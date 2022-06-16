@@ -4,11 +4,11 @@ from flow_algo_assembly.flow_solver_steps import (
 )
 from flow_algo_assembly.timestep_limits import compute_advection_diffusion_timestep
 
+from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
+
 import numpy as np
 
 import os
-
-from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 
 from plot_utils.lab_cmap import lab_cmap
 
