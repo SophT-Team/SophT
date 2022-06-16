@@ -11,8 +11,8 @@ def gen_compute_velocity_from_vorticity_kernel_2d(real_t, grid_size, dx, num_thr
 
     # compile kernels
     unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW2D(
-        grid_size_y=grid_size,
-        grid_size_x=grid_size,
+        grid_size_y=grid_size[0],
+        grid_size_x=grid_size[1],
         dx=dx,
         real_t=real_t,
         num_threads=num_threads,
@@ -21,7 +21,7 @@ def gen_compute_velocity_from_vorticity_kernel_2d(real_t, grid_size, dx, num_thr
     outplane_field_curl = gen_outplane_field_curl_pyst_kernel_2d(
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=(grid_size, grid_size),
+        fixed_grid_size=grid_size,
     )
 
     def compute_velocity_from_vorticity_kernel_2d(
@@ -45,13 +45,13 @@ def gen_advection_diffusion_timestep_kernel_2d(real_t, grid_size, dx, nu, num_th
 
     diffusion_timestep = gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(grid_size, grid_size),
+        fixed_grid_size=grid_size,
         num_threads=num_threads,
     )
     advection_timestep = (
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
             real_t=real_t,
-            fixed_grid_size=(grid_size, grid_size),
+            fixed_grid_size=grid_size,
             num_threads=num_threads,
         )
     )

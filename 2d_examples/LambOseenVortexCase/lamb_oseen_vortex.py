@@ -19,7 +19,7 @@ from sopht.utils.precision import get_real_t
 
 
 def lamb_oseen_vortex_flow_case(
-    grid_size, num_threads=4, precision="single", save_snap=False
+    grid_size_x, num_threads=4, precision="single", save_snap=False
 ):
     """
     This example considers a simple case of Lamb-Oseen vortex, advecting with a
@@ -28,9 +28,10 @@ def lamb_oseen_vortex_flow_case(
     """
     real_t = get_real_t(precision)
     # Consider a 1 by 1 2D domain
-    dx = real_t(1.0 / grid_size)
+    grid_size_y = grid_size_x
+    dx = real_t(1.0 / grid_size_x)
     eul_grid_shift = dx / 2
-    x = np.linspace(eul_grid_shift, 1 - eul_grid_shift, grid_size).astype(real_t)
+    x = np.linspace(eul_grid_shift, 1 - eul_grid_shift, grid_size_x).astype(real_t)
     x_grid, y_grid = np.meshgrid(x, x)
     nu = real_t(1e-3)
     CFL = real_t(0.1)
@@ -56,26 +57,26 @@ def lamb_oseen_vortex_flow_case(
 
     # Initialize velocity free stream magnitude in X and Y direction
     velocity_free_stream = np.ones(2, dtype=real_t)
-    velocity_field = np.zeros((2, grid_size, grid_size), dtype=real_t)
+    velocity_field = np.zeros((2, grid_size_y, grid_size_x), dtype=real_t)
     # Initialize buffer for advection, diffusion and velocity recovery kernels
     buffer_scalar_field = np.zeros_like(vorticity_field)
 
     # compile kernels
     add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(grid_size, grid_size),
+        fixed_grid_size=(grid_size_y, grid_size_x),
         num_threads=num_threads,
         field_type="vector",
     )
 
     compute_velocity_from_vorticity_kernel_2d = (
         gen_compute_velocity_from_vorticity_kernel_2d(
-            real_t, grid_size, dx, num_threads
+            real_t, (grid_size_y, grid_size_x), dx, num_threads
         )
     )
 
     advection_and_diffusion_timestep = gen_advection_diffusion_timestep_kernel_2d(
-        real_t, grid_size, dx, nu, num_threads
+        real_t, (grid_size_y, grid_size_x), dx, nu, num_threads
     )
 
     # iterate
@@ -124,7 +125,6 @@ def lamb_oseen_vortex_flow_case(
                 plt.colorbar()
                 ax.set_aspect(aspect=1)
                 plt.savefig(
-                    # os.path.join(SAVE_PATH, "snap_" + str("%0.4d" % (t * 100)) + ".png"),
                     "snap_" + str("%0.4d" % (t * 100)) + ".png",
                     bbox_inches="tight",
                     pad_inches=0,
@@ -196,5 +196,5 @@ def lamb_oseen_vortex_flow_case(
 
 
 if __name__ == "__main__":
-    grid_size = 256
-    lamb_oseen_vortex_flow_case(grid_size=grid_size, save_snap=True)
+    grid_size_x = 256
+    lamb_oseen_vortex_flow_case(grid_size_x=grid_size_x, save_snap=True)
