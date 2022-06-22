@@ -1,6 +1,6 @@
 from flow_algo_assembly.flow_solver_steps import (
     gen_compute_velocity_from_vorticity_kernel_2d,
-    gen_advection_diffusion_timestep_kernel_2d,
+    gen_advection_diffusion_with_forcing_timestep_kernel_2d,
 )
 from flow_algo_assembly.timestep_limits import compute_advection_diffusion_timestep
 
@@ -13,9 +13,8 @@ from plot_utils.lab_cmap import lab_cmap
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
     gen_penalise_field_boundary_pyst_kernel_2d,
-    gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d,
 )
-from sopht.numeric.immersed_boundary_ops import BrinkmannBoundaryForcing
+from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t
 
 
@@ -32,11 +31,10 @@ def flow_past_cylinder_boundary_forcing_case(
     boundary forcing.
     """
     real_t = get_real_t(precision)
+    # Initialize 2D domain
+    grid_size_y_by_x = grid_size_y / grid_size_x
     dx = real_t(1.0 / grid_size_x)
     eul_grid_shift = dx / 2
-    grid_size_y_by_x = grid_size_y / grid_size_x
-
-    # Initialize 2D domain
     x = np.linspace(eul_grid_shift, 1 - eul_grid_shift, grid_size_x).astype(real_t)
     y = np.linspace(
         eul_grid_shift, grid_size_y_by_x - eul_grid_shift, grid_size_y
@@ -59,23 +57,19 @@ def flow_past_cylinder_boundary_forcing_case(
     buffer_vector_field = np.zeros_like(velocity_field)
 
     # Initialize virtual forcing stuff for fixed cylinder
-    x_cm = real_t(2.5) * cyl_radius
-    y_cm = real_t(0.5) * grid_size_y_by_x
+    X_cm = real_t(2.5) * cyl_radius
+    Y_cm = real_t(0.5) * grid_size_y_by_x
     num_lag_nodes = 50
     dtheta = 2.0 * np.pi / num_lag_nodes
     theta = np.linspace(0 + dtheta / 2.0, 2.0 * np.pi - dtheta / 2.0, num_lag_nodes)
+    ds = cyl_radius * real_t(dtheta)
     lag_grid_position_field = np.zeros((2, num_lag_nodes), dtype=real_t)
-    lag_grid_position_field[0, :] = x_cm + cyl_radius * np.cos(theta).astype(real_t)
-    lag_grid_position_field[1, :] = y_cm + cyl_radius * np.sin(theta).astype(real_t)
+    lag_grid_position_field[0, :] = X_cm + cyl_radius * np.cos(theta).astype(real_t)
+    lag_grid_position_field[1, :] = Y_cm + cyl_radius * np.sin(theta).astype(real_t)
     lag_grid_velocity_field = np.zeros_like(lag_grid_position_field)
 
-    # compile kernels
-    add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
-        real_t=real_t,
-        fixed_grid_size=(grid_size_y, grid_size_x),
-        num_threads=num_threads,
-        field_type="vector",
-    )
+    # Compile kernels
+    # Flow kernels
     penalise_field_towards_boundary_pyst_kernel = (
         gen_penalise_field_boundary_pyst_kernel_2d(
             width=2,
@@ -87,43 +81,45 @@ def flow_past_cylinder_boundary_forcing_case(
             fixed_grid_size=(grid_size_y, grid_size_x),
         )
     )
-    update_vorticity_from_velocity_forcing = (
-        gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
-            real_t=real_t,
-            fixed_grid_size=(grid_size_y, grid_size_x),
-            num_threads=num_threads,
-        )
-    )
     compute_velocity_from_vorticity_kernel_2d = (
         gen_compute_velocity_from_vorticity_kernel_2d(
             real_t, (grid_size_y, grid_size_x), dx, num_threads
         )
     )
-
-    advection_and_diffusion_timestep = gen_advection_diffusion_timestep_kernel_2d(
-        real_t, (grid_size_y, grid_size_x), dx, nu, num_threads
+    add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
+        real_t=real_t,
+        fixed_grid_size=(grid_size_y, grid_size_x),
+        num_threads=num_threads,
+        field_type="vector",
+    )
+    advection_and_diffusion_with_forcing_timestep = (
+        gen_advection_diffusion_with_forcing_timestep_kernel_2d(
+            real_t, (grid_size_y, grid_size_x), dx, nu, num_threads
+        )
     )
 
-    # Brinkmann boundary forcing kernels
-    brinkmann_coeff = real_t(1e5)
+    # Virtual boundary forcing kernels
+    virtual_boundary_stiffness_coeff = real_t(-1e4 * ds)
+    virtual_boundary_damping_coeff = real_t(-1e1 * ds)
     interp_kernel_width = 2
-    brinkmann_boundary_forcing = BrinkmannBoundaryForcing(
-        brinkmann_coeff=brinkmann_coeff,
+    virtual_boundary_forcing = VirtualBoundaryForcing(
+        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
+        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         grid_dim=2,
         dx=dx,
         eul_grid_coord_shift=eul_grid_shift,
         num_lag_nodes=num_lag_nodes,
         interp_kernel_width=interp_kernel_width,
         real_t=real_t,
-        enable_eul_grid_flux_reset=True,
+        enable_eul_grid_forcing_reset=True,
         num_threads=num_threads,
     )
-    compute_feedback_force = brinkmann_boundary_forcing.compute_interaction_forcing
+    compute_feedback_force = virtual_boundary_forcing.compute_interaction_forcing
 
     CFL = real_t(0.1)
     # iterate
     timescale = cyl_radius / U_inf
-    t_end_hat = real_t(250.0)  # non-dimensional end time
+    t_end_hat = real_t(200.0)  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     t = real_t(0.0)
     if save_snap:
@@ -207,38 +203,37 @@ def flow_past_cylinder_boundary_forcing_case(
                 time.append(t / timescale)
 
                 # calculate drag
-                F = np.sum(
-                    brinkmann_boundary_forcing.lag_grid_penalisation_forcing[0, ...]
-                )
+                F = np.sum(virtual_boundary_forcing.lag_grid_forcing_field[0, ...])
                 drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
                 drag_coeffs.append(drag_coeff)
                 print(f"Cd: {drag_coeff}")
+                # velocity deviation at forcing points
+                velocity_deviation = np.fabs(
+                    lag_grid_velocity_field
+                    - virtual_boundary_forcing.lag_grid_flow_velocity_field
+                )
+                print(f"Velocity deviation: " f"{np.amax(velocity_deviation) / U_inf}")
             data_timer += dt
         t = t + dt
 
         # compute flow forcing
-        eul_grid_velocity_penalisation_flux = buffer_vector_field.view()
+        eul_grid_forcing_field = buffer_vector_field.view()
         compute_feedback_force(
-            eul_grid_penalisation_flux=eul_grid_velocity_penalisation_flux,
+            eul_grid_forcing_field=eul_grid_forcing_field,
             eul_grid_velocity_field=velocity_field,
             lag_grid_position_field=lag_grid_position_field,
             lag_grid_velocity_field=lag_grid_velocity_field,
             dt=dt,
         )
 
-        # update vorticity from velocity forcing
-        update_vorticity_from_velocity_forcing(
-            vorticity_field=vorticity_field,
-            velocity_forcing_field=eul_grid_velocity_penalisation_flux,
-            prefactor=real_t(0.5 / dx),
-        )
-
-        # advect and diffuse vorticity
-        advection_and_diffusion_timestep(
+        # advect and diffuse vorticity with forcing
+        advection_and_diffusion_with_forcing_timestep(
+            eul_grid_forcing_field=eul_grid_forcing_field,
             field=vorticity_field,
             velocity_field=velocity_field,
             flux_buffer=buffer_scalar_field,
             dt=dt,
+            forcing_prefactor=dt,
         )
 
     # compile video
@@ -267,7 +262,7 @@ def flow_past_cylinder_boundary_forcing_case(
 
 if __name__ == "__main__":
     grid_size_x = 512
-    grid_size_y = grid_size_x // 2
+    grid_size_y = 256
     flow_past_cylinder_boundary_forcing_case(
         grid_size_x=grid_size_x,
         grid_size_y=grid_size_y,
