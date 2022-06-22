@@ -127,3 +127,46 @@ def gen_advection_diffusion_with_forcing_timestep_kernel_2d(
         )
 
     return advection_and_diffusion_with_forcing_timestep_kernel_2d
+
+
+def gen_full_flow_with_forcing_timestep_kernel_2d(
+    real_t, grid_size, dx, nu, num_threads
+):
+    """
+    Generates kernel for full flow timestep
+    (advection-diffusion with velocity forcing timestep followed by velocity recovery)
+    in 2D.
+    """
+    # note currently only has base Euler Forward timestepper version.
+    advection_diffusion_with_forcing_timestep = (
+        gen_advection_diffusion_with_forcing_timestep_kernel_2d(
+            real_t, grid_size, dx, nu, num_threads
+        )
+    )
+    compute_velocity_from_vorticity = gen_compute_velocity_from_vorticity_kernel_2d(
+        real_t, grid_size, dx, num_threads
+    )
+
+    def full_flow_with_forcing_timestep_kernel_2d(
+        eul_grid_forcing_field,
+        vorticity_field,
+        velocity_field,
+        stream_func_field,
+        dt,
+        forcing_prefactor,
+    ):
+        advection_diffusion_with_forcing_timestep(
+            eul_grid_forcing_field=eul_grid_forcing_field,
+            field=vorticity_field,
+            velocity_field=velocity_field,
+            flux_buffer=stream_func_field.view(),  # recycling scalar buffer
+            dt=dt,
+            forcing_prefactor=forcing_prefactor,
+        )
+        compute_velocity_from_vorticity(
+            velocity_field,
+            vorticity_field,
+            stream_func_field,
+        )
+
+    return full_flow_with_forcing_timestep_kernel_2d
