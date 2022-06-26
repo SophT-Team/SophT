@@ -1,6 +1,6 @@
 from flow_algo_assembly.flow_solver_steps import (
     gen_compute_velocity_from_vorticity_kernel_2d,
-    gen_advection_diffusion_timestep_kernel_2d,
+    gen_full_flow_timestep_kernel_2d,
 )
 from flow_algo_assembly.timestep_limits import compute_advection_diffusion_timestep
 
@@ -58,6 +58,16 @@ def lamb_oseen_vortex_flow_case(
     # Initialize velocity free stream magnitude in X and Y direction
     velocity_free_stream = np.ones(2, dtype=real_t)
     velocity_field = np.zeros((2, grid_size_y, grid_size_x), dtype=real_t)
+    velocity_field[...] = compute_lamb_oseen_velocity(
+        x=x_grid,
+        y=y_grid,
+        x_cm=x_cm_start,
+        y_cm=y_cm_start,
+        nu=nu,
+        gamma=gamma,
+        t=t_end,
+        real_t=real_t,
+    )
     # Initialize buffer for advection, diffusion and velocity recovery kernels
     buffer_scalar_field = np.zeros_like(vorticity_field)
 
@@ -74,8 +84,7 @@ def lamb_oseen_vortex_flow_case(
             real_t, (grid_size_y, grid_size_x), dx, num_threads
         )
     )
-
-    advection_and_diffusion_timestep = gen_advection_diffusion_timestep_kernel_2d(
+    full_flow_timestep = gen_full_flow_timestep_kernel_2d(
         real_t, (grid_size_y, grid_size_x), dx, nu, num_threads
     )
 
@@ -88,58 +97,55 @@ def lamb_oseen_vortex_flow_case(
 
         plt.style.use("seaborn")
     while t < t_end:
-        # compute velocity from vorticity
-        compute_velocity_from_vorticity_kernel_2d(
-            velocity_field=velocity_field,
+
+        # Plot solution
+        if save_snap and (foto_timer >= foto_timer_limit or foto_timer == 0):
+            foto_timer = 0.0
+            fig = plt.figure(frameon=True, dpi=150)
+            ax = fig.add_subplot(111)
+            plt.contourf(
+                x_grid,
+                y_grid,
+                vorticity_field,
+                levels=np.linspace(0, 1, 50),
+                extend="both",
+                cmap=lab_cmap,
+            )
+            plt.colorbar()
+            ax.set_aspect(aspect=1)
+            plt.savefig(
+                "snap_" + str("%0.4d" % (t * 100)) + ".png",
+                bbox_inches="tight",
+                pad_inches=0,
+            )
+            plt.clf()
+            plt.close("all")
+
+        # compute timestep
+        dt = compute_advection_diffusion_timestep(
+            velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
+        )
+
+        # full flow timestep (advection->diffusion->velocity recovery)
+        full_flow_timestep(
             vorticity_field=vorticity_field,
+            velocity_field=velocity_field,
             stream_func_field=buffer_scalar_field,
+            dt=dt,
         )
 
         # add freestream
+        # can maybe merge into full timestep
         add_fixed_val(
             sum_field=velocity_field,
             vector_field=velocity_field,
             fixed_vals=velocity_free_stream,
         )
 
-        # compute timestep and update time
-        dt = compute_advection_diffusion_timestep(
-            velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
-        )
+        # update time
         t = t + dt
-
-        # Plot solution
         if save_snap:
-            if foto_timer >= foto_timer_limit or foto_timer == 0:
-                foto_timer = 0.0
-                fig = plt.figure(frameon=True, dpi=150)
-                ax = fig.add_subplot(111)
-                plt.contourf(
-                    x_grid,
-                    y_grid,
-                    vorticity_field,
-                    levels=np.linspace(0, 1, 50),
-                    extend="both",
-                    cmap=lab_cmap,
-                )
-                plt.colorbar()
-                ax.set_aspect(aspect=1)
-                plt.savefig(
-                    "snap_" + str("%0.4d" % (t * 100)) + ".png",
-                    bbox_inches="tight",
-                    pad_inches=0,
-                )
-                plt.clf()
-                plt.close("all")
             foto_timer += dt
-
-        # advect and diffuse vorticity
-        advection_and_diffusion_timestep(
-            field=vorticity_field,
-            velocity_field=velocity_field,
-            flux_buffer=buffer_scalar_field,
-            dt=dt,
-        )
 
     # final vortex computation
     t_end = t
