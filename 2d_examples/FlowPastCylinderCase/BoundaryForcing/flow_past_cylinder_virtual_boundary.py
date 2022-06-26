@@ -1,6 +1,5 @@
 from flow_algo_assembly.flow_solver_steps import (
-    gen_compute_velocity_from_vorticity_kernel_2d,
-    gen_advection_diffusion_with_forcing_timestep_kernel_2d,
+    gen_full_flow_timestep_with_forcing_and_boundary_penalisation_kernel_2d,
 )
 from flow_algo_assembly.timestep_limits import compute_advection_diffusion_timestep
 
@@ -12,7 +11,6 @@ from plot_utils.lab_cmap import lab_cmap
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
-    gen_penalise_field_boundary_pyst_kernel_2d,
 )
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t
@@ -70,31 +68,22 @@ def flow_past_cylinder_boundary_forcing_case(
 
     # Compile kernels
     # Flow kernels
-    penalise_field_towards_boundary_pyst_kernel = (
-        gen_penalise_field_boundary_pyst_kernel_2d(
-            width=2,
-            dx=dx,
-            x_grid_field=x_grid,
-            y_grid_field=y_grid,
-            real_t=real_t,
-            num_threads=num_threads,
-            fixed_grid_size=(grid_size_y, grid_size_x),
-        )
-    )
-    compute_velocity_from_vorticity_kernel_2d = (
-        gen_compute_velocity_from_vorticity_kernel_2d(
-            real_t, (grid_size_y, grid_size_x), dx, num_threads
-        )
-    )
     add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(grid_size_y, grid_size_x),
         num_threads=num_threads,
         field_type="vector",
     )
-    advection_and_diffusion_with_forcing_timestep = (
-        gen_advection_diffusion_with_forcing_timestep_kernel_2d(
-            real_t, (grid_size_y, grid_size_x), dx, nu, num_threads
+    full_flow_timestep = (
+        gen_full_flow_timestep_with_forcing_and_boundary_penalisation_kernel_2d(
+            real_t=real_t,
+            dx=dx,
+            nu=nu,
+            grid_size=(grid_size_y, grid_size_x),
+            num_threads=num_threads,
+            penalty_zone_width=2,
+            x_grid=x_grid,
+            y_grid=y_grid,
         )
     )
 
@@ -136,32 +125,6 @@ def flow_past_cylinder_boundary_forcing_case(
 
     while t < t_end:
 
-        # penalise vorticity towards boundary
-        penalise_field_towards_boundary_pyst_kernel(
-            field=vorticity_field,
-            x_grid_field=x_grid,
-            y_grid_field=y_grid,
-        )
-
-        # compute velocity from vorticity
-        compute_velocity_from_vorticity_kernel_2d(
-            velocity_field=velocity_field,
-            vorticity_field=vorticity_field,
-            stream_func_field=buffer_scalar_field,
-        )
-
-        # add freestream
-        add_fixed_val(
-            sum_field=velocity_field,
-            vector_field=velocity_field,
-            fixed_vals=velocity_free_stream,
-        )
-
-        # compute timestep
-        dt = compute_advection_diffusion_timestep(
-            velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
-        )
-
         # Plot solution
         if save_snap:
             if foto_timer >= foto_timer_limit or foto_timer == 0:
@@ -195,8 +158,8 @@ def flow_past_cylinder_boundary_forcing_case(
                 print(
                     f"t_hat: {t / timescale:.2f}, max_vort: {np.amax(vorticity_field):.4f}"
                 )
-            foto_timer += dt
 
+        # save diagnostic data
         if save_diagnostic:
             if data_timer >= data_timer_limit or data_timer == 0:
                 data_timer = 0.0
@@ -213,8 +176,11 @@ def flow_past_cylinder_boundary_forcing_case(
                     - virtual_boundary_forcing.lag_grid_flow_velocity_field
                 )
                 print(f"Velocity deviation: " f"{np.amax(velocity_deviation) / U_inf}")
-            data_timer += dt
-        t = t + dt
+
+        # compute timestep
+        dt = compute_advection_diffusion_timestep(
+            velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
+        )
 
         # compute flow forcing
         eul_grid_forcing_field = buffer_vector_field.view()
@@ -226,15 +192,32 @@ def flow_past_cylinder_boundary_forcing_case(
             dt=dt,
         )
 
-        # advect and diffuse vorticity with forcing
-        advection_and_diffusion_with_forcing_timestep(
+        # full flow timestep
+        full_flow_timestep(
             eul_grid_forcing_field=eul_grid_forcing_field,
             field=vorticity_field,
             velocity_field=velocity_field,
             flux_buffer=buffer_scalar_field,
             dt=dt,
             forcing_prefactor=dt,
+            vorticity_field=vorticity_field,
+            stream_func_field=buffer_scalar_field,
+            field_to_penalise=vorticity_field,
         )
+
+        # add freestream (can later merge into flow step)
+        add_fixed_val(
+            sum_field=velocity_field,
+            vector_field=velocity_field,
+            fixed_vals=velocity_free_stream,
+        )
+
+        # update time
+        t = t + dt
+        if save_snap:
+            foto_timer += dt
+        if save_diagnostic:
+            data_timer += dt
 
     # compile video
     if save_snap:

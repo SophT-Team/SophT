@@ -85,14 +85,18 @@ def lamb_oseen_vortex_flow_case(
         )
     )
     full_flow_timestep = gen_full_flow_timestep_kernel_2d(
-        real_t, (grid_size_y, grid_size_x), dx, nu, num_threads
+        real_t=real_t,
+        grid_size=(grid_size_y, grid_size_x),
+        dx=dx,
+        nu=nu,
+        num_threads=num_threads,
     )
 
     # iterate
     t = t_start
     if save_snap:
         foto_timer = 0.0
-        foto_timer_limit = (t_end - t_start) / 50
+        foto_timer_limit = (t_end - t_start) / 25
         import matplotlib.pyplot as plt
 
         plt.style.use("seaborn")
@@ -128,6 +132,8 @@ def lamb_oseen_vortex_flow_case(
 
         # full flow timestep (advection->diffusion->velocity recovery)
         full_flow_timestep(
+            field=vorticity_field,
+            flux_buffer=buffer_scalar_field,
             vorticity_field=vorticity_field,
             velocity_field=velocity_field,
             stream_func_field=buffer_scalar_field,
