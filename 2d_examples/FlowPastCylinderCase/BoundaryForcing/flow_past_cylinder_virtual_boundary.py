@@ -103,7 +103,7 @@ def flow_past_cylinder_boundary_forcing_case(
         enable_eul_grid_forcing_reset=True,
         num_threads=num_threads,
     )
-    compute_feedback_force = virtual_boundary_forcing.compute_interaction_forcing
+    compute_flow_interaction = virtual_boundary_forcing.compute_interaction
 
     CFL = real_t(0.1)
     # iterate
@@ -182,15 +182,15 @@ def flow_past_cylinder_boundary_forcing_case(
             velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
         )
 
-        # compute flow forcing
+        # compute flow forcing and timestep forcing
         eul_grid_forcing_field = buffer_vector_field.view()
-        compute_feedback_force(
+        compute_flow_interaction(
             eul_grid_forcing_field=eul_grid_forcing_field,
             eul_grid_velocity_field=velocity_field,
             lag_grid_position_field=lag_grid_position_field,
             lag_grid_velocity_field=lag_grid_velocity_field,
-            dt=dt,
         )
+        virtual_boundary_forcing.time_step(dt=dt)
 
         # full flow timestep
         full_flow_timestep(
