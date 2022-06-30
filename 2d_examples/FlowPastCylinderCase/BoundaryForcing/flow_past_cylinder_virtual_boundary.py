@@ -88,22 +88,20 @@ def flow_past_cylinder_boundary_forcing_case(
     )
 
     # Virtual boundary forcing kernels
-    virtual_boundary_stiffness_coeff = real_t(-1e4 * ds)
-    virtual_boundary_damping_coeff = real_t(-1e1 * ds)
+    virtual_boundary_stiffness_coeff = real_t(-5e4 * ds)
+    virtual_boundary_damping_coeff = real_t(-2e1 * ds)
     interp_kernel_width = 2
     virtual_boundary_forcing = VirtualBoundaryForcing(
         virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         grid_dim=2,
         dx=dx,
-        eul_grid_coord_shift=eul_grid_shift,
         num_lag_nodes=num_lag_nodes,
-        interp_kernel_width=interp_kernel_width,
         real_t=real_t,
         enable_eul_grid_forcing_reset=True,
         num_threads=num_threads,
     )
-    compute_flow_interaction = virtual_boundary_forcing.compute_interaction
+    compute_flow_interaction = virtual_boundary_forcing.compute_interaction_forcing
 
     CFL = real_t(0.1)
     # iterate
@@ -156,7 +154,8 @@ def flow_past_cylinder_boundary_forcing_case(
                 plt.clf()
                 plt.close("all")
                 print(
-                    f"t_hat: {t / timescale:.2f}, max_vort: {np.amax(vorticity_field):.4f}"
+                    f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
+                    f"max_vort: {np.amax(vorticity_field):.4f}"
                 )
 
         # save diagnostic data
@@ -169,13 +168,6 @@ def flow_past_cylinder_boundary_forcing_case(
                 F = np.sum(virtual_boundary_forcing.lag_grid_forcing_field[0, ...])
                 drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
                 drag_coeffs.append(drag_coeff)
-                print(f"Cd: {drag_coeff}")
-                # velocity deviation at forcing points
-                velocity_deviation = np.fabs(
-                    lag_grid_velocity_field
-                    - virtual_boundary_forcing.lag_grid_flow_velocity_field
-                )
-                print(f"Velocity deviation: " f"{np.amax(velocity_deviation) / U_inf}")
 
         # compute timestep
         dt = compute_advection_diffusion_timestep(
