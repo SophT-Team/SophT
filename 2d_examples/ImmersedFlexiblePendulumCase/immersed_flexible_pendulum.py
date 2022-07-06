@@ -3,7 +3,7 @@ from cosserat_rod_support.CosseratRodFlowInteraction2D import (
 )
 
 from elastica.boundary_conditions import OneEndFixedBC
-from elastica.dissipation import ExponentialDamper
+from elastica.dissipation import ExponentialDamper, LaplaceDissipationFilter
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.external_forces import GravityForces
 from elastica.timestepper import PositionVerlet, extend_stepper_interface
@@ -78,14 +78,19 @@ def immersed_flexible_pendulum_one_way_coupling(
         GravityForces, acc_gravity=np.array([0.0, gravitational_acc, 0.0])
     )
     # add damping
-    damping_constant = 1e-4
     dl = base_length / n_elem
     rod_dt = 0.005 * dl
+    # damping_constant = 1e-4
+    # pendulum_sim.dampen(pendulum_rod).using(
+    #     ExponentialDamper,
+    #     damping_constant=damping_constant,
+    #     time_step=rod_dt,
+    # )
     pendulum_sim.dampen(pendulum_rod).using(
-        ExponentialDamper,
-        damping_constant=damping_constant,
-        time_step=rod_dt,
+        LaplaceDissipationFilter,
+        filter_order=3,
     )
+
     pendulum_sim.finalize()
     timestepper = PositionVerlet()
     do_step, stages_and_updates = extend_stepper_interface(timestepper, pendulum_sim)
@@ -171,7 +176,7 @@ def immersed_flexible_pendulum_one_way_coupling(
             plt.plot(
                 pendulum_rod.position_collection[0],
                 pendulum_rod.position_collection[1],
-                linewidth=2,
+                linewidth=3,
                 color="k",
             )
             ax.set_aspect(aspect=1)
@@ -195,10 +200,6 @@ def immersed_flexible_pendulum_one_way_coupling(
         flow_dt = compute_advection_diffusion_timestep(
             velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
         )
-        if max(flow_dt, rod_dt) > flow_dt:
-            raise RuntimeError(
-                "rod timestep greater than flow timestep! Issue in local timestepping!"
-            )
 
         # timestep the flow
         full_flow_timestep(
@@ -214,11 +215,12 @@ def immersed_flexible_pendulum_one_way_coupling(
         )
 
         # timestep the rod, through the flow timestep
-        rod_time_steps = int(flow_dt / rod_dt)
+        local_rod_dt = min(flow_dt, rod_dt)
+        rod_time_steps = int(flow_dt / local_rod_dt)
         rod_time = time
         for i in range(rod_time_steps):
             rod_time = do_step(
-                timestepper, stages_and_updates, pendulum_sim, rod_time, rod_dt
+                timestepper, stages_and_updates, pendulum_sim, rod_time, local_rod_dt
             )
 
         # timestep the cosserat_rod_flow_interactor
