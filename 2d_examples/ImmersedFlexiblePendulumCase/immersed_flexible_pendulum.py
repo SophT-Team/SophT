@@ -1,6 +1,5 @@
-from cosserat_rod_support.CosseratRodFlowInteraction2D import (
-    CosseratRodFlowInteraction2D,
-)
+from cosserat_rod_support.CosseratRodFlowInteraction import CosseratRodFlowInteraction
+from cosserat_rod_support.flow_forces import FlowForces
 
 from elastica.boundary_conditions import OneEndFixedBC
 from elastica.dissipation import ExponentialDamper, LaplaceDissipationFilter
@@ -26,7 +25,12 @@ from sopht.utils.precision import get_real_t
 
 
 def immersed_flexible_pendulum_one_way_coupling(
-    final_time, grid_size, rod_start_incline_angle, num_threads=4, precision="single"
+    final_time,
+    grid_size,
+    rod_start_incline_angle,
+    coupling_type="one_way",
+    num_threads=4,
+    precision="single",
 ):
     # =================COMMON SIMULATOR STUFF=======================
     grid_size_x = grid_size
@@ -80,20 +84,16 @@ def immersed_flexible_pendulum_one_way_coupling(
     # add damping
     dl = base_length / n_elem
     rod_dt = 0.005 * dl
-    # damping_constant = 1e-4
-    # pendulum_sim.dampen(pendulum_rod).using(
-    #     ExponentialDamper,
-    #     damping_constant=damping_constant,
-    #     time_step=rod_dt,
-    # )
+    damping_constant = 1e-2
     pendulum_sim.dampen(pendulum_rod).using(
-        LaplaceDissipationFilter,
-        filter_order=3,
+        ExponentialDamper,
+        damping_constant=damping_constant,
+        time_step=rod_dt,
     )
-
-    pendulum_sim.finalize()
-    timestepper = PositionVerlet()
-    do_step, stages_and_updates = extend_stepper_interface(timestepper, pendulum_sim)
+    # pendulum_sim.dampen(pendulum_rod).using(
+    #     LaplaceDissipationFilter,
+    #     filter_order=5,
+    # )
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
@@ -109,7 +109,7 @@ def immersed_flexible_pendulum_one_way_coupling(
 
     # Flow parameters
     vel_scale = np.sqrt(np.fabs(gravitational_acc) * base_length)
-    Re = 200
+    Re = 500
     nu = base_length * vel_scale / Re
 
     # Initialize flow field
@@ -138,21 +138,32 @@ def immersed_flexible_pendulum_one_way_coupling(
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
     virtual_boundary_damping_coeff = real_t(-2e1 * dl)
-    cosserat_rod_flow_interactor = CosseratRodFlowInteraction2D(
+    # cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
+    cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
         cosserat_rod=pendulum_rod,
         eul_grid_forcing_field=eul_grid_forcing_field,
         eul_grid_velocity_field=velocity_field,
         virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=dx,
+        grid_dim=2,
         real_t=real_t,
         enable_eul_grid_forcing_reset=True,
         num_threads=num_threads,
         forcing_grid_type="nodal",
     )
+    if coupling_type == "two_way":
+        pendulum_sim.add_forcing_to(pendulum_rod).using(
+            FlowForces,
+            cosserat_rod_flow_interactor,
+        )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
 
     # =================TIMESTEPPING====================
+
+    pendulum_sim.finalize()
+    timestepper = PositionVerlet()
+    do_step, stages_and_updates = extend_stepper_interface(timestepper, pendulum_sim)
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = final_time / 50
@@ -168,7 +179,7 @@ def immersed_flexible_pendulum_one_way_coupling(
                 x_grid,
                 y_grid,
                 vorticity_field,
-                levels=np.linspace(-25, 25, 100),
+                levels=np.linspace(-5, 5, 100),
                 extend="both",
                 cmap=lab_cmap,
             )
@@ -193,13 +204,29 @@ def immersed_flexible_pendulum_one_way_coupling(
                 f"max_vort: {np.amax(vorticity_field):.4f}"
             )
 
-        # evaluate feedback/interaction between flow and rod
-        cosserat_rod_flow_interactor()
-
         # compute timestep
         flow_dt = compute_advection_diffusion_timestep(
-            velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
+            velocity_field=velocity_field,
+            CFL=CFL,
+            nu=nu,
+            dx=dx,
+            dt_prefac=0.25,
         )
+        # flow_dt = rod_dt
+
+        # timestep the rod, through the flow timestep
+        rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
+        local_rod_dt = flow_dt / rod_time_steps
+        rod_time = time
+        for i in range(rod_time_steps):
+            rod_time = do_step(
+                timestepper, stages_and_updates, pendulum_sim, rod_time, local_rod_dt
+            )
+            # timestep the cosserat_rod_flow_interactor
+            cosserat_rod_flow_interactor.time_step(dt=local_rod_dt)
+
+        # evaluate feedback/interaction between flow and rod
+        cosserat_rod_flow_interactor()
 
         # timestep the flow
         full_flow_timestep(
@@ -213,19 +240,6 @@ def immersed_flexible_pendulum_one_way_coupling(
             stream_func_field=buffer_scalar_field,
             field_to_penalise=vorticity_field,
         )
-
-        # timestep the rod, through the flow timestep
-        local_rod_dt = min(flow_dt, rod_dt)
-        rod_time_steps = int(flow_dt / local_rod_dt)
-        rod_time = time
-        for i in range(rod_time_steps):
-            rod_time = do_step(
-                timestepper, stages_and_updates, pendulum_sim, rod_time, local_rod_dt
-            )
-
-        # timestep the cosserat_rod_flow_interactor
-        # since one-way coupling, it can go here
-        cosserat_rod_flow_interactor.time_step(dt=flow_dt)
 
         # update simulation time
         time += flow_dt
@@ -242,5 +256,8 @@ def immersed_flexible_pendulum_one_way_coupling(
 
 if __name__ == "__main__":
     immersed_flexible_pendulum_one_way_coupling(
-        final_time=2.0, grid_size=256, rod_start_incline_angle=(np.pi / 3)
+        final_time=3.0,
+        grid_size=256,
+        rod_start_incline_angle=(np.pi / 2),
+        coupling_type="two_way",
     )
