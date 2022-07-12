@@ -4,7 +4,12 @@ from sopht.utils.precision import get_test_tol
 
 
 def compute_advection_diffusion_timestep(
-    velocity_field, CFL, nu, dx, precision="single"
+    velocity_field,
+    CFL,
+    nu,
+    dx,
+    precision="single",
+    dt_prefac=1,
 ):
     """Compute stable timestep based on advection and diffusion limits."""
     # This may need a numba or pystencil version
@@ -13,4 +18,4 @@ def compute_advection_diffusion_timestep(
         CFL * dx / (np.amax(velocity_mag_field) + get_test_tol(precision)),
         dx**2 / 4 / nu,
     )
-    return dt
+    return dt * dt_prefac
