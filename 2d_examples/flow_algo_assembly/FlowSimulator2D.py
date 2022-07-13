@@ -145,7 +145,7 @@ class UnboundedFlowSimulator2D:
             self.set_field = gen_set_fixed_val_pyst_kernel_2d(
                 real_t=self.real_t,
                 num_threads=self.num_threads,
-                field_type="scalar",
+                field_type="vector",
             )
 
     def finalise_flow_timestep(self):
@@ -195,7 +195,7 @@ class UnboundedFlowSimulator2D:
             prefactor=self.real_t(dt / (2 * self.dx)),
         )
         self.navier_stokes_timestep(dt=dt)
-        self.set_field(field=self.eul_grid_forcing_field, fixed_val=self.real_t(0.0))
+        self.set_field(vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0, 0.0])
 
     def compute_stable_timestep(self, dt_prefac=1, precision="single"):
         """Compute stable timestep based on advection and diffusion limits."""

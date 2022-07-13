@@ -23,7 +23,7 @@ class CosseratRodFlowInteraction(VirtualBoundaryForcing):
         real_t=np.float64,
         eul_grid_coord_shift=None,
         interp_kernel_width=None,
-        enable_eul_grid_forcing_reset=True,
+        enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
         forcing_grid_type="nodal",

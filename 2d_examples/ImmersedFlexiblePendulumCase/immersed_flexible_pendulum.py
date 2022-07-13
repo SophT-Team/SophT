@@ -2,16 +2,13 @@ from cosserat_rod_support.CosseratRodFlowInteraction import CosseratRodFlowInter
 from cosserat_rod_support.flow_forces import FlowForces
 
 from elastica.boundary_conditions import OneEndFixedBC
-from elastica.dissipation import ExponentialDamper, LaplaceDissipationFilter
+from elastica.dissipation import ExponentialDamper
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.external_forces import GravityForces
 from elastica.timestepper import PositionVerlet, extend_stepper_interface
 from elastica.wrappers import BaseSystemCollection, Constraints, Forcing, Damping
 
-from flow_algo_assembly.flow_solver_steps import (
-    gen_full_flow_timestep_with_forcing_and_boundary_penalisation_kernel_2d,
-)
-from flow_algo_assembly.timestep_limits import compute_advection_diffusion_timestep
+from flow_algo_assembly.FlowSimulator2D import UnboundedFlowSimulator2D
 
 import matplotlib.pyplot as plt
 
@@ -33,11 +30,6 @@ def immersed_flexible_pendulum_one_way_coupling(
     precision="single",
 ):
     # =================COMMON SIMULATOR STUFF=======================
-    grid_size_x = grid_size
-    grid_size_y = grid_size_x
-    flow_solver_precision = precision
-    real_t = get_real_t(flow_solver_precision)
-    CFL = 0.1
     plt.style.use("seaborn")
 
     # =================PYELASTICA STUFF BEGIN=====================
@@ -90,65 +82,40 @@ def immersed_flexible_pendulum_one_way_coupling(
         damping_constant=damping_constant,
         time_step=rod_dt,
     )
-    # pendulum_sim.dampen(pendulum_rod).using(
-    #     LaplaceDissipationFilter,
-    #     filter_order=5,
-    # )
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
-    # Initialize 2D domain
-    grid_size_y_by_x = grid_size_y / grid_size_x
-    dx = real_t(1.0 / grid_size_x)
-    eul_grid_shift = dx / 2
-    x = np.linspace(eul_grid_shift, 1 - eul_grid_shift, grid_size_x).astype(real_t)
-    y = np.linspace(
-        eul_grid_shift, grid_size_y_by_x - eul_grid_shift, grid_size_y
-    ).astype(real_t)
-    x_grid, y_grid = np.meshgrid(x, y)
-
+    flow_solver_precision = precision
+    real_t = get_real_t(flow_solver_precision)
+    grid_size_x = grid_size
+    grid_size_y = grid_size_x
+    CFL = 0.1
     # Flow parameters
     vel_scale = np.sqrt(np.fabs(gravitational_acc) * base_length)
     Re = 500
     nu = base_length * vel_scale / Re
-
-    # Initialize flow field
-    vorticity_field = np.zeros_like(x_grid)
-    velocity_field = np.zeros((2, grid_size_y, grid_size_x), dtype=real_t)
-    # we use the same buffer for advection, diffusion and velocity recovery
-    buffer_scalar_field = np.zeros_like(vorticity_field)
-    # this one holds the forcing from bodies
-    eul_grid_forcing_field = np.zeros_like(velocity_field)
-
-    # Compile kernels
-    full_flow_timestep = (
-        gen_full_flow_timestep_with_forcing_and_boundary_penalisation_kernel_2d(
-            real_t=real_t,
-            dx=dx,
-            nu=nu,
-            grid_size=(grid_size_y, grid_size_x),
-            num_threads=num_threads,
-            penalty_zone_width=2,
-            x_grid=x_grid,
-            y_grid=y_grid,
-        )
+    flow_sim = UnboundedFlowSimulator2D(
+        grid_size=(grid_size_y, grid_size_x),
+        kinematic_viscosity=nu,
+        CFL=CFL,
+        flow_type="navier_stokes_with_forcing",
+        real_t=real_t,
+        num_threads=num_threads,
     )
     # ==================FLOW SETUP END=========================
 
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
     virtual_boundary_damping_coeff = real_t(-2e1 * dl)
-    # cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
     cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
         cosserat_rod=pendulum_rod,
-        eul_grid_forcing_field=eul_grid_forcing_field,
-        eul_grid_velocity_field=velocity_field,
+        eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=flow_sim.velocity_field,
         virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
-        dx=dx,
+        dx=flow_sim.dx,
         grid_dim=2,
         real_t=real_t,
-        enable_eul_grid_forcing_reset=True,
         num_threads=num_threads,
         forcing_grid_type="nodal",
     )
@@ -176,9 +143,9 @@ def immersed_flexible_pendulum_one_way_coupling(
             fig = plt.figure(frameon=True, dpi=150)
             ax = fig.add_subplot(111)
             plt.contourf(
-                x_grid,
-                y_grid,
-                vorticity_field,
+                flow_sim.x_grid,
+                flow_sim.y_grid,
+                flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
                 cmap=lab_cmap,
@@ -201,17 +168,11 @@ def immersed_flexible_pendulum_one_way_coupling(
             plt.close("all")
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
-                f"max_vort: {np.amax(vorticity_field):.4f}"
+                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
         # compute timestep
-        flow_dt = compute_advection_diffusion_timestep(
-            velocity_field=velocity_field,
-            CFL=CFL,
-            nu=nu,
-            dx=dx,
-            dt_prefac=0.25,
-        )
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
         # flow_dt = rod_dt
 
         # timestep the rod, through the flow timestep
@@ -229,17 +190,7 @@ def immersed_flexible_pendulum_one_way_coupling(
         cosserat_rod_flow_interactor()
 
         # timestep the flow
-        full_flow_timestep(
-            eul_grid_forcing_field=eul_grid_forcing_field,
-            field=vorticity_field,
-            velocity_field=velocity_field,
-            flux_buffer=buffer_scalar_field,
-            dt=flow_dt,
-            forcing_prefactor=flow_dt,
-            vorticity_field=vorticity_field,
-            stream_func_field=buffer_scalar_field,
-            field_to_penalise=vorticity_field,
-        )
+        flow_sim.time_step(dt=flow_dt)
 
         # update simulation time
         time += flow_dt
