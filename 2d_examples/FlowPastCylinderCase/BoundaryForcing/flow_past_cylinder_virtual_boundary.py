@@ -1,7 +1,6 @@
-from flow_algo_assembly.flow_solver_steps import (
-    gen_full_flow_timestep_with_forcing_and_boundary_penalisation_kernel_2d,
-)
-from flow_algo_assembly.timestep_limits import compute_advection_diffusion_timestep
+from flow_algo_assembly.FlowSimulator2D import UnboundedFlowSimulator2D
+
+import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -21,42 +20,35 @@ def flow_past_cylinder_boundary_forcing_case(
     grid_size_y,
     num_threads=4,
     precision="single",
-    save_snap=False,
     save_diagnostic=False,
 ):
     """
     This example considers a simple flow past cylinder using immersed
     boundary forcing.
     """
+    plt.style.use("seaborn")
     real_t = get_real_t(precision)
-    # Initialize 2D domain
-    grid_size_y_by_x = grid_size_y / grid_size_x
-    dx = real_t(1.0 / grid_size_x)
-    eul_grid_shift = dx / 2
-    x = np.linspace(eul_grid_shift, 1 - eul_grid_shift, grid_size_x).astype(real_t)
-    y = np.linspace(
-        eul_grid_shift, grid_size_y_by_x - eul_grid_shift, grid_size_y
-    ).astype(real_t)
-    x_grid, y_grid = np.meshgrid(x, y)
-
     # Flow parameters
     U_inf = real_t(1.0)
+    velocity_free_stream = np.zeros(2)
+    velocity_free_stream[0] = U_inf
     cyl_radius = real_t(0.03)
     Re = 200
     nu = cyl_radius * U_inf / Re
+    CFL = real_t(0.1)
 
-    # Initialize flow field
-    vorticity_field = np.zeros_like(x_grid)
-    velocity_free_stream = np.zeros(2)
-    velocity_free_stream[0] = U_inf
-    velocity_field = np.zeros((2, grid_size_y, grid_size_x), dtype=real_t)
-    # we use the same buffer for advection, diffusion and velocity recovery
-    buffer_scalar_field = np.zeros_like(vorticity_field)
-    buffer_vector_field = np.zeros_like(velocity_field)
+    flow_sim = UnboundedFlowSimulator2D(
+        grid_size=(grid_size_y, grid_size_x),
+        kinematic_viscosity=nu,
+        CFL=CFL,
+        flow_type="navier_stokes_with_forcing",
+        real_t=real_t,
+        num_threads=num_threads,
+    )
 
     # Initialize virtual forcing stuff for fixed cylinder
     X_cm = real_t(2.5) * cyl_radius
-    Y_cm = real_t(0.5) * grid_size_y_by_x
+    Y_cm = real_t(0.5) * grid_size_y / grid_size_x
     num_lag_nodes = 50
     dtheta = 2.0 * np.pi / num_lag_nodes
     theta = np.linspace(0 + dtheta / 2.0, 2.0 * np.pi - dtheta / 2.0, num_lag_nodes)
@@ -66,55 +58,38 @@ def flow_past_cylinder_boundary_forcing_case(
     lag_grid_position_field[1, :] = Y_cm + cyl_radius * np.sin(theta).astype(real_t)
     lag_grid_velocity_field = np.zeros_like(lag_grid_position_field)
 
-    # Compile kernels
-    # Flow kernels
+    # Compile additional kernels
+    # TODO put in flow sim
     add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(grid_size_y, grid_size_x),
         num_threads=num_threads,
         field_type="vector",
     )
-    full_flow_timestep = (
-        gen_full_flow_timestep_with_forcing_and_boundary_penalisation_kernel_2d(
-            real_t=real_t,
-            dx=dx,
-            nu=nu,
-            grid_size=(grid_size_y, grid_size_x),
-            num_threads=num_threads,
-            penalty_zone_width=2,
-            x_grid=x_grid,
-            y_grid=y_grid,
-        )
-    )
 
     # Virtual boundary forcing kernels
     virtual_boundary_stiffness_coeff = real_t(-5e4 * ds)
     virtual_boundary_damping_coeff = real_t(-2e1 * ds)
-    interp_kernel_width = 2
     virtual_boundary_forcing = VirtualBoundaryForcing(
         virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         grid_dim=2,
-        dx=dx,
+        dx=flow_sim.dx,
         num_lag_nodes=num_lag_nodes,
         real_t=real_t,
-        enable_eul_grid_forcing_reset=True,
+        enable_eul_grid_forcing_reset=False,
         num_threads=num_threads,
     )
     compute_flow_interaction = virtual_boundary_forcing.compute_interaction_forcing
 
-    CFL = real_t(0.1)
     # iterate
     timescale = cyl_radius / U_inf
     t_end_hat = real_t(200.0)  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     t = real_t(0.0)
-    if save_snap:
-        foto_timer = 0.0
-        foto_timer_limit = t_end / 50
-        import matplotlib.pyplot as plt
+    foto_timer = 0.0
+    foto_timer_limit = t_end / 50
 
-        plt.style.use("seaborn")
     if save_diagnostic:
         data_timer = 0.0
         data_timer_limit = 0.25 * timescale
@@ -124,39 +99,38 @@ def flow_past_cylinder_boundary_forcing_case(
     while t < t_end:
 
         # Plot solution
-        if save_snap:
-            if foto_timer >= foto_timer_limit or foto_timer == 0:
-                foto_timer = 0.0
-                fig = plt.figure(frameon=True, dpi=150)
-                ax = fig.add_subplot(111)
-                plt.contourf(
-                    x_grid,
-                    y_grid,
-                    vorticity_field,
-                    levels=np.linspace(-25, 25, 100),
-                    extend="both",
-                    cmap=lab_cmap,
-                )
-                plt.colorbar()
-                plt.plot(
-                    lag_grid_position_field[0],
-                    lag_grid_position_field[1],
-                    linewidth=2,
-                    color="k",
-                )
-                ax.set_aspect(aspect=1)
-                ax.set_title(f"Vorticity, t_hat: {t / timescale:.2f}")
-                plt.savefig(
-                    "snap_" + str("%0.4d" % (t * 100)) + ".png",
-                    bbox_inches="tight",
-                    pad_inches=0,
-                )
-                plt.clf()
-                plt.close("all")
-                print(
-                    f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
-                    f"max_vort: {np.amax(vorticity_field):.4f}"
-                )
+        if foto_timer >= foto_timer_limit or foto_timer == 0:
+            foto_timer = 0.0
+            fig = plt.figure(frameon=True, dpi=150)
+            ax = fig.add_subplot(111)
+            plt.contourf(
+                flow_sim.x_grid,
+                flow_sim.y_grid,
+                flow_sim.vorticity_field,
+                levels=np.linspace(-25, 25, 100),
+                extend="both",
+                cmap=lab_cmap,
+            )
+            plt.colorbar()
+            plt.plot(
+                lag_grid_position_field[0],
+                lag_grid_position_field[1],
+                linewidth=2,
+                color="k",
+            )
+            ax.set_aspect(aspect=1)
+            ax.set_title(f"Vorticity, t_hat: {t / timescale:.2f}")
+            plt.savefig(
+                "snap_" + str("%0.4d" % (t * 100)) + ".png",
+                bbox_inches="tight",
+                pad_inches=0,
+            )
+            plt.clf()
+            plt.close("all")
+            print(
+                f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
+                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
+            )
 
         # save diagnostic data
         if save_diagnostic:
@@ -169,57 +143,42 @@ def flow_past_cylinder_boundary_forcing_case(
                 drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
                 drag_coeffs.append(drag_coeff)
 
-        # compute timestep
-        dt = compute_advection_diffusion_timestep(
-            velocity_field=velocity_field, CFL=CFL, nu=nu, dx=dx
-        )
+        dt = flow_sim.compute_stable_timestep()
 
         # compute flow forcing and timestep forcing
-        eul_grid_forcing_field = buffer_vector_field.view()
+        virtual_boundary_forcing.time_step(dt=dt)
         compute_flow_interaction(
-            eul_grid_forcing_field=eul_grid_forcing_field,
-            eul_grid_velocity_field=velocity_field,
+            eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
+            eul_grid_velocity_field=flow_sim.velocity_field,
             lag_grid_position_field=lag_grid_position_field,
             lag_grid_velocity_field=lag_grid_velocity_field,
         )
-        virtual_boundary_forcing.time_step(dt=dt)
 
-        # full flow timestep
-        full_flow_timestep(
-            eul_grid_forcing_field=eul_grid_forcing_field,
-            field=vorticity_field,
-            velocity_field=velocity_field,
-            flux_buffer=buffer_scalar_field,
-            dt=dt,
-            forcing_prefactor=dt,
-            vorticity_field=vorticity_field,
-            stream_func_field=buffer_scalar_field,
-            field_to_penalise=vorticity_field,
-        )
+        # timestep the flow
+        flow_sim.time_step(dt)
 
-        # add freestream (can later merge into flow step)
+        # add freestream
+        # TODO merge later into flow sim
         add_fixed_val(
-            sum_field=velocity_field,
-            vector_field=velocity_field,
+            sum_field=flow_sim.velocity_field,
+            vector_field=flow_sim.velocity_field,
             fixed_vals=velocity_free_stream,
         )
 
         # update time
         t = t + dt
-        if save_snap:
-            foto_timer += dt
+        foto_timer += dt
         if save_diagnostic:
             data_timer += dt
 
     # compile video
-    if save_snap:
-        os.system("rm -f flow.mp4")
-        os.system(
-            "ffmpeg -r 10 -s 3840x2160 -f image2 -pattern_type glob -i 'snap*.png' "
-            "-vcodec libx264 -crf 15 -pix_fmt yuv420p -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2'"
-            " flow.mp4"
-        )
-        os.system("rm -f snap*.png")
+    os.system("rm -f flow.mp4")
+    os.system(
+        "ffmpeg -r 10 -s 3840x2160 -f image2 -pattern_type glob -i 'snap*.png' "
+        "-vcodec libx264 -crf 15 -pix_fmt yuv420p -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2'"
+        " flow.mp4"
+    )
+    os.system("rm -f snap*.png")
 
     if save_diagnostic:
         np.savetxt(
@@ -241,6 +200,5 @@ if __name__ == "__main__":
     flow_past_cylinder_boundary_forcing_case(
         grid_size_x=grid_size_x,
         grid_size_y=grid_size_y,
-        save_snap=True,
         save_diagnostic=True,
     )
