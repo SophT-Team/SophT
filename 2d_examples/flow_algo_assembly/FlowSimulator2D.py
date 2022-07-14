@@ -18,6 +18,7 @@ class UnboundedFlowSimulator2D:
     def __init__(
         self,
         grid_size,
+        x_range,
         kinematic_viscosity,
         CFL=0.1,
         flow_type="passive_scalar",
@@ -28,6 +29,7 @@ class UnboundedFlowSimulator2D:
         """Class initialiser
 
         :param grid_size: Grid size of simulator
+        :param x_range: Range of X coordinate of the grid
         :param kinematic_viscosity: kinematic viscosity of the fluid
         :param CFL: Courant Freidrich Lewy number (advection timestep)
         :param flow_type: Nature of the simulator, can be "passive_scalar" (default value),
@@ -40,6 +42,7 @@ class UnboundedFlowSimulator2D:
         Currently only supports Euler forward timesteps :(
         """
         self.grid_size = grid_size
+        self.x_range = x_range
         self.real_t = real_t
         self.num_threads = num_threads
         self.flow_type = flow_type
@@ -62,14 +65,14 @@ class UnboundedFlowSimulator2D:
         """Initialize the domain i.e. grid coordinates. etc."""
         grid_size_y = self.grid_size[0]
         grid_size_x = self.grid_size[1]
-        grid_size_y_by_x = grid_size_y / grid_size_x
-        self.dx = self.real_t(1.0 / grid_size_x)
+        self.y_range = self.x_range * grid_size_y / grid_size_x
+        self.dx = self.real_t(self.x_range / grid_size_x)
         eul_grid_shift = self.dx / 2
-        x = np.linspace(eul_grid_shift, 1 - eul_grid_shift, grid_size_x).astype(
-            self.real_t
-        )
+        x = np.linspace(
+            eul_grid_shift, self.x_range - eul_grid_shift, grid_size_x
+        ).astype(self.real_t)
         y = np.linspace(
-            eul_grid_shift, grid_size_y_by_x - eul_grid_shift, grid_size_y
+            eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y
         ).astype(self.real_t)
         self.x_grid, self.y_grid = np.meshgrid(x, y)
 
@@ -113,7 +116,7 @@ class UnboundedFlowSimulator2D:
             self.unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW2D(
                 grid_size_y=self.grid_size[0],
                 grid_size_x=self.grid_size[1],
-                dx=self.dx,
+                x_range=self.x_range,
                 real_t=self.real_t,
                 num_threads=self.num_threads,
             )

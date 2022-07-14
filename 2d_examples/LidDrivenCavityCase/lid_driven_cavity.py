@@ -30,9 +30,11 @@ def lid_driven_cavity_case(
     ldc_side_length = 0.6
     nu = ldc_side_length * U / Re
     CFL = 0.1
+    x_range = 1.0
 
     flow_sim = UnboundedFlowSimulator2D(
         grid_size=(grid_size, grid_size),
+        x_range=x_range,
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes_with_forcing",

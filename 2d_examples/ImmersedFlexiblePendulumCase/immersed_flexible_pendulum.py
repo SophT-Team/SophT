@@ -90,12 +90,14 @@ def immersed_flexible_pendulum_one_way_coupling(
     grid_size_x = grid_size
     grid_size_y = grid_size_x
     CFL = 0.1
+    x_range = 1.0
     # Flow parameters
     vel_scale = np.sqrt(np.fabs(gravitational_acc) * base_length)
     Re = 500
     nu = base_length * vel_scale / Re
     flow_sim = UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
+        x_range=x_range,
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes_with_forcing",

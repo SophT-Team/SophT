@@ -36,9 +36,11 @@ def flow_past_cylinder_boundary_forcing_case(
     Re = 200
     nu = cyl_radius * U_inf / Re
     CFL = real_t(0.1)
+    x_range = 1.0
 
     flow_sim = UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
+        x_range=x_range,
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes_with_forcing",

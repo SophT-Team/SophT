@@ -24,6 +24,7 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     """
     real_t = get_real_t(precision)
     # Consider a 1 by 1 2D domain
+    x_range = real_t(1.0)
     grid_size_y = grid_size_x
     nu = real_t(1e-3)
     CFL = real_t(0.1)
@@ -38,6 +39,7 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
 
     flow_sim = UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
+        x_range=x_range,
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes",
