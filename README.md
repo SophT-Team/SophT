@@ -1,14 +1,32 @@
-# SophT_examples
-Example cases illustrating SophT usage.
+# SophT-Examples
+Scalable One-stop Platform for Hydroelastic Things (SOPHT) example cases.
 
-This branch corresponds to the development of flow-structure
-interaction cases (2D and 3D), using `SophT` as a backend.
-The cases are coded up directly using kernels from the
-`dev_backend` of `SophT`. For installing `SophT`, instructions
-can be found [here](https://github.com/SophT-Team/SophT/tree/dev_backend#readme).
+This respository corresponds to the development of flow-structure
+interaction cases (2D and 3D), using `sopht-backend` and `pyelastica`.
 
-Additional dependencies involved in post-processing of data
-can be installed by
-```{sh}
-pip install -r requirements.txt
+## Installation
+
+Below are steps of how to install `sopht-examples`. We mainly use `poetry` to manage
+the project, although most of the important commands will be provided in `Makefile`.
+
+1. Clone!
+
+First **create the fork repository and clone** to your local machine.
+
+2. Virtual python workspace: `conda`, `pyenv`, or `venv`.
+
+We recommend using python version above 3.8.0.
+
+```bash
+conda create --name sopht-examples-env
+conda activate sopht-examples-env
+conda install python==3.8
+```
+
+3. Setup [`poetry`](https://python-poetry.org) and `dependencies`!
+
+```bash
+make poetry-download
+make install
+make pre-commit-install
 ```
