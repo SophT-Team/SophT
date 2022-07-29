@@ -1,4 +1,6 @@
-from cosserat_rod_support.CosseratRodFlowInteraction import CosseratRodFlowInteraction
+from sopht_simulator.cosserat_rod_support.CosseratRodFlowInteraction import (
+    CosseratRodFlowInteraction,
+)
 
 from elastica.external_forces import NoForces
 from elastica.typing import RodType
