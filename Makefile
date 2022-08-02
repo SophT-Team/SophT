@@ -14,6 +14,8 @@ poetry-remove:
 .PHONY: install
 install:
 	poetry install
+	# sadly pip ffmpeg doesnt work, hence we use conda for ffmpeg
+	conda install -c conda-forge ffmpeg
 
 .PHONY: install_with_new_dependency
 install_with_new_dependency:
