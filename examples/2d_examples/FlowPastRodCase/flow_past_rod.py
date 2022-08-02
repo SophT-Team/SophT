@@ -4,7 +4,7 @@ from sopht_simulator.cosserat_rod_support.CosseratRodFlowInteraction import (
 from sopht_simulator.cosserat_rod_support.flow_forces import FlowForces
 
 from elastica.boundary_conditions import OneEndFixedBC
-from elastica.dissipation import ExponentialDamper
+from elastica.dissipation import AnalyticalLinearDamper
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.external_forces import GravityForces
 from elastica.timestepper import PositionVerlet, extend_stepper_interface
@@ -102,7 +102,7 @@ def flow_past_rod_case(
     rod_dt = 0.01 * dl
     damping_constant = 1e-2  # 0.5e-3
     flow_past_sim.dampen(flow_past_rod).using(
-        ExponentialDamper,
+        AnalyticalLinearDamper,
         damping_constant=damping_constant,
         time_step=rod_dt,
     )

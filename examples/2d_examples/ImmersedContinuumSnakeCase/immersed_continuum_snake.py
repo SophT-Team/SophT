@@ -3,7 +3,7 @@ from sopht_simulator.cosserat_rod_support.CosseratRodFlowInteraction import (
 )
 from sopht_simulator.cosserat_rod_support.flow_forces import FlowForces
 
-from elastica.dissipation import ExponentialDamper
+from elastica.dissipation import AnalyticalLinearDamper
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.external_forces import MuscleTorques
 from elastica.timestepper import PositionVerlet, extend_stepper_interface
@@ -87,7 +87,7 @@ def immersed_continuum_snake_case(
     damping_constant = 1.0
     rod_dt = 0.5e-4 * period
     snake_sim.dampen(snake_rod).using(
-        ExponentialDamper,
+        AnalyticalLinearDamper,
         damping_constant=damping_constant,
         time_step=rod_dt,
     )
