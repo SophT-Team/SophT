@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -75,6 +77,15 @@ class UnboundedFlowSimulator2D:
             eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y
         ).astype(self.real_t)
         self.x_grid, self.y_grid = np.meshgrid(x, y)
+        log = logging.getLogger()
+        log.warning(
+            "==============================================="
+            f"\n2D flow domain initialized with:"
+            f"\nX axis from 0.0 to {self.x_range}"
+            f"\nY axis from 0.0 to {self.y_range}"
+            "\nPlease initialize bodies within these bounds!"
+            "\n==============================================="
+        )
 
     def init_fields(self):
         """Initialize the necessary field arrays, i.e. vorticity, velocity, etc."""
