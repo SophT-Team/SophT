@@ -80,7 +80,7 @@ class UnboundedFlowSimulator2D:
         log = logging.getLogger()
         log.warning(
             "==============================================="
-            f"\n2D flow domain initialized with:"
+            "\n2D flow domain initialized with:"
             f"\nX axis from 0.0 to {self.x_range}"
             f"\nY axis from 0.0 to {self.y_range}"
             "\nPlease initialize bodies within these bounds!"
