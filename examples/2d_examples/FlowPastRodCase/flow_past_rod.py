@@ -100,7 +100,7 @@ def flow_past_rod_case(
     # add damping
     dl = base_length / n_elem
     rod_dt = 0.01 * dl
-    damping_constant = 1e-2  # 0.5e-3
+    damping_constant = 0.5e-3
     flow_past_sim.dampen(flow_past_rod).using(
         AnalyticalLinearDamper,
         damping_constant=damping_constant,
@@ -147,7 +147,8 @@ def flow_past_rod_case(
         grid_dim=2,
         real_t=real_t,
         num_threads=num_threads,
-        forcing_grid_type="nodal",
+        # forcing_grid_type="nodal",
+        forcing_grid_type="element_centric",
     )
     flow_past_sim.add_forcing_to(flow_past_rod).using(
         FlowForces,
