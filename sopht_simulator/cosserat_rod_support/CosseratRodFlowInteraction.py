@@ -1,15 +1,15 @@
 from elastica._linalg import _batch_cross, _batch_matvec
 from elastica.rod.cosserat_rod import CosseratRod
 
+import logging
+
 import numpy as np
 
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 
 
 class CosseratRodFlowInteraction(VirtualBoundaryForcing):
-    """Class for Cosserat rod flow interaction.
-    If grid_dim =2 , ASSUMES ROD MOVES IN XY PLANE!
-    """
+    """Class for Cosserat rod flow interaction."""
 
     def __init__(
         self,
@@ -101,6 +101,15 @@ class CosseratRodNodalForcingGrid:
         self.position_field = np.zeros((self.grid_dim, self.num_lag_nodes))
         self.velocity_field = np.zeros_like(self.position_field)
         self.moment_arm = np.zeros((3, cosserat_rod.n_elems))
+        if grid_dim == 2:
+            log = logging.getLogger()
+            log.warning(
+                "========================================================"
+                "\n2D rod forcing grid generated, this assumes the rod is"
+                "\nin XY plane! Please initialize your rod and ensuing "
+                "\ndynamics in XY plane!"
+                "\n========================================================"
+            )
 
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
