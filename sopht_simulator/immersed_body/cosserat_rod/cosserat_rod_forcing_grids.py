@@ -159,10 +159,8 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         # Here we also assume rod will always be in XY plane.
         rod_normal_direction = _batch_cross(self.z_vector, self.cosserat_rod.tangents)
 
-        rod_radius = self.cosserat_rod.radius
-
         # rd1
-        self.moment_arm[:] = rod_normal_direction * rod_radius
+        self.moment_arm[:] = rod_normal_direction * self.cosserat_rod.radius
 
         # x_elem + rd1
         self.position_field[
