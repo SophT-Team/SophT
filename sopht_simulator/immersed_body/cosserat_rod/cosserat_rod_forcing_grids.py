@@ -1,4 +1,4 @@
-from elastica._linalg import _batch_cross, _batch_matvec
+from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
 import numpy as np
@@ -127,8 +127,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             np.array([0, 0, 1.0]).reshape(3, 1), self.cosserat_rod.n_elems, axis=-1
         )
 
-        self.moment_arm_edge_left = np.zeros((3, cosserat_rod.n_elems))
-        self.moment_arm_edge_right = np.zeros((3, cosserat_rod.n_elems))
+        self.moment_arm = np.zeros((3, cosserat_rod.n_elems))
 
         self.start_idx_elems = 0
         self.end_idx_elems = self.start_idx_elems + cosserat_rod.n_elems
@@ -163,18 +162,18 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         rod_radius = self.cosserat_rod.radius
 
         # rd1
-        self.moment_arm_edge_left[:] = rod_normal_direction * rod_radius
+        self.moment_arm[:] = rod_normal_direction * rod_radius
 
         # x_elem + rd1
         self.position_field[
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
-        ] = (rod_element_position + self.moment_arm_edge_left)[: self.grid_dim]
+        ] = (rod_element_position + self.moment_arm[:])[: self.grid_dim]
 
         # x_elem - rd1
-        self.moment_arm_edge_right[:] = -self.moment_arm_edge_left
+        # self.moment_arm_edge_right[:] = -self.moment_arm_edge_left
         self.position_field[
             :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
-        ] = (rod_element_position + self.moment_arm_edge_right)[: self.grid_dim]
+        ] = (rod_element_position - self.moment_arm)[: self.grid_dim]
 
     def compute_lag_grid_velocity_field(self):
         """Computes velocity of forcing grid points for the Cosserat rod"""
@@ -184,7 +183,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )
         # Element angular velocity
-        omega_collection = self.cosserat_rod.omega_collection
+        omega_collection = _batch_matvec(_batch_matrix_transpose(self.cosserat_rod.director_collection), self.cosserat_rod.omega_collection)
 
         self.velocity_field[
             :, self.start_idx_elems : self.end_idx_elems
@@ -194,7 +193,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         self.velocity_field[
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
         ] = (
-            element_velocity + _batch_cross(self.moment_arm_edge_left, omega_collection)
+            element_velocity + _batch_cross(self.moment_arm, omega_collection)
         )[
             : self.grid_dim
         ]
@@ -204,7 +203,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
         ] = (
             element_velocity
-            + _batch_cross(self.moment_arm_edge_right, omega_collection)
+            + _batch_cross(-self.moment_arm, omega_collection)
         )[
             : self.grid_dim
         ]
@@ -233,7 +232,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         ]
         # torque from grid forcing
         body_flow_torques[...] += _batch_cross(
-            self.moment_arm_edge_left, self.element_forces_left_edge_nodes
+            self.moment_arm, self.element_forces_left_edge_nodes
         )
 
         # Lagrangian nodes on right edge.
@@ -242,7 +241,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         ]
         # torque from grid forcing
         body_flow_torques[...] += _batch_cross(
-            self.moment_arm_edge_right, self.element_forces_right_edge_nodes
+            -self.moment_arm, self.element_forces_right_edge_nodes
         )
 
         # Convert forces on elements to nodes
