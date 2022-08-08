@@ -193,7 +193,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         self.velocity_field[
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
         ] = (
-            element_velocity + _batch_cross(self.moment_arm, omega_collection)
+            element_velocity + _batch_cross(omega_collection, self.moment_arm)
         )[
             : self.grid_dim
         ]
@@ -203,7 +203,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
         ] = (
             element_velocity
-            + _batch_cross(-self.moment_arm, omega_collection)
+            + _batch_cross(omega_collection, -self.moment_arm)
         )[
             : self.grid_dim
         ]
