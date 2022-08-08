@@ -188,7 +188,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             :, self.start_idx_elems : self.end_idx_elems
         ] = element_velocity[: self.grid_dim]
 
-        # v_elem + rd1 x omega
+        # v_elem + omega X rd1
         self.velocity_field[
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
         ] = (
