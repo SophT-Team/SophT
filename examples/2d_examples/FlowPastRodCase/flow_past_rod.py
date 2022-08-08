@@ -1,8 +1,3 @@
-from sopht_simulator.cosserat_rod_support.CosseratRodFlowInteraction import (
-    CosseratRodFlowInteraction,
-)
-from sopht_simulator.cosserat_rod_support.flow_forces import FlowForces
-
 from elastica.boundary_conditions import OneEndFixedBC
 from elastica.dissipation import AnalyticalLinearDamper
 from elastica.rod.cosserat_rod import CosseratRod
@@ -10,21 +5,21 @@ from elastica.external_forces import GravityForces
 from elastica.timestepper import PositionVerlet, extend_stepper_interface
 from elastica.wrappers import BaseSystemCollection, Constraints, Forcing, Damping
 
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
-
 import matplotlib.pyplot as plt
 
 import numpy as np
 
 import os
 
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
 )
-
 from sopht.utils.precision import get_real_t
+
+from sopht_simulator.immersed_body import CosseratRodFlowInteraction
+from sopht_simulator.immersed_body import FlowForces
+from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
+from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
 
 def flow_past_rod_case(

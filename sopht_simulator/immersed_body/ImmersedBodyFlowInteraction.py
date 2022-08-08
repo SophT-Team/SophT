@@ -1,21 +1,18 @@
-from elastica.rod.cosserat_rod import CosseratRod
-
 import numpy as np
 
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 
-from sopht_simulator.cosserat_rod_support.cosserat_rod_forcing_grids import (
-    CosseratRodNodalForcingGrid,
-    CosseratRodElementCentricForcingGrid,
-)
 
+class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
+    """Base class for immersed body flow interaction."""
 
-class CosseratRodFlowInteraction(VirtualBoundaryForcing):
-    """Class for Cosserat rod flow interaction."""
+    # These are meant to be initialised in the derived classes
+    body_flow_forces: np.ndarray
+    body_flow_torques: np.ndarray
+    forcing_grid = None
 
     def __init__(
         self,
-        cosserat_rod: CosseratRod,
         eul_grid_forcing_field,
         eul_grid_velocity_field,
         virtual_boundary_stiffness_coeff,
@@ -28,27 +25,11 @@ class CosseratRodFlowInteraction(VirtualBoundaryForcing):
         enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
-        forcing_grid_type="nodal",
     ):
         """Class initialiser."""
         # these hold references to Eulerian fields
         self.eul_grid_forcing_field = eul_grid_forcing_field.view()
         self.eul_grid_velocity_field = eul_grid_velocity_field.view()
-        self.cosserat_rod_flow_forces = np.zeros(
-            (3, cosserat_rod.n_elems + 1),
-        )
-        self.cosserat_rod_flow_torques = np.zeros(
-            (3, cosserat_rod.n_elems),
-        )
-
-        if forcing_grid_type == "nodal":
-            self.forcing_grid = CosseratRodNodalForcingGrid(
-                grid_dim=grid_dim, cosserat_rod=cosserat_rod
-            )
-        elif forcing_grid_type == "element_centric":
-            self.forcing_grid = CosseratRodElementCentricForcingGrid(
-                grid_dim=grid_dim, cosserat_rod=cosserat_rod
-            )
 
         # initialising super class
         super().__init__(
@@ -87,10 +68,10 @@ class CosseratRodFlowInteraction(VirtualBoundaryForcing):
         )
 
     def compute_flow_forces_and_torques(self):
-        """Compute flow forces and torques on rod from forces on Lagrangian grid."""
+        """Compute flow forces and torques on the body from forces on Lagrangian grid."""
         self.compute_interaction_on_lag_grid()
-        self.forcing_grid.transfer_forcing_from_grid_to_rod(
-            cosserat_rod_flow_forces=self.cosserat_rod_flow_forces,
-            cosserat_rod_flow_torques=self.cosserat_rod_flow_torques,
+        self.forcing_grid.transfer_forcing_from_grid_to_body(
+            body_flow_forces=self.body_flow_forces,
+            body_flow_torques=self.body_flow_torques,
             lag_grid_forcing_field=self.lag_grid_forcing_field,
         )

@@ -1,15 +1,8 @@
-from sopht_simulator.cosserat_rod_support.CosseratRodFlowInteraction import (
-    CosseratRodFlowInteraction,
-)
-from sopht_simulator.cosserat_rod_support.flow_forces import FlowForces
-
 from elastica.dissipation import AnalyticalLinearDamper
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.external_forces import MuscleTorques
 from elastica.timestepper import PositionVerlet, extend_stepper_interface
 from elastica.wrappers import BaseSystemCollection, Forcing, Damping
-
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
 
 import matplotlib.pyplot as plt
 
@@ -17,9 +10,12 @@ import numpy as np
 
 import os
 
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
-
 from sopht.utils.precision import get_real_t
+
+from sopht_simulator.immersed_body import CosseratRodFlowInteraction
+from sopht_simulator.immersed_body import FlowForces
+from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
+from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
 
 def immersed_continuum_snake_case(
@@ -128,7 +124,8 @@ def immersed_continuum_snake_case(
         grid_dim=2,
         real_t=real_t,
         num_threads=num_threads,
-        forcing_grid_type="nodal",
+        # forcing_grid_type="nodal",
+        forcing_grid_type="element_centric",
     )
     if coupling_type == "two_way":
         snake_sim.add_forcing_to(snake_rod).using(

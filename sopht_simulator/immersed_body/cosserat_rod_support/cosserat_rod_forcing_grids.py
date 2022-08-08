@@ -40,10 +40,10 @@ class CosseratRodNoForcingGrid:
     def compute_lag_grid_velocity_field(self):
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
-    def transfer_forcing_from_grid_to_rod(
+    def transfer_forcing_from_grid_to_body(
         self,
-        cosserat_rod_flow_forces,
-        cosserat_rod_flow_torques,
+        body_flow_forces,
+        body_flow_torques,
         lag_grid_forcing_field,
     ):
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
@@ -69,45 +69,44 @@ class CosseratRodNodalForcingGrid(CosseratRodNoForcingGrid):
             : self.grid_dim
         ]
 
-    def transfer_forcing_from_grid_to_rod(
+    def transfer_forcing_from_grid_to_body(
         self,
-        cosserat_rod_flow_forces,
-        cosserat_rod_flow_torques,
+        body_flow_forces,
+        body_flow_torques,
         lag_grid_forcing_field,
     ):
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
         # negative sign due to Newtons third law
-        cosserat_rod_flow_forces[: self.grid_dim] = -lag_grid_forcing_field
+        body_flow_forces[: self.grid_dim] = -lag_grid_forcing_field
 
         # torque from grid forcing
         self.moment_arm[...] = (
             self.cosserat_rod.position_collection[..., 1:]
             - self.cosserat_rod.position_collection[..., :-1]
         ) / 2.0
-        cosserat_rod_flow_torques[...] = _batch_cross(
+        body_flow_torques[...] = _batch_cross(
             self.moment_arm,
-            (cosserat_rod_flow_forces[..., 1:] - cosserat_rod_flow_forces[..., :-1])
-            / 2.0,
+            (body_flow_forces[..., 1:] - body_flow_forces[..., :-1]) / 2.0,
         )
         # end element corrections
-        cosserat_rod_flow_torques[..., -1] += (
+        body_flow_torques[..., -1] += (
             np.cross(
                 self.moment_arm[..., -1],
-                cosserat_rod_flow_forces[..., -1],
+                body_flow_forces[..., -1],
             )
             / 2.0
         )
-        cosserat_rod_flow_torques[..., 0] -= (
+        body_flow_torques[..., 0] -= (
             np.cross(
                 self.moment_arm[..., 0],
-                cosserat_rod_flow_forces[..., 0],
+                body_flow_forces[..., 0],
             )
             / 2.0
         )
         # convert global to local frame
-        cosserat_rod_flow_torques[...] = _batch_matvec(
+        body_flow_torques[...] = _batch_matvec(
             self.cosserat_rod.director_collection,
-            cosserat_rod_flow_torques,
+            body_flow_torques,
         )
 
 
@@ -132,17 +131,17 @@ class CosseratRodElementCentricForcingGrid(CosseratRodNoForcingGrid):
             + self.cosserat_rod.velocity_collection[: self.grid_dim, :-1]
         ) / 2.0
 
-    def transfer_forcing_from_grid_to_rod(
+    def transfer_forcing_from_grid_to_body(
         self,
-        cosserat_rod_flow_forces,
-        cosserat_rod_flow_torques,
+        body_flow_forces,
+        body_flow_torques,
         lag_grid_forcing_field,
     ):
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
         # negative sign due to Newtons third law
-        cosserat_rod_flow_forces[...] = 0.0
-        cosserat_rod_flow_forces[: self.grid_dim, 1:] -= 0.5 * lag_grid_forcing_field
-        cosserat_rod_flow_forces[: self.grid_dim, :-1] -= 0.5 * lag_grid_forcing_field
+        body_flow_forces[...] = 0.0
+        body_flow_forces[: self.grid_dim, 1:] -= 0.5 * lag_grid_forcing_field
+        body_flow_forces[: self.grid_dim, :-1] -= 0.5 * lag_grid_forcing_field
 
-        # torque from grid forcing
-        cosserat_rod_flow_torques[...] = 0.0
+        # torque from grid forcing (don't modify since set = 0 at initialisation)
+        # because no torques acting on element centers
