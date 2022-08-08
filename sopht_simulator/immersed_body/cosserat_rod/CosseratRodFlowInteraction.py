@@ -2,7 +2,7 @@ from elastica.rod.cosserat_rod import CosseratRod
 
 import numpy as np
 
-from sopht_simulator.immersed_body.cosserat_rod_support.cosserat_rod_forcing_grids import (
+from sopht_simulator.immersed_body.cosserat_rod.cosserat_rod_forcing_grids import (
     CosseratRodNodalForcingGrid,
     CosseratRodElementCentricForcingGrid,
 )

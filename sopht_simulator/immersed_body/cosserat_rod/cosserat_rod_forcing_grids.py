@@ -1,60 +1,18 @@
 from elastica._linalg import _batch_cross, _batch_matvec
 from elastica.rod.cosserat_rod import CosseratRod
 
-import logging
-
 import numpy as np
 
-
-class CosseratRodNoForcingGrid:
-    """
-    This is the base class for forcing grid in Cosserat rod-flow coupling.
-
-    Notes
-    -----
-    Every new forcing grid class must be derived
-    from CosseratRodNoForcingGrid class.
-
-    """
-
-    num_lag_nodes: int
-
-    def __init__(self, grid_dim, cosserat_rod: CosseratRod):
-        self.grid_dim = grid_dim
-        self.cosserat_rod = cosserat_rod
-        self.position_field = np.zeros((self.grid_dim, self.num_lag_nodes))
-        self.velocity_field = np.zeros_like(self.position_field)
-        if grid_dim == 2:
-            log = logging.getLogger()
-            log.warning(
-                "========================================================"
-                "\n2D rod forcing grid generated, this assumes the rod is"
-                "\nin XY plane! Please initialize your rod and ensuing "
-                "\ndynamics in XY plane!"
-                "\n========================================================"
-            )
-
-    def compute_lag_grid_position_field(self):
-        """Computes location of forcing grid for the Cosserat rod"""
-
-    def compute_lag_grid_velocity_field(self):
-        """Computes velocity of forcing grid points for the Cosserat rod"""
-
-    def transfer_forcing_from_grid_to_body(
-        self,
-        body_flow_forces,
-        body_flow_torques,
-        lag_grid_forcing_field,
-    ):
-        """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
+from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
 
 
-class CosseratRodNodalForcingGrid(CosseratRodNoForcingGrid):
+class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
     def __init__(self, grid_dim, cosserat_rod: CosseratRod):
         self.num_lag_nodes = cosserat_rod.n_elems + 1
-        super().__init__(grid_dim, cosserat_rod)
+        self.cosserat_rod = cosserat_rod
+        super().__init__(grid_dim)
         self.moment_arm = np.zeros((3, cosserat_rod.n_elems))
 
     def compute_lag_grid_position_field(self):
@@ -110,12 +68,13 @@ class CosseratRodNodalForcingGrid(CosseratRodNoForcingGrid):
         )
 
 
-class CosseratRodElementCentricForcingGrid(CosseratRodNoForcingGrid):
+class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
     def __init__(self, grid_dim, cosserat_rod: CosseratRod):
         self.num_lag_nodes = cosserat_rod.n_elems
-        super().__init__(grid_dim, cosserat_rod)
+        self.cosserat_rod = cosserat_rod
+        super().__init__(grid_dim)
 
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
