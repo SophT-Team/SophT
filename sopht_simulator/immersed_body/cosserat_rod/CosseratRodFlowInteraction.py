@@ -5,6 +5,7 @@ import numpy as np
 from sopht_simulator.immersed_body.cosserat_rod.cosserat_rod_forcing_grids import (
     CosseratRodNodalForcingGrid,
     CosseratRodElementCentricForcingGrid,
+    CosseratRodEdgeForcingGrid,
 )
 
 from sopht_simulator.immersed_body import ImmersedBodyFlowInteraction
@@ -45,6 +46,12 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             self.forcing_grid = CosseratRodElementCentricForcingGrid(
                 grid_dim=grid_dim, cosserat_rod=cosserat_rod
             )
+        elif forcing_grid_type == "rod_edge":
+            self.forcing_grid = CosseratRodEdgeForcingGrid(
+                grid_dim=grid_dim, cosserat_rod=cosserat_rod
+            )
+        else:
+            raise NotImplementedError
 
         # initialising super class
         super().__init__(
