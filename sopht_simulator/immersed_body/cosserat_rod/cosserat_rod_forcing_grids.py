@@ -167,7 +167,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         # x_elem + rd1
         self.position_field[
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
-        ] = (rod_element_position + self.moment_arm[:])[: self.grid_dim]
+        ] = (rod_element_position + self.moment_arm)[: self.grid_dim]
 
         # x_elem - rd1
         # self.moment_arm_edge_right[:] = -self.moment_arm_edge_left
