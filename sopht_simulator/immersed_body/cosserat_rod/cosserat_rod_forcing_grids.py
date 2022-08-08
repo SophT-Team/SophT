@@ -113,7 +113,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     Notes
     -----
-        For tapered rods (varying cross-sectional area) and for thicker rods 
+        For tapered rods (varying cross-sectional area) and for thicker rods
         (high cross-section area to length ratio) this class has to be used.
 
     """
@@ -182,7 +182,10 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )
         # Element angular velocity
-        omega_collection = _batch_matvec(_batch_matrix_transpose(self.cosserat_rod.director_collection), self.cosserat_rod.omega_collection)
+        omega_collection = _batch_matvec(
+            _batch_matrix_transpose(self.cosserat_rod.director_collection),
+            self.cosserat_rod.omega_collection,
+        )
 
         self.velocity_field[
             :, self.start_idx_elems : self.end_idx_elems
@@ -191,19 +194,14 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         # v_elem + omega X rd1
         self.velocity_field[
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
-        ] = (
-            element_velocity + _batch_cross(omega_collection, self.moment_arm)
-        )[
+        ] = (element_velocity + _batch_cross(omega_collection, self.moment_arm))[
             : self.grid_dim
         ]
 
         # v_elem - omega X rd1
         self.velocity_field[
             :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
-        ] = (
-            element_velocity
-            + _batch_cross(omega_collection, -self.moment_arm)
-        )[
+        ] = (element_velocity + _batch_cross(omega_collection, -self.moment_arm))[
             : self.grid_dim
         ]
 
@@ -218,7 +216,12 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         body_flow_torques[...] = 0.0
 
         # negative sign due to Newtons third law
-        elements_to_nodes_inplace(-lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems], body_flow_forces)
+        body_flow_forces[: self.grid_dim, 1:] -= (
+            0.5 * lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems]
+        )
+        body_flow_forces[: self.grid_dim, :-1] -= (
+            0.5 * lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems]
+        )
 
         # Lagrangian nodes on left edge.
         self.element_forces_left_edge_nodes[: self.grid_dim] = -lag_grid_forcing_field[
