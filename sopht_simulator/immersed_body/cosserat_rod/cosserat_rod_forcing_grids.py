@@ -211,19 +211,19 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     def transfer_forcing_from_grid_to_body(
         self,
-        cosserat_rod_flow_forces,
-        cosserat_rod_flow_torques,
+        body_flow_forces,
+        body_flow_torques,
         lag_grid_forcing_field,
     ):
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
-        cosserat_rod_flow_forces[...] = 0.0
-        cosserat_rod_flow_torques[...] = 0.0
+        body_flow_forces[...] = 0.0
+        body_flow_torques[...] = 0.0
 
         # negative sign due to Newtons third law
-        cosserat_rod_flow_forces[: self.grid_dim, 1:] -= (
+        body_flow_forces[: self.grid_dim, 1:] -= (
             0.5 * lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems]
         )
-        cosserat_rod_flow_forces[: self.grid_dim, :-1] -= (
+        body_flow_forces[: self.grid_dim, :-1] -= (
             0.5 * lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems]
         )
 
@@ -232,7 +232,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
         ]
         # torque from grid forcing
-        cosserat_rod_flow_torques[...] += _batch_cross(
+        body_flow_torques[...] += _batch_cross(
             self.moment_arm_edge_left, self.element_forces_left_edge_nodes
         )
 
@@ -241,7 +241,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
         ]
         # torque from grid forcing
-        cosserat_rod_flow_torques[...] += _batch_cross(
+        body_flow_torques[...] += _batch_cross(
             self.moment_arm_edge_right, self.element_forces_right_edge_nodes
         )
 
@@ -249,10 +249,10 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         total_element_forces = (
             self.element_forces_left_edge_nodes + self.element_forces_right_edge_nodes
         )
-        elements_to_nodes_inplace(total_element_forces, cosserat_rod_flow_forces)
+        elements_to_nodes_inplace(total_element_forces, body_flow_forces)
 
         # convert global to local frame
-        cosserat_rod_flow_torques[...] = _batch_matvec(
+        body_flow_torques[...] = _batch_matvec(
             self.cosserat_rod.director_collection,
-            cosserat_rod_flow_torques,
+            body_flow_torques,
         )
