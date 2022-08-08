@@ -54,14 +54,15 @@ def flow_past_rod_case(
     normal = np.array([0.0, 0.0, 1.0])
     base_radius = 0.01
     base_area = np.pi * base_radius**2
-    # mass_ratio = rod_line_density / rho_f * L
-    rod_line_density = mass_ratio * rho_f * base_length
+    z_axis_width = 1.0
+    # mass_ratio = rod_line_density / (rho_f * L * z_axis_width)
+    rod_line_density = mass_ratio * rho_f * base_length * z_axis_width
     density = rod_line_density / base_area
     moment_of_inertia = np.pi / 4 * base_radius**4
-    # Kb = E I / (rho_f U^2 L^3)
+    # Kb = E I / (rho_f U^2 L^3 * z_axis_width)
     youngs_modulus = (
         nondim_bending_stiffness
-        * (rho_f * U_free_stream**2 * base_length**3)
+        * (rho_f * U_free_stream**2 * base_length**3 * z_axis_width)
         / moment_of_inertia
     )
     poisson_ratio = 0.5
