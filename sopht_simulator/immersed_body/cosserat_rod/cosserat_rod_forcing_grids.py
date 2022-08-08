@@ -113,7 +113,8 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     Notes
     -----
-        For tapered rods this class has to be used.
+        For tapered rods (varying cross-sectional area) and for thicker rods 
+        (high cross-section area to length ratio) this class has to be used.
 
     """
 
