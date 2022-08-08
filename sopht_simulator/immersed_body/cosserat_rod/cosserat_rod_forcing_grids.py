@@ -218,12 +218,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         body_flow_torques[...] = 0.0
 
         # negative sign due to Newtons third law
-        body_flow_forces[: self.grid_dim, 1:] -= (
-            0.5 * lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems]
-        )
-        body_flow_forces[: self.grid_dim, :-1] -= (
-            0.5 * lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems]
-        )
+        elements_to_nodes_inplace(-lag_grid_forcing_field[:, self.start_idx_elems : self.end_idx_elems], body_flow_forces)
 
         # Lagrangian nodes on left edge.
         self.element_forces_left_edge_nodes[: self.grid_dim] = -lag_grid_forcing_field[
