@@ -12,8 +12,10 @@ import os
 
 from sopht.utils.precision import get_real_t
 
-from sopht_simulator.immersed_body import CosseratRodFlowInteraction
-from sopht_simulator.immersed_body import FlowForces
+from sopht_simulator.immersed_body import CosseratRodFlowInteraction, FlowForces
+from sopht_simulator.immersed_body.cosserat_rod import (
+    CosseratRodElementCentricForcingGrid,
+)
 from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
 from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
@@ -122,10 +124,9 @@ def immersed_continuum_snake_case(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
+        forcing_grid_cls=CosseratRodElementCentricForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
-        # forcing_grid_type="nodal",
-        forcing_grid_type="element_centric",
     )
     if coupling_type == "two_way":
         snake_sim.add_forcing_to(snake_rod).using(
