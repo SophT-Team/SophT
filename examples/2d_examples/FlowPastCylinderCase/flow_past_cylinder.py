@@ -15,6 +15,7 @@ from sopht.numeric.eulerian_grid_ops import (
 from sopht.utils.precision import get_real_t
 
 from sopht_simulator.immersed_body import RigidBodyFlowInteraction
+from sopht_simulator.immersed_body.rigid_body import CircularCylinderForcingGrid
 from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
 
@@ -87,9 +88,8 @@ def flow_past_cylinder_boundary_forcing_case(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
+        forcing_grid_cls=CircularCylinderForcingGrid,
         real_t=real_t,
-        forcing_grid_type="2d_circular_cylinder",
-        # forcing_grid_type="2d_square_cylinder",
     )
     # ==================FLOW-BODY COMMUNICATOR SETUP END======
 

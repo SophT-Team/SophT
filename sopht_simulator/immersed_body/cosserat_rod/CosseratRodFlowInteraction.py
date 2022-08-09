@@ -2,9 +2,10 @@ from elastica.rod.cosserat_rod import CosseratRod
 
 import numpy as np
 
-from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
-
-from sopht_simulator.immersed_body import ImmersedBodyFlowInteraction
+from sopht_simulator.immersed_body import (
+    ImmersedBodyForcingGrid,
+    ImmersedBodyFlowInteraction,
+)
 
 
 class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):

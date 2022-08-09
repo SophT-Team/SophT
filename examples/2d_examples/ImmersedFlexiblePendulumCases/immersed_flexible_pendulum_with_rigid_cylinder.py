@@ -22,6 +22,7 @@ from sopht_simulator.immersed_body import (
 from sopht_simulator.immersed_body.cosserat_rod import (
     CosseratRodElementCentricForcingGrid,
 )
+from sopht_simulator.immersed_body.rigid_body import CircularCylinderForcingGrid
 from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
 from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
@@ -156,8 +157,8 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
+        forcing_grid_cls=CircularCylinderForcingGrid,
         real_t=real_t,
-        forcing_grid_type="2d_circular_cylinder",
     )
     if rigid_body_coupling_type == "two_way":
         pendulum_sim.add_forcing_to(cylinder).using(

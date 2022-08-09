@@ -2,16 +2,14 @@ from elastica import RigidBodyBase
 
 import numpy as np
 
-from sopht_simulator.immersed_body.rigid_body.rigid_body_forcing_grids import (
-    CircularCylinderForcingGrid,
-    SquareCylinderForcingGrid,
+from sopht_simulator.immersed_body import (
+    ImmersedBodyForcingGrid,
+    ImmersedBodyFlowInteraction,
 )
-
-from sopht_simulator.immersed_body import ImmersedBodyFlowInteraction
 
 
 class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
-    """Class for Cosserat rod flow interaction."""
+    """Class for rigid body (from pyelastica) flow interaction."""
 
     def __init__(
         self,
@@ -23,31 +21,24 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         virtual_boundary_damping_coeff,
         dx,
         grid_dim,
+        forcing_grid_cls: type(ImmersedBodyForcingGrid),
         real_t=np.float64,
         eul_grid_coord_shift=None,
         interp_kernel_width=None,
         enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
-        forcing_grid_type="2d_circular_cylinder",
+        **kwaargs,
     ):
         """Class initialiser."""
         self.body_flow_forces = np.zeros((3, 1))
         self.body_flow_torques = np.zeros((3, 1))
-        if forcing_grid_type == "2d_circular_cylinder":
-            self.forcing_grid = CircularCylinderForcingGrid(
-                grid_dim=grid_dim,
-                num_forcing_points=num_forcing_points,
-                cylinder=rigid_body,
-            )
-        elif forcing_grid_type == "2d_square_cylinder":
-            self.forcing_grid = SquareCylinderForcingGrid(
-                grid_dim=grid_dim,
-                num_forcing_points=num_forcing_points,
-                cylinder=rigid_body,
-            )
-        else:
-            raise NotImplementedError
+        self.forcing_grid = forcing_grid_cls(
+            grid_dim=grid_dim,
+            num_forcing_points=num_forcing_points,
+            cylinder=rigid_body,
+            **kwaargs,
+        )
 
         # initialising super class
         super().__init__(
