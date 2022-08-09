@@ -136,3 +136,7 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
+
+    def update_local_frame_lag_grid_position_field(self, time=0.0):
+        """Update the local frame forcing grid positions"""
+        # TODO if using rotating square cylinder this needs to be implemented!
