@@ -2,6 +2,8 @@ import numpy as np
 
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 
+from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
+
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
     """Base class for immersed body flow interaction."""
@@ -9,7 +11,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
     # These are meant to be initialised in the derived classes
     body_flow_forces: np.ndarray
     body_flow_torques: np.ndarray
-    forcing_grid = None
+    forcing_grid: type(ImmersedBodyForcingGrid)
 
     def __init__(
         self,

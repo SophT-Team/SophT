@@ -9,7 +9,7 @@ from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
-    def __init__(self, grid_dim, cosserat_rod: CosseratRod):
+    def __init__(self, grid_dim, cosserat_rod: type(CosseratRod)):
         self.num_lag_nodes = cosserat_rod.n_elems + 1
         self.cosserat_rod = cosserat_rod
         super().__init__(grid_dim)
@@ -71,7 +71,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
-    def __init__(self, grid_dim, cosserat_rod: CosseratRod):
+    def __init__(self, grid_dim, cosserat_rod: type(CosseratRod)):
         self.num_lag_nodes = cosserat_rod.n_elems
         self.cosserat_rod = cosserat_rod
         super().__init__(grid_dim)
@@ -118,7 +118,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim, cosserat_rod: CosseratRod):
+    def __init__(self, grid_dim, cosserat_rod: type(CosseratRod)):
         self.cosserat_rod = cosserat_rod
         # 1 for element center 2 for edges
         self.num_lag_nodes = cosserat_rod.n_elems + 2 * cosserat_rod.n_elems

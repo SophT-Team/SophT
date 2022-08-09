@@ -16,7 +16,7 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
 
     def __init__(
         self,
-        cosserat_rod: CosseratRod,
+        cosserat_rod: type(CosseratRod),
         eul_grid_forcing_field,
         eul_grid_velocity_field,
         virtual_boundary_stiffness_coeff,
