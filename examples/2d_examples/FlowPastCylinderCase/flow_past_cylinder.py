@@ -1,3 +1,5 @@
+from elastica import Cylinder
+
 from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
 
 import matplotlib.pyplot as plt
@@ -6,13 +8,14 @@ import numpy as np
 
 import os
 
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
 )
-from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t
+
+from sopht_simulator.immersed_body import RigidBodyFlowInteraction
+from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
 
 def flow_past_cylinder_boundary_forcing_case(
@@ -48,17 +51,17 @@ def flow_past_cylinder_boundary_forcing_case(
         num_threads=num_threads,
     )
 
-    # Initialize virtual forcing stuff for fixed cylinder
+    # Initialize fixed cylinder (elastica rigid body) with direction along Z
     X_cm = real_t(2.5) * cyl_radius
     Y_cm = real_t(0.5) * grid_size_y / grid_size_x
-    num_lag_nodes = 50
-    dtheta = 2.0 * np.pi / num_lag_nodes
-    theta = np.linspace(0 + dtheta / 2.0, 2.0 * np.pi - dtheta / 2.0, num_lag_nodes)
-    ds = cyl_radius * real_t(dtheta)
-    lag_grid_position_field = np.zeros((2, num_lag_nodes), dtype=real_t)
-    lag_grid_position_field[0, :] = X_cm + cyl_radius * np.cos(theta).astype(real_t)
-    lag_grid_position_field[1, :] = Y_cm + cyl_radius * np.sin(theta).astype(real_t)
-    lag_grid_velocity_field = np.zeros_like(lag_grid_position_field)
+    start = np.array([X_cm, Y_cm, 0.0])
+    direction = np.array([0.0, 0.0, 1.0])
+    normal = np.array([1.0, 0.0, 0.0])
+    base_length = 1.0
+    density = 1e3
+    cylinder = Cylinder(start, direction, normal, base_length, cyl_radius, density)
+    # Since the cylinder is fixed, we dont add it to pyelastica simulator,
+    # and directly use it for setting up the flow interactor.
 
     # Compile additional kernels
     # TODO put in flow sim
@@ -69,20 +72,26 @@ def flow_past_cylinder_boundary_forcing_case(
         field_type="vector",
     )
 
-    # Virtual boundary forcing kernels
+    # ==================FLOW-BODY COMMUNICATOR SETUP START======
+    num_lag_nodes = 60
+    dtheta = 2.0 * np.pi / num_lag_nodes
+    ds = cyl_radius * real_t(dtheta)
     virtual_boundary_stiffness_coeff = real_t(-5e4 * ds)
     virtual_boundary_damping_coeff = real_t(-2e1 * ds)
-    virtual_boundary_forcing = VirtualBoundaryForcing(
+    cylinder_flow_interactor = RigidBodyFlowInteraction(
+        num_forcing_points=num_lag_nodes,
+        rigid_body=cylinder,
+        eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=flow_sim.velocity_field,
         virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
-        grid_dim=2,
         dx=flow_sim.dx,
-        num_lag_nodes=num_lag_nodes,
+        grid_dim=2,
         real_t=real_t,
-        enable_eul_grid_forcing_reset=False,
-        num_threads=num_threads,
+        forcing_grid_type="2d_circular_cylinder",
+        # forcing_grid_type="2d_square_cylinder",
     )
-    compute_flow_interaction = virtual_boundary_forcing.compute_interaction_forcing
+    # ==================FLOW-BODY COMMUNICATOR SETUP END======
 
     # iterate
     timescale = cyl_radius / U_inf
@@ -114,10 +123,10 @@ def flow_past_cylinder_boundary_forcing_case(
                 cmap=lab_cmap,
             )
             plt.colorbar()
-            plt.plot(
-                lag_grid_position_field[0],
-                lag_grid_position_field[1],
-                linewidth=2,
+            plt.scatter(
+                cylinder_flow_interactor.forcing_grid.position_field[0],
+                cylinder_flow_interactor.forcing_grid.position_field[1],
+                s=4,
                 color="k",
             )
             ax.set_aspect(aspect=1)
@@ -141,20 +150,15 @@ def flow_past_cylinder_boundary_forcing_case(
                 time.append(t / timescale)
 
                 # calculate drag
-                F = np.sum(virtual_boundary_forcing.lag_grid_forcing_field[0, ...])
+                F = np.sum(cylinder_flow_interactor.lag_grid_forcing_field[0, ...])
                 drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
                 drag_coeffs.append(drag_coeff)
 
         dt = flow_sim.compute_stable_timestep()
 
         # compute flow forcing and timestep forcing
-        virtual_boundary_forcing.time_step(dt=dt)
-        compute_flow_interaction(
-            eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
-            eul_grid_velocity_field=flow_sim.velocity_field,
-            lag_grid_position_field=lag_grid_position_field,
-            lag_grid_velocity_field=lag_grid_velocity_field,
-        )
+        cylinder_flow_interactor.time_step(dt=dt)
+        cylinder_flow_interactor()
 
         # timestep the flow
         flow_sim.time_step(dt)

@@ -4,6 +4,7 @@ import numpy as np
 
 from sopht_simulator.immersed_body.rigid_body.rigid_body_forcing_grids import (
     CircularCylinderForcingGrid,
+    SquareCylinderForcingGrid,
 )
 
 from sopht_simulator.immersed_body import ImmersedBodyFlowInteraction
@@ -39,6 +40,14 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
                 num_forcing_points=num_forcing_points,
                 cylinder=rigid_body,
             )
+        elif forcing_grid_type == "2d_square_cylinder":
+            self.forcing_grid = SquareCylinderForcingGrid(
+                grid_dim=grid_dim,
+                num_forcing_points=num_forcing_points,
+                cylinder=rigid_body,
+            )
+        else:
+            raise NotImplementedError
 
         # initialising super class
         super().__init__(
