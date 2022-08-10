@@ -9,18 +9,19 @@ from elastica._linalg import _batch_matvec, _batch_norm
 from elastica._calculus import _difference, _average
 from elastica._rotations import _get_rotation_matrix, _inv_rotate
 
+
 @njit(cache=True)
 def inverse(matrix_collection):
     output_matrix_collection = np.empty(matrix_collection.shape)
     for n in range(output_matrix_collection.shape[2]):
-        output_matrix_collection[:, :, n] = (
-            np.linalg.inv(matrix_collection[:, :, n])
-        )
+        output_matrix_collection[:, :, n] = np.linalg.inv(matrix_collection[:, :, n])
     return output_matrix_collection
+
 
 @njit(cache=True)
 def _lab_to_material(directors, lab_vectors):
     return _batch_matvec(directors, lab_vectors)
+
 
 @njit(cache=True)
 def _material_to_lab(directors, material_vectors):
@@ -29,47 +30,48 @@ def _material_to_lab(directors, material_vectors):
     for n in range(blocksize):
         for i in range(3):
             for j in range(3):
-                lab_vectors[i, n] += (
-                    directors[j, i, n] * material_vectors[j, n]
-                )
+                lab_vectors[i, n] += directors[j, i, n] * material_vectors[j, n]
     return lab_vectors
+
 
 @njit(cache=True)
 def average1D(vector_collection):
-    blocksize = vector_collection.shape[0]-1
+    blocksize = vector_collection.shape[0] - 1
     output_vector = np.zeros(blocksize)
     for n in range(blocksize):
-        output_vector[n] = (vector_collection[n]+vector_collection[n+1])/2
+        output_vector[n] = (vector_collection[n] + vector_collection[n + 1]) / 2
     return output_vector
+
 
 @njit(cache=True)
 def average2D(vector_collection):
-    blocksize = vector_collection.shape[1]-1
+    blocksize = vector_collection.shape[1] - 1
     output_vector = np.zeros((3, blocksize))
     for n in range(blocksize):
         for i in range(3):
             output_vector[i, n] = (
-                (vector_collection[i, n]+vector_collection[i, n+1])/2
-            )
+                vector_collection[i, n] + vector_collection[i, n + 1]
+            ) / 2
     return output_vector
+
 
 @njit(cache=True)
 def difference2D(vector_collection):
-    blocksize = vector_collection.shape[1]-1
+    blocksize = vector_collection.shape[1] - 1
     output_vector = np.zeros((3, blocksize))
     for n in range(blocksize):
         for i in range(3):
-            output_vector[i, n] = (
-                vector_collection[i, n+1]-vector_collection[i, n]
-            )
+            output_vector[i, n] = vector_collection[i, n + 1] - vector_collection[i, n]
     return output_vector
+
 
 @njit(cache=True)
 def calculate_dilatation(sigma):
     shear = sigma_to_shear(sigma)
     dilatation = _batch_norm(shear)
-    voronoi_dilatation = (dilatation[:-1] + dilatation[1:])/2
+    voronoi_dilatation = (dilatation[:-1] + dilatation[1:]) / 2
     return dilatation, voronoi_dilatation
+
 
 # @njit(cache=True)
 # def calculate_length(position_collection):
@@ -82,17 +84,19 @@ def calculate_dilatation(sigma):
 #         )
 #     return length
 
+
 @njit(cache=True)
 def calculate_distance_to_a_point(position_collection, point_position):
     blocksize = position_collection.shape[1]
     distance_collection = np.zeros(blocksize)
     for n in range(blocksize):
         distance_collection[n] = (
-            (position_collection[0, n]-point_position[0])**2 +
-            (position_collection[1, n]-point_position[1])**2 +
-            (position_collection[2, n]-point_position[2])**2
-        )**0.5
+            (position_collection[0, n] - point_position[0]) ** 2
+            + (position_collection[1, n] - point_position[1]) ** 2
+            + (position_collection[2, n] - point_position[2]) ** 2
+        ) ** 0.5
     return distance_collection
+
 
 @njit(cache=True)
 def calculate_distance(position_collection_1, position_collection_2):
@@ -100,11 +104,12 @@ def calculate_distance(position_collection_1, position_collection_2):
     distance_collection = np.zeros(blocksize)
     for n in range(blocksize):
         distance_collection[n] = (
-            (position_collection_1[0, n]-position_collection_2[0, n])**2 +
-            (position_collection_1[1, n]-position_collection_2[1, n])**2 +
-            (position_collection_1[2, n]-position_collection_2[2, n])**2
-        )**0.5
+            (position_collection_1[0, n] - position_collection_2[0, n]) ** 2
+            + (position_collection_1[1, n] - position_collection_2[1, n]) ** 2
+            + (position_collection_1[2, n] - position_collection_2[2, n]) ** 2
+        ) ** 0.5
     return distance_collection
+
 
 @njit(cache=True)
 def sigma_to_shear(sigma):
@@ -115,6 +120,7 @@ def sigma_to_shear(sigma):
         shear[2, n] = sigma[2, n] + 1
     return shear
 
+
 @njit(cache=True)
 def kappa_to_curvature(kappa, voronoi_dilatation):
     curvature = np.zeros(kappa.shape)
@@ -124,16 +130,17 @@ def kappa_to_curvature(kappa, voronoi_dilatation):
         curvature[2, n] = kappa[2, n] / voronoi_dilatation[n]
     return curvature
 
+
 class StaticRod:
     def __init__(
-            self, rest_position, rest_director, rest_radius, shear_matrix, bend_matrix
-        ):
+        self, rest_position, rest_director, rest_radius, shear_matrix, bend_matrix
+    ):
         self.n_elements = rest_radius.shape[0]
         self.shear_matrix = shear_matrix.copy()
         self.bend_matrix = bend_matrix.copy()
         self.position_collection = rest_position.copy()
         self.director_collection = rest_director.copy()
-        
+
         self.rest_radius = rest_radius.copy()
         self.rest_lengths = _batch_norm(
             _difference(self.position_collection)  # Position difference
@@ -147,14 +154,18 @@ class StaticRod:
         self.radius = np.zeros(self.n_elements)
 
         self.dilatation = np.zeros(self.n_elements)
-        self.voronoi_dilatation = np.zeros(self.n_elements-1)
+        self.voronoi_dilatation = np.zeros(self.n_elements - 1)
 
         self.sigma = np.zeros((3, self.n_elements))
-        self.kappa = np.zeros((3, self.n_elements-1))
+        self.kappa = np.zeros((3, self.n_elements - 1))
 
         self._compute_geometry_from_state(
-            self.position_collection, self.rest_lengths, self.rest_radius,
-            self.lengths, self.tangents, self.radius
+            self.position_collection,
+            self.rest_lengths,
+            self.rest_radius,
+            self.lengths,
+            self.tangents,
+            self.radius,
         )
         self._compute_all_dilatations(
             self.lengths,
@@ -170,9 +181,7 @@ class StaticRod:
             self.sigma,
         )
         self._compute_bending_twist_strains(
-            self.director_collection, 
-            self.rest_voronoi_lengths,
-             self.kappa
+            self.director_collection, self.rest_voronoi_lengths, self.kappa
         )
 
         self.rest_sigma = self.sigma.copy()
@@ -183,7 +192,7 @@ class StaticRod:
     def _compute_bending_twist_strains(
         director_collection, rest_voronoi_lengths, kappa
     ):
-        
+
         temp = _inv_rotate(director_collection)
         blocksize = rest_voronoi_lengths.shape[0]
         for k in range(blocksize):
@@ -240,18 +249,25 @@ class StaticRod:
             tangents[1, k] = position_diff[1, k] / lengths[k]
             tangents[2, k] = position_diff[2, k] / lengths[k]
             # recalculate radius based on volume conservation
-            radius[k] = rest_radius[k] * np.sqrt(rest_lengths[k]/lengths[k])
+            radius[k] = rest_radius[k] * np.sqrt(rest_lengths[k] / lengths[k])
 
     def update_from_strain(self, sigma, kappa):
         self.sigma[:, :] = sigma.copy()
         self.kappa[:, :] = kappa.copy()
         self.static_pose_evolution(
-            self.rest_lengths, self.sigma, self.kappa,
-            self.position_collection, self.director_collection
+            self.rest_lengths,
+            self.sigma,
+            self.kappa,
+            self.position_collection,
+            self.director_collection,
         )
         self._compute_geometry_from_state(
-            self.position_collection, self.rest_lengths, self.rest_radius,
-            self.lengths, self.tangents, self.radius
+            self.position_collection,
+            self.rest_lengths,
+            self.rest_radius,
+            self.lengths,
+            self.tangents,
+            self.radius,
         )
         self._compute_all_dilatations(
             self.lengths,
@@ -264,26 +280,24 @@ class StaticRod:
     @staticmethod
     @njit(cache=True)
     def static_pose_evolution(
-        rest_lengths, sigma, kappa,
-        position_collection, director_collection
+        rest_lengths, sigma, kappa, position_collection, director_collection
     ):
         shear = sigma_to_shear(sigma)
-        for k in range(rest_lengths.shape[0]-1):
+        for k in range(rest_lengths.shape[0] - 1):
             next_position(
                 director_collection[:, :, k],
                 shear[:, k] * rest_lengths[k],
-                position_collection[:, k:k+2]
-                )
+                position_collection[:, k : k + 2],
+            )
             next_director(
-                kappa[:, k] * rest_lengths[k],
-                director_collection[:, :, k:k+2]
-                )
+                kappa[:, k] * rest_lengths[k], director_collection[:, :, k : k + 2]
+            )
 
         next_position(
             director_collection[:, :, -1],
             shear[:, -1] * rest_lengths[-1],
-            position_collection[:, -2:]
-            )
+            position_collection[:, -2:],
+        )
 
     @classmethod
     def get_rod(cls, rest_cosserat_rod):
@@ -292,27 +306,25 @@ class StaticRod:
             rest_cosserat_rod.director_collection,
             rest_cosserat_rod.radius,
             rest_cosserat_rod.shear_matrix,
-            rest_cosserat_rod.bend_matrix
+            rest_cosserat_rod.bend_matrix,
         )
+
 
 @njit(cache=True)
 def next_position(director, delta, positions):
     for i in range(3):
         for j in range(3):
-            positions[i, 1] = (
-                positions[i, 0] + director[j, i] * delta[j]
-            )
+            positions[i, 1] = positions[i, 0] + director[j, i] * delta[j]
+
 
 @njit(cache=True)
 def next_director(rotation, directors):
     # FIXME The following should be the right implementation once the _get_rotation_matrix is fixed
     # Rotation = _get_rotation_matrix(-1, rotation.reshape((3, 1)))[:, :, 0]
-    
+
     Rotation = _get_rotation_matrix(1, rotation.reshape((3, 1)))[:, :, 0]
     for i in range(3):
         for j in range(3):
             directors[i, j, 1] = 0
             for k in range(3):
-                directors[i, j, 1] += (
-                    Rotation[i, k] * directors[k, j, 0]
-                )
+                directors[i, j, 1] += Rotation[i, k] * directors[k, j, 0]

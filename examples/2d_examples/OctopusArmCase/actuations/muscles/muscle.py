@@ -12,9 +12,9 @@ import elastica
 from elastica._linalg import _batch_cross
 from elastica._calculus import quadrature_kernel
 from elastica.external_forces import inplace_addition
-from comm._rod_tool import average2D, difference2D, sigma_to_shear
+from .._rod_tool import average2D, difference2D, sigma_to_shear
 
-from comm.actuations.actuation import (
+from actuations.actuation import (
     _force_induced_couple,
     _internal_to_external_load,
     ContinuousActuation,

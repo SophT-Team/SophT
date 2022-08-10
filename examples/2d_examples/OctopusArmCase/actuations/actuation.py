@@ -12,7 +12,7 @@ from elastica._calculus import quadrature_kernel, difference_kernel
 from elastica.external_forces import inplace_addition
 from elastica.external_forces import NoForces
 
-from _rod_tool import _lab_to_material, _material_to_lab, average2D
+from ._rod_tool import _lab_to_material, _material_to_lab, average2D
 
 
 @njit(cache=True)
