@@ -1,8 +1,13 @@
-from elastica.dissipation import AnalyticalLinearDamper
-from elastica.rod.cosserat_rod import CosseratRod
-from elastica.external_forces import MuscleTorques
-from elastica.timestepper import PositionVerlet, extend_stepper_interface
-from elastica.wrappers import BaseSystemCollection, Forcing, Damping
+from elastica import (
+    AnalyticalLinearDamper,
+    CosseratRod,
+    MuscleTorques,
+    PositionVerlet,
+    extend_stepper_interface,
+    BaseSystemCollection,
+    Forcing,
+    Damping,
+)
 
 import matplotlib.pyplot as plt
 
@@ -12,12 +17,13 @@ import os
 
 from sopht.utils.precision import get_real_t
 
-from sopht_simulator.immersed_body import CosseratRodFlowInteraction, FlowForces
-from sopht_simulator.immersed_body.cosserat_rod import (
+from sopht_simulator import (
+    CosseratRodFlowInteraction,
     CosseratRodElementCentricForcingGrid,
+    FlowForces,
+    UnboundedFlowSimulator2D,
+    lab_cmap,
 )
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
 
 
 def immersed_continuum_snake_case(

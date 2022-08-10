@@ -1,15 +1,13 @@
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
-
 import matplotlib.pyplot as plt
 
 import numpy as np
 
 import os
 
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
-
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t
+
+from sopht_simulator import UnboundedFlowSimulator2D, lab_cmap
 
 
 def lid_driven_cavity_case(

@@ -1,7 +1,5 @@
 from elastica import Cylinder
 
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
-
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -14,9 +12,12 @@ from sopht.numeric.eulerian_grid_ops import (
 )
 from sopht.utils.precision import get_real_t
 
-from sopht_simulator.immersed_body import RigidBodyFlowInteraction
-from sopht_simulator.immersed_body.rigid_body import CircularCylinderForcingGrid
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
+from sopht_simulator import (
+    CircularCylinderForcingGrid,
+    RigidBodyFlowInteraction,
+    UnboundedFlowSimulator2D,
+    lab_cmap,
+)
 
 
 def flow_past_cylinder_boundary_forcing_case(

@@ -1,3 +1,4 @@
+__all__ = ["lab_cmap"]
 import numpy as np
 from matplotlib.colors import ListedColormap
 from matplotlib import cm

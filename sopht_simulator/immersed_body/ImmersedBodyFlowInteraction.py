@@ -1,3 +1,4 @@
+__all__ = ["ImmersedBodyFlowInteraction"]
 import numpy as np
 
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing

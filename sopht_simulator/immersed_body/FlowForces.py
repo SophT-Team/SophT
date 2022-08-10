@@ -1,3 +1,4 @@
+__all__ = ["FlowForces"]
 from sopht_simulator.immersed_body import ImmersedBodyFlowInteraction
 
 from elastica import CosseratRod, NoForces, RigidBodyBase
