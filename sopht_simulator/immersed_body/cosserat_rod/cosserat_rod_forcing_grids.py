@@ -20,6 +20,10 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
         super().__init__(grid_dim)
         self.moment_arm = np.zeros((3, cosserat_rod.n_elems))
 
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
         self.position_field[...] = self.cosserat_rod.position_collection[
@@ -80,6 +84,10 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
         self.num_lag_nodes = cosserat_rod.n_elems
         self.cosserat_rod = cosserat_rod
         super().__init__(grid_dim)
+
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
@@ -148,6 +156,10 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
         self.element_forces_left_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
         self.element_forces_right_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
+
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
