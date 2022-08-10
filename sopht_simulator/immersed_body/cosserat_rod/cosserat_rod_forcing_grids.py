@@ -1,4 +1,8 @@
-__all__ = ["CosseratRodNodalForcingGrid", "CosseratRodElementCentricForcingGrid", "CosseratRodEdgeForcingGrid"]
+__all__ = [
+    "CosseratRodNodalForcingGrid",
+    "CosseratRodElementCentricForcingGrid",
+    "CosseratRodEdgeForcingGrid",
+]
 from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
 from elastica.rod.cosserat_rod import CosseratRod
 from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
