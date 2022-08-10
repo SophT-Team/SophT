@@ -208,7 +208,7 @@ def tapered_arm_and_cylinder_flow_coupling(
             )
 
         # compute timestep
-        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
