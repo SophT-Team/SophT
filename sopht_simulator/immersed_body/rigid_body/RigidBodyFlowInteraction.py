@@ -1,3 +1,4 @@
+__all__ = ["RigidBodyFlowInteraction"]
 from elastica import RigidBodyBase
 
 import numpy as np

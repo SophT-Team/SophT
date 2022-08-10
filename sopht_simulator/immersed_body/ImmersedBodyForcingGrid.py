@@ -1,3 +1,4 @@
+__all__ = ["ImmersedBodyForcingGrid"]
 from abc import ABC, abstractmethod
 
 import logging

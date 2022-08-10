@@ -1,3 +1,4 @@
+__all__ = ["UnboundedFlowSimulator2D"]
 import logging
 
 import numpy as np
