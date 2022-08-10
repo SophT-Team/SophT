@@ -3,7 +3,9 @@ import numpy as np
 
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 
-from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
+from sopht_simulator.immersed_body.immersed_body_forcing_grid import (
+    ImmersedBodyForcingGrid,
+)
 
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
