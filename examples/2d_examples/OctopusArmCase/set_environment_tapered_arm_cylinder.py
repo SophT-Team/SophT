@@ -4,7 +4,6 @@ import numpy as np
 from elastica import *
 from elastica.timestepper import extend_stepper_interface
 from elastica._calculus import _isnan_check
-from post_processing import plot_video_with_surface
 from arm_functions import StraightRodCallBack, CylinderCallBack
 
 # TODO: After HS releases the COMM remove below import statements and just import the package.
@@ -278,7 +277,7 @@ class ArmEnvironment:
             self.StatefulStepper, self.simulator
         )
 
-        """ Return 
+        """ Return
             (1) total time steps for the simulation step iterations
             (2) systems for controller design
         """
@@ -360,31 +359,6 @@ class ArmEnvironment:
             straight_rods_position_history=straight_rods_position_history,
             straight_rods_radius_history=straight_rods_radius_history,
         )
-
-    def post_processing(self, filename_video, **kwargs):
-        """
-        Make video 3D rod movement in time.
-        Parameters
-        ----------
-        filename_video
-        Returns
-        -------
-
-        """
-
-        if self.COLLECT_DATA_FOR_POSTPROCESSING:
-            import os
-
-            current_path = os.getcwd()
-            current_path = kwargs.get("folder_name", current_path)
-
-            plot_video_with_surface(
-                [self.rod_parameters_dict],
-                video_name=filename_video,
-                fps=self.rendering_fps,
-                step=1,
-                **kwargs,
-            )
 
 
 class Environment(ArmEnvironment):

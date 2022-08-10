@@ -79,7 +79,6 @@ def tapered_arm_and_cylinder_flow_coupling(
     # 2x1 domain with x_range = 4 * base_length
     x_range = 2 * base_length
     # Flow parameters
-    # TODO Ask Yash what is vel_scale is for ?
     vel_scale = base_length / period
     nu = base_length * vel_scale / Re
     flow_sim = UnboundedFlowSimulator2D(
@@ -136,12 +135,12 @@ def tapered_arm_and_cylinder_flow_coupling(
     # =================TIMESTEPPING====================
 
     # Finalize the pyelastica environment
-    total_steps, systems = env.finalize()
+    _, _ = env.finalize()
 
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = period / 10
-
+    rod_time_steps = 1
     while time < final_time:
 
         # Plot solution
@@ -158,24 +157,34 @@ def tapered_arm_and_cylinder_flow_coupling(
                 cmap=lab_cmap,
             )
             plt.colorbar()
-            difference = lambda x: x[1] - x[0]
-            max_axis_length = max(flow_sim.x_range, flow_sim.y_range)
-            # for reference see
-            # https://stackoverflow.com/questions/48172928/scale-matplotlib-pyplot
-            # -axes-scatter-markersize-by-x-scale/48174228#48174228
-            scaling_factor = (
-                ax.get_window_extent().width / (max_axis_length) * 72.0 / fig.dpi
-            )
 
             element_position = 0.5 * (
                 env.shearable_rod.position_collection[:, 1:]
                 + env.shearable_rod.position_collection[:, :-1]
             )
+            # for plotting rod with correct radii
+            # for reference see
+            # https://stackoverflow.com/questions/48172928/scale-matplotlib-pyplot
+            # -axes-scatter-markersize-by-x-scale/48174228#48174228
+            scaling_factor = (
+                ax.get_window_extent().width
+                / max(flow_sim.x_range, flow_sim.y_range)
+                * 72.0
+                / fig.dpi
+            )
+
             plt.scatter(
                 element_position[0],
                 element_position[1],
                 s=4 * (scaling_factor * env.shearable_rod.radius) ** 2,
                 c="k",
+            )
+            # plot rod and cylinder forcing points
+            plt.scatter(
+                cosserat_rod_flow_interactor.forcing_grid.position_field[0],
+                cosserat_rod_flow_interactor.forcing_grid.position_field[1],
+                s=4,
+                color="g",
             )
             plt.scatter(
                 cylinder_flow_interactor.forcing_grid.position_field[0],
@@ -195,14 +204,15 @@ def tapered_arm_and_cylinder_flow_coupling(
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"arm com: {np.mean(env.shearable_rod.position_collection[0])}"
+                f"rod sub-timesteps: {rod_time_steps}"
             )
 
         # compute timestep
-        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
+        # print(flow_dt, rod_dt)
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = time
         for i in range(rod_time_steps):
@@ -239,8 +249,8 @@ def tapered_arm_and_cylinder_flow_coupling(
 
 if __name__ == "__main__":
     tapered_arm_and_cylinder_flow_coupling(
-        final_time_by_period=6.0,
-        grid_size=256 * 2,
+        final_time_by_period=5.0,
+        grid_size=512,
         rod_coupling_type="two_way",
         rigid_body_coupling_type="two_way",
     )
