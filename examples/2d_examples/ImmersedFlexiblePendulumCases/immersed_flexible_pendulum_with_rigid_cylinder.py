@@ -1,10 +1,16 @@
-from elastica.boundary_conditions import OneEndFixedBC
-from elastica.dissipation import AnalyticalLinearDamper
-from elastica.rod.cosserat_rod import CosseratRod
-from elastica.external_forces import GravityForces
-from elastica.timestepper import PositionVerlet, extend_stepper_interface
-from elastica.wrappers import BaseSystemCollection, Constraints, Forcing, Damping
-from elastica import Cylinder
+from elastica import (
+    OneEndFixedBC,
+    AnalyticalLinearDamper,
+    CosseratRod,
+    GravityForces,
+    PositionVerlet,
+    extend_stepper_interface,
+    BaseSystemCollection,
+    Constraints,
+    Forcing,
+    Damping,
+    Cylinder,
+)
 
 import matplotlib.pyplot as plt
 
@@ -14,18 +20,15 @@ import os
 
 from sopht.utils.precision import get_real_t
 
-# from sopht_simulator.immersed_body import (
-#     CosseratRodFlowInteraction,
-#     FlowForces,
-#     RigidBodyFlowInteraction,
-# )
-# from sopht_simulator.immersed_body.cosserat_rod import (
-#     CosseratRodElementCentricForcingGrid,
-# )
-# from sopht_simulator.immersed_body.rigid_body import CircularCylinderForcingGrid
-# from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
-# from sopht_simulator.plot_utils.lab_cmap import lab_cmap
-from sopht_simulator import *
+from sopht_simulator import (
+    CosseratRodFlowInteraction,
+    CosseratRodElementCentricForcingGrid,
+    FlowForces,
+    CircularCylinderForcingGrid,
+    RigidBodyFlowInteraction,
+    UnboundedFlowSimulator2D,
+    lab_cmap,
+)
 
 
 def immersed_flexible_pendulum_with_rigid_cylinder_case(
