@@ -19,6 +19,7 @@ from sopht_simulator.immersed_body.cosserat_rod import (
 )
 from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
 from sopht_simulator.plot_utils.lab_cmap import lab_cmap
+from sopht_simulator import *
 
 
 def immersed_flexible_pendulum_one_way_coupling(

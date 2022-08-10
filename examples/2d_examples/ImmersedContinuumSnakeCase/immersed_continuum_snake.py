@@ -12,12 +12,13 @@ import os
 
 from sopht.utils.precision import get_real_t
 
-from sopht_simulator.immersed_body import CosseratRodFlowInteraction, FlowForces
-from sopht_simulator.immersed_body.cosserat_rod import (
-    CosseratRodElementCentricForcingGrid,
-)
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
+# from sopht_simulator.immersed_body import CosseratRodFlowInteraction, FlowForces
+# from sopht_simulator.immersed_body.cosserat_rod import (
+#     CosseratRodElementCentricForcingGrid,
+# )
+# from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
+# from sopht_simulator.plot_utils.lab_cmap import lab_cmap
+from sopht_simulator import *
 
 
 def immersed_continuum_snake_case(

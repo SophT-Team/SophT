@@ -1,4 +1,4 @@
-from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
+# from sopht_simulator.flow.FlowSimulator2D import UnboundedFlowSimulator2D
 
 from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 
@@ -8,7 +8,8 @@ import numpy as np
 
 import os
 
-from sopht_simulator.plot_utils.lab_cmap import lab_cmap
+# from sopht_simulator.plot_utils.lab_cmap import lab_cmap
+from sopht_simulator import *
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
