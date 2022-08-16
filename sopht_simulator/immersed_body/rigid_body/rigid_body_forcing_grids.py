@@ -57,7 +57,9 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
     ):
         """Transfer forcing from lagrangian forcing grid to the cylinder"""
         # negative sign due to Newtons third law
-        body_flow_forces[: self.grid_dim] = -np.sum(lag_grid_forcing_field)
+        body_flow_forces[: self.grid_dim] = -np.sum(
+            lag_grid_forcing_field, axis=1
+        ).reshape(-1, 1)
 
         # torque from grid forcing
         # Q @ (0, 0, torque) = d3 dot (0, 0, torque) = Q[2, 2] * (0, 0, torque)
@@ -105,7 +107,7 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
             )
         num_lag_nodes_per_side = self.num_lag_nodes // 4
         side_length = 2 * self.cylinder.radius
-        ds = 2 * side_length / num_lag_nodes_per_side
+        ds = side_length / num_lag_nodes_per_side
         side_coordinates_range = np.linspace(
             -0.5 * side_length + 0.5 * ds,
             0.5 * side_length - 0.5 * ds,
