@@ -20,7 +20,7 @@ We recommend using python version above 3.8.0.
 ```bash
 conda create --name sopht-examples-env
 conda activate sopht-examples-env
-conda install python==3.8
+conda install python==3.10
 ```
 
 3. Setup [`poetry`](https://python-poetry.org) and `dependencies`!
