@@ -20,7 +20,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
 sopht_backend = {git = "https://github.com/bhosale2/sopht-backend.git", rev = "main"}
-pyelastica = {git = "https://github.com/GazzolaLab/PyElastica.git", rev = "update-0.3.0"}
+pyelastica = "^0.3"
 matplotlib = "^3.3.2"
 
 [tool.poetry.dev-dependencies]
