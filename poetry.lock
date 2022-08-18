@@ -371,7 +371,7 @@ diagrams = ["railroad-diagrams", "jinja2"]
 
 [[package]]
 name = "pystencils"
-version = "0.4.4"
+version = "1.0"
 description = "Speeding up stencil computations on CPUs and GPUs"
 category = "main"
 optional = false
@@ -381,7 +381,7 @@ python-versions = ">=3.8"
 appdirs = "*"
 joblib = "*"
 numpy = ">=1.8.0"
-sympy = ">=1.5.1,<=1.9"
+sympy = ">=1.6,<=1.10"
 
 [package.extras]
 alltrafos = ["islpy", "py-cpuinfo"]
@@ -460,7 +460,7 @@ numba = "^0.55.1"
 numpy = "^1.20.0"
 psutil = "^5.9.0"
 pyfftw = "^0.13.0"
-pystencils = "^0.4.4"
+pystencils = "^1.0"
 scipy = "^1.7.3"
 sympy = "^1.9"
 
@@ -468,15 +468,15 @@ sympy = "^1.9"
 type = "git"
 url = "https://github.com/bhosale2/sopht-backend.git"
 reference = "main"
-resolved_reference = "c483a7cb04802444a0017139b69f129bc2151bc8"
+resolved_reference = "2f751f9348263e0a02f356bb8f91dd85bd0e3734"
 
 [[package]]
 name = "sympy"
-version = "1.9"
+version = "1.10"
 description = "Computer algebra system (CAS) in Python"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 mpmath = ">=0.19"
@@ -822,7 +822,7 @@ pyparsing = [
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
 ]
 pystencils = [
-    {file = "pystencils-0.4.4.tar.gz", hash = "sha256:92f9710ebd6b48fcb65c2ea09e8c4f5c41d7771d43e42228e1e69a5d1be66627"},
+    {file = "pystencils-1.0.tar.gz", hash = "sha256:c813e99e8c1632741987bb8068d5b485c374904f8fdd8f7074e37f1cd30604d8"},
 ]
 python-dateutil = []
 pyyaml = [
@@ -892,8 +892,8 @@ setuptools-scm = [
 six = []
 sopht-backend = []
 sympy = [
-    {file = "sympy-1.9-py3-none-any.whl", hash = "sha256:8bc5de4608b7aa4e7ffd1b25452ae87ccc5f6ca667c661aafb854a1ade337d0c"},
-    {file = "sympy-1.9.tar.gz", hash = "sha256:c7a880e229df96759f955d4f3970d4cabce79f60f5b18830c08b90ce77cd5fdc"},
+    {file = "sympy-1.10-py3-none-any.whl", hash = "sha256:2009368e862cd29f1b568dc6572786371a2faa1cd8eb4d313e11a90195d6ee36"},
+    {file = "sympy-1.10.tar.gz", hash = "sha256:6cf85a5cfe8fff69553e745b05128de6fc8de8f291965c63871c79701dc6efc9"},
 ]
 toml = []
 tomli = [
