@@ -96,7 +96,7 @@ def flow_past_cylinder_boundary_forcing_case(
 
     # iterate
     timescale = cyl_radius / U_inf
-    t_end_hat = real_t(20.0)  # non-dimensional end time
+    t_end_hat = real_t(200.0)  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     t = real_t(0.0)
     foto_timer = 0.0
