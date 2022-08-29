@@ -18,6 +18,7 @@ from sopht_simulator import (
     UnboundedFlowSimulator2D,
     lab_cmap,
 )
+from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
 
 
 def flow_past_cylinder_boundary_forcing_case(
@@ -31,7 +32,6 @@ def flow_past_cylinder_boundary_forcing_case(
     This example considers a simple flow past cylinder using immersed
     boundary forcing.
     """
-    plt.style.use("seaborn")
     real_t = get_real_t(precision)
     # Flow parameters
     U_inf = real_t(1.0)
@@ -102,20 +102,21 @@ def flow_past_cylinder_boundary_forcing_case(
     foto_timer = 0.0
     foto_timer_limit = t_end / 50
 
-    if save_diagnostic:
-        data_timer = 0.0
-        data_timer_limit = 0.25 * timescale
-        time = []
-        drag_coeffs = []
+    data_timer = 0.0
+    data_timer_limit = 0.25 * timescale
+    time = []
+    drag_coeffs = []
+
+    # create fig for plotting flow fields
+    fig, ax = create_figure_and_axes()
 
     while t < t_end:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            fig = plt.figure(frameon=True, dpi=150)
-            ax = fig.add_subplot(111)
-            plt.contourf(
+            ax.set_title(f"Vorticity, time: {t / timescale:.2f}")
+            contourf_obj = ax.contourf(
                 flow_sim.x_grid,
                 flow_sim.y_grid,
                 flow_sim.vorticity_field,
@@ -123,37 +124,30 @@ def flow_past_cylinder_boundary_forcing_case(
                 extend="both",
                 cmap=lab_cmap,
             )
-            plt.colorbar()
-            plt.scatter(
+            cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
+            ax.scatter(
                 cylinder_flow_interactor.forcing_grid.position_field[0],
                 cylinder_flow_interactor.forcing_grid.position_field[1],
                 s=4,
                 color="k",
             )
-            ax.set_aspect(aspect=1)
-            ax.set_title(f"Vorticity, t_hat: {t / timescale:.2f}")
-            plt.savefig(
-                "snap_" + str("%0.4d" % (t * 100)) + ".png",
-                bbox_inches="tight",
-                pad_inches=0,
+            save_and_clear_fig(
+                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
-            plt.clf()
-            plt.close("all")
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
-        # save diagnostic data
-        if save_diagnostic:
-            if data_timer >= data_timer_limit or data_timer == 0:
-                data_timer = 0.0
-                time.append(t / timescale)
+        # track diagnostic data
+        if data_timer >= data_timer_limit or data_timer == 0:
+            data_timer = 0.0
+            time.append(t / timescale)
 
-                # calculate drag
-                F = np.sum(cylinder_flow_interactor.lag_grid_forcing_field[0, ...])
-                drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
-                drag_coeffs.append(drag_coeff)
+            # calculate drag
+            F = np.sum(cylinder_flow_interactor.lag_grid_forcing_field[0, ...])
+            drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
+            drag_coeffs.append(drag_coeff)
 
         dt = flow_sim.compute_stable_timestep()
 
@@ -175,8 +169,7 @@ def flow_past_cylinder_boundary_forcing_case(
         # update time
         t = t + dt
         foto_timer += dt
-        if save_diagnostic:
-            data_timer += dt
+        data_timer += dt
 
     # compile video
     os.system("rm -f flow.mp4")
@@ -187,18 +180,18 @@ def flow_past_cylinder_boundary_forcing_case(
     )
     os.system("rm -f snap*.png")
 
+    plt.figure()
+    plt.plot(np.array(time), np.array(drag_coeffs))
+    plt.ylim([0.7, 1.7])
+    plt.xlabel("Non-dimensional time")
+    plt.ylabel("Drag coefficient, Cd")
+    plt.savefig("drag_vs_time.png")
     if save_diagnostic:
         np.savetxt(
             "drag_vs_time.csv",
             np.c_[np.array(time), np.array(drag_coeffs)],
             delimiter=",",
         )
-        plt.figure()
-        plt.plot(np.array(time), np.array(drag_coeffs))
-        plt.ylim([0.7, 1.7])
-        plt.xlabel("Non-dimensional time")
-        plt.ylabel("Drag coefficient, Cd")
-        plt.savefig("drag_vs_time.png")
 
 
 if __name__ == "__main__":
