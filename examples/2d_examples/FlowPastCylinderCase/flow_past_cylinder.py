@@ -96,7 +96,7 @@ def flow_past_cylinder_boundary_forcing_case(
 
     # iterate
     timescale = cyl_radius / U_inf
-    t_end_hat = real_t(200.0)  # non-dimensional end time
+    t_end_hat = real_t(20.0)  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     t = real_t(0.0)
     foto_timer = 0.0
@@ -106,6 +106,7 @@ def flow_past_cylinder_boundary_forcing_case(
     data_timer_limit = 0.25 * timescale
     time = []
     drag_coeffs = []
+    lag_grid_deviation = []
 
     # create fig for plotting flow fields
     fig, ax = create_figure_and_axes()
@@ -134,15 +135,27 @@ def flow_past_cylinder_boundary_forcing_case(
             save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
+            lag_grid_dev = np.linalg.norm(
+                cylinder_flow_interactor.lag_grid_position_mismatch_field
+            ) / np.sqrt(num_lag_nodes)
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
-                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
+                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
+                f"lag grid deviation: {lag_grid_dev:.8f}"
             )
 
         # track diagnostic data
         if data_timer >= data_timer_limit or data_timer == 0:
             data_timer = 0.0
             time.append(t / timescale)
+
+            # compute lag grid deviation
+            lag_grid_deviation.append(
+                np.linalg.norm(
+                    cylinder_flow_interactor.lag_grid_position_mismatch_field
+                )
+                / np.sqrt(num_lag_nodes)
+            )
 
             # calculate drag
             F = np.sum(cylinder_flow_interactor.lag_grid_forcing_field[0, ...])
@@ -192,6 +205,12 @@ def flow_past_cylinder_boundary_forcing_case(
             np.c_[np.array(time), np.array(drag_coeffs)],
             delimiter=",",
         )
+
+    plt.figure()
+    plt.plot(np.array(time), np.array(lag_grid_deviation))
+    plt.xlabel("Non-dimensional time")
+    plt.ylabel("Lagrangian grid deviation error")
+    plt.savefig("lag_grid_dev_vs_time.png")
 
 
 if __name__ == "__main__":
