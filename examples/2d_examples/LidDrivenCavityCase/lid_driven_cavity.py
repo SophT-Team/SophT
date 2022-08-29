@@ -1,13 +1,10 @@
 import matplotlib.pyplot as plt
-
 import numpy as np
-
 import os
-
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t
-
 from sopht_simulator import UnboundedFlowSimulator2D, lab_cmap
+from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
 
 
 def lid_driven_cavity_case(
@@ -21,7 +18,6 @@ def lid_driven_cavity_case(
     This example considers a lid driven cavity flow using immersed
     boundary forcing.
     """
-    plt.style.use("seaborn")
     real_t = get_real_t(precision)
     # Flow parameters
     U = 1.0
@@ -104,14 +100,17 @@ def lid_driven_cavity_case(
     t = 0.0
     foto_timer = 0.0
     foto_timer_limit = t_end / 50
+
+    # create fig for plotting flow fields
+    fig, ax = create_figure_and_axes()
+
     while t < t_end:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            fig = plt.figure(frameon=True, dpi=150)
-            ax = fig.add_subplot(111)
-            plt.contourf(
+            ax.set_title(f"U velocity, t_hat: {t / timescale:.2f}")
+            contourf_obj = ax.contourf(
                 flow_sim.x_grid,
                 flow_sim.y_grid,
                 ldc_mask * flow_sim.velocity_field[0],
@@ -119,22 +118,16 @@ def lid_driven_cavity_case(
                 extend="both",
                 cmap=lab_cmap,
             )
-            plt.colorbar()
-            plt.scatter(
+            cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
+            ax.scatter(
                 lag_grid_position_field[0],
                 lag_grid_position_field[1],
                 s=10,
                 color="k",
             )
-            ax.set_aspect(aspect=1)
-            ax.set_title(f"U velocity, t_hat: {t / timescale:.2f}")
-            plt.savefig(
-                "snap_" + str("%0.4d" % (t * 100)) + ".png",
-                bbox_inches="tight",
-                pad_inches=0,
+            save_and_clear_fig(
+                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
-            plt.clf()
-            plt.close("all")
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"

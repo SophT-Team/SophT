@@ -1,17 +1,12 @@
 from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
-
-import matplotlib.pyplot as plt
-
 import numpy as np
-
 import os
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t
-
 from sopht_simulator import UnboundedFlowSimulator2D, lab_cmap
+from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
 
 
 def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
@@ -81,16 +76,17 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     t = t_start
     foto_timer = 0.0
     foto_timer_limit = (t_end - t_start) / 25
-    plt.style.use("seaborn")
+
+    # create fig for plotting flow fields
+    fig, ax = create_figure_and_axes()
 
     while t < t_end:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            fig = plt.figure(frameon=True, dpi=150)
-            ax = fig.add_subplot(111)
-            plt.contourf(
+            ax.set_title(f"Vorticity, time: {t:.2f}")
+            contourf_obj = ax.contourf(
                 flow_sim.x_grid,
                 flow_sim.y_grid,
                 flow_sim.vorticity_field,
@@ -98,15 +94,10 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
                 extend="both",
                 cmap=lab_cmap,
             )
-            plt.colorbar()
-            ax.set_aspect(aspect=1)
-            plt.savefig(
-                "snap_" + str("%0.4d" % (t * 100)) + ".png",
-                bbox_inches="tight",
-                pad_inches=0,
+            cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
+            save_and_clear_fig(
+                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
-            plt.clf()
-            plt.close("all")
             print(
                 f"time: {t:.2f} ({((t-t_start)/(t_end-t_start)*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"

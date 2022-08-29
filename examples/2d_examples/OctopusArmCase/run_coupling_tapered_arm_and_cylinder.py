@@ -1,6 +1,5 @@
 import numpy as np
 import os
-import matplotlib.pyplot as plt
 from sopht.utils.precision import get_real_t
 from sopht_simulator import (
     CosseratRodFlowInteraction,
@@ -13,6 +12,7 @@ from sopht_simulator import (
 )
 from set_environment_tapered_arm_cylinder import Environment
 from arm_functions import SigmoidActivationLongitudinalMuscles, LocalActivation
+from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
 
 
 def tapered_arm_and_cylinder_flow_coupling(
@@ -24,9 +24,6 @@ def tapered_arm_and_cylinder_flow_coupling(
     num_threads=8,
     precision="single",
 ):
-    # =================COMMON SIMULATOR STUFF=======================
-    plt.style.use("seaborn")
-
     # =================PYELASTICA STUFF BEGIN=====================
     period = 1
     final_time = period * final_time_by_period
@@ -141,14 +138,17 @@ def tapered_arm_and_cylinder_flow_coupling(
     foto_timer = 0.0
     foto_timer_limit = period / 10
     rod_time_steps = 1
+
+    # create fig for plotting flow fields
+    fig, ax = create_figure_and_axes()
+
     while time < final_time:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            fig = plt.figure(frameon=True, dpi=150)
-            ax = fig.add_subplot(111)
-            plt.contourf(
+            ax.set_title(f"Vorticity, time: {time:.2f}")
+            contourf_obj = ax.contourf(
                 flow_sim.x_grid,
                 flow_sim.y_grid,
                 flow_sim.vorticity_field,
@@ -156,8 +156,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 extend="both",
                 cmap=lab_cmap,
             )
-            plt.colorbar()
-
+            cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             element_position = 0.5 * (
                 env.shearable_rod.position_collection[:, 1:]
                 + env.shearable_rod.position_collection[:, :-1]
@@ -172,35 +171,28 @@ def tapered_arm_and_cylinder_flow_coupling(
                 * 72.0
                 / fig.dpi
             )
-
-            plt.scatter(
+            ax.scatter(
                 element_position[0],
                 element_position[1],
                 s=4 * (scaling_factor * env.shearable_rod.radius) ** 2,
                 c="k",
             )
             # plot rod and cylinder forcing points
-            plt.scatter(
+            ax.scatter(
                 cosserat_rod_flow_interactor.forcing_grid.position_field[0],
                 cosserat_rod_flow_interactor.forcing_grid.position_field[1],
                 s=4,
                 color="g",
             )
-            plt.scatter(
+            ax.scatter(
                 cylinder_flow_interactor.forcing_grid.position_field[0],
                 cylinder_flow_interactor.forcing_grid.position_field[1],
                 s=10,
                 color="k",
             )
-            ax.set_aspect(aspect=1)
-            ax.set_title(f"Vorticity, time: {time:.2f}")
-            plt.savefig(
-                "snap_" + str("%0.4d" % (time * 100)) + ".png",
-                bbox_inches="tight",
-                pad_inches=0,
+            save_and_clear_fig(
+                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
-            plt.clf()
-            plt.close("all")
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "

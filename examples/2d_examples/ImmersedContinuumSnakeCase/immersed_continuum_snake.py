@@ -24,6 +24,7 @@ from sopht_simulator import (
     UnboundedFlowSimulator2D,
     lab_cmap,
 )
+from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
 
 
 def immersed_continuum_snake_case(
@@ -34,9 +35,6 @@ def immersed_continuum_snake_case(
     num_threads=4,
     precision="single",
 ):
-    # =================COMMON SIMULATOR STUFF=======================
-    plt.style.use("seaborn")
-
     # =================PYELASTICA STUFF BEGIN=====================
     class ImmersedContinuumSnakeSimulator(BaseSystemCollection, Forcing, Damping):
         pass
@@ -151,14 +149,16 @@ def immersed_continuum_snake_case(
     foto_timer = 0.0
     foto_timer_limit = period / 10
 
+    # create fig for plotting flow fields
+    fig, ax = create_figure_and_axes()
+
     while time < final_time:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            fig = plt.figure(frameon=True, dpi=150)
-            ax = fig.add_subplot(111)
-            plt.contourf(
+            ax.set_title(f"Vorticity, time: {time:.2f}")
+            contourf_obj = ax.contourf(
                 flow_sim.x_grid,
                 flow_sim.y_grid,
                 flow_sim.vorticity_field,
@@ -166,22 +166,16 @@ def immersed_continuum_snake_case(
                 extend="both",
                 cmap=lab_cmap,
             )
-            plt.colorbar()
-            plt.plot(
+            cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
+            ax.plot(
                 snake_rod.position_collection[0],
                 snake_rod.position_collection[1],
                 linewidth=3,
                 color="k",
             )
-            ax.set_aspect(aspect=1)
-            ax.set_title(f"Vorticity, time: {time:.2f}")
-            plt.savefig(
-                "snap_" + str("%0.4d" % (time * 100)) + ".png",
-                bbox_inches="tight",
-                pad_inches=0,
+            save_and_clear_fig(
+                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
-            plt.clf()
-            plt.close("all")
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
