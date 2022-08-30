@@ -11,15 +11,10 @@ from elastica import (
     Damping,
     Cylinder,
 )
-
-import matplotlib.pyplot as plt
-
 import numpy as np
-
+import matplotlib.pyplot as plt
 import os
-
 from sopht.utils.precision import get_real_t
-
 from sopht_simulator import (
     CosseratRodFlowInteraction,
     CosseratRodElementCentricForcingGrid,
@@ -177,6 +172,9 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = final_time / 50
+    T = []
+    rod_force = []
+    cylinder_force = []
 
     # create fig for plotting flow fields
     fig, ax = create_figure_and_axes()
@@ -211,9 +209,25 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
             save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
+            lag_grid_dev = np.linalg.norm(
+                cylinder_flow_interactor.lag_grid_position_mismatch_field
+            ) / np.sqrt(cylinder_flow_interactor.forcing_grid.num_lag_nodes)
+            +np.linalg.norm(
+                cosserat_rod_flow_interactor.lag_grid_position_mismatch_field
+            ) / np.sqrt(cosserat_rod_flow_interactor.forcing_grid.num_lag_nodes)
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
-                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
+                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
+                f"lag grid deviation: {lag_grid_dev:.8f}"
+            )
+
+            # dump forces
+            T.append(time)
+            cylinder_force.append(
+                np.linalg.norm(cylinder_flow_interactor.body_flow_forces)
+            )
+            rod_force.append(
+                np.linalg.norm(cosserat_rod_flow_interactor.body_flow_forces)
             )
 
         # compute timestep
@@ -250,6 +264,14 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         " flow.mp4"
     )
     os.system("rm -f snap*.png")
+
+    plt.figure()
+    plt.plot(np.array(T), np.array(cylinder_force), label="force on cylinder")
+    plt.plot(np.array(T), np.array(rod_force), label="force on rod")
+    plt.legend()
+    plt.xlabel("Non-dimensional time")
+    plt.ylabel("Force")
+    plt.savefig("body_forces_vs_time.png")
 
 
 if __name__ == "__main__":
