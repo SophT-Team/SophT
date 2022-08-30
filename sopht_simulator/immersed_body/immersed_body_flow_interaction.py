@@ -35,6 +35,8 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         # these hold references to Eulerian fields
         self.eul_grid_forcing_field = eul_grid_forcing_field.view()
         self.eul_grid_velocity_field = eul_grid_velocity_field.view()
+        # this class should only "view" the flow velocity
+        self.eul_grid_velocity_field.flags.writeable = False
 
         # initialising super class
         super().__init__(
