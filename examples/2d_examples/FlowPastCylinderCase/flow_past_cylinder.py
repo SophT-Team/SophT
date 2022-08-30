@@ -1,24 +1,12 @@
-from elastica import Cylinder
-
+import elastica as ea
 import matplotlib.pyplot as plt
-
 import numpy as np
-
 import os
-
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t
-
-from sopht_simulator import (
-    CircularCylinderForcingGrid,
-    RigidBodyFlowInteraction,
-    UnboundedFlowSimulator2D,
-    lab_cmap,
-)
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def flow_past_cylinder_boundary_forcing_case(
@@ -43,7 +31,7 @@ def flow_past_cylinder_boundary_forcing_case(
     CFL = real_t(0.1)
     x_range = 1.0
 
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -61,7 +49,7 @@ def flow_past_cylinder_boundary_forcing_case(
     normal = np.array([1.0, 0.0, 0.0])
     base_length = 1.0
     density = 1e3
-    cylinder = Cylinder(start, direction, normal, base_length, cyl_radius, density)
+    cylinder = ea.Cylinder(start, direction, normal, base_length, cyl_radius, density)
     # Since the cylinder is fixed, we dont add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
 
@@ -80,7 +68,7 @@ def flow_past_cylinder_boundary_forcing_case(
     ds = cyl_radius * real_t(dtheta)
     virtual_boundary_stiffness_coeff = real_t(-5e4 * ds)
     virtual_boundary_damping_coeff = real_t(-2e1 * ds)
-    cylinder_flow_interactor = RigidBodyFlowInteraction(
+    cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
         num_forcing_points=num_lag_nodes,
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -89,7 +77,7 @@ def flow_past_cylinder_boundary_forcing_case(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
-        forcing_grid_cls=CircularCylinderForcingGrid,
+        forcing_grid_cls=sps.CircularCylinderForcingGrid,
         real_t=real_t,
     )
     # ==================FLOW-BODY COMMUNICATOR SETUP END======
@@ -109,7 +97,7 @@ def flow_past_cylinder_boundary_forcing_case(
     lag_grid_deviation = []
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while t < t_end:
 
@@ -123,7 +111,7 @@ def flow_past_cylinder_boundary_forcing_case(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-25, 25, 100),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -132,7 +120,7 @@ def flow_past_cylinder_boundary_forcing_case(
                 s=4,
                 color="k",
             )
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
             lag_grid_dev = np.linalg.norm(

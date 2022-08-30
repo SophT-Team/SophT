@@ -1,5 +1,5 @@
+import elastica as ea
 import numpy as np
-from elastica import *
 from numba import njit
 from elastica._linalg import _batch_norm
 
@@ -113,12 +113,10 @@ class LocalActivation:
 
 
 from elastica._linalg import _batch_dot
-
-# from elastica._elastica_numba._interaction import elements_to_nodes_inplace
 from elastica.interaction import elements_to_nodes_inplace
 
 
-class DragForceOnStraightRods(NoForces):
+class DragForceOnStraightRods(ea.NoForces):
     def __init__(self, cd_perpendicular, cd_tangent, rho_water, start_time=0.0):
         self.cd_perpendicular = cd_perpendicular
         self.cd_tangent = cd_tangent
@@ -185,13 +183,13 @@ class DragForceOnStraightRods(NoForces):
 
 
 # Call back functions
-class StraightRodCallBack(CallBackBaseClass):
+class StraightRodCallBack(ea.CallBackBaseClass):
     """
     Call back function for two arm octopus
     """
 
     def __init__(self, step_skip: int, callback_params: dict):
-        CallBackBaseClass.__init__(self)
+        ea.CallBackBaseClass.__init__(self)
         self.every = step_skip
         self.callback_params = callback_params
 
@@ -229,7 +227,7 @@ class StraightRodCallBack(CallBackBaseClass):
             return
 
 
-class CylinderCallBack(CallBackBaseClass):
+class CylinderCallBack(ea.CallBackBaseClass):
     def __init__(self, step_skip: int, callback_params: dict):
         self.every = step_skip
         self.callback_params = callback_params

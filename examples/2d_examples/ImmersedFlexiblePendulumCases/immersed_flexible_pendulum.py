@@ -1,30 +1,8 @@
-from elastica import (
-    OneEndFixedBC,
-    AnalyticalLinearDamper,
-    CosseratRod,
-    GravityForces,
-    PositionVerlet,
-    extend_stepper_interface,
-    BaseSystemCollection,
-    Constraints,
-    Forcing,
-    Damping,
-)
-
+import elastica as ea
 import numpy as np
-
 import os
-
 from sopht.utils.precision import get_real_t
-
-from sopht_simulator import (
-    CosseratRodFlowInteraction,
-    CosseratRodElementCentricForcingGrid,
-    FlowForces,
-    UnboundedFlowSimulator2D,
-    lab_cmap,
-)
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def immersed_flexible_pendulum_one_way_coupling(
@@ -37,7 +15,7 @@ def immersed_flexible_pendulum_one_way_coupling(
 ):
     # =================PYELASTICA STUFF BEGIN=====================
     class ImmersedFlexiblePendulumSimulator(
-        BaseSystemCollection, Constraints, Forcing, Damping
+        ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
     ):
         pass
 
@@ -55,7 +33,7 @@ def immersed_flexible_pendulum_one_way_coupling(
     youngs_modulus = 1e6
     poisson_ratio = 0.5
 
-    pendulum_rod = CosseratRod.straight_rod(
+    pendulum_rod = ea.CosseratRod.straight_rod(
         n_elem,
         start,
         direction,
@@ -69,19 +47,19 @@ def immersed_flexible_pendulum_one_way_coupling(
     )
     pendulum_sim.append(pendulum_rod)
     pendulum_sim.constrain(pendulum_rod).using(
-        OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
+        ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
     )
     # Add gravitational forces
     gravitational_acc = -9.80665
     pendulum_sim.add_forcing_to(pendulum_rod).using(
-        GravityForces, acc_gravity=np.array([0.0, gravitational_acc, 0.0])
+        ea.GravityForces, acc_gravity=np.array([0.0, gravitational_acc, 0.0])
     )
     # add damping
     dl = base_length / n_elem
     rod_dt = 0.005 * dl
     damping_constant = 1e-2
     pendulum_sim.dampen(pendulum_rod).using(
-        AnalyticalLinearDamper,
+        ea.AnalyticalLinearDamper,
         damping_constant=damping_constant,
         time_step=rod_dt,
     )
@@ -98,7 +76,7 @@ def immersed_flexible_pendulum_one_way_coupling(
     vel_scale = np.sqrt(np.fabs(gravitational_acc) * base_length)
     Re = 500
     nu = base_length * vel_scale / Re
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -112,7 +90,7 @@ def immersed_flexible_pendulum_one_way_coupling(
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
     virtual_boundary_damping_coeff = real_t(-2e1 * dl)
-    cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
+    cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=pendulum_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -120,13 +98,13 @@ def immersed_flexible_pendulum_one_way_coupling(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
-        forcing_grid_cls=CosseratRodElementCentricForcingGrid,
+        forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
     )
     if coupling_type == "two_way":
         pendulum_sim.add_forcing_to(pendulum_rod).using(
-            FlowForces,
+            sps.FlowForces,
             cosserat_rod_flow_interactor,
         )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
@@ -134,14 +112,14 @@ def immersed_flexible_pendulum_one_way_coupling(
     # =================TIMESTEPPING====================
 
     pendulum_sim.finalize()
-    timestepper = PositionVerlet()
-    do_step, stages_and_updates = extend_stepper_interface(timestepper, pendulum_sim)
+    timestepper = ea.PositionVerlet()
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, pendulum_sim)
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = final_time / 50
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while time < final_time:
 
@@ -155,7 +133,7 @@ def immersed_flexible_pendulum_one_way_coupling(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
@@ -164,7 +142,7 @@ def immersed_flexible_pendulum_one_way_coupling(
                 linewidth=3,
                 color="k",
             )
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             print(

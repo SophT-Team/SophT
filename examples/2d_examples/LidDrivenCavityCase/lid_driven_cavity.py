@@ -3,8 +3,7 @@ import numpy as np
 import os
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t
-from sopht_simulator import UnboundedFlowSimulator2D, lab_cmap
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def lid_driven_cavity_case(
@@ -26,7 +25,7 @@ def lid_driven_cavity_case(
     CFL = 0.1
     x_range = 1.0
 
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size, grid_size),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -102,7 +101,7 @@ def lid_driven_cavity_case(
     foto_timer_limit = t_end / 50
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while t < t_end:
 
@@ -116,7 +115,7 @@ def lid_driven_cavity_case(
                 ldc_mask * flow_sim.velocity_field[0],
                 levels=np.linspace(-0.5, 0.5, 100),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -125,7 +124,7 @@ def lid_driven_cavity_case(
                 s=10,
                 color="k",
             )
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
             print(

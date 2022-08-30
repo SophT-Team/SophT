@@ -1,8 +1,8 @@
 __all__ = ["Environment"]
 
+from collections import defaultdict
 import numpy as np
-from elastica import *
-from elastica.timestepper import extend_stepper_interface
+import elastica as ea
 from elastica._calculus import _isnan_check
 from arm_functions import StraightRodCallBack, CylinderCallBack
 
@@ -21,7 +21,12 @@ from actuations.muscles import (
 
 
 class BaseSimulator(
-    BaseSystemCollection, Constraints, Connections, Forcing, CallBacks, Damping
+    ea.BaseSystemCollection,
+    ea.Constraints,
+    ea.Connections,
+    ea.Forcing,
+    ea.CallBacks,
+    ea.Damping,
 ):
     pass
 
@@ -35,7 +40,7 @@ class ArmEnvironment:
         COLLECT_DATA_FOR_POSTPROCESSING=True,
     ):
         # Integrator type
-        self.StatefulStepper = PositionVerlet()
+        self.StatefulStepper = ea.PositionVerlet()
 
         self.final_time = final_time
         self.time_step = time_step
@@ -70,7 +75,7 @@ class ArmEnvironment:
         n_elements = 50  # number of discretized elements of the arm
         base_length = 0.2  # total length of the arm
         radius_base = 0.012  # radius of the arm at the base
-        radius_tip = 0.0012  # radius of the arm at the tip
+        radius_tip = 0.0012 * 4  # radius of the arm at the tip
         radius = np.linspace(radius_base, radius_tip, n_elements + 1)
         # radius = np.linspace(radius_base, radius_base, n_elements + 1)
         radius_mean = (radius[:-1] + radius[1:]) / 2
@@ -81,7 +86,7 @@ class ArmEnvironment:
         direction = np.array([1.0, 0.0, 0.0])
         normal = np.array([0.0, 0.0, -1.0])
 
-        self.shearable_rod = CosseratRod.straight_rod(
+        self.shearable_rod = ea.CosseratRod.straight_rod(
             n_elements=n_elements,
             start=start,
             direction=direction,
@@ -103,7 +108,7 @@ class ArmEnvironment:
         cylinder_normal = direction
         cylinder_radius = radius_base
         cylinder_density = density
-        self.cylinder = Cylinder(
+        self.cylinder = ea.Cylinder(
             cylinder_start,
             cylinder_direction,
             cylinder_normal,
@@ -129,7 +134,9 @@ class ArmEnvironment:
 
         """ Set up boundary conditions """
         self.simulator.constrain(self.shearable_rod).using(
-            OneEndFixedRod, constrained_position_idx=(0,), constrained_director_idx=(0,)
+            ea.OneEndFixedRod,
+            constrained_position_idx=(0,),
+            constrained_director_idx=(0,),
         )
 
         # Set exponential damper
@@ -138,7 +145,7 @@ class ArmEnvironment:
             damp_coefficient / density / (np.pi * radius_base**2) / 15
         )  # For tapered rod /15 stable
         self.simulator.dampen(self.shearable_rod).using(
-            AnalyticalLinearDamper,
+            ea.AnalyticalLinearDamper,
             damping_constant=damping_constant,
             time_step=self.time_step,
         )
@@ -273,7 +280,7 @@ class ArmEnvironment:
 
     def finalize(self):
         self.simulator.finalize()
-        self.do_step, self.stages_and_updates = extend_stepper_interface(
+        self.do_step, self.stages_and_updates = ea.extend_stepper_interface(
             self.StatefulStepper, self.simulator
         )
 

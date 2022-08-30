@@ -1,35 +1,12 @@
-from elastica import (
-    OneEndFixedBC,
-    AnalyticalLinearDamper,
-    CosseratRod,
-    GravityForces,
-    PositionVerlet,
-    extend_stepper_interface,
-    BaseSystemCollection,
-    Constraints,
-    Forcing,
-    Damping,
-)
-
+import elastica as ea
 import matplotlib.pyplot as plt
-
 import numpy as np
-
 import os
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t
-
-from sopht_simulator import (
-    CosseratRodFlowInteraction,
-    CosseratRodElementCentricForcingGrid,
-    FlowForces,
-    UnboundedFlowSimulator2D,
-    lab_cmap,
-)
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def flow_past_rod_case(
@@ -50,7 +27,9 @@ def flow_past_rod_case(
     base_length = 1.0
     x_range = 6.0 * base_length
     # =================PYELASTICA STUFF BEGIN=====================
-    class FlowPastRodSimulator(BaseSystemCollection, Constraints, Forcing, Damping):
+    class FlowPastRodSimulator(
+        ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
+    ):
         pass
 
     flow_past_sim = FlowPastRodSimulator()
@@ -81,7 +60,7 @@ def flow_past_rod_case(
     print(f"youngs modulus:{youngs_modulus}")
     print(f"gravitational acceleration:{gravitational_acc}")
 
-    flow_past_rod = CosseratRod.straight_rod(
+    flow_past_rod = ea.CosseratRod.straight_rod(
         n_elem,
         start,
         direction,
@@ -96,18 +75,18 @@ def flow_past_rod_case(
     tip_y_start = flow_past_rod.position_collection[1, -1]
     flow_past_sim.append(flow_past_rod)
     flow_past_sim.constrain(flow_past_rod).using(
-        OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
+        ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
     )
     # Add gravitational forces
     flow_past_sim.add_forcing_to(flow_past_rod).using(
-        GravityForces, acc_gravity=np.array([gravitational_acc, 0.0, 0.0])
+        ea.GravityForces, acc_gravity=np.array([gravitational_acc, 0.0, 0.0])
     )
     # add damping
     dl = base_length / n_elem
     rod_dt = 0.01 * dl
     damping_constant = 0.5e-3
     flow_past_sim.dampen(flow_past_rod).using(
-        AnalyticalLinearDamper,
+        ea.AnalyticalLinearDamper,
         damping_constant=damping_constant,
         time_step=rod_dt,
     )
@@ -120,7 +99,7 @@ def flow_past_rod_case(
     # Flow parameters
     # Re = U * L / nu
     nu = base_length * U_free_stream / reynolds
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -142,7 +121,7 @@ def flow_past_rod_case(
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
     virtual_boundary_damping_coeff = real_t(-2e1 * dl)
-    cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
+    cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=flow_past_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -150,12 +129,12 @@ def flow_past_rod_case(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
-        forcing_grid_cls=CosseratRodElementCentricForcingGrid,
+        forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
     )
     flow_past_sim.add_forcing_to(flow_past_rod).using(
-        FlowForces,
+        sps.FlowForces,
         cosserat_rod_flow_interactor,
     )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
@@ -163,8 +142,10 @@ def flow_past_rod_case(
     # =================TIMESTEPPING====================
 
     flow_past_sim.finalize()
-    timestepper = PositionVerlet()
-    do_step, stages_and_updates = extend_stepper_interface(timestepper, flow_past_sim)
+    timestepper = ea.PositionVerlet()
+    do_step, stages_and_updates = ea.extend_stepper_interface(
+        timestepper, flow_past_sim
+    )
     time = 0.0
     foto_timer = 0.0
     timescale = base_length / U_free_stream
@@ -181,7 +162,7 @@ def flow_past_rod_case(
     tip_y = []
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while time < final_time:
 
@@ -195,7 +176,7 @@ def flow_past_rod_case(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
@@ -204,7 +185,7 @@ def flow_past_rod_case(
                 linewidth=3,
                 color="k",
             )
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             print(

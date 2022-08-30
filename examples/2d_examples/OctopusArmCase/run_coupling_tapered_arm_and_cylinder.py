@@ -1,18 +1,9 @@
 import numpy as np
 import os
 from sopht.utils.precision import get_real_t
-from sopht_simulator import (
-    CosseratRodFlowInteraction,
-    CosseratRodEdgeForcingGrid,
-    FlowForces,
-    CircularCylinderForcingGrid,
-    RigidBodyFlowInteraction,
-    UnboundedFlowSimulator2D,
-    lab_cmap,
-)
 from set_environment_tapered_arm_cylinder import Environment
 from arm_functions import SigmoidActivationLongitudinalMuscles, LocalActivation
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def tapered_arm_and_cylinder_flow_coupling(
@@ -78,7 +69,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     # Flow parameters
     vel_scale = base_length / period
     nu = base_length * vel_scale / Re
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -92,7 +83,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     virtual_boundary_stiffness_coeff = real_t(-2e4 * dl)
     virtual_boundary_damping_coeff = real_t(-2e1 * dl)
-    cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
+    cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=env.shearable_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -102,15 +93,15 @@ def tapered_arm_and_cylinder_flow_coupling(
         grid_dim=2,
         real_t=real_t,
         num_threads=num_threads,
-        forcing_grid_cls=CosseratRodEdgeForcingGrid,
+        forcing_grid_cls=sps.CosseratRodEdgeForcingGrid,
     )
     if rod_coupling_type == "two_way":
         env.simulator.add_forcing_to(env.shearable_rod).using(
-            FlowForces,
+            sps.FlowForces,
             cosserat_rod_flow_interactor,
         )
     cyl_num_forcing_points = 30
-    cylinder_flow_interactor = RigidBodyFlowInteraction(
+    cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
         num_forcing_points=cyl_num_forcing_points,
         rigid_body=env.cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -120,11 +111,11 @@ def tapered_arm_and_cylinder_flow_coupling(
         dx=flow_sim.dx,
         grid_dim=2,
         real_t=real_t,
-        forcing_grid_cls=CircularCylinderForcingGrid,
+        forcing_grid_cls=sps.CircularCylinderForcingGrid,
     )
     if rigid_body_coupling_type == "two_way":
         env.simulator.add_forcing_to(env.cylinder).using(
-            FlowForces,
+            sps.FlowForces,
             cylinder_flow_interactor,
         )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
@@ -140,7 +131,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     rod_time_steps = 1
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while time < final_time:
 
@@ -154,7 +145,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             element_position = 0.5 * (
@@ -190,7 +181,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 s=10,
                 color="k",
             )
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             print(

@@ -5,8 +5,7 @@ from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t
-from sopht_simulator import UnboundedFlowSimulator2D, lab_cmap
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
@@ -30,7 +29,7 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     # to start with max circulation = 1
     gamma = real_t(4 * np.pi * nu * t_start)
 
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -78,7 +77,7 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     foto_timer_limit = (t_end - t_start) / 25
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while t < t_end:
 
@@ -92,10 +91,10 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
                 flow_sim.vorticity_field,
                 levels=np.linspace(0, 1, 50),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
             print(

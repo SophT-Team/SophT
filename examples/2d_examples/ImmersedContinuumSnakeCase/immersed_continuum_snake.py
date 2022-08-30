@@ -1,30 +1,8 @@
-from elastica import (
-    AnalyticalLinearDamper,
-    CosseratRod,
-    MuscleTorques,
-    PositionVerlet,
-    extend_stepper_interface,
-    BaseSystemCollection,
-    Forcing,
-    Damping,
-)
-
-import matplotlib.pyplot as plt
-
+import elastica as ea
 import numpy as np
-
 import os
-
 from sopht.utils.precision import get_real_t
-
-from sopht_simulator import (
-    CosseratRodFlowInteraction,
-    CosseratRodElementCentricForcingGrid,
-    FlowForces,
-    UnboundedFlowSimulator2D,
-    lab_cmap,
-)
-from sopht_simulator.plot_utils import create_figure_and_axes, save_and_clear_fig
+import sopht_simulator as sps
 
 
 def immersed_continuum_snake_case(
@@ -36,7 +14,9 @@ def immersed_continuum_snake_case(
     precision="single",
 ):
     # =================PYELASTICA STUFF BEGIN=====================
-    class ImmersedContinuumSnakeSimulator(BaseSystemCollection, Forcing, Damping):
+    class ImmersedContinuumSnakeSimulator(
+        ea.BaseSystemCollection, ea.Forcing, ea.Damping
+    ):
         pass
 
     snake_sim = ImmersedContinuumSnakeSimulator()
@@ -52,7 +32,7 @@ def immersed_continuum_snake_case(
     poisson_ratio = 0.5
     shear_modulus = E / (poisson_ratio + 1.0)
 
-    snake_rod = CosseratRod.straight_rod(
+    snake_rod = ea.CosseratRod.straight_rod(
         n_elem,
         start,
         direction,
@@ -72,7 +52,7 @@ def immersed_continuum_snake_case(
     # Head and tail control points are zero.
     control_points = np.hstack((0, spline_coeff, 0))
     snake_sim.add_forcing_to(snake_rod).using(
-        MuscleTorques,
+        ea.MuscleTorques,
         base_length=base_length,
         b_coeff=control_points,
         period=period,
@@ -89,7 +69,7 @@ def immersed_continuum_snake_case(
     damping_constant = 1.0
     rod_dt = 0.5e-4 * period
     snake_sim.dampen(snake_rod).using(
-        AnalyticalLinearDamper,
+        ea.AnalyticalLinearDamper,
         damping_constant=damping_constant,
         time_step=rod_dt,
     )
@@ -106,7 +86,7 @@ def immersed_continuum_snake_case(
     # Flow parameters
     vel_scale = base_length / period
     nu = base_length * vel_scale / Re
-    flow_sim = UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -120,7 +100,7 @@ def immersed_continuum_snake_case(
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     virtual_boundary_stiffness_coeff = real_t(-2e4 * dl)
     virtual_boundary_damping_coeff = real_t(-2e1 * dl)
-    cosserat_rod_flow_interactor = CosseratRodFlowInteraction(
+    cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=snake_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -128,13 +108,13 @@ def immersed_continuum_snake_case(
         virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
         dx=flow_sim.dx,
         grid_dim=2,
-        forcing_grid_cls=CosseratRodElementCentricForcingGrid,
+        forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
     )
     if coupling_type == "two_way":
         snake_sim.add_forcing_to(snake_rod).using(
-            FlowForces,
+            sps.FlowForces,
             cosserat_rod_flow_interactor,
         )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
@@ -142,15 +122,15 @@ def immersed_continuum_snake_case(
     # =================TIMESTEPPING====================
 
     snake_sim.finalize()
-    timestepper = PositionVerlet()
-    do_step, stages_and_updates = extend_stepper_interface(timestepper, snake_sim)
+    timestepper = ea.PositionVerlet()
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, snake_sim)
     final_time = period * final_time_by_period
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = period / 10
 
     # create fig for plotting flow fields
-    fig, ax = create_figure_and_axes()
+    fig, ax = sps.create_figure_and_axes()
 
     while time < final_time:
 
@@ -164,7 +144,7 @@ def immersed_continuum_snake_case(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
-                cmap=lab_cmap,
+                cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
@@ -173,7 +153,7 @@ def immersed_continuum_snake_case(
                 linewidth=3,
                 color="k",
             )
-            save_and_clear_fig(
+            sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             print(
