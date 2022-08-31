@@ -91,6 +91,11 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    def get_minimum_lagrangian_grid_spacing(self):
+        """Get the minimum Lagrangian grid spacing"""
+        # ds = radius * dtheta
+        return self.cylinder.radius * (2.0 * np.pi / self.num_lag_nodes)
+
 
 class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     """Class for forcing grid of a 2D square shaped cylinder with cross-section
@@ -147,3 +152,9 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     def update_local_frame_lag_grid_position_field(self, time=0.0):
         """Update the local frame forcing grid positions"""
         # TODO if using rotating square cylinder this needs to be implemented!
+
+    def get_minimum_lagrangian_grid_spacing(self):
+        """Get the minimum Lagrangian grid spacing"""
+        num_lag_nodes_per_side = self.num_lag_nodes // 4
+        side_length = 2 * self.cylinder.radius
+        return side_length / num_lag_nodes_per_side
