@@ -1,8 +1,7 @@
 __all__ = ["ImmersedBodyFlowInteraction"]
+import logging
 import numpy as np
-
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
-
 from sopht_simulator.immersed_body.immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
@@ -38,7 +37,26 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         # this class should only "view" the flow velocity
         self.eul_grid_velocity_field.flags.writeable = False
 
-        # initialising super class
+        # check if Lagrangian grid is finer than flow Eulerian grid
+        log = logging.getLogger()
+        lag_grid_dx = self.forcing_grid.get_minimum_lagrangian_grid_spacing()
+        if (
+            lag_grid_dx < 2 * dx
+        ):  # 2 here since the support of delta function is 2 grid points
+            grid_type = type(self.forcing_grid).__name__
+            log.warning(
+                "==========================================================\n"
+                f"For {grid_type}:\n"
+                f"Eulerian grid spacing (dx): {dx}\n"
+                f"Lagrangian grid spacing: {lag_grid_dx} < 2 * dx\n"
+                "The Lagrangian grid of the body is finer than the Eulerian "
+                "\ngrid of the flow. This can give rise to spurious forces "
+                "\non the body! Please make the Lagrangian grid coarser or"
+                "\nmake the Eulerian grid finer."
+                "\n=========================================================="
+            )
+
+            # initialising super class
         super().__init__(
             virtual_boundary_stiffness_coeff,
             virtual_boundary_damping_coeff,

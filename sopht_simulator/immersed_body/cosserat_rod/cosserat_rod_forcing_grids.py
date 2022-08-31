@@ -76,6 +76,11 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
+    def get_minimum_lagrangian_grid_spacing(self):
+        """Get the minimum Lagrangian grid spacing"""
+        # estimated distance between consecutive elements
+        return np.amin(self.cosserat_rod.rest_lengths)
+
 
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
@@ -117,6 +122,11 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
 
         # torque from grid forcing (don't modify since set = 0 at initialisation)
         # because no torques acting on element centers
+
+    def get_minimum_lagrangian_grid_spacing(self):
+        """Get the minimum Lagrangian grid spacing"""
+        # estimated distance between consecutive elements
+        return np.amin(self.cosserat_rod.rest_lengths)
 
 
 # Forcing grid implementation for tapered rod
@@ -269,3 +279,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.director_collection,
             body_flow_torques,
         )
+
+    def get_minimum_lagrangian_grid_spacing(self):
+        """Get the minimum Lagrangian grid spacing"""
+        return np.amin([self.cosserat_rod.radius, self.cosserat_rod.rest_lengths])
