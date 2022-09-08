@@ -10,6 +10,8 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     final_time,
     grid_size,
     rod_start_incline_angle,
+    coupling_stiffness=-1.25e2,
+    coupling_damping=-5e-2,
     rod_coupling_type="two_way",
     rigid_body_coupling_type="one_way",
     num_threads=4,
@@ -23,13 +25,13 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
 
     pendulum_sim = ImmersedFlexiblePendulumSimulator()
     # setting up test params
-    n_elem = 30
+    n_elem = 40
     start = np.array([0.5, 0.7, 0.0])
     direction = np.array(
         [np.sin(rod_start_incline_angle), -np.cos(rod_start_incline_angle), 0.0]
     )
     normal = np.array([0.0, 0.0, 1.0])
-    base_length = 0.25
+    rod_length = 0.25
     base_radius = 0.0025
     density = 1e3
     youngs_modulus = 1e6
@@ -40,7 +42,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         start,
         direction,
         normal,
-        base_length,
+        rod_length,
         base_radius,
         density,
         0.0,  # internal damping constant, deprecated in v0.3.0
@@ -57,7 +59,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         ea.GravityForces, acc_gravity=np.array([0.0, gravitational_acc, 0.0])
     )
     # add damping
-    dl = base_length / n_elem
+    dl = rod_length / n_elem
     rod_dt = 0.005 * dl
     damping_constant = 1e-2
     pendulum_sim.dampen(pendulum_rod).using(
@@ -72,11 +74,11 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     cyl_start = np.array([X_cm, Y_cm, 0.0])
     direction = np.array([0.0, 0.0, 1.0])
     normal = np.array([1.0, 0.0, 0.0])
-    base_length = 1.0
+    cyl_length = 1.0
     cyl_radius = 0.05
     cylinder_density = 1e-3 * density
     cylinder = ea.Cylinder(
-        cyl_start, direction, normal, base_length, cyl_radius, cylinder_density
+        cyl_start, direction, normal, cyl_length, cyl_radius, cylinder_density
     )
     pendulum_sim.append(cylinder)
     # =================PYELASTICA STUFF END=====================
@@ -89,9 +91,9 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     CFL = 0.1
     x_range = 1.0
     # Flow parameters
-    vel_scale = np.sqrt(np.fabs(gravitational_acc) * base_length)
+    vel_scale = np.sqrt(np.fabs(gravitational_acc) * rod_length)
     Re = 500
-    nu = base_length * vel_scale / Re
+    nu = rod_length * vel_scale / Re
     flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
@@ -104,14 +106,13 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     # ==================FLOW SETUP END=========================
 
     # ==================FLOW-BODY COMMUNICATORS SETUP START======
-    virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
-    virtual_boundary_damping_coeff = real_t(-2e1 * dl)
+    flow_body_interactors = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=pendulum_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
@@ -123,14 +124,16 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
             sps.FlowForces,
             cosserat_rod_flow_interactor,
         )
-    cyl_num_forcing_points = 30
+    flow_body_interactors.append(cosserat_rod_flow_interactor)
+    cyl_circumference = 2 * np.pi * cyl_radius
+    cyl_num_forcing_points = int(cyl_circumference / rod_length * n_elem)
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
         num_forcing_points=cyl_num_forcing_points,
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
@@ -141,6 +144,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
             sps.FlowForces,
             cylinder_flow_interactor,
         )
+    flow_body_interactors.append(cylinder_flow_interactor)
     # ==================FLOW-BODY COMMUNICATORS SETUP END======
 
     # =================TIMESTEPPING====================
@@ -173,27 +177,21 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
                 cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
-            ax.plot(
-                pendulum_rod.position_collection[0],
-                pendulum_rod.position_collection[1],
-                linewidth=3,
-                color="k",
-            )
-            ax.scatter(
-                cylinder_flow_interactor.forcing_grid.position_field[0],
-                cylinder_flow_interactor.forcing_grid.position_field[1],
-                s=10,
-                color="k",
-            )
+            for flow_body_interactor in flow_body_interactors:
+                ax.scatter(
+                    flow_body_interactor.forcing_grid.position_field[0],
+                    flow_body_interactor.forcing_grid.position_field[1],
+                    s=8,
+                    color="k",
+                )
             sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
-            lag_grid_dev = np.linalg.norm(
-                cylinder_flow_interactor.lag_grid_position_mismatch_field
-            ) / np.sqrt(cylinder_flow_interactor.forcing_grid.num_lag_nodes)
-            +np.linalg.norm(
-                cosserat_rod_flow_interactor.lag_grid_position_mismatch_field
-            ) / np.sqrt(cosserat_rod_flow_interactor.forcing_grid.num_lag_nodes)
+            lag_grid_dev = 0.0
+            for flow_body_interactor in flow_body_interactors:
+                lag_grid_dev += np.linalg.norm(
+                    flow_body_interactor.lag_grid_position_mismatch_field
+                ) / np.sqrt(flow_body_interactor.forcing_grid.num_lag_nodes)
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
@@ -210,7 +208,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
             )
 
         # compute timestep
-        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=1.0)
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
         # flow_dt = rod_dt
 
         # timestep the rod, through the flow timestep
@@ -221,13 +219,13 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
             rod_time = do_step(
                 timestepper, stages_and_updates, pendulum_sim, rod_time, local_rod_dt
             )
-            # timestep the cosserat_rod_flow_interactor
-            cosserat_rod_flow_interactor.time_step(dt=local_rod_dt)
-            cylinder_flow_interactor.time_step(dt=local_rod_dt)
+            # timestep the body_flow_interactors
+            for flow_body_interactor in flow_body_interactors:
+                flow_body_interactor.time_step(dt=local_rod_dt)
 
         # evaluate feedback/interaction between flow and bodies
-        cosserat_rod_flow_interactor()
-        cylinder_flow_interactor()
+        for flow_body_interactor in flow_body_interactors:
+            flow_body_interactor()
 
         # timestep the flow
         flow_sim.time_step(dt=flow_dt)
