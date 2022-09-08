@@ -20,6 +20,8 @@ def flow_past_rod_case(
     mass_ratio=0.5714285714285715,
     cyl_diameter_to_rod_length=(0.1 / 0.35),
     beam_aspect_ratio=(0.2 / 3.5),
+    coupling_stiffness=-6.25e2,
+    coupling_damping=-0.25,
     num_threads=4,
     flow_precision="single",
     save_diagnostic=False,
@@ -54,11 +56,10 @@ def flow_past_rod_case(
     # Kb = E I / (rho_f U^2 L^3)
     # for converting plate to rod stiffness
     # see Gilmanov et al. 2015
-    poisson_ratio_plate = 0.4
-    poisson_ratio_correction_factor = 1.0 - poisson_ratio_plate**2
+    # poisson_ratio_plate = 0.4
+    # poisson_ratio_correction_factor = 1.0 - poisson_ratio_plate**2
     # TODO after convergence see if we really need it?
-    poisson_ratio_correction_factor = 1.0
-    nondim_bending_stiffness /= poisson_ratio_correction_factor
+    # nondim_bending_stiffness /= poisson_ratio_correction_factor
     youngs_modulus = (
         nondim_bending_stiffness
         * (rho_f * U_free_stream**2 * base_length**3)
@@ -176,14 +177,12 @@ def flow_past_rod_case(
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     flow_body_interactors = []
-    virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
-    virtual_boundary_damping_coeff = real_t(-2e1 * dl)
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=flow_past_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CosseratRodEdgeForcingGrid,
@@ -201,8 +200,8 @@ def flow_past_rod_case(
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
@@ -213,8 +212,8 @@ def flow_past_rod_case(
         cosserat_rod=top_wall_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CosseratRodNodalForcingGrid,
@@ -226,8 +225,8 @@ def flow_past_rod_case(
         cosserat_rod=bottom_wall_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CosseratRodNodalForcingGrid,
@@ -310,7 +309,7 @@ def flow_past_rod_case(
                 (flow_past_rod.position_collection[:2, -1] - tip_start_position)
                 / cyl_diameter
             )
-            print(tip_position[-1])
+            # print(tip_position[-1])
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)

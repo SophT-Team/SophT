@@ -10,6 +10,8 @@ def lid_driven_cavity_case(
     grid_size,
     Re=100,
     num_threads=4,
+    coupling_stiffness=-7.5e2,
+    coupling_damping=-3e-1,
     precision="single",
     save_diagnostic=False,
 ):
@@ -36,8 +38,9 @@ def lid_driven_cavity_case(
     )
 
     # Initialize virtual forcing grid for ldc boundaries
+    # TODO refactor as 4 fixed osserat rods
     num_ldc_sides = 4
-    num_lag_nodes_per_side = 40
+    num_lag_nodes_per_side = 100
     num_lag_nodes = num_ldc_sides * num_lag_nodes_per_side
     ds = ldc_side_length / num_lag_nodes_per_side
     lag_grid_position_field = np.zeros((2, num_lag_nodes), dtype=real_t)
@@ -78,11 +81,9 @@ def lid_driven_cavity_case(
     )
 
     # Virtual boundary forcing kernels
-    virtual_boundary_stiffness_coeff = real_t(-5e4 * ds)
-    virtual_boundary_damping_coeff = real_t(-2e1 * ds)
     virtual_boundary_forcing = VirtualBoundaryForcing(
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         grid_dim=2,
         dx=flow_sim.dx,
         num_lag_nodes=num_lag_nodes,

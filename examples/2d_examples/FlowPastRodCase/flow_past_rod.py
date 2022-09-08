@@ -18,6 +18,8 @@ def flow_past_rod_case(
     mass_ratio=1.5,
     froude=0.5,
     rod_start_incline_angle=0.0,
+    coupling_stiffness=-1.25e3,
+    coupling_damping=-5e-1,
     num_threads=4,
     precision="single",
 ):
@@ -34,7 +36,7 @@ def flow_past_rod_case(
 
     flow_past_sim = FlowPastRodSimulator()
     # setting up test params
-    n_elem = 40
+    n_elem = 64
     start = np.array([base_length, 0.5 * x_range * grid_size_y / grid_size_x, 0.0])
     direction = np.array(
         [np.cos(rod_start_incline_angle), np.sin(rod_start_incline_angle), 0.0]
@@ -119,14 +121,12 @@ def flow_past_rod_case(
     # ==================FLOW SETUP END=========================
 
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    virtual_boundary_stiffness_coeff = real_t(-5e4 * dl)
-    virtual_boundary_damping_coeff = real_t(-2e1 * dl)
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=flow_past_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,

@@ -10,6 +10,8 @@ def immersed_continuum_snake_case(
     grid_size,
     Re=10,
     coupling_type="one_way",
+    coupling_stiffness=-4e2,
+    coupling_damping=-4e-1,
     num_threads=4,
     precision="single",
 ):
@@ -21,7 +23,7 @@ def immersed_continuum_snake_case(
 
     snake_sim = ImmersedContinuumSnakeSimulator()
     # setting up test params
-    n_elem = 50
+    n_elem = 40
     base_length = 1.0
     start = np.array([base_length, base_length, 0.0])
     direction = np.array([1.0, 0.0, 0.0])
@@ -98,14 +100,12 @@ def immersed_continuum_snake_case(
     # ==================FLOW SETUP END=========================
 
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    virtual_boundary_stiffness_coeff = real_t(-2e4 * dl)
-    virtual_boundary_damping_coeff = real_t(-2e1 * dl)
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=snake_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,

@@ -12,6 +12,8 @@ import sopht_simulator as sps
 def flow_past_cylinder_boundary_forcing_case(
     grid_size_x,
     grid_size_y,
+    coupling_stiffness=-1.5e2,
+    coupling_damping=-6e-2,
     num_threads=4,
     precision="single",
     save_diagnostic=False,
@@ -64,17 +66,13 @@ def flow_past_cylinder_boundary_forcing_case(
 
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
     num_lag_nodes = 60
-    dtheta = 2.0 * np.pi / num_lag_nodes
-    ds = cyl_radius * real_t(dtheta)
-    virtual_boundary_stiffness_coeff = real_t(-5e4 * ds)
-    virtual_boundary_damping_coeff = real_t(-2e1 * ds)
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
         num_forcing_points=num_lag_nodes,
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff=virtual_boundary_damping_coeff,
+        virtual_boundary_stiffness_coeff=coupling_stiffness,
+        virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
@@ -125,7 +123,7 @@ def flow_past_cylinder_boundary_forcing_case(
             )
             lag_grid_dev = np.linalg.norm(
                 cylinder_flow_interactor.lag_grid_position_mismatch_field
-            ) / np.sqrt(num_lag_nodes)
+            ) / np.sqrt(cylinder_flow_interactor.forcing_grid.num_lag_nodes)
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
@@ -142,7 +140,7 @@ def flow_past_cylinder_boundary_forcing_case(
                 np.linalg.norm(
                     cylinder_flow_interactor.lag_grid_position_mismatch_field
                 )
-                / np.sqrt(num_lag_nodes)
+                / np.sqrt(cylinder_flow_interactor.forcing_grid.num_lag_nodes)
             )
 
             # calculate drag
