@@ -37,26 +37,42 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         # this class should only "view" the flow velocity
         self.eul_grid_velocity_field.flags.writeable = False
 
-        # check if Lagrangian grid is finer than flow Eulerian grid
+        # check relative resolutions of the Lagrangian and Eulerian grids
         log = logging.getLogger()
         lag_grid_dx = self.forcing_grid.get_minimum_lagrangian_grid_spacing()
+        grid_type = type(self.forcing_grid).__name__
+        log.warning(
+            "==========================================================\n"
+            f"For {grid_type}:"
+        )
         if (
-            lag_grid_dx < 2 * dx
+            lag_grid_dx > 2 * dx
         ):  # 2 here since the support of delta function is 2 grid points
-            grid_type = type(self.forcing_grid).__name__
+            log.warning(
+                f"Eulerian grid spacing (dx): {dx}"
+                f"\nLagrangian grid spacing: {lag_grid_dx} > 2 * dx"
+                "\nThe Lagrangian grid of the body is too coarse relative to"
+                "\nthe Eulerian grid of the flow, which can lead to unexpected"
+                "\nconvergence. Please make the Lagrangian grid finer."
+            )
+        elif lag_grid_dx < 0.5 * dx:  # reverse case of the above condition
             log.warning(
                 "==========================================================\n"
                 f"For {grid_type}:\n"
-                f"Eulerian grid spacing (dx): {dx}\n"
-                f"Lagrangian grid spacing: {lag_grid_dx} < 2 * dx\n"
-                "The Lagrangian grid of the body is finer than the Eulerian "
-                "\ngrid of the flow. This can give rise to spurious forces "
-                "\non the body! Please make the Lagrangian grid coarser or"
-                "\nmake the Eulerian grid finer."
-                "\n=========================================================="
+                f"Eulerian grid spacing (dx): {dx}"
+                f"\nLagrangian grid spacing: {lag_grid_dx} < 0.5 * dx"
+                "\nThe Lagrangian grid of the body is too fine relative to"
+                "\nthe Eulerian grid of the flow, which corresponds to redundant"
+                "\nforcing points. Please make the Lagrangian grid coarser."
             )
+        else:
+            log.warning(
+                "Lagrangian grid is resolved almost the same as the Eulerian"
+                "\ngrid of the flow."
+            )
+        log.warning("==========================================================")
 
-            # initialising super class
+        # initialising super class
         super().__init__(
             virtual_boundary_stiffness_coeff,
             virtual_boundary_damping_coeff,
