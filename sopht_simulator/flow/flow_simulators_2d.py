@@ -223,6 +223,6 @@ class UnboundedFlowSimulator2D:
             self.CFL
             * self.dx
             / (np.amax(velocity_mag_field) + get_test_tol(precision)),
-            self.dx**2 / 4 / self.kinematic_viscosity,
+            0.9 * self.dx**2 / 4 / self.kinematic_viscosity,
         )
         return dt * dt_prefac
