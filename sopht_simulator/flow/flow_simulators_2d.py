@@ -1,4 +1,3 @@
-__all__ = ["UnboundedFlowSimulator2D"]
 import logging
 
 import numpy as np
@@ -44,6 +43,7 @@ class UnboundedFlowSimulator2D:
         -----
         Currently only supports Euler forward timesteps :(
         """
+        self.grid_dim = 2
         self.grid_size = grid_size
         self.x_range = x_range
         self.real_t = real_t
@@ -51,12 +51,16 @@ class UnboundedFlowSimulator2D:
         self.flow_type = flow_type
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
+        supported_flow_types = [
+            "passive_scalar",
+            "navier_stokes",
+            "navier_stokes_with_forcing",
+        ]
+        if self.flow_type not in supported_flow_types:
+            raise ValueError("Invalid flow type given")
         self.init_domain()
         self.init_fields()
-        if (
-            self.flow_type == "navier_stokes"
-            or self.flow_type == "navier_stokes_with_forcing"
-        ):
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
             if "penalty_zone_width" in kwargs:
                 self.penalty_zone_width = kwargs.get("penalty_zone_width")
             else:
@@ -66,11 +70,10 @@ class UnboundedFlowSimulator2D:
 
     def init_domain(self):
         """Initialize the domain i.e. grid coordinates. etc."""
-        grid_size_y = self.grid_size[0]
-        grid_size_x = self.grid_size[1]
+        grid_size_y, grid_size_x = self.grid_size
         self.y_range = self.x_range * grid_size_y / grid_size_x
         self.dx = self.real_t(self.x_range / grid_size_x)
-        eul_grid_shift = self.dx / 2
+        eul_grid_shift = self.dx / 2.0
         x = np.linspace(
             eul_grid_shift, self.x_range - eul_grid_shift, grid_size_x
         ).astype(self.real_t)
@@ -81,7 +84,7 @@ class UnboundedFlowSimulator2D:
         log = logging.getLogger()
         log.warning(
             "==============================================="
-            "\n2D flow domain initialized with:"
+            f"\n{self.grid_dim}D flow domain initialized with:"
             f"\nX axis from 0.0 to {self.x_range}"
             f"\nY axis from 0.0 to {self.y_range}"
             "\nPlease initialize bodies within these bounds!"
@@ -92,14 +95,13 @@ class UnboundedFlowSimulator2D:
         """Initialize the necessary field arrays, i.e. vorticity, velocity, etc."""
         # Initialize flow field
         self.primary_scalar_field = np.zeros_like(self.x_grid)
-        self.velocity_field = np.zeros((2, *self.grid_size), dtype=self.real_t)
+        self.velocity_field = np.zeros(
+            (self.grid_dim, *self.grid_size), dtype=self.real_t
+        )
         # we use the same buffer for advection, diffusion and velocity recovery
         self.buffer_scalar_field = np.zeros_like(self.primary_scalar_field)
 
-        if (
-            self.flow_type == "navier_stokes"
-            or self.flow_type == "navier_stokes_with_forcing"
-        ):
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
             self.vorticity_field = self.primary_scalar_field.view()
             self.stream_func_field = np.zeros_like(self.vorticity_field)
         if self.flow_type == "navier_stokes_with_forcing":
@@ -121,18 +123,16 @@ class UnboundedFlowSimulator2D:
             )
         )
 
-        if (
-            self.flow_type == "navier_stokes"
-            or self.flow_type == "navier_stokes_with_forcing"
-        ):
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
+            grid_size_y, grid_size_x = self.grid_size
             self.unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW2D(
-                grid_size_y=self.grid_size[0],
-                grid_size_x=self.grid_size[1],
+                grid_size_y=grid_size_y,
+                grid_size_x=grid_size_x,
                 x_range=self.x_range,
                 real_t=self.real_t,
                 num_threads=self.num_threads,
             )
-            self.outplane_field_curl = gen_outplane_field_curl_pyst_kernel_2d(
+            self.curl = gen_outplane_field_curl_pyst_kernel_2d(
                 real_t=self.real_t,
                 num_threads=self.num_threads,
                 fixed_grid_size=self.grid_size,
@@ -193,7 +193,7 @@ class UnboundedFlowSimulator2D:
             solution_field=self.stream_func_field,
             rhs_field=self.vorticity_field,
         )
-        self.outplane_field_curl(
+        self.curl(
             curl=self.velocity_field,
             field=self.stream_func_field,
             prefactor=self.real_t(0.5 / self.dx),
@@ -210,19 +210,19 @@ class UnboundedFlowSimulator2D:
             prefactor=self.real_t(dt / (2 * self.dx)),
         )
         self.navier_stokes_timestep(dt=dt)
-        self.set_field(vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0, 0.0])
+        self.set_field(
+            vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim
+        )
 
     def compute_stable_timestep(self, dt_prefac=1, precision="single"):
         """Compute stable timestep based on advection and diffusion limits."""
         # This may need a numba or pystencil version
         velocity_mag_field = self.buffer_scalar_field.view()
-        velocity_mag_field[...] = np.sqrt(
-            self.velocity_field[0] ** 2 + self.velocity_field[1] ** 2
-        )
+        velocity_mag_field[...] = np.sum(np.fabs(self.velocity_field), axis=0)
         dt = min(
             self.CFL
             * self.dx
             / (np.amax(velocity_mag_field) + get_test_tol(precision)),
-            0.9 * self.dx**2 / 4 / self.kinematic_viscosity,
+            0.9 * self.dx**2 / (2 * self.grid_dim) / self.kinematic_viscosity,
         )
         return dt * dt_prefac
