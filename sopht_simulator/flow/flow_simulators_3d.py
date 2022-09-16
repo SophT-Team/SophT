@@ -97,7 +97,7 @@ class UnboundedFlowSimulator3D:
             f"\n{self.grid_dim}D flow domain initialized with:"
             f"\nX axis from 0.0 to {self.x_range}"
             f"\nY axis from 0.0 to {self.y_range}"
-            f"\nY axis from 0.0 to {self.z_range}"
+            f"\nZ axis from 0.0 to {self.z_range}"
             "\nPlease initialize bodies within these bounds!"
             "\n==============================================="
         )
@@ -254,7 +254,7 @@ class UnboundedFlowSimulator3D:
     def compute_velocity_from_vorticity(
         self,
     ):
-        self.penalise_field_towards_boundary(field=self.vorticity_field)
+        self.penalise_field_towards_boundary(vector_field=self.vorticity_field)
         self.unbounded_poisson_solver.vector_field_solve(
             solution_vector_field=self.stream_func_field,
             rhs_vector_field=self.vorticity_field,
@@ -290,11 +290,10 @@ class UnboundedFlowSimulator3D:
         """Compute stable timestep based on advection and diffusion limits."""
         # This may need a numba or pystencil version
         velocity_mag_field = self.buffer_scalar_field.view()
+        tol = get_test_tol(precision)
         velocity_mag_field[...] = np.sum(np.fabs(self.velocity_field), axis=0)
         dt = min(
-            self.CFL
-            * self.dx
-            / (np.amax(velocity_mag_field) + get_test_tol(precision)),
-            0.9 * self.dx**2 / (2 * self.grid_dim) / self.kinematic_viscosity,
+            self.CFL * self.dx / (np.amax(velocity_mag_field) + tol),
+            0.9 * self.dx**2 / (2 * self.grid_dim) / (self.kinematic_viscosity + tol),
         )
         return dt * dt_prefac
