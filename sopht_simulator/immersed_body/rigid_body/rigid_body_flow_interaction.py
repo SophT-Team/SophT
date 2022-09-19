@@ -37,7 +37,7 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         self.forcing_grid = forcing_grid_cls(
             grid_dim=grid_dim,
             num_forcing_points=num_forcing_points,
-            cylinder=rigid_body,
+            rigid_body=rigid_body,
             **kwaargs,
         )
 

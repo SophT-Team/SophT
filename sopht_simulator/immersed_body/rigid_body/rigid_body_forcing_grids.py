@@ -16,9 +16,9 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim, num_forcing_points, cylinder: type(Cylinder)):
+    def __init__(self, grid_dim, num_forcing_points, rigid_body: type(Cylinder)):
         self.num_lag_nodes = num_forcing_points
-        self.cylinder = cylinder
+        self.cylinder = rigid_body
         super().__init__(grid_dim)
         self.local_frame_position_field = np.zeros_like(self.position_field)
 
@@ -77,8 +77,8 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
 
     """
 
-    def __init__(self, grid_dim, num_forcing_points, cylinder: type(Cylinder)):
-        super().__init__(grid_dim, num_forcing_points, cylinder)
+    def __init__(self, grid_dim, num_forcing_points, rigid_body: type(Cylinder)):
+        super().__init__(grid_dim, num_forcing_points, rigid_body)
 
         dtheta = 2.0 * np.pi / self.num_lag_nodes
         theta = np.linspace(
@@ -103,8 +103,8 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
 
     """
 
-    def __init__(self, grid_dim, num_forcing_points, cylinder: type(Cylinder)):
-        super().__init__(grid_dim, num_forcing_points, cylinder)
+    def __init__(self, grid_dim, num_forcing_points, rigid_body: type(Cylinder)):
+        super().__init__(grid_dim, num_forcing_points, rigid_body)
 
         if self.num_lag_nodes % 4 != 0:
             raise ValueError(
