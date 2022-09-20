@@ -14,7 +14,6 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
 
     def __init__(
         self,
-        num_forcing_points,
         rigid_body: type(RigidBodyBase),
         eul_grid_forcing_field,
         eul_grid_velocity_field,
@@ -29,16 +28,15 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
-        **kwaargs,
+        **forcing_grid_kwargs,
     ):
         """Class initialiser."""
         self.body_flow_forces = np.zeros((3, 1))
         self.body_flow_torques = np.zeros((3, 1))
         self.forcing_grid = forcing_grid_cls(
             grid_dim=grid_dim,
-            num_forcing_points=num_forcing_points,
             rigid_body=rigid_body,
-            **kwaargs,
+            **forcing_grid_kwargs,
         )
 
         # initialising super class

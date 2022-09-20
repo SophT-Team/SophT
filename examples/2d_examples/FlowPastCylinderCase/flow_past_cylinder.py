@@ -67,7 +67,6 @@ def flow_past_cylinder_boundary_forcing_case(
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
     num_lag_nodes = 60
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
-        num_forcing_points=num_lag_nodes,
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -75,8 +74,9 @@ def flow_past_cylinder_boundary_forcing_case(
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
-        forcing_grid_cls=sps.CircularCylinderForcingGrid,
         real_t=real_t,
+        forcing_grid_cls=sps.CircularCylinderForcingGrid,
+        num_forcing_points=num_lag_nodes,
     )
     # ==================FLOW-BODY COMMUNICATOR SETUP END======
 

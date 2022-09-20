@@ -128,7 +128,6 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     cyl_circumference = 2 * np.pi * cyl_radius
     cyl_num_forcing_points = int(cyl_circumference / rod_length * n_elem)
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
-        num_forcing_points=cyl_num_forcing_points,
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -136,8 +135,9 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
         grid_dim=2,
-        forcing_grid_cls=sps.CircularCylinderForcingGrid,
         real_t=real_t,
+        forcing_grid_cls=sps.CircularCylinderForcingGrid,
+        num_forcing_points=cyl_num_forcing_points,
     )
     if rigid_body_coupling_type == "two_way":
         pendulum_sim.add_forcing_to(cylinder).using(

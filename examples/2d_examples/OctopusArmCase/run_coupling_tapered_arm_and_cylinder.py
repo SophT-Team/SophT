@@ -103,7 +103,6 @@ def tapered_arm_and_cylinder_flow_coupling(
         )
     cyl_num_forcing_points = 50
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
-        num_forcing_points=cyl_num_forcing_points,
         rigid_body=env.cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -113,6 +112,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         grid_dim=2,
         real_t=real_t,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
+        num_forcing_points=cyl_num_forcing_points,
     )
     flow_body_interactors.append(cylinder_flow_interactor)
     if rigid_body_coupling_type == "two_way":

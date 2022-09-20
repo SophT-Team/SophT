@@ -196,7 +196,6 @@ def flow_past_rod_case(
     )
     cyl_num_forcing_points = n_elem
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
-        num_forcing_points=cyl_num_forcing_points,
         rigid_body=cylinder,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
@@ -206,6 +205,7 @@ def flow_past_rod_case(
         grid_dim=2,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
         real_t=real_t,
+        num_forcing_points=cyl_num_forcing_points,
     )
     flow_body_interactors.append(cylinder_flow_interactor)
     top_wall_flow_interactor = sps.CosseratRodFlowInteraction(
