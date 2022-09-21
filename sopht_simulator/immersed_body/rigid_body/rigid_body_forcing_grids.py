@@ -19,16 +19,18 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
     def __init__(self, grid_dim, rigid_body: type(Cylinder)):
         self.cylinder = rigid_body
         super().__init__(grid_dim)
-        self.local_frame_position_field = np.zeros_like(self.position_field)
-
-    def update_local_frame_lag_grid_position_field(self, time=0.0):
-        """Update the local frame forcing grid positions"""
+        self.local_frame_relative_position_field = np.zeros_like(self.position_field)
+        self.global_frame_relative_position_field = np.zeros_like(self.position_field)
 
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the cylinder boundary"""
+        self.global_frame_relative_position_field[...] = np.dot(
+            self.cylinder.director_collection[: self.grid_dim, : self.grid_dim, 0].T,
+            self.local_frame_relative_position_field,
+        )
         self.position_field[...] = (
             self.cylinder.position_collection[: self.grid_dim]
-            + self.local_frame_position_field
+            + self.global_frame_relative_position_field
         )
 
     def compute_lag_grid_velocity_field(self):
@@ -41,11 +43,11 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
         )
         self.velocity_field[0] = (
             self.cylinder.velocity_collection[0]
-            - global_frame_omega_z * self.local_frame_position_field[1]
+            - global_frame_omega_z * self.global_frame_relative_position_field[1]
         )
         self.velocity_field[1] = (
             self.cylinder.velocity_collection[1]
-            + global_frame_omega_z * self.local_frame_position_field[0]
+            + global_frame_omega_z * self.global_frame_relative_position_field[0]
         )
 
     def transfer_forcing_from_grid_to_body(
@@ -65,8 +67,8 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
         body_flow_torques[self.grid_dim] = self.cylinder.director_collection[
             self.grid_dim, self.grid_dim, 0
         ] * np.sum(
-            -self.local_frame_position_field[0] * lag_grid_forcing_field[1]
-            + self.local_frame_position_field[1] * lag_grid_forcing_field[0]
+            -self.global_frame_relative_position_field[0] * lag_grid_forcing_field[1]
+            + self.global_frame_relative_position_field[1] * lag_grid_forcing_field[0]
         )
 
 
@@ -84,8 +86,12 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         theta = np.linspace(
             0 + dtheta / 2.0, 2.0 * np.pi - dtheta / 2.0, self.num_lag_nodes
         )
-        self.local_frame_position_field[0, :] = self.cylinder.radius * np.cos(theta)
-        self.local_frame_position_field[1, :] = self.cylinder.radius * np.sin(theta)
+        self.local_frame_relative_position_field[0, :] = self.cylinder.radius * np.cos(
+            theta
+        )
+        self.local_frame_relative_position_field[1, :] = self.cylinder.radius * np.sin(
+            theta
+        )
 
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
@@ -120,39 +126,37 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
             num_lag_nodes_per_side,
         )
         # top boundary
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             0, :num_lag_nodes_per_side
         ] = side_coordinates_range
-        self.local_frame_position_field[1, :num_lag_nodes_per_side] = 0.5 * side_length
+        self.local_frame_relative_position_field[1, :num_lag_nodes_per_side] = (
+            0.5 * side_length
+        )
         # right boundary
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             0, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
         ] = (0.5 * side_length)
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             1, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
         ] = side_coordinates_range
         # bottom boundary
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             0, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
         ] = side_coordinates_range
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             1, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
         ] = (-0.5 * side_length)
         # left boundary
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             0, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
         ] = (-0.5 * side_length)
-        self.local_frame_position_field[
+        self.local_frame_relative_position_field[
             1, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
         ] = side_coordinates_range
 
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
-
-    def update_local_frame_lag_grid_position_field(self, time=0.0):
-        """Update the local frame forcing grid positions"""
-        # TODO if using rotating square cylinder this needs to be implemented!
 
     def get_minimum_lagrangian_grid_spacing(self):
         """Get the minimum Lagrangian grid spacing"""
