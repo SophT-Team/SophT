@@ -286,6 +286,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
 
 from elastica._rotations import _get_rotation_matrix
+from elastica._linalg import _batch_matrix_transpose
 
 # Forcing grid implementation for tapered rod
 class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
@@ -312,10 +313,10 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Number of lagrangian grid points per element
         self.grid_density = grid_density
         # Compute the rotational angle for each surface point.
-        # Here surface point rotation corresponds to how much d1(normal) vector of element have to be
+        # Here surface point rotation angle corresponds to how much d1(normal) vector of element have to be
         # rotated to get a vector pointing from element center to lagrangian grid point.
         # TODO: maybe a better naming ?
-        self.surface_point_rotation = np.linspace(
+        self.surface_point_rotation_angle = np.linspace(
             0, 2 * np.pi, grid_density, endpoint=False
         )
 
@@ -329,6 +330,20 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.end_idx = np.zeros((grid_density), dtype=np.int)
         self.start_idx[:] = cosserat_rod.n_elems * np.arange(0, self.grid_density)
         self.end_idx[:] = cosserat_rod.n_elems * np.arange(1, self.grid_density + 1)
+
+        self.local_frame_surface_points = np.zeros((3, self.num_lag_nodes))
+        for i in range(self.grid_density):
+            self.local_frame_surface_points[
+                :, self.start_idx[i] : self.end_idx[i]
+            ] = np.array(
+                [
+                    np.cos(self.surface_point_rotation_angle[i]),
+                    np.sin(self.surface_point_rotation_angle[i]),
+                    0,
+                ]
+            ).reshape(
+                3, 1
+            )
 
         # self.element_forces_left_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
         # self.element_forces_right_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
@@ -349,16 +364,28 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.position_collection[..., 1:]
             + self.cosserat_rod.position_collection[..., :-1]
         )
-        rod_normal_direction = self.cosserat_rod.director_collection[0, :, :]
-        rod_tangent_direction = self.cosserat_rod.director_collection[2, :, :]
+        # rod_normal_direction = self.cosserat_rod.director_collection[0, :, :]
+        # rod_tangent_direction = self.cosserat_rod.director_collection[2, :, :]
+        #
+        # for i in range(self.grid_density):
+        #     self.moment_arm[
+        #         :, self.start_idx[i] : self.end_idx[i]
+        #     ] = self.cosserat_rod.radius * _batch_matvec(
+        #         _get_rotation_matrix(
+        #             self.surface_point_rotation_angle[i], rod_tangent_direction
+        #         ),
+        #         rod_normal_direction,
+        #     )
+
+        self.rod_director_collection_transpose = _batch_matrix_transpose(
+            self.cosserat_rod.director_collection
+        )
         for i in range(self.grid_density):
             self.moment_arm[
                 :, self.start_idx[i] : self.end_idx[i]
             ] = self.cosserat_rod.radius * _batch_matvec(
-                _get_rotation_matrix(
-                    self.surface_point_rotation[i], rod_tangent_direction
-                ),
-                rod_normal_direction,
+                self.rod_director_collection_transpose,
+                self.local_frame_surface_points[:, self.start_idx[i] : self.end_idx[i]],
             )
 
         # Surface positions are moment_arm + element center position
@@ -399,7 +426,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         )
         # Element angular velocity
         omega_collection = _batch_matvec(
-            _batch_matrix_transpose(self.cosserat_rod.director_collection),
+            # _batch_matrix_transpose(self.cosserat_rod.director_collection),
+            self.rod_director_collection_transpose,
             self.cosserat_rod.omega_collection,
         )
 
