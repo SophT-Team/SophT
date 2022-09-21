@@ -28,6 +28,7 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
         enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
+        **forcing_grid_kwargs,
     ):
         """Class initialiser."""
         self.body_flow_forces = np.zeros(
@@ -37,7 +38,9 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             (3, cosserat_rod.n_elems),
         )
         self.forcing_grid = forcing_grid_cls(
-            grid_dim=grid_dim, cosserat_rod=cosserat_rod
+            grid_dim=grid_dim,
+            cosserat_rod=cosserat_rod,
+            **forcing_grid_kwargs,
         )
 
         # initialising super class

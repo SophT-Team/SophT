@@ -2,6 +2,7 @@ __all__ = [
     "CosseratRodNodalForcingGrid",
     "CosseratRodElementCentricForcingGrid",
     "CosseratRodEdgeForcingGrid",
+    "CosseratRodSurfaceForcingGrid",
 ]
 from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
 from elastica.rod.cosserat_rod import CosseratRod
@@ -472,10 +473,10 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # negative sign due to Newtons third law
         for i in range(self.grid_density):
             body_flow_forces[: self.grid_dim, 1:] -= (
-                0.5 * lag_grid_forcing_field[:, self.start_idx[i], self.end_idx[i]]
+                0.5 * lag_grid_forcing_field[:, self.start_idx[i] : self.end_idx[i]]
             )
             body_flow_forces[: self.grid_dim, :-1] -= (
-                0.5 * lag_grid_forcing_field[:, self.start_idx[i], self.end_idx[i]]
+                0.5 * lag_grid_forcing_field[:, self.start_idx[i] : self.end_idx[i]]
             )
 
         # # negative sign due to Newtons third law
@@ -492,7 +493,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         for i in range(self.grid_density):
             body_flow_torques[:] += lag_grid_torque_field[
-                :, self.start_idx[i] : self.end_idx[:]
+                :, self.start_idx[i] : self.end_idx[i]
             ]
 
         # # Lagrangian nodes on left edge.
