@@ -52,5 +52,5 @@ class ImmersedBodyForcingGrid(ABC):
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
 
     @abstractmethod
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""

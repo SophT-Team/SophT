@@ -74,8 +74,8 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
             + self.global_frame_relative_position_field[1] * lag_grid_forcing_field[0]
         )
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
 
 
 class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
@@ -103,8 +103,8 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
         return self.cylinder.radius * (2.0 * np.pi / self.num_lag_nodes)
 
@@ -164,8 +164,8 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
         num_lag_nodes_per_side = self.num_lag_nodes // 4
         side_length = 2 * self.cylinder.radius
         return side_length / num_lag_nodes_per_side
@@ -223,8 +223,8 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
             ).reshape(-1, 1),
         )
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
 
 
 class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
@@ -280,10 +280,10 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
-        return min(
+        return max(
             self.rigid_body.radius
             * (2.0 * np.pi / self.num_forcing_points_along_circumference),
             self.rigid_body.length / self.num_forcing_points_along_length,

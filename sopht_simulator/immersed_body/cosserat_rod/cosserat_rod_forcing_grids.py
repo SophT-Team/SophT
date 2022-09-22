@@ -77,10 +77,10 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
         # estimated distance between consecutive elements
-        return np.amin(self.cosserat_rod.rest_lengths)
+        return np.amax(self.cosserat_rod.lengths)
 
 
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
@@ -124,10 +124,10 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
         # torque from grid forcing (don't modify since set = 0 at initialisation)
         # because no torques acting on element centers
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
         # estimated distance between consecutive elements
-        return np.amin(self.cosserat_rod.rest_lengths)
+        return np.amax(self.cosserat_rod.lengths)
 
 
 # Forcing grid implementation for tapered rod
@@ -280,11 +280,10 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.director_collection,
             body_flow_torques,
         )
-
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
-        return np.amin([self.cosserat_rod.radius, self.cosserat_rod.rest_lengths])
-
+        
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
+        return np.amax(self.cosserat_rod.lengths)
 
 from elastica._linalg import _batch_matrix_transpose
 
@@ -457,6 +456,6 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
-    def get_minimum_lagrangian_grid_spacing(self):
-        """Get the minimum Lagrangian grid spacing"""
-        return np.amin([self.cosserat_rod.radius, self.cosserat_rod.rest_lengths])
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
+        return np.amax(self.cosserat_rod.lengths)
