@@ -39,28 +39,28 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
 
         # check relative resolutions of the Lagrangian and Eulerian grids
         log = logging.getLogger()
-        lag_grid_dx = self.forcing_grid.get_minimum_lagrangian_grid_spacing()
+        max_lag_grid_dx = self.forcing_grid.get_maximum_lagrangian_grid_spacing()
         grid_type = type(self.forcing_grid).__name__
         log.warning(
             "==========================================================\n"
             f"For {grid_type}:"
         )
         if (
-            lag_grid_dx > 2 * dx
+            max_lag_grid_dx > 2 * dx
         ):  # 2 here since the support of delta function is 2 grid points
             log.warning(
                 f"Eulerian grid spacing (dx): {dx}"
-                f"\nLagrangian grid spacing: {lag_grid_dx} > 2 * dx"
+                f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} > 2 * dx"
                 "\nThe Lagrangian grid of the body is too coarse relative to"
                 "\nthe Eulerian grid of the flow, which can lead to unexpected"
                 "\nconvergence. Please make the Lagrangian grid finer."
             )
-        elif lag_grid_dx < 0.5 * dx:  # reverse case of the above condition
+        elif max_lag_grid_dx < 0.5 * dx:  # reverse case of the above condition
             log.warning(
                 "==========================================================\n"
                 f"For {grid_type}:\n"
                 f"Eulerian grid spacing (dx): {dx}"
-                f"\nLagrangian grid spacing: {lag_grid_dx} < 0.5 * dx"
+                f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} < 0.5 * dx"
                 "\nThe Lagrangian grid of the body is too fine relative to"
                 "\nthe Eulerian grid of the flow, which corresponds to redundant"
                 "\nforcing points. Please make the Lagrangian grid coarser."
