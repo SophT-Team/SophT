@@ -2,6 +2,7 @@ __all__ = [
     "TwoDimensionalCylinderForcingGrid",
     "CircularCylinderForcingGrid",
     "SquareCylinderForcingGrid",
+    "OpenEndCircularCylinderForcingGrid",
 ]
 
 from elastica import Cylinder, RigidBodyBase
