@@ -4,6 +4,7 @@ import numpy as np
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d,
+    gen_add_fixed_val_pyst_kernel_2d,
     gen_diffusion_timestep_euler_forward_pyst_kernel_2d,
     gen_penalise_field_boundary_pyst_kernel_2d,
     gen_outplane_field_curl_pyst_kernel_2d,
@@ -24,6 +25,7 @@ class UnboundedFlowSimulator2D:
         kinematic_viscosity,
         CFL=0.1,
         flow_type="passive_scalar",
+        with_free_stream_flow=False,
         real_t=np.float32,
         num_threads=1,
         **kwargs,
@@ -36,6 +38,7 @@ class UnboundedFlowSimulator2D:
         :param CFL: Courant Freidrich Lewy number (advection timestep)
         :param flow_type: Nature of the simulator, can be "passive_scalar" (default value),
         "navier_stokes" or "navier_stokes_with_forcing"
+        :param with_free_stream_flow: has free stream flow or not
         :param real_t: precision of the solver
         :param num_threads: number of threads
 
@@ -49,6 +52,7 @@ class UnboundedFlowSimulator2D:
         self.real_t = real_t
         self.num_threads = num_threads
         self.flow_type = flow_type
+        self.with_free_stream_flow = with_free_stream_flow
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
         supported_flow_types = [
@@ -58,6 +62,10 @@ class UnboundedFlowSimulator2D:
         ]
         if self.flow_type not in supported_flow_types:
             raise ValueError("Invalid flow type given")
+        if self.flow_type == "passive_scalar" and self.with_free_stream_flow:
+            raise ValueError(
+                "Free stream flow not defined for passive advection diffusion!"
+            )
         self.init_domain()
         self.init_fields()
         if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
@@ -162,6 +170,28 @@ class UnboundedFlowSimulator2D:
                 num_threads=self.num_threads,
                 field_type="vector",
             )
+        # free stream velocity stuff
+        if self.with_free_stream_flow:
+            add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
+                real_t=self.real_t,
+                fixed_grid_size=self.grid_size,
+                num_threads=self.num_threads,
+                field_type="vector",
+            )
+
+            def update_velocity_with_free_stream(free_stream_velocity):
+                add_fixed_val(
+                    sum_field=self.velocity_field,
+                    vector_field=self.velocity_field,
+                    fixed_vals=free_stream_velocity,
+                )
+
+        else:
+
+            def update_velocity_with_free_stream(free_stream_velocity):
+                ...
+
+        self.update_velocity_with_free_stream = update_velocity_with_free_stream
 
     def finalise_flow_timestep(self):
         # defqult time step
@@ -172,7 +202,7 @@ class UnboundedFlowSimulator2D:
         elif self.flow_type == "navier_stokes_with_forcing":
             self.time_step = self.navier_stokes_with_forcing_timestep
 
-    def advection_and_diffusion_timestep(self, dt):
+    def advection_and_diffusion_timestep(self, dt, **kwargs):
         self.advection_timestep(
             field=self.primary_scalar_field,
             advection_flux=self.buffer_scalar_field,
@@ -199,17 +229,18 @@ class UnboundedFlowSimulator2D:
             prefactor=self.real_t(0.5 / self.dx),
         )
 
-    def navier_stokes_timestep(self, dt):
+    def navier_stokes_timestep(self, dt, free_stream_velocity=(0.0, 0.0)):
         self.advection_and_diffusion_timestep(dt=dt)
         self.compute_velocity_from_vorticity()
+        self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 
-    def navier_stokes_with_forcing_timestep(self, dt):
+    def navier_stokes_with_forcing_timestep(self, dt, free_stream_velocity=(0.0, 0.0)):
         self.update_vorticity_from_velocity_forcing(
             vorticity_field=self.vorticity_field,
             velocity_forcing_field=self.eul_grid_forcing_field,
             prefactor=self.real_t(dt / (2 * self.dx)),
         )
-        self.navier_stokes_timestep(dt=dt)
+        self.navier_stokes_timestep(dt=dt, free_stream_velocity=free_stream_velocity)
         self.set_field(
             vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim
         )
