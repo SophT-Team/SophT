@@ -2,9 +2,6 @@ import elastica as ea
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from sopht.numeric.eulerian_grid_ops import (
-    gen_add_fixed_val_pyst_kernel_2d,
-)
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 
@@ -107,16 +104,9 @@ def flow_past_rod_case(
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes_with_forcing",
+        with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
-    )
-    # Compile additional kernels
-    # TODO put in flow sim
-    add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
-        real_t=real_t,
-        fixed_grid_size=(grid_size_y, grid_size_x),
-        num_threads=num_threads,
-        field_type="vector",
     )
     # ==================FLOW SETUP END=========================
 
@@ -219,16 +209,11 @@ def flow_past_rod_case(
         # evaluate feedback/interaction between flow and rod
         cosserat_rod_flow_interactor()
 
-        # timestep the flow
-        flow_sim.time_step(dt=flow_dt)
-
-        # add freestream
         ramp_factor = np.exp(-time / ramp_timescale)
-        # TODO merge later into flow sim
-        add_fixed_val(
-            sum_field=flow_sim.velocity_field,
-            vector_field=flow_sim.velocity_field,
-            fixed_vals=[
+        # timestep the flow
+        flow_sim.time_step(
+            dt=flow_dt,
+            free_stream_velocity=[
                 U_free_stream * (1.0 - ramp_factor),
                 V_free_stream_perturb * ramp_factor,
             ],

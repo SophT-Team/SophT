@@ -1,9 +1,6 @@
 from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 import numpy as np
 import os
-from sopht.numeric.eulerian_grid_ops import (
-    gen_add_fixed_val_pyst_kernel_2d,
-)
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 
@@ -35,6 +32,7 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes",
+        with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
     )
@@ -61,14 +59,6 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
         gamma=gamma,
         t=t_end,
         real_t=real_t,
-    )
-    # compile additional kernels
-    # TODO push in flow sim!
-    add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
-        real_t=real_t,
-        fixed_grid_size=(grid_size_y, grid_size_x),
-        num_threads=num_threads,
-        field_type="vector",
     )
 
     # iterate
@@ -103,15 +93,7 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
             )
 
         dt = flow_sim.compute_stable_timestep()
-        flow_sim.time_step(dt=dt)
-
-        # add freestream
-        # TODO merge in flow sim
-        add_fixed_val(
-            sum_field=flow_sim.velocity_field,
-            vector_field=flow_sim.velocity_field,
-            fixed_vals=velocity_free_stream,
-        )
+        flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
         # update time
         t = t + dt

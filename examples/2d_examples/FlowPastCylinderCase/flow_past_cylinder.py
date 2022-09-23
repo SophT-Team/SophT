@@ -2,9 +2,6 @@ import elastica as ea
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from sopht.numeric.eulerian_grid_ops import (
-    gen_add_fixed_val_pyst_kernel_2d,
-)
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 
@@ -39,6 +36,7 @@ def flow_past_cylinder_boundary_forcing_case(
         kinematic_viscosity=nu,
         CFL=CFL,
         flow_type="navier_stokes_with_forcing",
+        with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
     )
@@ -54,15 +52,6 @@ def flow_past_cylinder_boundary_forcing_case(
     cylinder = ea.Cylinder(start, direction, normal, base_length, cyl_radius, density)
     # Since the cylinder is fixed, we dont add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
-
-    # Compile additional kernels
-    # TODO put in flow sim
-    add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
-        real_t=real_t,
-        fixed_grid_size=(grid_size_y, grid_size_x),
-        num_threads=num_threads,
-        field_type="vector",
-    )
 
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
     num_lag_nodes = 60
@@ -155,15 +144,7 @@ def flow_past_cylinder_boundary_forcing_case(
         cylinder_flow_interactor()
 
         # timestep the flow
-        flow_sim.time_step(dt)
-
-        # add freestream
-        # TODO merge later into flow sim
-        add_fixed_val(
-            sum_field=flow_sim.velocity_field,
-            vector_field=flow_sim.velocity_field,
-            fixed_vals=velocity_free_stream,
-        )
+        flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
         # update time
         t = t + dt
