@@ -15,7 +15,7 @@ from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
-    def __init__(self, grid_dim, cosserat_rod: type(CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
         self.num_lag_nodes = cosserat_rod.n_elems + 1
         self.cosserat_rod = cosserat_rod
         super().__init__(grid_dim)
@@ -86,7 +86,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
-    def __init__(self, grid_dim, cosserat_rod: type(CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
         self.num_lag_nodes = cosserat_rod.n_elems
         self.cosserat_rod = cosserat_rod
         super().__init__(grid_dim)
@@ -142,7 +142,12 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim, cosserat_rod: type(CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
+        if grid_dim != 2:
+            raise ValueError(
+                "Invalid grid dimensions. Cosserat rod edge forcing grid is only "
+                "defined for grid_dim=2"
+            )
         self.cosserat_rod = cosserat_rod
         # 1 for element center 2 for edges
         self.num_lag_nodes = cosserat_rod.n_elems + 2 * cosserat_rod.n_elems
@@ -280,12 +285,11 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.director_collection,
             body_flow_torques,
         )
-        
+
     def get_maximum_lagrangian_grid_spacing(self):
         """Get the maximum Lagrangian grid spacing"""
         return np.amax(self.cosserat_rod.lengths)
 
-from elastica._linalg import _batch_matrix_transpose
 
 # Forcing grid implementation for tapered rod
 class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
@@ -300,19 +304,24 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
     def __init__(
         self,
-        grid_dim,
+        grid_dim: int,
         cosserat_rod: type(CosseratRod),
         surface_grid_density: int,
-        centerline_grid=True,
+        centerline_grid: bool = True,
     ):
+        if grid_dim != 3:
+            raise ValueError(
+                "Invalid grid dimensions. Cosserat rod surface forcing grid is only "
+                "defined for grid_dim=3"
+            )
         self.cosserat_rod = cosserat_rod
 
-        # If center line grid is True than add lagrangian grid points to the center line, otherwise points will be
-        # only added to the surface.
+        # If center line grid is True than add lagrangian grid points to the center
+        # line, otherwise points will be only added to the surface.
         self.center_grid_density = 1 if centerline_grid else 0
 
-        # Number of lagrangian nodes one at the center and rest are around the surface of element
-        # Grid around the surface of element are controlled by grid_density.
+        # Number of lagrangian nodes one at the center and rest are around the
+        # surface of element grid around the surface of element are controlled by grid_density.
         self.num_lag_nodes = (
             surface_grid_density + self.center_grid_density
         ) * cosserat_rod.n_elems
@@ -324,21 +333,20 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Surface points are on the local frame
         # TODO: maybe a better naming ?
         self.surface_point_rotation_angle = np.linspace(
-            0, 2 * np.pi, surface_grid_density, endpoint=False
+            0.0, 2 * np.pi, surface_grid_density, endpoint=False
         )
 
         # Since lag grid points are on the surface, for each node we need to compute moment arm.
-        self.moment_arm = np.zeros((3, self.num_lag_nodes))
+        self.moment_arm = np.zeros_like(self.position_field)
 
         self.n_elems = cosserat_rod.n_elems
-
         # Here we are thinking for each surface point, we have n_elem of them.
-        self.start_idx = np.zeros((self.grid_density), dtype=np.int)
-        self.end_idx = np.zeros((self.grid_density), dtype=np.int)
-        self.start_idx[:] = cosserat_rod.n_elems * np.arange(0, self.grid_density)
-        self.end_idx[:] = cosserat_rod.n_elems * np.arange(1, self.grid_density + 1)
+        self.start_idx = np.zeros((self.grid_density), dtype=int)
+        self.end_idx = np.zeros((self.grid_density), dtype=int)
+        self.start_idx[...] = cosserat_rod.n_elems * np.arange(0, self.grid_density)
+        self.end_idx[...] = cosserat_rod.n_elems * np.arange(1, self.grid_density + 1)
 
-        self.local_frame_surface_points = np.zeros((3, self.num_lag_nodes))
+        self.local_frame_surface_points = np.zeros_like(self.position_field)
         # Grid points for each element are one at the center, and rest around the surface.
         # Since first grid point is at the center, set local_frame_surface_point values to zero, and don't update.
         # local_frame_surface_points are used to compute the moment arm, i.e. distance from the element center.
@@ -359,25 +367,30 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 3, 1
             )
 
-        # We need this temp array just only to be compatible with the dimension of moment arm for torque calculation.
-        # Since if the grid dim is 2 then lagrangian forces has size 2,num_lag_nodes which is not consistent with
-        # moment arm
-        self.surface_forces = np.zeros((3, self.num_lag_nodes))
-
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+        # some caching stuff
+        self.rod_director_collection_transpose = np.zeros_like(
+            self.cosserat_rod.director_collection
+        )
+        self.rod_element_position = np.zeros((self.grid_dim, self.n_elems))
+        self.rod_element_velocity = np.zeros_like(self.rod_element_position)
+        self.rod_element_global_frame_omega = np.zeros_like(self.rod_element_position)
+        self.lag_grid_torque_field = np.zeros_like(self.position_field)
+
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
 
-        rod_element_position = 0.5 * (
+        self.rod_element_position[...] = 0.5 * (
             self.cosserat_rod.position_collection[..., 1:]
             + self.cosserat_rod.position_collection[..., :-1]
         )
 
-        # Cache rod director collection transpose since it will be used to compute velocity field.
-        self.rod_director_collection_transpose = _batch_matrix_transpose(
+        # Cache rod director collection transpose since it will be used
+        # to compute velocity field.
+        self.rod_director_collection_transpose[...] = _batch_matrix_transpose(
             self.cosserat_rod.director_collection
         )
         # Compute the moment arm or distance from the element center for each grid point.
@@ -390,35 +403,33 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             )
 
         # Surface positions are moment_arm + element center position
-        self.position_field[:] = self.moment_arm[: self.grid_dim]
+        self.position_field[...] = self.moment_arm
         for i in range(self.grid_density):
             self.position_field[
                 :, self.start_idx[i] : self.end_idx[i]
-            ] += rod_element_position[: self.grid_dim]
+            ] += self.rod_element_position
 
     def compute_lag_grid_velocity_field(self):
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
         # Element velocity
-        element_velocity = node_to_element_velocity(
+        self.rod_element_velocity[...] = node_to_element_velocity(
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )
         # Element angular velocity
-        omega_collection = _batch_matvec(
-            # _batch_matrix_transpose(self.cosserat_rod.director_collection),
+        self.rod_element_global_frame_omega[...] = _batch_matvec(
             self.rod_director_collection_transpose,
             self.cosserat_rod.omega_collection,
         )
 
         # v_elem + omega X moment_arm
         for i in range(self.grid_density):
-            self.velocity_field[:, self.start_idx[i] : self.end_idx[i]] = (
-                element_velocity
-                + _batch_cross(
-                    omega_collection,
-                    self.moment_arm[:, self.start_idx[i] : self.end_idx[i]],
-                )
-            )[: self.grid_dim]
+            self.velocity_field[
+                :, self.start_idx[i] : self.end_idx[i]
+            ] = self.rod_element_velocity + _batch_cross(
+                self.rod_element_global_frame_omega,
+                self.moment_arm[:, self.start_idx[i] : self.end_idx[i]],
+            )
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -432,22 +443,22 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         # negative sign due to Newtons third law
         for i in range(self.grid_density):
-            body_flow_forces[: self.grid_dim, 1:] -= (
+            body_flow_forces[..., 1:] -= (
                 0.5 * lag_grid_forcing_field[:, self.start_idx[i] : self.end_idx[i]]
             )
-            body_flow_forces[: self.grid_dim, :-1] -= (
+            body_flow_forces[..., :-1] -= (
                 0.5 * lag_grid_forcing_field[:, self.start_idx[i] : self.end_idx[i]]
             )
 
         # negative sign due to Newtons third law
-        self.surface_forces[: self.grid_dim] = -lag_grid_forcing_field[:]
-
         # torque generated by all lagrangian points are
-        lag_grid_torque_field = _batch_cross(self.moment_arm, self.surface_forces)
+        self.lag_grid_torque_field[...] = _batch_cross(
+            self.moment_arm, -lag_grid_forcing_field
+        )
 
         # Update body torques
         for i in range(self.grid_density):
-            body_flow_torques[:] += lag_grid_torque_field[
+            body_flow_torques[...] += self.lag_grid_torque_field[
                 :, self.start_idx[i] : self.end_idx[i]
             ]
         # convert global to local frame
