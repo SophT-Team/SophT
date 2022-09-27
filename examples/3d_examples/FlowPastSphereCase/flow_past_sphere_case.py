@@ -1,3 +1,4 @@
+import click
 import elastica as ea
 import numpy as np
 from sopht.utils.IO import IO
@@ -153,4 +154,13 @@ def flow_past_sphere_case(
 if __name__ == "__main__":
     # in order Z, Y, X
     grid_size = (64, 64, 128)
-    flow_past_sphere_case(grid_size=grid_size, save_data=False)
+
+    @click.command()
+    @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
+    def simulate_parallelised_flow_past_sphere(num_threads):
+        click.echo(f"Number of threads for parallelism: {num_threads}")
+        flow_past_sphere_case(
+            grid_size=grid_size, num_threads=num_threads, save_data=False
+        )
+
+    simulate_parallelised_flow_past_sphere()

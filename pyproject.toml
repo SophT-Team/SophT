@@ -22,6 +22,7 @@ python = ">=3.8,<3.11"
 sopht_backend = {git = "https://github.com/bhosale2/sopht-backend.git", rev = "main"}
 pyelastica = "^0.3"
 matplotlib = "^3.3.2"
+click = "^8.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
