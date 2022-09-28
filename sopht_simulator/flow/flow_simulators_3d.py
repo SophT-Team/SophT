@@ -10,7 +10,7 @@ from sopht.numeric.eulerian_grid_ops import (
     gen_curl_pyst_kernel_3d,
     gen_set_fixed_val_pyst_kernel_3d,
     gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d,
-    gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d,
+    gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d,
     UnboundedPoissonSolverPYFFTW3D,
 )
 from sopht.utils.precision import get_test_tol
@@ -210,8 +210,9 @@ class UnboundedFlowSimulator3D:
                 )
             )
             self.vorticity_stretching_timestep = (
-                gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
+                gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d(
                     real_t=self.real_t,
+                    midstep_buffer_vector_field=self.buffer_vector_field,
                     num_threads=self.num_threads,
                     fixed_grid_size=self.grid_size,
                 )
