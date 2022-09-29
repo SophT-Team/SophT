@@ -136,6 +136,7 @@ class UnboundedFlowSimulator3D:
             self.vorticity_field = self.primary_vector_field.view()
             self.stream_func_field = np.zeros_like(self.vorticity_field)
             self.buffer_vector_field = np.zeros_like(self.vorticity_field)
+            self.midstep_vorticity_field = np.zeros_like(self.vorticity_field)
         if self.flow_type == "navier_stokes_with_forcing":
             # this one holds the forcing from bodies
             self.eul_grid_forcing_field = np.zeros_like(self.velocity_field)
@@ -212,7 +213,7 @@ class UnboundedFlowSimulator3D:
             self.vorticity_stretching_timestep = (
                 gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d(
                     real_t=self.real_t,
-                    midstep_buffer_vector_field=self.buffer_vector_field,
+                    midstep_buffer_vector_field=self.midstep_vorticity_field,
                     num_threads=self.num_threads,
                     fixed_grid_size=self.grid_size,
                 )
