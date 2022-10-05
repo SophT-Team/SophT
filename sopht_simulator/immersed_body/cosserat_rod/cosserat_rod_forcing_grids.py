@@ -319,21 +319,22 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # If center line grid is True than add lagrangian grid points to the center
         # line, otherwise points will be only added to the surface.
         self.center_grid_density = 1 if centerline_grid else 0
+        self.surface_grid_density = surface_grid_density
 
         # Number of lagrangian nodes one at the center and rest are around the
         # surface of element grid around the surface of element are controlled by grid_density.
         self.num_lag_nodes = (
-            surface_grid_density + self.center_grid_density
+            self.surface_grid_density + self.center_grid_density
         ) * cosserat_rod.n_elems
         super().__init__(grid_dim)
 
         # Number of lagrangian grid points per element, one at center rest around surface
-        self.grid_density = surface_grid_density + self.center_grid_density
+        self.grid_density = self.surface_grid_density + self.center_grid_density
         # Compute the rotational angle for each surface point.
         # Surface points are on the local frame
         # TODO: maybe a better naming ?
         self.surface_point_rotation_angle = np.linspace(
-            0.0, 2 * np.pi, surface_grid_density, endpoint=False
+            0.0, 2 * np.pi, self.surface_grid_density, endpoint=False
         )
 
         # Since lag grid points are on the surface, for each node we need to compute moment arm.
@@ -367,10 +368,6 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 3, 1
             )
 
-        # to ensure position/velocity are consistent during initialisation
-        self.compute_lag_grid_position_field()
-        self.compute_lag_grid_velocity_field()
-
         # some caching stuff
         self.rod_director_collection_transpose = np.zeros_like(
             self.cosserat_rod.director_collection
@@ -379,6 +376,10 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.rod_element_velocity = np.zeros_like(self.rod_element_position)
         self.rod_element_global_frame_omega = np.zeros_like(self.rod_element_position)
         self.lag_grid_torque_field = np.zeros_like(self.position_field)
+
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_position_field(self):
         """Computes location of forcing grid for the Cosserat rod"""
@@ -469,4 +470,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
     def get_maximum_lagrangian_grid_spacing(self):
         """Get the maximum Lagrangian grid spacing"""
-        return np.amax(self.cosserat_rod.lengths)
+        grid_angular_spacing = 2 * np.pi / self.surface_grid_density
+        return np.amax(
+            [self.cosserat_rod.lengths, self.cosserat_rod.radius * grid_angular_spacing]
+        )
