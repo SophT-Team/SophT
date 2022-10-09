@@ -11,6 +11,7 @@ from sopht.numeric.eulerian_grid_ops import (
     gen_set_fixed_val_pyst_kernel_3d,
     gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d,
     gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d,
+    gen_elementwise_cross_product_pyst_kernel_3d,
     UnboundedPoissonSolverPYFFTW3D,
 )
 from sopht.utils.precision import get_test_tol
@@ -27,7 +28,6 @@ class UnboundedFlowSimulator3D:
         kinematic_viscosity,
         CFL=0.1,
         flow_type="passive_scalar",
-        with_free_stream_flow=False,
         real_t=np.float32,
         num_threads=1,
         **kwargs,
@@ -40,7 +40,6 @@ class UnboundedFlowSimulator3D:
         :param CFL: Courant Freidrich Lewy number (advection timestep)
         :param flow_type: Nature of the simulator, can be "passive_scalar" (default value),
         "passive_vector", "navier_stokes" or "navier_stokes_with_forcing"
-        :param with_free_stream_flow: has free stream flow or not
         :param real_t: precision of the solver
         :param num_threads: number of threads
 
@@ -54,7 +53,6 @@ class UnboundedFlowSimulator3D:
         self.real_t = real_t
         self.num_threads = num_threads
         self.flow_type = flow_type
-        self.with_free_stream_flow = with_free_stream_flow
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
         supported_flow_types = [
@@ -65,23 +63,26 @@ class UnboundedFlowSimulator3D:
         ]
         if self.flow_type not in supported_flow_types:
             raise ValueError("Invalid flow type given")
-        if (
-            self.flow_type in ["passive_scalar", "passive_vector"]
-            and self.with_free_stream_flow
-        ):
-            raise ValueError(
-                "Free stream flow not defined for passive advection diffusion!"
-            )
         self.init_domain()
         self.init_fields()
         if (
             self.flow_type == "navier_stokes"
             or self.flow_type == "navier_stokes_with_forcing"
         ):
-            if "penalty_zone_width" in kwargs:
-                self.penalty_zone_width = kwargs.get("penalty_zone_width")
-            else:
-                self.penalty_zone_width = 2
+            self.penalty_zone_width = kwargs.get("penalty_zone_width", 2)
+            self.with_free_stream_flow = kwargs.get("with_free_stream_flow", False)
+            self.navier_stokes_inertial_term_form = kwargs.get(
+                "navier_stokes_inertial_term_form", "advection_stretching_split"
+            )
+            supported_navier_stokes_inertial_term_forms = [
+                "advection_stretching_split",
+                "rotational",
+            ]
+            if (
+                self.navier_stokes_inertial_term_form
+                not in supported_navier_stokes_inertial_term_forms
+            ):
+                raise ValueError("Invalid Navier Stokes inertial treatment form given")
         self.compile_kernels()
         self.finalise_flow_timestep()
 
@@ -136,7 +137,6 @@ class UnboundedFlowSimulator3D:
             self.vorticity_field = self.primary_vector_field.view()
             self.stream_func_field = np.zeros_like(self.vorticity_field)
             self.buffer_vector_field = np.zeros_like(self.vorticity_field)
-            self.midstep_vorticity_field = np.zeros_like(self.vorticity_field)
         if self.flow_type == "navier_stokes_with_forcing":
             # this one holds the forcing from bodies
             self.eul_grid_forcing_field = np.zeros_like(self.velocity_field)
@@ -160,11 +160,7 @@ class UnboundedFlowSimulator3D:
                     field_type="scalar",
                 )
             )
-        elif self.flow_type in [
-            "passive_vector",
-            "navier_stokes",
-            "navier_stokes_with_forcing",
-        ]:
+        elif self.flow_type == "passive_vector":
             self.diffusion_timestep = (
                 gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
                     real_t=self.real_t,
@@ -183,6 +179,14 @@ class UnboundedFlowSimulator3D:
             )
 
         if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
+            self.diffusion_timestep = (
+                gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
+                    real_t=self.real_t,
+                    fixed_grid_size=self.grid_size,
+                    num_threads=self.num_threads,
+                    field_type="vector",
+                )
+            )
             grid_size_z, grid_size_y, grid_size_x = self.grid_size
             self.unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW3D(
                 grid_size_z=grid_size_z,
@@ -210,27 +214,52 @@ class UnboundedFlowSimulator3D:
                     field_type="vector",
                 )
             )
-            self.vorticity_stretching_timestep = (
-                gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
+            if self.navier_stokes_inertial_term_form == "advection_stretching_split":
+                self.advection_timestep = gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
                     real_t=self.real_t,
-                    num_threads=self.num_threads,
                     fixed_grid_size=self.grid_size,
+                    num_threads=self.num_threads,
+                    field_type="vector",
                 )
-            )
+                self.vorticity_stretching_timestep = (
+                    gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
+                        real_t=self.real_t,
+                        num_threads=self.num_threads,
+                        fixed_grid_size=self.grid_size,
+                    )
+                )
+            elif self.navier_stokes_inertial_term_form == "rotational":
+                self.elementwise_cross_product = (
+                    gen_elementwise_cross_product_pyst_kernel_3d(
+                        real_t=self.real_t,
+                        num_threads=self.num_threads,
+                        fixed_grid_size=self.grid_size,
+                    )
+                )
+                self.update_vorticity_from_velocity_forcing = (
+                    gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
+                        real_t=self.real_t,
+                        fixed_grid_size=self.grid_size,
+                        num_threads=self.num_threads,
+                    )
+                )
 
         if self.flow_type == "navier_stokes_with_forcing":
-            self.update_vorticity_from_velocity_forcing = (
-                gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
-                    real_t=self.real_t,
-                    fixed_grid_size=self.grid_size,
-                    num_threads=self.num_threads,
-                )
-            )
             self.set_field = gen_set_fixed_val_pyst_kernel_3d(
                 real_t=self.real_t,
                 num_threads=self.num_threads,
                 field_type="vector",
             )
+            # Avoid double kernel compilation
+            # TODO have a cleaner way for this
+            if self.navier_stokes_inertial_term_form != "rotational":
+                self.update_vorticity_from_velocity_forcing = (
+                    gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
+                        real_t=self.real_t,
+                        fixed_grid_size=self.grid_size,
+                        num_threads=self.num_threads,
+                    )
+                )
         # free stream velocity stuff
         if self.with_free_stream_flow:
             add_fixed_val = gen_add_fixed_val_pyst_kernel_3d(
@@ -254,7 +283,20 @@ class UnboundedFlowSimulator3D:
 
         self.update_velocity_with_free_stream = update_velocity_with_free_stream
 
+    def finalise_navier_stokes_timestep(self):
+        self.navier_stokes_timestep = None
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
+            if self.navier_stokes_inertial_term_form == "advection_stretching_split":
+                self.navier_stokes_timestep = (
+                    self.advection_stretching_split_navier_stokes_timestep
+                )
+            elif self.navier_stokes_inertial_term_form == "rotational":
+                self.navier_stokes_timestep = (
+                    self.rotational_form_navier_stokes_timestep
+                )
+
     def finalise_flow_timestep(self):
+        self.finalise_navier_stokes_timestep()
         # defqult time step
         self.time_step = self.scalar_advection_and_diffusion_timestep
         if self.flow_type == "passive_vector":
@@ -304,7 +346,9 @@ class UnboundedFlowSimulator3D:
             prefactor=self.real_t(0.5 / self.dx),
         )
 
-    def navier_stokes_timestep(self, dt, free_stream_velocity=(0.0, 0.0, 0.0)):
+    def advection_stretching_split_navier_stokes_timestep(
+        self, dt, free_stream_velocity=(0.0, 0.0, 0.0)
+    ):
         self.vorticity_stretching_timestep(
             vorticity_field=self.vorticity_field,
             velocity_field=self.velocity_field,
@@ -312,6 +356,28 @@ class UnboundedFlowSimulator3D:
             dt_by_2_dx=self.real_t(dt / (2 * self.dx)),
         )
         self.vector_advection_and_diffusion_timestep(dt=dt)
+        self.compute_velocity_from_vorticity()
+        self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
+
+    def rotational_form_navier_stokes_timestep(
+        self, dt, free_stream_velocity=(0.0, 0.0, 0.0)
+    ):
+        velocity_cross_vorticity = self.buffer_vector_field.view()
+        self.elementwise_cross_product(
+            result_field=velocity_cross_vorticity,
+            field_1=self.velocity_field,
+            field_2=self.vorticity_field,
+        )
+        self.update_vorticity_from_velocity_forcing(
+            vorticity_field=self.vorticity_field,
+            velocity_forcing_field=velocity_cross_vorticity,
+            prefactor=self.real_t(dt / (2 * self.dx)),
+        )
+        self.diffusion_timestep(
+            vector_field=self.vorticity_field,
+            diffusion_flux=self.buffer_scalar_field,
+            nu_dt_by_dx2=self.real_t(self.kinematic_viscosity * dt / self.dx / self.dx),
+        )
         self.compute_velocity_from_vorticity()
         self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 

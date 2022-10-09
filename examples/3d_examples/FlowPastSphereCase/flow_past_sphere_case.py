@@ -30,10 +30,11 @@ def flow_past_sphere_case(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        flow_type="navier_stokes_with_forcing",
-        with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
+        flow_type="navier_stokes_with_forcing",
+        with_free_stream_flow=True,
+        navier_stokes_inertial_term_form="rotational",
     )
     rho_f = 1.0
     sphere_projected_area = 0.25 * np.pi * sphere_diameter**2
@@ -150,6 +151,7 @@ def flow_past_sphere_case(
             sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
+            # TODO refactor with pystencils form
             divg_vorticity[1:-1, 1:-1, 1:-1] = (
                 flow_sim.vorticity_field[0, 1:-1, 1:-1, 2:]
                 - flow_sim.vorticity_field[0, 1:-1, 1:-1, :-2]
