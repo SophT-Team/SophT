@@ -3,7 +3,6 @@ import numpy as np
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 import os
-# from flow_simulators_3d import UnboundedFlowSimulator3D
 
 
 def flow_past_rod_case(
@@ -11,7 +10,6 @@ def flow_past_rod_case(
     grid_size,
     cauchy_number,
     mass_ratio,
-    slenderness_ratio,
     froude_number,
     stretch_bending_ratio,
     poisson_ratio=0.5,
@@ -45,8 +43,6 @@ def flow_past_rod_case(
         [np.sin(rod_start_incline_angle), 0.0, -np.cos(rod_start_incline_angle)]
     )
     normal = np.array([0.0, 1.0, 0.0])
-    # slenderness_ratio  = L/D
-    # base_diameter = base_length / slenderness_ratio
     base_diameter = y_range / 5.0
     base_radius = base_diameter / 2.0
     base_area = np.pi * base_radius**2
@@ -59,7 +55,6 @@ def flow_past_rod_case(
     )
     # Froude = g L / U^2
     gravitational_acc = froude_number * U_free_stream**2 / base_diameter
-
     # Stretch to Bending ratio EAL2 / EI
     Es_Eb = stretch_bending_ratio * moment_of_inertia / (base_area * base_length**2)
 
@@ -75,7 +70,7 @@ def flow_past_rod_case(
         youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
-    flow_past_rod.shear_matrix[2,2,:] *= Es_Eb
+    flow_past_rod.shear_matrix[2, 2, :] *= Es_Eb
     flow_past_sim.append(flow_past_rod)
     flow_past_sim.constrain(flow_past_rod).using(
         ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
@@ -87,7 +82,7 @@ def flow_past_rod_case(
     # add damping
     dl = base_length / n_elem
     rod_dt = 0.01 * dl
-    damping_constant = 1e-1/100
+    damping_constant = 1e-3
     flow_past_sim.dampen(flow_past_rod).using(
         ea.AnalyticalLinearDamper,
         damping_constant=damping_constant,
@@ -122,7 +117,6 @@ def flow_past_rod_case(
         grid_dim=dim,
         real_t=real_t,
         num_threads=num_threads,
-        # forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
         forcing_grid_cls=sps.CosseratRodSurfaceForcingGrid,
         surface_grid_density=16,
         centerline_grid=False,
@@ -160,12 +154,6 @@ def flow_past_rod_case(
             )
         )
 
-    # projection stuff
-    divg_vorticity = np.zeros_like(flow_sim.vorticity_field[0])
-    advection_flux = np.zeros_like(flow_sim.vorticity_field)
-    curl_of_advection_flux = np.zeros_like(flow_sim.vorticity_field)
-    from laplacian_filter import nb_filter_rate
-
     # iterate
     while time < final_time:
         # Save data
@@ -189,12 +177,6 @@ def flow_past_rod_case(
                 cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
-            # ax.plot(
-            #     flow_past_rod.position_collection[0],
-            #     flow_past_rod.position_collection[2],
-            #     linewidth=3,
-            #     color="k",
-            # )
             ax.scatter(
                 cosserat_rod_flow_interactor.forcing_grid.position_field[0],
                 cosserat_rod_flow_interactor.forcing_grid.position_field[2],
@@ -205,16 +187,6 @@ def flow_past_rod_case(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
             time_history.append(time)
-            # projection stuff
-            # divg_vorticity[1:-1, 1:-1, 1:-1] = (
-            #     flow_sim.vorticity_field[0, 1:-1, 1:-1, 2:]
-            #     - flow_sim.vorticity_field[0, 1:-1, 1:-1, :-2]
-            #     + flow_sim.vorticity_field[1, 1:-1, 2:, 1:-1]
-            #     - flow_sim.vorticity_field[1, 1:-1, :-2, 1:-1]
-            #     + flow_sim.vorticity_field[2, 2:, 1:-1, 1:-1]
-            #     - flow_sim.vorticity_field[2, :-2, 1:-1, 1:-1]
-            # ) / (2 * flow_sim.dx)
-            # divg_norm = np.linalg.norm(divg_vorticity) * flow_sim.dx**1.5
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
@@ -239,30 +211,10 @@ def flow_past_rod_case(
         # evaluate feedback/interaction between flow and rod
         cosserat_rod_flow_interactor()
 
-        # # timestep the flow
-        # velocity_cross_omega = advection_flux.view()
-        # for axis in range(dim):
-        #     velocity_cross_omega[axis] = (
-        #         flow_sim.velocity_field[(axis + 1) % dim]
-        #         * flow_sim.vorticity_field[(axis + 2) % dim]
-        #         - flow_sim.velocity_field[(axis + 2) % dim]
-        #         * flow_sim.vorticity_field[(axis + 1) % dim]
-        #     )
-        # flow_sim.curl(
-        #     curl=curl_of_advection_flux,
-        #     field=velocity_cross_omega,
-        #     prefactor=(0.5 / flow_sim.dx),
-        # )
-        # flow_sim.vorticity_field += flow_dt * curl_of_advection_flux
         flow_sim.time_step(
             dt=flow_dt,
             free_stream_velocity=velocity_free_stream,
         )
-        # nb_filter_rate(rate_collection=flow_sim.vorticity_field, filter_order=2)
-        # flow_sim.compute_velocity_from_vorticity()
-        # flow_sim.update_velocity_with_free_stream(
-        #     free_stream_velocity=velocity_free_stream
-        # )
 
         # update simulation time
         time += flow_dt
@@ -311,7 +263,9 @@ if __name__ == "__main__":
     exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
 
     # stretch to bending ratio EAL2 / EI
-    exp_Ks_Kb = (exp_youngs_modulus * exp_base_area * exp_base_length**2) / (exp_youngs_modulus * exp_moment_of_inertia)
+    exp_Ks_Kb = (exp_youngs_modulus * exp_base_area * exp_base_length**2) / (
+        exp_youngs_modulus * exp_moment_of_inertia
+    )
 
     print(f"Re: {exp_Re}, Ca: {exp_cauchy_number}, Fr: {exp_froude_number}")
 
@@ -323,11 +277,10 @@ if __name__ == "__main__":
         non_dim_final_time=final_time,
         cauchy_number=exp_cauchy_number,
         mass_ratio=exp_mass_ratio,
-        slenderness_ratio=exp_slenderness_ratio,
         froude_number=exp_froude_number,
         poisson_ratio=exp_poisson_ratio,
         reynolds=exp_Re,
-        stretch_bending_ratio = exp_Ks_Kb,
+        stretch_bending_ratio=exp_Ks_Kb,
         grid_size=grid_size,
         rod_start_incline_angle=np.deg2rad(90.0 - angle_with_horizontal),
     )
