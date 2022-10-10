@@ -104,9 +104,6 @@ def flow_past_sphere_case(
     # create fig for plotting flow fields
     fig, ax = sps.create_figure_and_axes()
 
-    # TODO remove this once issue fixed
-    divg_vorticity = np.zeros_like(flow_sim.vorticity_field[0])
-
     # iterate
     while t < t_end:
         # Save data
@@ -151,20 +148,11 @@ def flow_past_sphere_case(
             sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
-            # TODO refactor with pystencils form
-            divg_vorticity[1:-1, 1:-1, 1:-1] = (
-                flow_sim.vorticity_field[0, 1:-1, 1:-1, 2:]
-                - flow_sim.vorticity_field[0, 1:-1, 1:-1, :-2]
-                + flow_sim.vorticity_field[1, 1:-1, 2:, 1:-1]
-                - flow_sim.vorticity_field[1, 1:-1, :-2, 1:-1]
-                + flow_sim.vorticity_field[2, 2:, 1:-1, 1:-1]
-                - flow_sim.vorticity_field[2, :-2, 1:-1, 1:-1]
-            ) / (2 * flow_sim.dx)
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"drag coeff: {drag_coeff:.4f}, "
-                f"div vorticity norm: {np.linalg.norm(divg_vorticity) * flow_sim.dx ** 1.5:.4f}"
+                f"div vorticity norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
             )
 
         dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)

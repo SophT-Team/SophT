@@ -13,6 +13,7 @@ from sopht.numeric.eulerian_grid_ops import (
     gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d,
     gen_elementwise_cross_product_pyst_kernel_3d,
     UnboundedPoissonSolverPYFFTW3D,
+    gen_divergence_pyst_kernel_3d,
 )
 from sopht.utils.precision import get_test_tol
 
@@ -243,6 +244,12 @@ class UnboundedFlowSimulator3D:
                         num_threads=self.num_threads,
                     )
                 )
+            # check if vorticity stays divergence free
+            self.compute_divergence = gen_divergence_pyst_kernel_3d(
+                real_t=self.real_t,
+                fixed_grid_size=self.grid_size,
+                num_threads=self.num_threads,
+            )
 
         if self.flow_type == "navier_stokes_with_forcing":
             self.set_field = gen_set_fixed_val_pyst_kernel_3d(
@@ -405,3 +412,14 @@ class UnboundedFlowSimulator3D:
             0.9 * self.dx**2 / (2 * self.grid_dim) / (self.kinematic_viscosity + tol),
         )
         return dt * dt_prefac
+
+    def get_vorticity_divergence_l2_norm(self):
+        """Return L2 norm of divergence of the vorticity field."""
+        divergence_field = self.buffer_scalar_field.view()
+        self.compute_divergence(
+            divergence=divergence_field,
+            field=self.vorticity_field,
+            inv_dx=(1.0 / self.dx),
+        )
+        vorticity_divg_l2_norm = np.linalg.norm(divergence_field) * self.dx**1.5
+        return vorticity_divg_l2_norm
