@@ -328,7 +328,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             * self.surface_grid_density_for_largest_element
         ).astype(int)
         # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
-        self.surface_grid_points[np.where(self.surface_grid_points < 1)[0]] = 1
+        self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
         self.num_lag_nodes = self.surface_grid_points.sum()
         super().__init__(grid_dim)
         self.n_elems = cosserat_rod.n_elems
