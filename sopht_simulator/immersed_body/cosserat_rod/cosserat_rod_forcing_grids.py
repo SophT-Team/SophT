@@ -307,7 +307,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self,
         grid_dim: int,
         cosserat_rod: type(CosseratRod),
-        surface_grid_density_for_larges_element: int,
+        surface_grid_density_for_largest_element: int,
     ):
         if grid_dim != 3:
             raise ValueError(
@@ -317,15 +317,15 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.cosserat_rod = cosserat_rod
 
         # Surface grid density at the arm maximum radius
-        self.surface_grid_density_for_larges_element = (
-            surface_grid_density_for_larges_element
+        self.surface_grid_density_for_largest_element = (
+            surface_grid_density_for_largest_element
         )
 
-        # Surface grid points scaled between different element based on the largest radius.
+        # Surface grid points scaled between different element based on the largestt radius.
         self.surface_grid_points = np.rint(
             self.cosserat_rod.radius[:]
             / np.max(self.cosserat_rod.radius[:])
-            * self.surface_grid_density_for_larges_element
+            * self.surface_grid_density_for_largest_element
         ).astype(int)
         # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
         self.surface_grid_points[np.where(self.surface_grid_points < 1)[0]] = 1
@@ -494,7 +494,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
     def get_maximum_lagrangian_grid_spacing(self):
         """Get the maximum Lagrangian grid spacing"""
-        grid_angular_spacing = 2 * np.pi / self.surface_grid_density_for_larges_element
+        grid_angular_spacing = 2 * np.pi / self.surface_grid_density_for_largest_element
         return np.amax(
             [self.cosserat_rod.lengths, self.cosserat_rod.radius * grid_angular_spacing]
         )
