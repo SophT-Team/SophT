@@ -339,9 +339,7 @@ class UnboundedFlowSimulator3D:
             nu_dt_by_dx2=self.real_t(self.kinematic_viscosity * dt / self.dx / self.dx),
         )
 
-    def compute_velocity_from_vorticity(
-        self,
-    ):
+    def compute_flow_velocity(self, free_stream_velocity):
         self.penalise_field_towards_boundary(vector_field=self.vorticity_field)
         self.unbounded_poisson_solver.vector_field_solve(
             solution_vector_field=self.stream_func_field,
@@ -352,6 +350,7 @@ class UnboundedFlowSimulator3D:
             field=self.stream_func_field,
             prefactor=self.real_t(0.5 / self.dx),
         )
+        self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 
     def advection_stretching_split_navier_stokes_timestep(
         self, dt, free_stream_velocity=(0.0, 0.0, 0.0)
@@ -363,8 +362,7 @@ class UnboundedFlowSimulator3D:
             dt_by_2_dx=self.real_t(dt / (2 * self.dx)),
         )
         self.vector_advection_and_diffusion_timestep(dt=dt)
-        self.compute_velocity_from_vorticity()
-        self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
+        self.compute_flow_velocity(free_stream_velocity=free_stream_velocity)
 
     def rotational_form_navier_stokes_timestep(
         self, dt, free_stream_velocity=(0.0, 0.0, 0.0)
@@ -385,8 +383,7 @@ class UnboundedFlowSimulator3D:
             diffusion_flux=self.buffer_scalar_field,
             nu_dt_by_dx2=self.real_t(self.kinematic_viscosity * dt / self.dx / self.dx),
         )
-        self.compute_velocity_from_vorticity()
-        self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
+        self.compute_flow_velocity(free_stream_velocity=free_stream_velocity)
 
     def navier_stokes_with_forcing_timestep(
         self, dt, free_stream_velocity=(0.0, 0.0, 0.0)
