@@ -14,6 +14,7 @@ from sopht.numeric.eulerian_grid_ops import (
     gen_elementwise_cross_product_pyst_kernel_3d,
     UnboundedPoissonSolverPYFFTW3D,
     gen_divergence_pyst_kernel_3d,
+    gen_laplacian_filter_kernel_3d,
 )
 from sopht.utils.precision import get_test_tol
 
@@ -31,6 +32,7 @@ class UnboundedFlowSimulator3D:
         flow_type="passive_scalar",
         real_t=np.float32,
         num_threads=1,
+        filter_vorticity=False,
         **kwargs,
     ):
         """Class initialiser
@@ -43,6 +45,8 @@ class UnboundedFlowSimulator3D:
         "passive_vector", "navier_stokes" or "navier_stokes_with_forcing"
         :param real_t: precision of the solver
         :param num_threads: number of threads
+        :param filter_vorticity: flag to determine if vorticity should be filtered or not,
+        needed for stability sometimes
 
         Notes
         -----
@@ -56,6 +60,7 @@ class UnboundedFlowSimulator3D:
         self.flow_type = flow_type
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
+        self.filter_vorticity = filter_vorticity
         supported_flow_types = [
             "passive_scalar",
             "passive_vector",
@@ -66,14 +71,11 @@ class UnboundedFlowSimulator3D:
             raise ValueError("Invalid flow type given")
         self.init_domain()
         self.init_fields()
-        if (
-            self.flow_type == "navier_stokes"
-            or self.flow_type == "navier_stokes_with_forcing"
-        ):
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
             self.penalty_zone_width = kwargs.get("penalty_zone_width", 2)
             self.with_free_stream_flow = kwargs.get("with_free_stream_flow", False)
             self.navier_stokes_inertial_term_form = kwargs.get(
-                "navier_stokes_inertial_term_form", "advection_stretching_split"
+                "navier_stokes_inertial_term_form", "rotational"
             )
             supported_navier_stokes_inertial_term_forms = [
                 "advection_stretching_split",
@@ -84,6 +86,23 @@ class UnboundedFlowSimulator3D:
                 not in supported_navier_stokes_inertial_term_forms
             ):
                 raise ValueError("Invalid Navier Stokes inertial treatment form given")
+            if self.filter_vorticity:
+                log = logging.getLogger()
+                log.warning(
+                    "==============================================="
+                    "\nVorticity filtering is turned on."
+                )
+                self.filter_setting_dict = kwargs.get("filter_setting_dict")
+                if self.filter_setting_dict is None:
+                    # set default values for the filter setting dictionary
+                    self.filter_setting_dict = {"order": 2, "type": "multiplicative"}
+                    log.warning(
+                        "Since a dict named filter_setting with keys "
+                        "\n'order' and 'type' is not provided, setting "
+                        f"\ndefault filter order = {self.filter_setting_dict['order']}"
+                        f"\nand type: {self.filter_setting_dict['type']}"
+                    )
+                log.warning("===============================================")
         self.compile_kernels()
         self.finalise_flow_timestep()
 
@@ -251,6 +270,23 @@ class UnboundedFlowSimulator3D:
                 num_threads=self.num_threads,
             )
 
+            # filter kernel compilation
+            def filter_vector_field(vector_field):
+                ...
+
+            self.filter_vector_field = filter_vector_field
+            if self.filter_vorticity:
+                self.filter_vector_field = gen_laplacian_filter_kernel_3d(
+                    filter_order=self.filter_setting_dict["order"],
+                    filter_flux_buffer=self.buffer_vector_field[0],
+                    field_buffer=self.buffer_vector_field[1],
+                    real_t=self.real_t,
+                    num_threads=self.num_threads,
+                    fixed_grid_size=self.grid_size,
+                    field_type="vector",
+                    filter_type=self.filter_setting_dict["type"],
+                )
+
         if self.flow_type == "navier_stokes_with_forcing":
             self.set_field = gen_set_fixed_val_pyst_kernel_3d(
                 real_t=self.real_t,
@@ -362,6 +398,7 @@ class UnboundedFlowSimulator3D:
             dt_by_2_dx=self.real_t(dt / (2 * self.dx)),
         )
         self.vector_advection_and_diffusion_timestep(dt=dt)
+        self.filter_vector_field(vector_field=self.vorticity_field)
         self.compute_flow_velocity(free_stream_velocity=free_stream_velocity)
 
     def rotational_form_navier_stokes_timestep(
@@ -383,6 +420,7 @@ class UnboundedFlowSimulator3D:
             diffusion_flux=self.buffer_scalar_field,
             nu_dt_by_dx2=self.real_t(self.kinematic_viscosity * dt / self.dx / self.dx),
         )
+        self.filter_vector_field(vector_field=self.vorticity_field)
         self.compute_flow_velocity(free_stream_velocity=free_stream_velocity)
 
     def navier_stokes_with_forcing_timestep(

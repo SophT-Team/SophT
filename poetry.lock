@@ -493,7 +493,7 @@ sympy = "^1.9"
 type = "git"
 url = "https://github.com/bhosale2/sopht-backend.git"
 reference = "main"
-resolved_reference = "82e623e00022bbbb74f7f113a2924d5f77ac8384"
+resolved_reference = "e998adb473cdef2569343cf57eacd42c179b20a9"
 
 [[package]]
 name = "sympy"

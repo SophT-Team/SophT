@@ -103,6 +103,8 @@ def flow_past_rod_case(
         real_t=real_t,
         num_threads=num_threads,
         navier_stokes_inertial_term_form="rotational",
+        filter_vorticity=True,
+        filter_setting_dict={"order": 2, "type": "multiplicative"},
     )
     # ==================FLOW SETUP END=========================
 
