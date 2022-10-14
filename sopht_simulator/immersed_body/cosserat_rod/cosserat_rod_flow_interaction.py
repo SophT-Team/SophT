@@ -1,8 +1,5 @@
-__all__ = ["CosseratRodFlowInteraction"]
 from elastica.rod.cosserat_rod import CosseratRod
-
 import numpy as np
-
 from sopht_simulator.immersed_body import (
     ImmersedBodyForcingGrid,
     ImmersedBodyFlowInteraction,

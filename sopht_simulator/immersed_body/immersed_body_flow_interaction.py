@@ -1,4 +1,3 @@
-__all__ = ["ImmersedBodyFlowInteraction"]
 import logging
 import numpy as np
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
