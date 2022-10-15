@@ -1,11 +1,3 @@
-__all__ = [
-    "TwoDimensionalCylinderForcingGrid",
-    "CircularCylinderForcingGrid",
-    "SquareCylinderForcingGrid",
-    "OpenEndCircularCylinderForcingGrid",
-    "SphereForcingGrid",
-]
-
 from elastica import Cylinder, RigidBodyBase, Sphere
 from elastica._linalg import _batch_cross
 import numpy as np

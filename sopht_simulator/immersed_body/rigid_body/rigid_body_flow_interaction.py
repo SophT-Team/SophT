@@ -1,8 +1,5 @@
-__all__ = ["RigidBodyFlowInteraction"]
 from elastica import RigidBodyBase
-
 import numpy as np
-
 from sopht_simulator.immersed_body import (
     ImmersedBodyForcingGrid,
     ImmersedBodyFlowInteraction,
