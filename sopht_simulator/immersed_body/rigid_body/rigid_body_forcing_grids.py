@@ -10,14 +10,14 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim: int, rigid_body: type(Cylinder)):
+    def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: type(Cylinder)):
         if grid_dim != 2:
             raise ValueError(
                 "Invalid grid dimensions. 2D cylinder forcing grid is only "
                 "defined for grid_dim=2"
             )
         self.cylinder = rigid_body
-        super().__init__(grid_dim)
+        super().__init__(grid_dim, num_lag_nodes)
         self.local_frame_relative_position_field = np.zeros_like(self.position_field)
         self.global_frame_relative_position_field = np.zeros_like(self.position_field)
 
@@ -83,8 +83,9 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     def __init__(
         self, grid_dim: int, rigid_body: type(Cylinder), num_forcing_points: int
     ):
-        self.num_lag_nodes = num_forcing_points
-        super().__init__(grid_dim, rigid_body)
+        super().__init__(
+            grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body
+        )
 
         dtheta = 2.0 * np.pi / self.num_lag_nodes
         theta = np.linspace(
@@ -116,8 +117,9 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     def __init__(
         self, grid_dim: int, rigid_body: type(Cylinder), num_forcing_points: int
     ):
-        self.num_lag_nodes = num_forcing_points
-        super().__init__(grid_dim, rigid_body)
+        super().__init__(
+            grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body
+        )
 
         if self.num_lag_nodes % 4 != 0:
             raise ValueError(
@@ -174,14 +176,16 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
 class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid of a 3D rigid body with cross-section."""
 
-    def __init__(self, grid_dim: int, rigid_body: type(RigidBodyBase)):
+    def __init__(
+        self, grid_dim: int, num_lag_nodes: int, rigid_body: type(RigidBodyBase)
+    ):
         if grid_dim != 3:
             raise ValueError(
                 "Invalid grid dimensions. 3D Rigid body forcing grid is only "
                 "defined for grid_dim=3"
             )
         self.rigid_body = rigid_body
-        super().__init__(grid_dim)
+        super().__init__(grid_dim, num_lag_nodes)
         self.local_frame_relative_position_field = np.zeros_like(self.position_field)
         self.global_frame_relative_position_field = np.zeros_like(self.position_field)
 
@@ -254,11 +258,13 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
             raise RuntimeError(
                 "Too thin cylinder! Use a line source forcing grid instead!"
             )
-        self.num_lag_nodes = (
+        num_lag_nodes = (
             self.num_forcing_points_along_length
             * self.num_forcing_points_along_circumference
         )
-        super().__init__(grid_dim, rigid_body)
+        super().__init__(
+            grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
+        )
 
         dtheta = 2.0 * np.pi / self.num_forcing_points_along_circumference
         theta = np.linspace(
@@ -317,8 +323,10 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
             )
             + 1
         )
-        self.num_lag_nodes = sum(num_forcing_points_along_latitudes)
-        super().__init__(grid_dim, rigid_body)
+        num_lag_nodes = sum(num_forcing_points_along_latitudes)
+        super().__init__(
+            grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
+        )
         global_frame_relative_position_x = np.array([])
         global_frame_relative_position_y = np.array([])
         global_frame_relative_position_z = np.array([])

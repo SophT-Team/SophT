@@ -9,9 +9,9 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
     def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
-        self.num_lag_nodes = cosserat_rod.n_elems + 1
+        num_lag_nodes = cosserat_rod.n_elems + 1
+        super().__init__(grid_dim, num_lag_nodes)
         self.cosserat_rod = cosserat_rod
-        super().__init__(grid_dim)
         self.moment_arm = np.zeros((3, cosserat_rod.n_elems))
 
         # to ensure position/velocity are consistent during initialisation
@@ -80,9 +80,9 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
     def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
-        self.num_lag_nodes = cosserat_rod.n_elems
+        num_lag_nodes = cosserat_rod.n_elems
+        super().__init__(grid_dim, num_lag_nodes)
         self.cosserat_rod = cosserat_rod
-        super().__init__(grid_dim)
 
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
@@ -143,8 +143,8 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             )
         self.cosserat_rod = cosserat_rod
         # 1 for element center 2 for edges
-        self.num_lag_nodes = cosserat_rod.n_elems + 2 * cosserat_rod.n_elems
-        super().__init__(grid_dim)
+        num_lag_nodes = cosserat_rod.n_elems + 2 * cosserat_rod.n_elems
+        super().__init__(grid_dim, num_lag_nodes)
 
         self.z_vector = np.repeat(
             np.array([0, 0, 1.0]).reshape(3, 1), self.cosserat_rod.n_elems, axis=-1
@@ -322,8 +322,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         ).astype(int)
         # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
         self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
-        self.num_lag_nodes = self.surface_grid_points.sum()
-        super().__init__(grid_dim)
+        num_lag_nodes = self.surface_grid_points.sum()
+        super().__init__(grid_dim, num_lag_nodes)
         self.n_elems = cosserat_rod.n_elems
 
         self.surface_point_rotation_angle_list = []

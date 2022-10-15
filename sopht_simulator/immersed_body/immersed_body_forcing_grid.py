@@ -14,11 +14,10 @@ class ImmersedBodyForcingGrid(ABC):
 
     """
 
-    # Will be set in derived classes
-    num_lag_nodes: int = NotImplementedError
-
-    def __init__(self, grid_dim):
+    def __init__(self, grid_dim: int, num_lag_nodes: int):
+        # Will be set in derived classes
         self.grid_dim = grid_dim
+        self.num_lag_nodes = num_lag_nodes
         self.position_field = np.zeros((self.grid_dim, self.num_lag_nodes))
         self.velocity_field = np.zeros_like(self.position_field)
         if grid_dim == 2:

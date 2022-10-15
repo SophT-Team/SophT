@@ -9,19 +9,17 @@ from sopht_simulator.immersed_body.immersed_body_forcing_grid import (
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
     """Base class for immersed body flow interaction."""
 
-    # These are meant to be initialised in the derived classes
-    body_flow_forces: np.ndarray
-    body_flow_torques: np.ndarray
-    forcing_grid: type(ImmersedBodyForcingGrid)
-
     def __init__(
         self,
-        eul_grid_forcing_field,
-        eul_grid_velocity_field,
-        virtual_boundary_stiffness_coeff,
-        virtual_boundary_damping_coeff,
-        dx,
-        grid_dim,
+        eul_grid_forcing_field: np.ndarray,
+        eul_grid_velocity_field: np.ndarray,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        forcing_grid: type(ImmersedBodyForcingGrid),
+        virtual_boundary_stiffness_coeff: float,
+        virtual_boundary_damping_coeff: float,
+        dx: float,
+        grid_dim: int,
         real_t=np.float64,
         eul_grid_coord_shift=None,
         interp_kernel_width=None,
@@ -30,6 +28,10 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         start_time=0.0,
     ):
         """Class initialiser."""
+        # These are meant to be specialised/created in the derived classes
+        self.body_flow_forces = body_flow_forces
+        self.body_flow_torques = body_flow_torques
+        self.forcing_grid = forcing_grid
         # these hold references to Eulerian fields
         self.eul_grid_forcing_field = eul_grid_forcing_field.view()
         self.eul_grid_velocity_field = eul_grid_velocity_field.view()
