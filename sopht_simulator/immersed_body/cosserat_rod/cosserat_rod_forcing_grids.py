@@ -313,7 +313,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             surface_grid_density_for_largest_element
         )
 
-        # Surface grid points scaled between different element based on the largestt radius.
+        # Surface grid points scaled between different element based on the largest radius.
         self.surface_grid_points = np.rint(
             self.cosserat_rod.radius[:]
             / np.max(self.cosserat_rod.radius[:])
