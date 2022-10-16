@@ -1,9 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import logging
 import numpy as np
 
 
-class ImmersedBodyForcingGrid(ABC):
+class ImmersedBodyForcingGrid:
     """
     This is the base class for forcing grid in immersed body-flow coupling.
 
