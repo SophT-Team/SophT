@@ -381,8 +381,8 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         """Computes location of forcing grid for the rigid sphere.
 
         Since this is a sphere, the local frame concept is redundant,
-        and the global relative fram can be directly used.
-        Hence overloading the method here.
+        and the global relative frame can be directly used.
+        Hence, overloading the method here.
         """
         self.position_field[...] = (
             self.rigid_body.position_collection
