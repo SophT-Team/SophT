@@ -1,4 +1,4 @@
-from elastica import Cylinder, RigidBodyBase, Sphere
+import elastica as ea
 from elastica._linalg import _batch_cross
 import numpy as np
 from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
@@ -10,7 +10,9 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: type(Cylinder)):
+    def __init__(
+        self, grid_dim: int, num_lag_nodes: int, rigid_body: type(ea.Cylinder)
+    ):
         if grid_dim != 2:
             raise ValueError(
                 "Invalid grid dimensions. 2D cylinder forcing grid is only "
@@ -81,7 +83,7 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     """
 
     def __init__(
-        self, grid_dim: int, rigid_body: type(Cylinder), num_forcing_points: int
+        self, grid_dim: int, rigid_body: type(ea.Cylinder), num_forcing_points: int
     ):
         super().__init__(
             grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body
@@ -115,7 +117,7 @@ class SquareCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     """
 
     def __init__(
-        self, grid_dim: int, rigid_body: type(Cylinder), num_forcing_points: int
+        self, grid_dim: int, rigid_body: type(ea.Cylinder), num_forcing_points: int
     ):
         super().__init__(
             grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body
@@ -177,7 +179,7 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid of a 3D rigid body with cross-section."""
 
     def __init__(
-        self, grid_dim: int, num_lag_nodes: int, rigid_body: type(RigidBodyBase)
+        self, grid_dim: int, num_lag_nodes: int, rigid_body: type(ea.RigidBodyBase)
     ):
         if grid_dim != 3:
             raise ValueError(
@@ -243,7 +245,7 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        rigid_body: type(Cylinder),
+        rigid_body: type(ea.Cylinder),
         num_forcing_points_along_length: int,
     ):
         self.num_forcing_points_along_length = num_forcing_points_along_length
@@ -310,7 +312,7 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        rigid_body: type(Sphere),
+        rigid_body: type(ea.Sphere),
         num_forcing_points_along_equator: int,
     ):
         self.num_forcing_points_along_equator = num_forcing_points_along_equator
