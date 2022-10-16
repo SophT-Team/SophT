@@ -5,13 +5,13 @@ import sopht_simulator as sps
 from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
 
 
-def mock_straight_rod(n_elems):
+def mock_straight_rod(n_elems, **kwargs):
     """Returns a straight rod aligned x = y = z plane for testing."""
     start = np.array([0.0, 0.0, 0.0])
     direction = np.array([1.0, 1.0, 1.0])
     normal = np.array([0.0, -1.0, 1.0])
     rod_length = 1.0
-    base_radius = 0.05
+    base_radius = kwargs.get("base_radius", 0.05)
     staight_rod = ea.CosseratRod.straight_rod(
         n_elems,
         start,
@@ -163,16 +163,6 @@ def test_rod_element_centric_grid_spacing(n_elems):
 
 
 # Edge Forcing Grid tests
-@pytest.mark.parametrize("grid_dim", [0, 1, 3, 4])
-@pytest.mark.parametrize("n_elems", [8, 16])
-@pytest.mark.xfail(raises=ValueError)
-def test_rod_edge_grid_grid_kinematics(grid_dim, n_elems):
-    straight_rod = mock_straight_rod(n_elems)
-    rod_forcing_grid = sps.CosseratRodEdgeForcingGrid(
-        grid_dim=grid_dim, cosserat_rod=straight_rod
-    )
-
-
 class MockEdgeForcingGrid:
     def __init__(self, n_elems):
 
@@ -189,6 +179,16 @@ class MockEdgeForcingGrid:
         self.position_field = np.zeros((2, self.num_lag_nodes))
         self.velocity_field = np.zeros((2, self.num_lag_nodes))
         self.moment_arm = np.zeros((3, n_elems))
+
+
+@pytest.mark.parametrize("grid_dim", [0, 1, 3, 4])
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.xfail(raises=ValueError)
+def test_rod_edge_grid_dimension(grid_dim, n_elems):
+    straight_rod = mock_straight_rod(n_elems)
+    rod_forcing_grid = sps.CosseratRodEdgeForcingGrid(
+        grid_dim=grid_dim, cosserat_rod=straight_rod
+    )
 
 
 @pytest.mark.parametrize("n_elems", [8, 16])
@@ -381,3 +381,255 @@ def test_rod_edge_grid_spacing(n_elems):
     # rod with same element sizes so max is one of any lengths
     correct_max_grid_spacing = straight_rod.lengths[0]
     assert correct_max_grid_spacing == max_grid_spacing
+
+
+# Surface Forcing Grid tests
+class MockSurfaceForcingGrid:
+    def __init__(self, n_elems, grid_density, base_radius):
+
+        self.surface_grid_density_for_largest_element = grid_density
+        self.surface_grid_points = np.zeros((n_elems), dtype=np.int)
+        self.surface_point_rotation_angle_list = []
+        self.start_idx = np.zeros((n_elems), dtype=np.int)
+        self.end_idx = np.zeros((n_elems), dtype=np.int)
+
+        idx_temp = 0
+        for i in range(n_elems):
+            n_point_per_elem = base_radius[i] / np.max(base_radius) * grid_density
+            n_point_per_elem = round(n_point_per_elem)
+
+            if n_point_per_elem < 3:
+                n_point_per_elem = 1
+                self.surface_point_rotation_angle_list.append(np.array([]))
+
+            else:
+                self.surface_point_rotation_angle_list.append(
+                    np.array(
+                        [
+                            2 * np.pi / n_point_per_elem * i
+                            for i in range(n_point_per_elem)
+                        ]
+                    )
+                )
+
+            self.surface_grid_points[i] = n_point_per_elem
+            self.start_idx[i] = idx_temp
+            idx_temp += n_point_per_elem
+            self.end_idx[i] = idx_temp
+
+        self.num_lag_nodes = self.surface_grid_points.sum()
+        self.n_elems = n_elems
+        self.position_field = np.zeros((3, self.num_lag_nodes))
+        self.velocity_field = np.zeros((3, self.num_lag_nodes))
+        self.moment_arm = np.zeros((3, self.num_lag_nodes))
+        self.local_frame_surface_points = np.zeros_like(self.position_field)
+
+        for i, angle in enumerate(self.surface_point_rotation_angle_list):
+            if angle.size == 0:
+                self.local_frame_surface_points[
+                    :, self.start_idx[i] : self.end_idx[i]
+                ] = 0.0
+            else:
+                self.local_frame_surface_points[
+                    0, self.start_idx[i] : self.end_idx[i]
+                ] = np.cos(angle)
+                self.local_frame_surface_points[
+                    1, self.start_idx[i] : self.end_idx[i]
+                ] = np.sin(angle)
+
+
+@pytest.mark.parametrize("grid_dim", [0, 1, 2, 4])
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.xfail(raises=ValueError)
+def test_rod_surface_grid_dimension(grid_dim, n_elems):
+    straight_rod = mock_straight_rod(n_elems)
+    rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=grid_dim,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=1,
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
+@pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
+def test_rod_surface_grid_setup(n_elems, largest_element_grid_density, taper_ratio):
+    base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
+    straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
+
+    rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=largest_element_grid_density,
+    )
+
+    correct_forcing_grid = MockSurfaceForcingGrid(
+        n_elems, largest_element_grid_density, base_radius
+    )
+
+    # check if setup is correct
+    assert rod_forcing_grid.cosserat_rod is straight_rod
+    assert rod_forcing_grid.num_lag_nodes == correct_forcing_grid.num_lag_nodes
+    assert (
+        rod_forcing_grid.position_field.shape
+        == correct_forcing_grid.position_field.shape
+    )
+    assert (
+        rod_forcing_grid.velocity_field.shape
+        == correct_forcing_grid.velocity_field.shape
+    )
+    assert rod_forcing_grid.moment_arm.shape == correct_forcing_grid.moment_arm.shape
+
+    np.testing.assert_allclose(
+        rod_forcing_grid.surface_grid_points, correct_forcing_grid.surface_grid_points
+    )
+
+    for i in range(n_elems):
+        np.testing.assert_allclose(
+            rod_forcing_grid.surface_point_rotation_angle_list[i],
+            correct_forcing_grid.surface_point_rotation_angle_list[i],
+            atol=1e-10,
+        )
+
+    np.testing.assert_allclose(
+        rod_forcing_grid.start_idx, correct_forcing_grid.start_idx
+    )
+    np.testing.assert_allclose(rod_forcing_grid.end_idx, correct_forcing_grid.end_idx)
+    np.testing.assert_allclose(
+        rod_forcing_grid.local_frame_surface_points,
+        correct_forcing_grid.local_frame_surface_points,
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
+@pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
+def test_rod_surface_grid_grid_kinematics(
+    n_elems, largest_element_grid_density, taper_ratio
+):
+    base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
+    straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
+
+    rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=largest_element_grid_density,
+    )
+    correct_forcing_grid = MockSurfaceForcingGrid(
+        n_elems, largest_element_grid_density, base_radius
+    )
+
+    # Compute the correct grid position
+    for i in range(n_elems):
+        element_pos = 0.5 * (
+            straight_rod.position_collection[:, i]
+            + straight_rod.position_collection[:, i + 1]
+        )
+        director_transpose = straight_rod.director_collection[:, :, i].T
+        rod_radius = straight_rod.radius[i]
+
+        for j in range(correct_forcing_grid.surface_grid_points[i]):
+            grid_idx = correct_forcing_grid.start_idx[i] + j
+            correct_forcing_grid.moment_arm[:, grid_idx] = (
+                rod_radius
+                * director_transpose
+                @ correct_forcing_grid.local_frame_surface_points[:, grid_idx]
+            )
+            correct_forcing_grid.position_field[:, grid_idx] = (
+                element_pos + correct_forcing_grid.moment_arm[:, grid_idx]
+            )
+
+    np.testing.assert_allclose(
+        rod_forcing_grid.moment_arm, correct_forcing_grid.moment_arm, atol=1e-15
+    )
+    np.testing.assert_allclose(
+        rod_forcing_grid.position_field, correct_forcing_grid.position_field
+    )
+
+    # Compute the correct grid velocity
+    for i in range(n_elems):
+        element_velocity = (
+            straight_rod.velocity_collection[:, i] * straight_rod.mass[i]
+            + straight_rod.velocity_collection[:, i + 1] * straight_rod.mass[i + 1]
+        ) / (straight_rod.mass[i] + straight_rod.mass[i + 1])
+        director_transpose = straight_rod.director_collection[:, :, i].T
+        omega_in_lab_frame = director_transpose @ straight_rod.omega_collection[:, i]
+
+        for j in range(correct_forcing_grid.surface_grid_points[i]):
+            grid_idx = correct_forcing_grid.start_idx[i] + j
+            correct_forcing_grid.velocity_field[
+                :, grid_idx
+            ] = element_velocity + np.cross(
+                omega_in_lab_frame, correct_forcing_grid.moment_arm[:, grid_idx]
+            )
+
+    np.testing.assert_allclose(
+        rod_forcing_grid.velocity_field, correct_forcing_grid.velocity_field
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
+@pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
+def test_rod_surface_grid_force_transfer(
+    n_elems, largest_element_grid_density, taper_ratio
+):
+    base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
+    straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
+
+    rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=largest_element_grid_density,
+    )
+    correct_forcing_grid = MockSurfaceForcingGrid(
+        n_elems, largest_element_grid_density, base_radius
+    )
+
+    body_flow_forces = np.zeros((3, n_elems + 1))
+    body_flow_torques = np.zeros((3, n_elems))
+    lag_grid_forcing_field = np.zeros((3, rod_forcing_grid.num_lag_nodes))
+    uniform_forcing = np.linspace(1.0, 3, 3).reshape(-1, 1)
+    lag_grid_forcing_field[...] = uniform_forcing
+    rod_forcing_grid.transfer_forcing_from_grid_to_body(
+        body_flow_forces=body_flow_forces,
+        body_flow_torques=body_flow_torques,
+        lag_grid_forcing_field=lag_grid_forcing_field,
+    )
+
+    # check if forces are correct
+    correct_body_flow_forces = np.zeros_like(body_flow_forces)
+    for i in range(n_elems):
+        correct_body_flow_forces[:, i] -= (
+            0.5 * uniform_forcing[:, 0] * correct_forcing_grid.surface_grid_points[i]
+        )
+        correct_body_flow_forces[:, i + 1] -= (
+            0.5 * uniform_forcing[:, 0] * correct_forcing_grid.surface_grid_points[i]
+        )
+    np.testing.assert_allclose(body_flow_forces, correct_body_flow_forces)
+
+    # torques stay 0 for this loading
+    np.testing.assert_allclose(body_flow_torques, 0.0, atol=1e-14)
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
+@pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
+def test_rod_surface_grid_spacing(n_elems, largest_element_grid_density, taper_ratio):
+    base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
+    straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
+
+    rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=largest_element_grid_density,
+    )
+
+    max_grid_spacing = rod_forcing_grid.get_maximum_lagrangian_grid_spacing()
+    # rod with same element sizes so max is one of any lengths
+    correct_max_grid_spacing = max(
+        straight_rod.lengths[0],
+        np.max(base_radius) * (2 * np.pi / largest_element_grid_density),
+    )
+
+    np.testing.assert_allclose(correct_max_grid_spacing, max_grid_spacing)
