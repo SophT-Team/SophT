@@ -1,6 +1,6 @@
 from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
-from elastica.rod.cosserat_rod import CosseratRod
 from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
+import elastica as ea
 import numpy as np
 from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
 
@@ -8,7 +8,7 @@ from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
-    def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: type(ea.CosseratRod)):
         num_lag_nodes = cosserat_rod.n_elems + 1
         super().__init__(grid_dim, num_lag_nodes)
         self.cosserat_rod = cosserat_rod
@@ -79,7 +79,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
-    def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: type(ea.CosseratRod)):
         num_lag_nodes = cosserat_rod.n_elems
         super().__init__(grid_dim, num_lag_nodes)
         self.cosserat_rod = cosserat_rod
@@ -135,7 +135,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim: int, cosserat_rod: type(CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: type(ea.CosseratRod)):
         if grid_dim != 2:
             raise ValueError(
                 "Invalid grid dimensions. Cosserat rod edge forcing grid is only "
@@ -299,7 +299,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        cosserat_rod: type(CosseratRod),
+        cosserat_rod: type(ea.CosseratRod),
         surface_grid_density_for_largest_element: int,
     ):
         if grid_dim != 3:
