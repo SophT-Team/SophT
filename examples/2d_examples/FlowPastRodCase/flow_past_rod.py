@@ -15,8 +15,8 @@ def flow_past_rod_case(
     mass_ratio=1.5,
     froude=0.5,
     rod_start_incline_angle=0.0,
-    coupling_stiffness=-1.25e3,
-    coupling_damping=-5e-1,
+    coupling_stiffness=-8e4,
+    coupling_damping=-30,
     num_threads=4,
     precision="single",
 ):

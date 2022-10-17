@@ -9,8 +9,8 @@ import sopht_simulator as sps
 def flow_past_cylinder_boundary_forcing_case(
     grid_size_x,
     grid_size_y,
-    coupling_stiffness=-1.5e2,
-    coupling_damping=-6e-2,
+    coupling_stiffness=-5e4,
+    coupling_damping=-20,
     num_threads=4,
     precision="single",
     save_diagnostic=False,

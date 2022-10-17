@@ -10,8 +10,8 @@ def immersed_continuum_snake_case(
     grid_size,
     Re=10,
     coupling_type="one_way",
-    coupling_stiffness=-4e2,
-    coupling_damping=-4e-1,
+    coupling_stiffness=-1.6e4,
+    coupling_damping=-16,
     num_threads=4,
     precision="single",
 ):
