@@ -97,10 +97,9 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
 
     def compute_lag_grid_velocity_field(self):
         """Computes velocity of forcing grid points for the Cosserat rod"""
-        self.velocity_field[...] = (
-            self.cosserat_rod.velocity_collection[: self.grid_dim, 1:]
-            + self.cosserat_rod.velocity_collection[: self.grid_dim, :-1]
-        ) / 2.0
+        self.velocity_field[...] = node_to_element_velocity(
+            self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
+        )[: self.grid_dim]
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -314,7 +313,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             surface_grid_density_for_largest_element
         )
 
-        # Surface grid points scaled between different element based on the largestt radius.
+        # Surface grid points scaled between different element based on the largest radius.
         self.surface_grid_points = np.rint(
             self.cosserat_rod.radius[:]
             / np.max(self.cosserat_rod.radius[:])
