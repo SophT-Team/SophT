@@ -73,6 +73,11 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             )
         log.warning("==========================================================")
 
+        # rescale the virtual boundary coeffs by grid spacings
+        # (based on previous penalty immersed boundary method works)
+        virtual_boundary_stiffness_coeff *= max_lag_grid_dx ** (grid_dim - 1)
+        virtual_boundary_damping_coeff *= max_lag_grid_dx ** (grid_dim - 1)
+
         # initialising super class
         super().__init__(
             virtual_boundary_stiffness_coeff,

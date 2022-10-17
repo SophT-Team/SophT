@@ -10,8 +10,8 @@ import sopht_simulator as sps
 def flow_past_sphere_case(
     grid_size,
     reynolds=100.0,
-    coupling_stiffness=-1e2,
-    coupling_damping=-6e-2,
+    coupling_stiffness=-6e5,
+    coupling_damping=-3.5e2,
     num_threads=4,
     precision="single",
     save_data=False,

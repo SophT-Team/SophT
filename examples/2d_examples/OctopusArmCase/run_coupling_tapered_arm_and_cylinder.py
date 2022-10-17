@@ -12,8 +12,8 @@ def tapered_arm_and_cylinder_flow_coupling(
     Re=200,
     rod_coupling_type="one_way",
     rigid_body_coupling_type="one_way",
-    coupling_stiffness=-8e1,
-    coupling_damping=-8e-2,
+    coupling_stiffness=-5e4,
+    coupling_damping=-5e1,
     num_threads=8,
     precision="single",
 ):

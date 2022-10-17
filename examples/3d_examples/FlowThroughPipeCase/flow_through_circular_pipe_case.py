@@ -12,8 +12,8 @@ def analytical_pipe_flow_velocity(radial_coordinate, mean_velocity, pipe_radius)
 
 def flow_through_circular_pipe_case(
     grid_size,
-    coupling_stiffness=-1e2,
-    coupling_damping=-6e-2,
+    coupling_stiffness=-4e5,
+    coupling_damping=-2.5e2,
     num_threads=4,
     precision="single",
     save_data=False,
