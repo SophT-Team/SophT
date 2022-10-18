@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 import sopht_simulator as sps
 from sopht.utils.precision import get_test_tol
+from tests.immersed_body.rigid_body.test_derived_rigid_bodies import mock_xy_plane
 
 
 def mock_2d_cylinder():
@@ -321,4 +322,82 @@ def test_sphere_grid_spacing(num_forcing_points_along_equator):
     correct_max_grid_spacing = (
         sphere_equator_circumference / num_forcing_points_along_equator
     )
+    assert correct_max_grid_spacing == max_grid_spacing
+
+
+@pytest.mark.parametrize("num_forcing_points_along_length", [8, 16])
+def test_rectangular_plane_grid_kinematics(num_forcing_points_along_length):
+    plane = mock_xy_plane()
+    grid_dim = 3
+    rect_plane_forcing_grid = sps.RectangularPlaneForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=plane,
+        num_forcing_points_along_length=num_forcing_points_along_length,
+    )
+    assert rect_plane_forcing_grid.rigid_body is plane
+    num_forcing_points_along_breadth = int(
+        num_forcing_points_along_length * plane.breadth / plane.length
+    )
+    correct_num_forcing_lag_nodes = (
+        num_forcing_points_along_length * num_forcing_points_along_breadth
+    )
+    assert rect_plane_forcing_grid.num_lag_nodes == correct_num_forcing_lag_nodes
+    assert rect_plane_forcing_grid.position_field.shape == (
+        grid_dim,
+        correct_num_forcing_lag_nodes,
+    )
+    assert rect_plane_forcing_grid.velocity_field.shape == (
+        grid_dim,
+        correct_num_forcing_lag_nodes,
+    )
+
+    # check if positions are correct
+    z_axis = 2
+    np.testing.assert_allclose(
+        rect_plane_forcing_grid.position_field[z_axis],
+        plane.position_collection[z_axis, 0],
+    )
+    x_axis = 0
+    x_axis_grid_range = np.linspace(
+        plane.position_collection[x_axis, 0] - 0.5 * plane.length,
+        plane.position_collection[x_axis, 0] + 0.5 * plane.length,
+        num_forcing_points_along_length,
+    )
+    y_axis = 1
+    y_axis_grid_range = np.linspace(
+        plane.position_collection[y_axis, 0] - 0.5 * plane.breadth,
+        plane.position_collection[y_axis, 0] + 0.5 * plane.breadth,
+        num_forcing_points_along_breadth,
+    )
+    correct_x_axis_grid, correct_y_axis_grid = np.meshgrid(
+        x_axis_grid_range, y_axis_grid_range
+    )
+    np.testing.assert_allclose(
+        rect_plane_forcing_grid.position_field[x_axis],
+        correct_x_axis_grid.reshape(
+            -1,
+        ),
+    )
+    np.testing.assert_allclose(
+        rect_plane_forcing_grid.position_field[y_axis],
+        correct_y_axis_grid.reshape(
+            -1,
+        ),
+    )
+
+    # velocity computation is tested in parent 3D rigid body class
+    # hence leaving only a check against 0 here
+    np.testing.assert_allclose(rect_plane_forcing_grid.velocity_field, 0.0)
+
+
+@pytest.mark.parametrize("num_forcing_points_along_length", [8, 16])
+def test_rectangular_plane_grid_spacing(num_forcing_points_along_length):
+    plane = mock_xy_plane()
+    rect_plane_forcing_grid = sps.RectangularPlaneForcingGrid(
+        grid_dim=3,
+        rigid_body=plane,
+        num_forcing_points_along_length=num_forcing_points_along_length,
+    )
+    max_grid_spacing = rect_plane_forcing_grid.get_maximum_lagrangian_grid_spacing()
+    correct_max_grid_spacing = plane.length / num_forcing_points_along_length
     assert correct_max_grid_spacing == max_grid_spacing
