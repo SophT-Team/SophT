@@ -2,6 +2,9 @@ import elastica as ea
 from elastica._linalg import _batch_cross
 import numpy as np
 from sopht_simulator.immersed_body import ImmersedBodyForcingGrid
+from sopht_simulator.immersed_body.rigid_body.derived_rigid_bodies import (
+    RectangularPlane,
+)
 
 
 class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
@@ -388,3 +391,56 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
             self.rigid_body.position_collection
             + self.global_frame_relative_position_field
         )
+
+
+class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
+    """Class for forcing grid of a rectangular plane"""
+
+    def __init__(
+        self,
+        grid_dim: int,
+        rigid_body: type(RectangularPlane),
+        num_forcing_points_along_length: int,
+    ):
+        self.num_forcing_points_along_length = num_forcing_points_along_length
+        self.num_forcing_points_along_breadth = int(
+            num_forcing_points_along_length * rigid_body.breadth / rigid_body.length
+        )
+        self.grid_spacing = rigid_body.length / self.num_forcing_points_along_length
+        num_lag_nodes = (
+            self.num_forcing_points_along_length * self.num_forcing_points_along_breadth
+        )
+        super().__init__(
+            grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
+        )
+
+        grid_range_along_length = np.linspace(
+            -0.5 * rigid_body.length,
+            0.5 * rigid_body.length,
+            self.num_forcing_points_along_length,
+        )
+        grid_range_along_breadth = np.linspace(
+            -0.5 * rigid_body.breadth,
+            0.5 * rigid_body.breadth,
+            self.num_forcing_points_along_breadth,
+        )
+        # local frame is set such that first 2 axes (d1 and d2) are in
+        # the plane coordinates, third axis (d3) is plane normal direction
+        length_grid, breadth_grid = np.meshgrid(
+            grid_range_along_length, grid_range_along_breadth
+        )
+        self.local_frame_relative_position_field[0] = length_grid.reshape(
+            -1,
+        )
+        self.local_frame_relative_position_field[1] = breadth_grid.reshape(
+            -1,
+        )
+        self.local_frame_relative_position_field[2] = 0.0
+
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def get_maximum_lagrangian_grid_spacing(self):
+        """Get the maximum Lagrangian grid spacing"""
+        return self.grid_spacing
