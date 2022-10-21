@@ -81,7 +81,7 @@ def create_submit_file(
         f.write(f"#SBATCH --mail-type={mail_type}\n")
 
     if verbose:
-        f.write("SBATCH -v\n")
+        f.write("#SBATCH -v\n")
 
     f.writelines(
         [
