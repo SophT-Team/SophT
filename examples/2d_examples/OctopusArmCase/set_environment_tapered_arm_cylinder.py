@@ -6,12 +6,12 @@ import elastica as ea
 from elastica._calculus import _isnan_check
 from arm_functions import StraightRodCallBack, CylinderCallBack
 
-# TODO: After HS releases the COMM remove below import statements and just import the package.
-from actuations.muscles import (
+
+from coomm.actuations.muscles import (
     force_length_weight_guassian,
     force_length_weight_poly,
 )
-from actuations.muscles import (
+from coomm.actuations.muscles import (
     MuscleGroup,
     LongitudinalMuscle,
     ObliqueMuscle,
