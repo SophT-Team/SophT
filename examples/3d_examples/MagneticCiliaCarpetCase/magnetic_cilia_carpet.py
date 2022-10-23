@@ -7,11 +7,12 @@ from post_processing import plot_video_with_surface
 class MagneticCiliaCarpetSimulator:
     def __init__(
         self,
+        rod_base_length=1.5,
         n_elem_per_rod=25,
         num_cycles=2.0,
         num_rods_along_x=8,
         num_rods_along_y=4,
-        carpet_centroid=np.array([0.0, 0.0, 0.0]),
+        carpet_base_centroid=np.array([0.0, 0.0, 0.0]),
         plot_result=True,
     ):
         class MagneticBeamSimulator(
@@ -27,8 +28,8 @@ class MagneticCiliaCarpetSimulator:
         self.magnetic_beam_sim = MagneticBeamSimulator()
         # setting up test params
         n_rods = num_rods_along_x * num_rods_along_y
-        self.base_length = 1.5  # m
-        self.spacing_between_rods = self.base_length  # following Gu2020
+        self.rod_base_length = rod_base_length
+        self.spacing_between_rods = self.rod_base_length  # following Gu2020
         n_elem = n_elem_per_rod
         grid_dim = 3
         x_axis = 0
@@ -43,9 +44,10 @@ class MagneticCiliaCarpetSimulator:
             ) * self.spacing_between_rods
         direction = np.array([0.0, 0.0, 1.0])
         normal = np.array([0.0, 1.0, 0.0])
-        base_radius = 0.15  # m
+        aspect_ratio = 5.0
+        base_radius = rod_base_length / aspect_ratio / 2.0
         base_area = np.pi * base_radius**2
-        volume = base_area * self.base_length
+        volume = base_area * self.rod_base_length
         moment_of_inertia = np.pi / 4 * base_radius**4
         density = 2.39e3  # kg/m3
         E = 1.85e5  # Pa
@@ -53,9 +55,9 @@ class MagneticCiliaCarpetSimulator:
 
         # Parameters are from Gu2020
         angular_frequency = np.deg2rad(
-            5.0
+            10.0
         )  # angular frequency of the rotating magnetic field
-        self.velocity_scale = self.base_length * angular_frequency
+        self.velocity_scale = self.rod_base_length * angular_frequency
         magnetic_field_strength = 80e-3  # 80mT
         # MBAL2_EI is a non-dimensional number from Wang 2019
         MBAL2_EI = (
@@ -68,7 +70,7 @@ class MagneticCiliaCarpetSimulator:
             MBAL2_EI
             * E
             * moment_of_inertia
-            / (volume * magnetic_field_strength * self.base_length)
+            / (volume * magnetic_field_strength * self.rod_base_length)
         )
         self.carpet_length_x = self.spacing_between_rods * (num_rods_along_x - 1)
         self.carpet_length_y = self.spacing_between_rods * (num_rods_along_y - 1)
@@ -84,10 +86,11 @@ class MagneticCiliaCarpetSimulator:
         magnetization_direction_list = []
 
         # shift the carpet to the provided centroid
-        self.carpet_centroid = carpet_centroid
+        self.carpet_base_centroid = carpet_base_centroid
         current_carpet_start_centroid = np.mean(start_collection, axis=0)
         start_collection += (
-            self.carpet_centroid.reshape(-1, grid_dim) - current_carpet_start_centroid
+            self.carpet_base_centroid.reshape(-1, grid_dim)
+            - current_carpet_start_centroid
         )
 
         for i in range(n_rods):
@@ -114,7 +117,7 @@ class MagneticCiliaCarpetSimulator:
                 start_collection[i],
                 direction,
                 normal,
-                self.base_length,
+                self.rod_base_length,
                 base_radius,
                 density,
                 0.0,
@@ -159,7 +162,7 @@ class MagneticCiliaCarpetSimulator:
             )
 
         # add damping
-        dl = self.base_length / n_elem
+        dl = self.rod_base_length / n_elem
         self.dt = 0.1 * dl
         damping_constant = 0.5
         for i in range(n_rods):
@@ -178,6 +181,8 @@ class MagneticCiliaCarpetSimulator:
             self.add_callback()
 
         self.timestepper = ea.PositionVerlet()
+
+    def finalize(self):
         self.magnetic_beam_sim.finalize()
 
     def add_callback(self):
@@ -227,16 +232,16 @@ class MagneticCiliaCarpetSimulator:
                 fps=self.rendering_fps,
                 step=10,
                 x_limits=(
-                    self.carpet_centroid[0] - 0.6 * self.carpet_length_x,
-                    self.carpet_centroid[0] + 0.6 * self.carpet_length_x,
+                    self.carpet_base_centroid[0] - 0.6 * self.carpet_length_x,
+                    self.carpet_base_centroid[0] + 0.6 * self.carpet_length_x,
                 ),
                 y_limits=(
-                    self.carpet_centroid[1] - 0.6 * self.carpet_length_y,
-                    self.carpet_centroid[1] + 0.6 * self.carpet_length_y,
+                    self.carpet_base_centroid[1] - 0.6 * self.carpet_length_y,
+                    self.carpet_base_centroid[1] + 0.6 * self.carpet_length_y,
                 ),
                 z_limits=(
-                    self.carpet_centroid[2] - 0.1 * self.base_length,
-                    self.carpet_centroid[2] + 1.5 * self.base_length,
+                    self.carpet_base_centroid[2] - 0.1 * self.rod_base_length,
+                    self.carpet_base_centroid[2] + 1.5 * self.rod_base_length,
                 ),
                 vis3D=True,
             )
@@ -244,4 +249,5 @@ class MagneticCiliaCarpetSimulator:
 
 if __name__ == "__main__":
     cilia_carpet_sim = MagneticCiliaCarpetSimulator()
+    cilia_carpet_sim.finalize()
     cilia_carpet_sim.run()
