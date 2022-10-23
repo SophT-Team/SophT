@@ -1,4 +1,3 @@
-import elastica as ea
 import numpy as np
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
@@ -109,12 +108,8 @@ def immersed_magnetic_cilia_carpet_case(
             lagrangian_grid_name="cilia",
             vector_3d=carpet_lag_grid_forcing_field,
         )
-
-    # =================TIMESTEPPING====================
     cilia_carpet_simulator.finalize()
-    do_step, stages_and_updates = ea.extend_stepper_interface(
-        cilia_carpet_simulator.timestepper, cilia_carpet_simulator.magnetic_beam_sim
-    )
+    # =================TIMESTEPPING====================
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = cilia_carpet_simulator.final_time / 100
@@ -181,12 +176,9 @@ def immersed_magnetic_cilia_carpet_case(
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = time
         for i in range(rod_time_steps):
-            rod_time = do_step(
-                cilia_carpet_simulator.timestepper,
-                stages_and_updates,
-                cilia_carpet_simulator.magnetic_beam_sim,
-                rod_time,
-                local_rod_dt,
+            # timestep the cilia simulator
+            rod_time = cilia_carpet_simulator.time_step(
+                time=rod_time, time_step=local_rod_dt
             )
             # timestep the rod_flow_interactors
             for rod_flow_interactor in rod_flow_interactor_list:

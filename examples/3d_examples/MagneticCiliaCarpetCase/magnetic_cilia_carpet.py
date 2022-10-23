@@ -181,6 +181,9 @@ class MagneticCiliaCarpetSimulator:
             self.add_callback()
 
         self.timestepper = ea.PositionVerlet()
+        self.do_step, self.stages_and_updates = ea.extend_stepper_interface(
+            self.timestepper, self.magnetic_beam_sim
+        )
 
     def finalize(self):
         self.magnetic_beam_sim.finalize()
@@ -217,6 +220,17 @@ class MagneticCiliaCarpetSimulator:
                 step_skip=int(1.0 / (self.rendering_fps * self.dt)),
                 callback_params=self.rod_post_processing_list[idx],
             )
+
+    def time_step(self, time, time_step):
+        """Time step the simulator"""
+        time = self.do_step(
+            self.timestepper,
+            self.stages_and_updates,
+            self.magnetic_beam_sim,
+            time,
+            time_step,
+        )
+        return time
 
     def run(
         self,
