@@ -3,10 +3,10 @@
 #SBATCH -J test_job
 #SBATCH -o %N.%j.o         # Name of stdout output file
 #SBATCH -e %N.%j.e         # Name of stderr error file
-#SBATCH -p shared                      # Queue (partition) name
+#SBATCH -p compute                      # Queue (partition) name
 #SBATCH -N 1
-#SBATCH --ntasks-per-node=4
-#SBATCH --cpus-per-task=4
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=32
 #SBATCH --mem=64G
 #SBATCH --export=ALL
 #SBATCH -t 00:10:00                    # Run time (hh:mm:ss)
@@ -32,7 +32,7 @@ which python
 
 # set smp num threads the same as ---cpus-per-task or --ntasks-per-node
 # see README.md for details
-SMP_NUM_THREADS=4
+SMP_NUM_THREADS=32
 export OMP_NUM_THREADS=$SMP_NUM_THREADS
 
 # execute the program
