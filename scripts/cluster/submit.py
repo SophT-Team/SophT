@@ -2,14 +2,14 @@
 
 #!/bin/bash
 
-#SBATCH -p RM-shared                        # Partition name
+#SBATCH -p shared                        # Partition name
 #SBATCH -J job_name                         # Job name
 (https://slurm.schedmd.com/sbatch.html#SECTION_%3CB%3Efilename-pattern%3C/B%3E)
 #SBATCH -o %x_%j.out                        # Name of stdout output file
 #SBATCH -e %x_%j.err                        # Name of stderr error file
 #SBATCH -N 1                                # Number of nodes
-#SBATCH --ntasks-per-node=32                # MPI cores per node
-#SBATCH -c 2
+#SBATCH --ntasks-per-node=1                # MPI cores per node
+#SBATCH --cpus-per-task=32
 #SBATCH --mem=64G
 #SBATCH -t 48:00:00                         # Time limit (hh:mm:ss)
 #SBATCH --mail-user=NetID@illinois.edu      # Email notification
@@ -37,10 +37,9 @@ def create_submit_file(
     environment_name,
     output_file_name=None,
     error_file_name=None,
-    partition="RM-shared",
-    node=1,
-    ntasks_per_node=4,
-    cpus_per_task=4,
+    partition="shared",
+    num_nodes=1,
+    num_threads=4,
     memory=64,
     time="48:00:00",
     account="mcb200029p",
@@ -48,6 +47,10 @@ def create_submit_file(
     mail_user=None,
     mail_type=None,
 ):
+
+    ntasks_per_node = 1
+    if partition == "shared":
+        ntasks_per_node = num_threads
 
     filename = "submit_" + program_name.replace(".py", ".sh")
     f = open(filename, "w")
@@ -57,14 +60,16 @@ def create_submit_file(
             "\n",
             f"#SBATCH -p {partition}\n",
             f"#SBATCH -J {program_name.replace('.py', '')}\n",
-            f"#SBATCH -N {node}\n",
-            f"#SBATCH --cpus-per-task={cpus_per_task}\n",
+            f"#SBATCH -N {num_nodes}\n",
             f"#SBATCH -t {time}\n",
             f"#SBATCH --ntasks-per-node={ntasks_per_node}\n",
             f"#SBATCH --account={account}\n",
             f"#SBATCH --mem={memory}G\n",
         ]
     )
+    # only use cpus per task for compute node jobs (see readme)
+    if partition == "compute":
+        f.write(f"#SBATCH --cpus-per-task={num_threads}\n")
 
     if not output_file_name:
         output_file_name = "%x_%j.out"
@@ -94,8 +99,8 @@ def create_submit_file(
             "echo Number of processes: $SLURM_NTASKS\n",
             "\n",
             f"source activate {environment_name}\n",
-            f"export OMP_NUM_THREADS={cpus_per_task}\n",
-            f"~/.conda/envs/{environment_name}/bin/python -u {program_name} --num_threads {cpus_per_task}\n",
+            f"export OMP_NUM_THREADS={num_threads}\n",
+            f"~/.conda/envs/{environment_name}/bin/python -u {program_name} --num_threads {num_threads}\n",
             "\n",
         ]
     )
@@ -106,21 +111,18 @@ def create_submit_file(
 if __name__ == "__main__":
     program_name = "run_tapered_arm_and_sphere_with_flow.py"
     environment_name = "sopht-examples-env"
-    partition = "shared"
+    partition = "compute"
     time = "06:00:00"
-    ntasks_per_node = 1
-    cpus_per_task = 32
+    num_threads = 32
     account = "uic409"
     mail_user = "atekinal"
-
 
     create_submit_file(
         program_name=program_name,
         environment_name=environment_name,
         time=time,
         partition=partition,
-        ntasks_per_node=ntasks_per_node,
-        cpus_per_task=cpus_per_task,
-        account = account,
-        mail_user = mail_user,
+        num_threads=num_threads,
+        account=account,
+        mail_user=mail_user,
     )

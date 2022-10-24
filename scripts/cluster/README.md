@@ -19,7 +19,6 @@ If you are not using all 128 cores on a single node (say you only need 4 cores f
 #SBATCH -p shared  # Using shared here so that they will only charge at the 4cores/hour rate
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=4  # this is somewhat counter-intuitive but will only speed up as expected when using shared queue partition
-#SBATCH --cpus-per-task=4
 ```
 
 Please note the difference in `--ntasks-per-node` directives for the two different queue partitions (`compute` and `shared`). The behavior is slightly and perhaps unintuitively different, depending on which partition you are using.
