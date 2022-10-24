@@ -7,6 +7,7 @@ import sopht_simulator as sps
 import elastica as ea
 from sopht.utils.IO import IO
 import click
+from matplotlib import pyplot as plt
 
 
 def tapered_arm_and_cylinder_flow_coupling(
@@ -18,13 +19,12 @@ def tapered_arm_and_cylinder_flow_coupling(
     reynolds_number,
     stretch_bending_ratio,
     taper_ratio,
-    froude_number,
     grid_size,
     coupling_stiffness=-2e4,
     coupling_damping=-1e1,
     num_threads=4,
     precision="single",
-    save_data=True,
+    save_data=False,
 ):
     # =================COMMON STUFF BEGIN=====================
     period = 1
@@ -81,12 +81,6 @@ def tapered_arm_and_cylinder_flow_coupling(
     env.simulator.constrain(env.shearable_rod).using(
         ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
     )
-    # Add gravitational forces
-    # Froude = g L / U^2
-    # gravitational_acc = froude_number * vel_scale**2 / base_diameter
-    # env.simulator.add_forcing_to(env.shearable_rod).using(
-    #     ea.GravityForces, acc_gravity=np.array([0.0, 0.0, -gravitational_acc])
-    # )
 
     # Setup activation functions to control muscles
     activations = []
@@ -96,9 +90,9 @@ def tapered_arm_and_cylinder_flow_coupling(
         activation_functions.append(
             SigmoidActivationLongitudinalMuscles(
                 beta=1,
-                tau=0.05*50,
+                tau=0.05 * 50,
                 start_time=1.0,
-                end_time=10, #0.1 + 2 + 0.1 * 10,
+                end_time=10,  # 0.1 + 2 + 0.1 * 10,
                 start_non_dim_length=0,
                 end_non_dim_length=0.5,
                 activation_level_max=0.15,
@@ -119,22 +113,18 @@ def tapered_arm_and_cylinder_flow_coupling(
     #     )
 
     # Initialize fixed sphere (elastica rigid body)
-    sphere_com = np.array([0.6667*x_range, 0.5 * y_range, 0.3111*z_range])
+    sphere_com = np.array([0.6667 * x_range, 0.5 * y_range, 0.3111 * z_range])
     sphere = ea.Sphere(
-        center=sphere_com, base_radius=radius_mean[0]*1.5, density=rho_s/1000/5/2
+        center=sphere_com,
+        base_radius=radius_mean[0] * 1.5,
+        density=rho_s / 1000 / 5 / 2,
     )
     env.simulator.append(sphere)
-    # Since the sphere is fixed, we don't add it to pyelastica simulator,
-    # and directly use it for setting up the flow interactor.
-    # ==================FLOW-BODY COMMUNICATOR SETUP START======
-
-
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
     flow_solver_precision = precision
     real_t = get_real_t(flow_solver_precision)
-    CFL = 0.1
 
     # Flow parameters
     dim = 3
@@ -180,8 +170,8 @@ def tapered_arm_and_cylinder_flow_coupling(
         rigid_body=sphere,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
         eul_grid_velocity_field=flow_sim.velocity_field,
-        virtual_boundary_stiffness_coeff=coupling_stiffness/5,
-        virtual_boundary_damping_coeff=coupling_damping/5,
+        virtual_boundary_stiffness_coeff=coupling_stiffness / 5,
+        virtual_boundary_damping_coeff=coupling_damping / 5,
         dx=flow_sim.dx,
         grid_dim=dim,
         real_t=real_t,
@@ -193,26 +183,6 @@ def tapered_arm_and_cylinder_flow_coupling(
         sps.FlowForces,
         sphere_flow_interactor,
     )
-
-    # cyl_num_forcing_points = 50
-    # cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
-    #     rigid_body=env.cylinder,
-    #     eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
-    #     eul_grid_velocity_field=flow_sim.velocity_field,
-    #     virtual_boundary_stiffness_coeff=coupling_stiffness,
-    #     virtual_boundary_damping_coeff=coupling_damping,
-    #     dx=flow_sim.dx,
-    #     grid_dim=2,
-    #     real_t=real_t,
-    #     forcing_grid_cls=sps.CircularCylinderForcingGrid,
-    #     num_forcing_points=cyl_num_forcing_points,
-    # )
-    # flow_body_interactors.append(cylinder_flow_interactor)
-    # if rigid_body_coupling_type == "two_way":
-    #     env.simulator.add_forcing_to(env.cylinder).using(
-    #         sps.FlowForces,
-    #         cylinder_flow_interactor,
-    #     )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
 
     if save_data:
@@ -244,7 +214,6 @@ def tapered_arm_and_cylinder_flow_coupling(
             vector_3d=sphere_flow_interactor.lag_grid_forcing_field,
         )
 
-
     # =================TIMESTEPPING====================
 
     # Finalize the pyelastica environment
@@ -257,12 +226,9 @@ def tapered_arm_and_cylinder_flow_coupling(
 
     # create fig for plotting flow fields
     fig, ax = sps.create_figure_and_axes()
-    import matplotlib
-    from matplotlib import pyplot as plt
 
     while time < final_time:
 
-        # Plot solution
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -275,7 +241,8 @@ def tapered_arm_and_cylinder_flow_coupling(
                     h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
                 )
                 sphere_io.save(
-                    h5_file_name="sphere_" + str("%0.4d" % (time * 100)) + ".h5", time=time
+                    h5_file_name="sphere_" + str("%0.4d" % (time * 100)) + ".h5",
+                    time=time,
                 )
             ax.set_title(f"Vorticity magnitude, time: {time / final_time:.2f}")
             contourf_obj = ax.contourf(
@@ -290,15 +257,9 @@ def tapered_arm_and_cylinder_flow_coupling(
                     ),
                     axis=0,
                 ),
-                # np.mean(
-                #     flow_sim.velocity_field[
-                #         :, :, grid_size_y // 2 - 1 : grid_size_y // 2 + 1, :
-                #     ],
-                #     axis=2,
-                # )[1, :],
                 levels=np.linspace(0, vel_scale, 50),
                 extend="both",
-                cmap="Purples",#sps.lab_cmap,
+                cmap="Purples",
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -333,7 +294,6 @@ def tapered_arm_and_cylinder_flow_coupling(
             )
             axs[0].set_xlabel("idx", fontsize=20)
             axs[0].set_ylabel("vel", fontsize=20)
-            # axs[0].set_xlim(0, 8.0)
             axs[0].set_ylim(-1.5, 1.5)
 
             plt.tight_layout()
@@ -359,7 +319,6 @@ def tapered_arm_and_cylinder_flow_coupling(
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
-        # print(flow_dt, rod_dt)
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = time
         for i in range(rod_time_steps):
@@ -405,7 +364,6 @@ def tapered_arm_and_cylinder_flow_coupling(
 
 if __name__ == "__main__":
 
-
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     def simulate_parallelised_octopus_arm(num_threads):
@@ -417,18 +375,15 @@ if __name__ == "__main__":
         exp_rho_s = 1e3  # kg/m3
         exp_rho_f = 1.21  # kg/m3
         exp_youngs_modulus = 2.25e5  # Pa
-        exp_poisson_ratio = 0.01
         exp_base_length = 25e-3  # m
         exp_base_diameter = exp_base_length / 10  # 0.4e-3  # m
-        exp_kinematic_viscosity = 1.51e-5/5  # m2/s
+        exp_kinematic_viscosity = 1.51e-5 / 5  # m2/s
         exp_U_free_stream = 1.1  # m/s
-        exp_gravitational_acc = 9.80665  # m/s2
 
         exp_mass_ratio = exp_rho_s / exp_rho_f
         exp_slenderness_ratio = exp_base_length / exp_base_diameter
         exp_base_radius = exp_base_diameter / 2
         exp_base_area = np.pi * exp_base_radius**2
-        exp_volume = exp_base_area * exp_base_length
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
         exp_cauchy_number = (
@@ -437,10 +392,6 @@ if __name__ == "__main__":
             * exp_base_length**3
             * exp_base_diameter
             / exp_bending_rigidity
-        )
-        # Froude = g D / U^2
-        exp_froude_number = (
-            exp_gravitational_acc * exp_base_diameter / exp_U_free_stream**2
         )
         exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
 
@@ -466,11 +417,8 @@ if __name__ == "__main__":
             reynolds_number=exp_Re,
             stretch_bending_ratio=exp_Ks_Kb,
             taper_ratio=exp_taper_ratio,
-            froude_number=exp_froude_number,
             grid_size=grid_size,
-            save_data=True,
-            num_threads = num_threads,
+            num_threads=num_threads,
         )
-
 
     simulate_parallelised_octopus_arm()

@@ -1,13 +1,9 @@
-__all__ = ["Environment"]
-
 from collections import defaultdict
 import numpy as np
 import elastica as ea
 from elastica._calculus import _isnan_check
-from arm_functions import StraightRodCallBack, CylinderCallBack
 
 from coomm.actuations.muscles import (
-    force_length_weight_guassian,
     force_length_weight_poly,
 )
 from coomm.actuations.muscles import (
@@ -56,10 +52,6 @@ class ArmEnvironment:
     def set_arm(self, E, rod):
         self.set_rod(E, rod)
         self.set_muscles(self.shearable_rod)
-        # self.set_drag_force(
-        #     base_length, radius[0], radius[-1],
-        #     self.shearable_rod, self.rod_parameters_dict
-        # )
 
     def setup(self, E, rod):
         self.set_arm(E, rod)
@@ -68,54 +60,8 @@ class ArmEnvironment:
         """Set up a rod"""
 
         self.E = E
-        #
-        # n_elements = 50  # number of discretized elements of the arm
-        # base_length = 0.2  # total length of the arm
-        # radius_base = 0.012  # radius of the arm at the base
-        # radius_tip = 0.0012   # radius of the arm at the tip
-        # radius = np.linspace(radius_base, radius_tip, n_elements + 1)
-        # # radius = np.linspace(radius_base, radius_base, n_elements + 1)
-        # radius_mean = (radius[:-1] + radius[1:]) / 2
-        # damp_coefficient = 0.05
-        # density = 1050
-        # poisson_ratio = 0.5
-        # youngs_modulus = self.E
-        # shear_modulus = self.E / (2 * (1 + poisson_ratio))
-        #
-        # start = np.zeros((3,)) + np.array([0.5 * base_length, 0.5 * base_length, 0])
-        # direction = np.array([1.0, 0.0, 0.0])
-        # normal = np.array([0.0, 0.0, -1.0])
-        #
-        # self.shearable_rod = ea.CosseratRod.straight_rod(
-        #     n_elements=n_elements,
-        #     start=start,
-        #     direction=direction,
-        #     normal=normal,
-        #     base_length=base_length,
-        #     base_radius=radius_mean.copy(),
-        #     density=density,
-        #     nu=0.0,  # internal damping constant, deprecated in v0.3.0
-        #     youngs_modulus=youngs_modulus,
-        #     shear_modulus=shear_modulus,
-        # )
         self.shearable_rod = rod
         self.simulator.append(self.shearable_rod)
-
-        # Cylinder
-        # cylinder_start = start + direction * base_length * 0.7 + np.array([0, 0.1, 0])
-        # cylinder_direction = normal
-        # cylinder_normal = direction
-        # cylinder_radius = radius_base
-        # cylinder_density = density
-        # self.cylinder = ea.Cylinder(
-        #     cylinder_start,
-        #     cylinder_direction,
-        #     cylinder_normal,
-        #     base_length,
-        #     cylinder_radius,
-        #     cylinder_density,
-        # )
-        # self.simulator.append(self.cylinder)
 
         """ Set up boundary conditions """
         self.simulator.constrain(self.shearable_rod).using(
@@ -138,43 +84,29 @@ class ArmEnvironment:
             time_step=self.time_step,
         )
 
-        # # Filter damper
-        # self.simulator.dampen(self.shearable_rod).using(ea.LaplaceDissipationFilter, filter_order=2)
-
-        # return base_length, radius
-
     def set_muscles(self, arm):
         """Add muscle actuation"""
 
         def add_muscle_actuation(arm):
-            # radius_base = arm.radius[0]
-
             radius_base = 0.012
-
             muscle_groups = []
-
             LM_ratio_muscle_position = 0.0075 / radius_base
             OM_ratio_muscle_position = 0.01125 / radius_base
-
             AN_ratio_radius = 0.002 / radius_base
             TM_ratio_radius = 0.0045 / radius_base
             LM_ratio_radius = 0.003 / radius_base
             OM_ratio_radius = 0.00075 / radius_base
-
             OM_rotation_number = 6
-
             shearable_rod_area = np.pi * arm.radius**2
             TM_rest_muscle_area = shearable_rod_area * (
                 TM_ratio_radius**2 - AN_ratio_radius**2
             )
             LM_rest_muscle_area = shearable_rod_area * (LM_ratio_radius**2)
             OM_rest_muscle_area = shearable_rod_area * (OM_ratio_radius**2)
-
             # stress is in unit [Pa]
             TM_max_muscle_stress = 1.5 * self.E  # 15_000.0
             LM_max_muscle_stress = 10 * self.E  # 50_000.0 * 2
             OM_max_muscle_stress = 5 * self.E  # 50_000.0
-
             muscle_dict = dict(
                 force_length_weight=force_length_weight_poly,
             )
