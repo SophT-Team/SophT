@@ -46,6 +46,7 @@ def create_submit_file(
     verbose=False,
     mail_user=None,
     mail_type=None,
+    other_cli_arguments="",
 ):
 
     ntasks_per_node = 1
@@ -100,7 +101,7 @@ def create_submit_file(
             "\n",
             f"source activate {environment_name}\n",
             f"export OMP_NUM_THREADS={num_threads}\n",
-            f"~/.conda/envs/{environment_name}/bin/python -u {program_name} --num_threads {num_threads}\n",
+            f"~/.conda/envs/{environment_name}/bin/python -u {program_name} --num_threads {num_threads}  {other_cli_arguments}\n",
             "\n",
         ]
     )
