@@ -9,6 +9,7 @@ import sopht_simulator as sps
 
 def flow_past_sphere_case(
     grid_size,
+    num_forcing_points_along_equator,
     reynolds=100.0,
     coupling_stiffness=-6e5,
     coupling_damping=-3.5e2,
@@ -55,7 +56,6 @@ def flow_past_sphere_case(
     # Since the sphere is fixed, we don't add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
-    num_forcing_points_along_equator = 48
     sphere_flow_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=sphere,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -189,15 +189,27 @@ def flow_past_sphere_case(
 
 
 if __name__ == "__main__":
-    # in order Z, Y, X
-    grid_size = (64, 64, 128)
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    def simulate_parallelised_flow_past_sphere(num_threads):
-        click.echo(f"Number of threads for parallelism: {num_threads}")
+    @click.option("--nx", default=128, help="Number of grid points in x direction.")
+    def simulate_parallelised_flow_past_sphere(num_threads, nx):
+        ny = nx // 2
+        nz = nx // 2
+        # in order Z, Y, X
+        grid_size = (nz, ny, nx)
+        num_forcing_points_along_equator = 3 * (nx // 8)
+
+        click.echo(f"Number of threads for parallelism: {num_threads, }")
+        click.echo(f"Grid size:  {nz, ny, nx ,} ")
+        click.echo(
+            f"num forcing points along equator:  {num_forcing_points_along_equator}"
+        )
         flow_past_sphere_case(
-            grid_size=grid_size, num_threads=num_threads, save_data=False
+            grid_size=grid_size,
+            num_forcing_points_along_equator=num_forcing_points_along_equator,
+            num_threads=num_threads,
+            save_data=False,
         )
 
     simulate_parallelised_flow_past_sphere()
