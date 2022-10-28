@@ -1,8 +1,7 @@
-import matplotlib.pyplot as plt
-
-
 def create_figure_and_axes(fig_aspect_ratio=1.0):
     """Creates figure and axes for plotting contour fields"""
+    import matplotlib.pyplot as plt
+
     plt.style.use("seaborn")
     fig = plt.figure(frameon=True, dpi=150)
     ax = fig.add_subplot(111)

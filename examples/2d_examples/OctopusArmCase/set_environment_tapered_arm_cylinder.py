@@ -1,5 +1,3 @@
-__all__ = ["Environment"]
-
 from collections import defaultdict
 import numpy as np
 import elastica as ea
@@ -8,7 +6,6 @@ from arm_functions import StraightRodCallBack, CylinderCallBack
 
 
 from coomm.actuations.muscles import (
-    force_length_weight_guassian,
     force_length_weight_poly,
 )
 from coomm.actuations.muscles import (
@@ -62,10 +59,6 @@ class ArmEnvironment:
     def set_arm(self):
         base_length, radius = self.set_rod()
         self.set_muscles(radius[0], self.shearable_rod)
-        # self.set_drag_force(
-        #     base_length, radius[0], radius[-1],
-        #     self.shearable_rod, self.rod_parameters_dict
-        # )
 
     def setup(self):
         self.set_arm()
@@ -149,9 +142,6 @@ class ArmEnvironment:
             damping_constant=damping_constant,
             time_step=self.time_step,
         )
-
-        # # # Filter damper
-        # self.simulator.dampen(self.shearable_rod).using(LaplaceDissipationFilter, filter_order=4)
 
         return base_length, radius
 
