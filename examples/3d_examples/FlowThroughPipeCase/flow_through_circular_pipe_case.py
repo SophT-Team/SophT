@@ -108,6 +108,9 @@ def flow_through_circular_pipe_case(
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                "grid deviation L2 error: "
+                f"{cylinder_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
             if save_data:
                 io.save(

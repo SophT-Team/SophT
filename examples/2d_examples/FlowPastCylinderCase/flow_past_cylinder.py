@@ -80,7 +80,6 @@ def flow_past_cylinder_boundary_forcing_case(
     data_timer_limit = 0.25 * timescale
     time = []
     drag_coeffs = []
-    lag_grid_deviation = []
 
     # create fig for plotting flow fields
     fig, ax = sps.create_figure_and_axes()
@@ -109,28 +108,17 @@ def flow_past_cylinder_boundary_forcing_case(
             sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
-            lag_grid_dev = np.linalg.norm(
-                cylinder_flow_interactor.lag_grid_position_mismatch_field
-            ) / np.sqrt(cylinder_flow_interactor.forcing_grid.num_lag_nodes)
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"lag grid deviation: {lag_grid_dev:.8f}"
+                "grid deviation L2 error: "
+                f"{cylinder_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
         # track diagnostic data
         if data_timer >= data_timer_limit or data_timer == 0:
             data_timer = 0.0
             time.append(t / timescale)
-
-            # compute lag grid deviation
-            lag_grid_deviation.append(
-                np.linalg.norm(
-                    cylinder_flow_interactor.lag_grid_position_mismatch_field
-                )
-                / np.sqrt(cylinder_flow_interactor.forcing_grid.num_lag_nodes)
-            )
-
             # calculate drag
             F = np.sum(cylinder_flow_interactor.lag_grid_forcing_field[0, ...])
             drag_coeff = np.fabs(F) / U_inf / U_inf / cyl_radius
@@ -167,12 +155,6 @@ def flow_past_cylinder_boundary_forcing_case(
             np.c_[np.array(time), np.array(drag_coeffs)],
             delimiter=",",
         )
-
-    plt.figure()
-    plt.plot(np.array(time), np.array(lag_grid_deviation))
-    plt.xlabel("Non-dimensional time")
-    plt.ylabel("Lagrangian grid deviation error")
-    plt.savefig("lag_grid_dev_vs_time.png")
 
 
 if __name__ == "__main__":

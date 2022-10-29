@@ -160,10 +160,16 @@ def immersed_magnetic_cilia_carpet_case(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
             time_history.append(time)
+            grid_dev_error = 0.0
+            for flow_body_interactor in rod_flow_interactor_list:
+                grid_dev_error += (
+                    flow_body_interactor.get_grid_deviation_error_l2_norm()
+                )
             print(
                 f"time: {time:.2f} ({(time/cilia_carpet_simulator.final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"div vorticity norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
         # compute timestep
