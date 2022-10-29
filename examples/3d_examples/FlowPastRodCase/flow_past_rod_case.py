@@ -192,7 +192,9 @@ def flow_past_rod_case(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"rod angle: {rod_incline_angle_with_horizon(flow_past_rod):2.2f}, "
-                f"div vorticity norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                "grid deviation L2 error: "
+                f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
         # compute timestep

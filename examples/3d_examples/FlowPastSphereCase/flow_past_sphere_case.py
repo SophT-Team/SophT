@@ -152,7 +152,9 @@ def flow_past_sphere_case(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"drag coeff: {drag_coeff:.4f}, "
-                f"div vorticity norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                "grid deviation L2 error: "
+                f"{sphere_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
         dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)

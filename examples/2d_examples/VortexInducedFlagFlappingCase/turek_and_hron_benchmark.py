@@ -280,15 +280,15 @@ def flow_past_rod_case(
             sps.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
-            lag_grid_dev = 0.0
+            grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                lag_grid_dev += np.linalg.norm(
-                    flow_body_interactor.lag_grid_position_mismatch_field
-                ) / np.sqrt(flow_body_interactor.forcing_grid.num_lag_nodes)
+                grid_dev_error += (
+                    flow_body_interactor.get_grid_deviation_error_l2_norm()
+                )
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"lag grid deviation: {lag_grid_dev:.8f}"
+                f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
         # save diagnostic data
@@ -299,7 +299,6 @@ def flow_past_rod_case(
                 (flow_past_rod.position_collection[:2, -1] - tip_start_position)
                 / cyl_diameter
             )
-            # print(tip_position[-1])
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)

@@ -160,6 +160,8 @@ def immersed_continuum_snake_case(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"snake com: {np.mean(snake_rod.position_collection[0])}"
+                "grid deviation L2 error: "
+                f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
         # compute timestep

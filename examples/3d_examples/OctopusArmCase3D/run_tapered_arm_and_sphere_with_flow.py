@@ -302,16 +302,16 @@ def tapered_arm_and_cylinder_flow_coupling(
             plt.close(plt.gcf())
 
             time_history.append(time)
-            lag_grid_dev = 0.0
+            grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                lag_grid_dev += np.linalg.norm(
-                    flow_body_interactor.lag_grid_position_mismatch_field
-                ) / np.sqrt(flow_body_interactor.forcing_grid.num_lag_nodes)
+                grid_dev_error += (
+                    flow_body_interactor.get_grid_deviation_error_l2_norm()
+                )
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"div vorticity norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
-                f"lag grid deviation: {lag_grid_dev:.8f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
         # compute timestep

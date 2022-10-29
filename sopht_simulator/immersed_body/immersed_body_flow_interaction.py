@@ -122,3 +122,14 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             body_flow_torques=self.body_flow_torques,
             lag_grid_forcing_field=self.lag_grid_forcing_field,
         )
+
+    def get_grid_deviation_error_l2_norm(self):
+        """
+        Computes and returns L2 norm of deviation error between flow
+        and body grids.
+
+        """
+        grid_dev_error_l2_norm = np.linalg.norm(
+            self.lag_grid_position_mismatch_field
+        ) / np.sqrt(self.forcing_grid.num_lag_nodes)
+        return grid_dev_error_l2_norm

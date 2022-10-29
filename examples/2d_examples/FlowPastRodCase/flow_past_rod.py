@@ -55,9 +55,6 @@ def flow_past_rod_case(
     poisson_ratio = 0.5
     # Fr = g L^2 / U
     gravitational_acc = froude * U_free_stream**2 / base_length
-    print(f"density:{density}")
-    print(f"youngs modulus:{youngs_modulus}")
-    print(f"gravitational acceleration:{gravitational_acc}")
 
     flow_past_rod = ea.CosseratRod.straight_rod(
         n_elem,
@@ -181,6 +178,8 @@ def flow_past_rod_case(
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
+                "grid deviation L2 error: "
+                f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
         # save diagnostic data
