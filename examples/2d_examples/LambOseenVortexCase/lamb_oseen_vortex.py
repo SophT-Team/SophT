@@ -1,6 +1,5 @@
 from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 import numpy as np
-import os
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 
@@ -115,13 +114,9 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     )
 
     # compile video
-    os.system("rm -f flow.mp4")
-    os.system(
-        "ffmpeg -r 16 -s 3840x2160 -f image2 -pattern_type glob -i 'snap*.png' "
-        "-vcodec libx264 -crf 15 -pix_fmt yuv420p -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2'"
-        " flow.mp4"
+    sps.make_video_from_image_series(
+        video_name="flow", image_series_name="snap", frame_rate=10
     )
-    os.system("rm -f snap*.png")
 
     # check error
     error_field = np.fabs(flow_sim.vorticity_field - final_analytical_vorticity_field)

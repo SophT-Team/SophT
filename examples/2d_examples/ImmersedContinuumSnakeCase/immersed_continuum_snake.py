@@ -1,6 +1,5 @@
 import elastica as ea
 import numpy as np
-import os
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 
@@ -189,13 +188,10 @@ def immersed_continuum_snake_case(
         time += flow_dt
         foto_timer += flow_dt
 
-    os.system("rm -f flow.mp4")
-    os.system(
-        "ffmpeg -r 10 -s 3840x2160 -f image2 -pattern_type glob -i 'snap*.png' "
-        "-vcodec libx264 -crf 15 -pix_fmt yuv420p -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2'"
-        " flow.mp4"
+    # compile video
+    sps.make_video_from_image_series(
+        video_name="flow", image_series_name="snap", frame_rate=10
     )
-    os.system("rm -f snap*.png")
 
 
 if __name__ == "__main__":
