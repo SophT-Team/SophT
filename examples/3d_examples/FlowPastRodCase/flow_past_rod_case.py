@@ -2,11 +2,14 @@ import elastica as ea
 import numpy as np
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
+import click
 
 
 def flow_past_rod_case(
     non_dim_final_time,
+    n_elem,
     grid_size,
+    surface_grid_density_for_largest_element,
     cauchy_number,
     mass_ratio,
     froude_number,
@@ -36,7 +39,6 @@ def flow_past_rod_case(
         ...
 
     flow_past_sim = FlowPastRodSimulator()
-    n_elem = 40
     start = np.array([0.2 * x_range, 0.5 * y_range, 0.75 * z_range])
     direction = np.array(
         [np.sin(rod_start_incline_angle), 0.0, -np.cos(rod_start_incline_angle)]
@@ -119,7 +121,7 @@ def flow_past_rod_case(
         real_t=real_t,
         num_threads=num_threads,
         forcing_grid_cls=sps.CosseratRodSurfaceForcingGrid,
-        surface_grid_density_for_largest_element=16,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
     )
     flow_past_sim.add_forcing_to(flow_past_rod).using(
         sps.FlowForces,
@@ -138,8 +140,10 @@ def flow_past_rod_case(
     foto_timer = 0.0
     timescale = base_length / U_free_stream
     final_time = non_dim_final_time * timescale
-    foto_timer_limit = final_time / 50
+    foto_timer_limit = 1 / 30
     time_history = []
+    rod_angle = []
+    force_history = []
 
     # create fig for plotting flow fields
     fig, ax = sps.create_figure_and_axes()
@@ -187,13 +191,18 @@ def flow_past_rod_case(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
             time_history.append(time)
+            rod_angle.append(rod_incline_angle_with_horizon(flow_past_rod))
+            forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
+            force_history.append(forces.copy())
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"rod angle: {rod_incline_angle_with_horizon(flow_past_rod):2.2f}, "
-                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
-                "grid deviation L2 error: "
-                f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f},"
+                " grid deviation L2 error: "
+                f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f},"
+                f" total force: {forces},"
+                f" force norm: {np.linalg.norm(forces)}"
             )
 
         # compute timestep
@@ -224,62 +233,116 @@ def flow_past_rod_case(
 
     # compile video
     sps.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
+        video_name="flow", image_series_name="snap", frame_rate=30
+    )
+
+    # Save data
+    np.savetxt(
+        "rod_angle_vs_time.csv",
+        np.c_[np.array(time_history), np.array(rod_angle)],
+        delimiter=",",
+        header="time, rod_angle",
+    )
+
+    np.savetxt(
+        "rod_forces_vs_time.csv",
+        np.c_[
+            np.array(time_history),
+            np.array(force_history),
+            np.linalg.norm(np.array(force_history), axis=1),
+        ],
+        delimiter=",",
+        header="time, force x, force y, force z, force norm",
     )
 
 
 if __name__ == "__main__":
 
-    final_time = 7.5
-    exp_rho_s = 1e3  # kg/m3
-    exp_rho_f = 1.21  # kg/m3
-    exp_youngs_modulus = 2.25e5  # Pa
-    exp_poisson_ratio = 0.01
-    exp_base_length = 25e-3  # m
-    exp_base_diameter = 0.4e-3  # m
-    exp_kinematic_viscosity = 1.51e-5  # m2/s
-    exp_U_free_stream = 1.1  # m/s
-    exp_gravitational_acc = 9.80665  # m/s2
+    @click.command()
+    @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
+    @click.option("--nx", default=128, help="Number of grid points in x direction.")
+    @click.option("--u_free_stream", default=1.1, help="Free stream flow velocity.")
+    def simulate_flow_past_rod(num_threads, nx, u_free_stream):
+        ny = nx // 4
+        nz = nx
+        # in order Z, Y, X
+        grid_size = (nz, ny, nx)
+        surface_grid_density_for_largest_element = nx // 8
+        n_elem = 5 * nx // 16
 
-    exp_mass_ratio = exp_rho_s / exp_rho_f
-    exp_slenderness_ratio = exp_base_length / exp_base_diameter
-    exp_base_radius = exp_base_diameter / 2
-    exp_base_area = np.pi * exp_base_radius**2
-    exp_volume = exp_base_area * exp_base_length
-    exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
-    exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
-    exp_cauchy_number = (
-        exp_rho_f
-        * exp_U_free_stream**2
-        * exp_base_length**3
-        * exp_base_diameter
-        / exp_bending_rigidity
-    )
-    # Froude = g D / U^2
-    exp_froude_number = (
-        exp_gravitational_acc * exp_base_diameter / exp_U_free_stream**2
-    )
-    exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
+        click.echo(f"Number of threads for parallelism: {num_threads, }")
+        click.echo(f"Grid size:  {nz, ny, nx ,} ")
+        click.echo(
+            f"num forcing points around the surface:  {surface_grid_density_for_largest_element}"
+        )
+        click.echo(f"num rod elements: {n_elem}")
+        click.echo(f"Free stream flow velocity: {u_free_stream}")
 
-    # stretch to bending ratio EAL2 / EI
-    exp_Ks_Kb = (exp_youngs_modulus * exp_base_area * exp_base_length**2) / (
-        exp_youngs_modulus * exp_moment_of_inertia
-    )
+        final_time = 7.5
 
-    print(f"Re: {exp_Re}, Ca: {exp_cauchy_number}, Fr: {exp_froude_number}")
+        exp_rho_s = 1e3  # kg/m3
+        exp_rho_f = 1.21  # kg/m3
+        exp_youngs_modulus = 2.25e5  # Pa
+        exp_poisson_ratio = 0.01
+        exp_base_length = 25e-3  # m
+        exp_base_diameter = 0.4e-3  # m
+        exp_kinematic_viscosity = 1.51e-5  # m2/s
+        exp_U_free_stream = u_free_stream  # m/s
+        exp_gravitational_acc = 9.80665  # m/s2
 
-    # in order Z, Y, X
-    grid_size = (128, 32, 128)
-    angle_with_horizontal = 66
+        exp_mass_ratio = exp_rho_s / exp_rho_f
+        exp_slenderness_ratio = exp_base_length / exp_base_diameter
+        exp_base_radius = exp_base_diameter / 2
+        exp_base_area = np.pi * exp_base_radius**2
+        exp_volume = exp_base_area * exp_base_length
+        exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
+        exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
+        exp_cauchy_number = (
+            exp_rho_f
+            * exp_U_free_stream**2
+            * exp_base_length**3
+            * exp_base_diameter
+            / exp_bending_rigidity
+        )
+        # Froude = g D / U^2
+        exp_froude_number = (
+            exp_gravitational_acc * exp_base_diameter / exp_U_free_stream**2
+        )
+        exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
 
-    flow_past_rod_case(
-        non_dim_final_time=final_time,
-        cauchy_number=exp_cauchy_number,
-        mass_ratio=exp_mass_ratio,
-        froude_number=exp_froude_number,
-        poisson_ratio=exp_poisson_ratio,
-        reynolds=exp_Re,
-        stretch_bending_ratio=exp_Ks_Kb,
-        grid_size=grid_size,
-        rod_start_incline_angle=np.deg2rad(90.0 - angle_with_horizontal),
-    )
+        # stretch to bending ratio EAL2 / EI
+        exp_Ks_Kb = (exp_youngs_modulus * exp_base_area * exp_base_length**2) / (
+            exp_youngs_modulus * exp_moment_of_inertia
+        )
+
+        # Drag coefficient from Silvaleon 2018 Eq 10
+        Cd = (1.13 + 11.4 / exp_Re**0.808) ** 0.952
+        # Silvaleon 2018
+        Ca_B = (
+            (2 / np.pi) * Cd * (exp_rho_f / (exp_rho_s - exp_rho_f)) / exp_froude_number
+        )
+        # Final deflection angle Silvaleon 2018 Eq 15
+        rod_start_incline_angle = np.deg2rad(
+            90 - 90 / (1 + 3.32 * (Ca_B) ** 1.33) ** 0.407 + 0.5
+        )
+
+        print(
+            f"Re: {exp_Re}, Ca: {exp_cauchy_number}, Fr: {exp_froude_number}, Angle: {rod_start_incline_angle}"
+        )
+
+        flow_past_rod_case(
+            non_dim_final_time=final_time,
+            cauchy_number=exp_cauchy_number,
+            mass_ratio=exp_mass_ratio,
+            froude_number=exp_froude_number,
+            poisson_ratio=exp_poisson_ratio,
+            reynolds=exp_Re,
+            stretch_bending_ratio=exp_Ks_Kb,
+            grid_size=grid_size,
+            surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+            n_elem=n_elem,
+            rod_start_incline_angle=rod_start_incline_angle,
+            num_threads=num_threads,
+        )
+
+    simulate_flow_past_rod()
