@@ -35,6 +35,8 @@ def flow_past_sphere_case(
         flow_type="navier_stokes_with_forcing",
         with_free_stream_flow=True,
         navier_stokes_inertial_term_form="rotational",
+        # caution will introduce some boundary artifacts
+        # poisson_solver_type="fast_diagonalisation",
     )
     rho_f = 1.0
     sphere_projected_area = 0.25 * np.pi * sphere_diameter**2
@@ -151,7 +153,7 @@ def flow_past_sphere_case(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"drag coeff: {drag_coeff:.4f}, "
-                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f} "
                 "grid deviation L2 error: "
                 f"{sphere_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
@@ -198,10 +200,10 @@ if __name__ == "__main__":
         grid_size = (nz, ny, nx)
         num_forcing_points_along_equator = 3 * (nx // 8)
 
-        click.echo(f"Number of threads for parallelism: {num_threads, }")
-        click.echo(f"Grid size:  {nz, ny, nx ,} ")
+        click.echo(f"Number of threads for parallelism: {num_threads}")
+        click.echo(f"Grid size: {grid_size}")
         click.echo(
-            f"num forcing points along equator:  {num_forcing_points_along_equator}"
+            f"num forcing points along equator: {num_forcing_points_along_equator}"
         )
         flow_past_sphere_case(
             grid_size=grid_size,

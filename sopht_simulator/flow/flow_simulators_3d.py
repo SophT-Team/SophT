@@ -15,6 +15,7 @@ from sopht.numeric.eulerian_grid_ops import (
     UnboundedPoissonSolverPYFFTW3D,
     gen_divergence_pyst_kernel_3d,
     gen_laplacian_filter_kernel_3d,
+    FastDiagPoissonSolver3D,
 )
 from sopht.utils.precision import get_test_tol
 
@@ -33,6 +34,7 @@ class UnboundedFlowSimulator3D:
         real_t=np.float32,
         num_threads=1,
         filter_vorticity=False,
+        poisson_solver_type="greens_function_convolution",
         **kwargs,
     ):
         """Class initialiser
@@ -47,6 +49,8 @@ class UnboundedFlowSimulator3D:
         :param num_threads: number of threads
         :param filter_vorticity: flag to determine if vorticity should be filtered or not,
         needed for stability sometimes
+        :param poisson_solver_type: Type of the poisson solver algorithm, can be
+        "greens_function_convolution" or "fast_diagonalisation"
 
         Notes
         -----
@@ -61,6 +65,7 @@ class UnboundedFlowSimulator3D:
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
         self.filter_vorticity = filter_vorticity
+        self.poisson_solver_type = poisson_solver_type
         supported_flow_types = [
             "passive_scalar",
             "passive_vector",
@@ -103,6 +108,13 @@ class UnboundedFlowSimulator3D:
                         f"\nand type: {self.filter_setting_dict['type']}"
                     )
                 log.warning("===============================================")
+            # check validity of poisson solver types
+            supported_poisson_solver_types = [
+                "greens_function_convolution",
+                "fast_diagonalisation",
+            ]
+            if self.poisson_solver_type not in supported_poisson_solver_types:
+                raise ValueError("Invalid Poisson solver type given")
         self.compile_kernels()
         self.finalise_flow_timestep()
 
@@ -208,14 +220,25 @@ class UnboundedFlowSimulator3D:
                 )
             )
             grid_size_z, grid_size_y, grid_size_x = self.grid_size
-            self.unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW3D(
-                grid_size_z=grid_size_z,
-                grid_size_y=grid_size_y,
-                grid_size_x=grid_size_x,
-                x_range=self.x_range,
-                real_t=self.real_t,
-                num_threads=self.num_threads,
-            )
+            if self.poisson_solver_type == "greens_function_convolution":
+                self.unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW3D(
+                    grid_size_z=grid_size_z,
+                    grid_size_y=grid_size_y,
+                    grid_size_x=grid_size_x,
+                    x_range=self.x_range,
+                    real_t=self.real_t,
+                    num_threads=self.num_threads,
+                )
+            elif self.poisson_solver_type == "fast_diagonalisation":
+                self.unbounded_poisson_solver = FastDiagPoissonSolver3D(
+                    grid_size_z=grid_size_z,
+                    grid_size_y=grid_size_y,
+                    grid_size_x=grid_size_x,
+                    dx=self.dx,
+                    real_t=self.real_t,
+                    # TODO add different options here later
+                    bc_type="homogenous_neumann_along_xyz",
+                )
             self.curl = gen_curl_pyst_kernel_3d(
                 real_t=self.real_t,
                 num_threads=self.num_threads,
