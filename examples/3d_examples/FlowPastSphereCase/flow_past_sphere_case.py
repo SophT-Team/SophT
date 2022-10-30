@@ -193,7 +193,8 @@ if __name__ == "__main__":
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=128, help="Number of grid points in x direction.")
-    def simulate_parallelised_flow_past_sphere(num_threads, nx):
+    @click.option("--reynolds", default=100, help="Reynolds number of flow.")
+    def simulate_parallelised_flow_past_sphere(num_threads, nx, reynolds):
         ny = nx // 2
         nz = nx // 2
         # in order Z, Y, X
@@ -205,10 +206,12 @@ if __name__ == "__main__":
         click.echo(
             f"num forcing points along equator: {num_forcing_points_along_equator}"
         )
+        click.echo(f"Flow Reynolds number: {reynolds}")
         flow_past_sphere_case(
             grid_size=grid_size,
             num_forcing_points_along_equator=num_forcing_points_along_equator,
             num_threads=num_threads,
+            reynolds=reynolds,
             save_data=False,
         )
 
