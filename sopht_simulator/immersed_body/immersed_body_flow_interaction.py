@@ -59,7 +59,6 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         elif max_lag_grid_dx < 0.5 * dx:  # reverse case of the above condition
             log.warning(
                 "==========================================================\n"
-                f"For {grid_type}:\n"
                 f"Eulerian grid spacing (dx): {dx}"
                 f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} < 0.5 * dx"
                 "\nThe Lagrangian grid of the body is too fine relative to"
