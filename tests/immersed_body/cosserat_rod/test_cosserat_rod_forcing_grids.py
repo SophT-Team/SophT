@@ -77,6 +77,92 @@ def test_pyelastica_elements_to_nodes_inplace(n_elems):
 
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_nodal_grid_kinematics(grid_dim, n_elems):
+    straight_rod = mock_straight_rod(n_elems)
+    rod_forcing_grid = sps.CosseratRodNodalForcingGrid(
+        grid_dim=grid_dim, cosserat_rod=straight_rod
+    )
+
+    # check if setup is correct
+    n_nodes = straight_rod.n_elems + 1
+    assert rod_forcing_grid.cosserat_rod is straight_rod
+    assert rod_forcing_grid.num_lag_nodes == n_nodes
+    assert rod_forcing_grid.position_field.shape == (grid_dim, n_nodes)
+    assert rod_forcing_grid.velocity_field.shape == (grid_dim, n_nodes)
+
+    # check if position is correct; the rod is a straight one with same
+    # element size
+    correct_position_field = straight_rod.position_collection[:grid_dim]
+    np.testing.assert_allclose(rod_forcing_grid.position_field, correct_position_field)
+
+    # check if velocities are correct, in mock rod they are initialised as
+    # linearly increasing along the rod
+    correct_velocity_field = straight_rod.velocity_collection[:grid_dim]
+    np.testing.assert_allclose(rod_forcing_grid.velocity_field, correct_velocity_field)
+
+
+@pytest.mark.parametrize("grid_dim", [2, 3])
+@pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_nodal_grid_force_transfer(grid_dim, n_elems):
+    straight_rod = mock_straight_rod(n_elems)
+    rod_forcing_grid = sps.CosseratRodNodalForcingGrid(
+        grid_dim=grid_dim, cosserat_rod=straight_rod
+    )
+    rod_dim = 3
+    body_flow_forces = np.zeros((rod_dim, n_elems + 1))
+    body_flow_torques = np.zeros((rod_dim, n_elems))
+    lag_grid_forcing_field = np.zeros((grid_dim, rod_forcing_grid.num_lag_nodes))
+    uniform_forcing = np.linspace(1.0, grid_dim, grid_dim).reshape(-1, 1)
+    lag_grid_forcing_field[...] = uniform_forcing
+    rod_forcing_grid.transfer_forcing_from_grid_to_body(
+        body_flow_forces=body_flow_forces,
+        body_flow_torques=body_flow_torques,
+        lag_grid_forcing_field=lag_grid_forcing_field,
+    )
+
+    # check if forces are correct
+    correct_body_flow_forces = np.zeros_like(body_flow_forces)
+    correct_body_flow_forces[:grid_dim, ...] = -uniform_forcing
+    np.testing.assert_allclose(body_flow_forces, correct_body_flow_forces)
+
+    # torques stay 0 for this grid
+    correct_body_flow_torques = np.zeros_like(body_flow_torques)
+    # endpoint corrections
+    moment_arm = (
+        straight_rod.position_collection[..., 1:]
+        - straight_rod.position_collection[..., :-1]
+    ) / 2.0
+    correct_body_flow_torques[..., -1] += straight_rod.director_collection[..., -1] @ (
+        np.cross(
+            moment_arm[..., -1],
+            correct_body_flow_forces[..., -1],
+        )
+        / 2.0
+    )
+    correct_body_flow_torques[..., 0] -= straight_rod.director_collection[..., 0] @ (
+        np.cross(
+            moment_arm[..., 0],
+            correct_body_flow_forces[..., 0],
+        )
+        / 2.0
+    )
+    np.testing.assert_allclose(body_flow_torques, correct_body_flow_torques)
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_nodal_grid_spacing(n_elems):
+    straight_rod = mock_straight_rod(n_elems)
+    rod_forcing_grid = sps.CosseratRodNodalForcingGrid(
+        grid_dim=3, cosserat_rod=straight_rod
+    )
+    max_grid_spacing = rod_forcing_grid.get_maximum_lagrangian_grid_spacing()
+    # rod with same element sizes so max is one of any lengths
+    correct_max_grid_spacing = straight_rod.lengths[0]
+    assert correct_max_grid_spacing == max_grid_spacing
+
+
+@pytest.mark.parametrize("grid_dim", [2, 3])
+@pytest.mark.parametrize("n_elems", [8, 16])
 def test_rod_element_centric_grid_grid_kinematics(grid_dim, n_elems):
     straight_rod = mock_straight_rod(n_elems)
     rod_forcing_grid = sps.CosseratRodElementCentricForcingGrid(
