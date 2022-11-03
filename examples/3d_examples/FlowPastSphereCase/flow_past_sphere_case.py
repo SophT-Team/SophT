@@ -99,8 +99,23 @@ def flow_past_sphere_case(
     t_end = t_end_hat * timescale  # dimensional end time
     foto_timer = 0.0
     foto_timer_limit = t_end / 40
+    # Find the sphere center on euler grid
+    # First find the euler grid centers in z direction
+    euler_grid_center_in_z_dir = 0.5 * (
+        flow_sim.z_grid[1:, grid_size_y // 2, 0]
+        + flow_sim.z_grid[:-1, grid_size_y // 2, 0]
+    )
+    # Find the sphere center in z direction
+    lag_grid_center_in_z_dir = np.mean(
+        sphere_flow_interactor.forcing_grid.position_field[2]
+    )
+    # Find the eulerian grid index that has the sphere center (z coordinate)
+    sphere_center_on_euler_grid_idx = np.argmin(
+        np.abs(euler_grid_center_in_z_dir - lag_grid_center_in_z_dir)
+    )
     time = []
     drag_coeffs = []
+    flow_vel_along_sphere_center = []
 
     # create fig for plotting flow fields
     fig, ax = sps.create_figure_and_axes()
@@ -118,6 +133,21 @@ def flow_past_sphere_case(
             drag_coeff = drag_force / drag_force_scale
             time.append(t)
             drag_coeffs.append(drag_coeff)
+            flow_vel_along_sphere_center.append(
+                np.mean(
+                    np.mean(
+                        flow_sim.velocity_field[
+                            0,
+                            sphere_center_on_euler_grid_idx : sphere_center_on_euler_grid_idx
+                            + 2,
+                            grid_size_y // 2 - 1 : grid_size_y // 2 + 1,
+                            :,
+                        ],
+                        axis=1,  # Average velocities in y
+                    ),
+                    axis=0,  # Average velocities in z
+                )
+            )
             if save_data:
                 io.save(
                     h5_file_name="sopht_" + str("%0.4d" % (t * 100)) + ".h5", time=t
@@ -158,7 +188,7 @@ def flow_past_sphere_case(
                 f"{sphere_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
-        dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
+        dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
 
         # compute flow forcing and timestep forcing
         sphere_flow_interactor.time_step(dt=dt)
@@ -180,6 +210,13 @@ def flow_past_sphere_case(
         np.c_[np.array(time), np.array(drag_coeffs)],
         delimiter=",",
         header="time, drag_coeff",
+    )
+
+    np.savetxt(
+        "x_vel_along_center_line_vs_time.csv",
+        np.c_[np.array(time), np.array(flow_vel_along_sphere_center)],
+        delimiter=",",
+        header="time, flow_vel_along_sphere_center",
     )
 
     # compile video
