@@ -8,8 +8,7 @@
 #SBATCH -o %x_%j.out                        # Name of stdout output file
 #SBATCH -e %x_%j.err                        # Name of stderr error file
 #SBATCH -N 1                                # Number of nodes
-#SBATCH --ntasks-per-node=1                # MPI cores per node
-#SBATCH --cpus-per-task=32
+#SBATCH --ntasks-per-node=32                # cores to use per node
 #SBATCH --mem=64G
 #SBATCH -t 48:00:00                         # Time limit (hh:mm:ss)
 #SBATCH --mail-user=NetID@illinois.edu      # Email notification
@@ -26,7 +25,7 @@ echo Number of processes: $SLURM_NTASKS     # Print number of processes
 source activate (env_name)
 conda env list
 
-export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=32
 $PROJECT/.conda/envs/(env_name)/bin/python -u (program_name)
 
 """
@@ -49,10 +48,6 @@ def create_submit_file(
     other_cli_arguments="",
 ):
 
-    ntasks_per_node = 1
-    if partition == "shared":
-        ntasks_per_node = num_threads
-
     filename = "submit_" + program_name.replace(".py", ".sh")
     f = open(filename, "w")
     f.writelines(
@@ -63,14 +58,11 @@ def create_submit_file(
             f"#SBATCH -J {program_name.replace('.py', '')}\n",
             f"#SBATCH -N {num_nodes}\n",
             f"#SBATCH -t {time}\n",
-            f"#SBATCH --ntasks-per-node={ntasks_per_node}\n",
+            f"#SBATCH --ntasks-per-node={num_threads}\n",
             f"#SBATCH --account={account}\n",
             f"#SBATCH --mem={memory}G\n",
         ]
     )
-    # only use cpus per task for compute node jobs (see readme)
-    if partition == "compute":
-        f.write(f"#SBATCH --cpus-per-task={num_threads}\n")
 
     if not output_file_name:
         output_file_name = "%x_%j.out"

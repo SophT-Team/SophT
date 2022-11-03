@@ -5,8 +5,7 @@
 #SBATCH -e %N.%j.e         # Name of stderr error file
 #SBATCH -p compute                      # Queue (partition) name
 #SBATCH -N 1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=32
+#SBATCH --ntasks-per-node=32
 #SBATCH --mem=64G
 #SBATCH --export=ALL
 #SBATCH -t 00:10:00                    # Run time (hh:mm:ss)
@@ -30,7 +29,7 @@ module load anaconda3
 conda activate sopht-examples-env
 which python
 
-# set smp num threads the same as ---cpus-per-task or --ntasks-per-node
+# set smp num threads the same as --ntasks-per-node
 # see README.md for details
 SMP_NUM_THREADS=32
 export OMP_NUM_THREADS=$SMP_NUM_THREADS

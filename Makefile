@@ -30,17 +30,17 @@ pre-commit-install:
 .PHONY: black
 black:
 	poetry run black --version
-	poetry run black --config pyproject.toml sopht_simulator examples tests
+	poetry run black --config pyproject.toml sopht_simulator examples tests scripts
 
 .PHONY: black-check
 black-check:
 	poetry run black --version
-	poetry run black --diff --check --config pyproject.toml sopht_simulator examples tests
+	poetry run black --diff --check --config pyproject.toml sopht_simulator examples tests scripts
 
 .PHONY: flake8
 flake8:
 	poetry run flake8 --version
-	poetry run flake8 sopht_simulator tests
+	poetry run flake8 sopht_simulator tests scripts
 
 .PHONY: format-codestyle
 format-codestyle: black flake8
