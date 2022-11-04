@@ -34,6 +34,7 @@ $PROJECT/.conda/envs/(env_name)/bin/python -u (program_name)
 def create_submit_file(
     program_name,
     environment_name,
+    cluster_info_dict,
     output_file_name=None,
     error_file_name=None,
     partition="shared",
@@ -41,7 +42,6 @@ def create_submit_file(
     num_threads=4,
     memory=64,
     time="48:00:00",
-    account="mcb200029p",
     verbose=False,
     mail_user=None,
     mail_type=None,
@@ -54,12 +54,12 @@ def create_submit_file(
         [
             "#!/bin/bash\n",
             "\n",
-            f"#SBATCH -p {partition}\n",
+            f"#SBATCH -p {cluster_info_dict.get(partition)}\n",
             f"#SBATCH -J {program_name.replace('.py', '')}\n",
             f"#SBATCH -N {num_nodes}\n",
             f"#SBATCH -t {time}\n",
             f"#SBATCH --ntasks-per-node={num_threads}\n",
-            f"#SBATCH --account={account}\n",
+            f"#SBATCH --account={cluster_info_dict.get('account')}\n",
             f"#SBATCH --mem={memory}G\n",
         ]
     )
@@ -91,9 +91,9 @@ def create_submit_file(
             "echo Execution dir: $SLURM_SUBMIT_DIR\n",
             "echo Number of processes: $SLURM_NTASKS\n",
             "\n",
-            f"source activate {environment_name}\n",
+            f"conda activate {environment_name}\n",
             f"export OMP_NUM_THREADS={num_threads}\n",
-            f"~/.conda/envs/{environment_name}/bin/python -u {program_name} --num_threads {num_threads}  {other_cli_arguments}\n",
+            f"python -u {program_name} --num_threads {num_threads}  {other_cli_arguments}\n",
             "\n",
         ]
     )
@@ -102,20 +102,25 @@ def create_submit_file(
 
 
 if __name__ == "__main__":
+    expanse_info_dict = {"account": "uic409", "shared": "shared", "compute": "compute"}
+    bridges_info_dict = {
+        "account": "mcb200029p",
+        "shared": "RM-shared",
+        "compute": "RM",
+    }
     program_name = "run_tapered_arm_and_sphere_with_flow.py"
     environment_name = "sopht-examples-env"
     partition = "compute"
     time = "06:00:00"
     num_threads = 32
-    account = "uic409"
     mail_user = "atekinal"
 
     create_submit_file(
         program_name=program_name,
         environment_name=environment_name,
+        cluster_info_dict=expanse_info_dict,
         time=time,
         partition=partition,
         num_threads=num_threads,
-        account=account,
         mail_user=mail_user,
     )
