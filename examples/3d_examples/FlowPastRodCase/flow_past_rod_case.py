@@ -3,6 +3,7 @@ import numpy as np
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 import click
+from sopht.utils.IO import IO
 
 
 def flow_past_rod_case(
@@ -21,6 +22,7 @@ def flow_past_rod_case(
     rod_start_incline_angle=0.0,
     num_threads=4,
     precision="single",
+    save_data=False,
 ):
     # =================COMMON SIMULATOR STUFF=======================
     grid_dim = 3
@@ -107,7 +109,7 @@ def flow_past_rod_case(
         num_threads=num_threads,
         navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
-        filter_setting_dict={"order": 2, "type": "multiplicative"},
+        filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
     # ==================FLOW SETUP END=========================
 
@@ -136,6 +138,28 @@ def flow_past_rod_case(
     do_step, stages_and_updates = ea.extend_stepper_interface(
         timestepper, flow_past_sim
     )
+
+    if save_data:
+        # setup IO
+        # TODO internalise this in flow simulator as dump_fields
+        io_origin = np.array(
+            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+        )
+        io_dx = flow_sim.dx * np.ones(dim)
+        io_grid_size = np.array(grid_size)
+        io = IO(dim=dim, real_dtype=real_t)
+        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
+        io.add_as_eulerian_fields_for_io(
+            vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
+        )
+        # Initialize sphere IO
+        rod_io = IO(dim=dim, real_dtype=real_t)
+        # Add vector field on lagrangian grid
+        rod_io.add_as_lagrangian_fields_for_io(
+            lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
+            lagrangian_grid_name="rod",
+            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        )
 
     time = 0.0
     foto_timer = 0.0
@@ -211,6 +235,14 @@ def flow_past_rod_case(
                 f" total force: {forces},"
                 f" force norm: {np.linalg.norm(forces)}"
             )
+            if save_data:
+                io.save(
+                    h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
+                    time=time,
+                )
+                rod_io.save(
+                    h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
+                )
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
@@ -285,7 +317,7 @@ if __name__ == "__main__":
         click.echo(f"num rod elements: {n_elem}")
         click.echo(f"Free stream flow velocity: {u_free_stream}")
 
-        final_time = 7.5
+        final_time = 3.5
 
         exp_rho_s = 1e3  # kg/m3
         exp_rho_f = 1.21  # kg/m3
@@ -348,6 +380,7 @@ if __name__ == "__main__":
             n_elem=n_elem,
             rod_start_incline_angle=rod_start_incline_angle,
             num_threads=num_threads,
+            save_data=False,
         )
 
     simulate_flow_past_rod()
