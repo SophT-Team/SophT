@@ -310,7 +310,7 @@ if __name__ == "__main__":
         click.echo(f"num rod elements: {n_elem}")
         click.echo(f"Free stream flow velocity: {u_free_stream}")
 
-        final_time = 7.5
+        final_time = 3.5
 
         exp_rho_s = 1e3  # kg/m3
         exp_rho_f = 1.21  # kg/m3
@@ -375,7 +375,7 @@ if __name__ == "__main__":
             n_elem=n_elem,
             rod_start_incline_angle=rod_start_incline_angle,
             num_threads=num_threads,
-            save_data=True,
+            save_data=False,
         )
 
     simulate_flow_past_rod()
