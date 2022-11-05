@@ -13,6 +13,7 @@ from sopht.numeric.eulerian_grid_ops import (
     UnboundedPoissonSolverPYFFTW2D,
 )
 from sopht.utils.precision import get_test_tol
+from sopht_simulator.utils.grid_utils import VectorField
 
 
 class UnboundedFlowSimulator2D:
@@ -88,7 +89,8 @@ class UnboundedFlowSimulator2D:
         y = np.linspace(
             eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y
         ).astype(self.real_t)
-        self.x_grid, self.y_grid = np.meshgrid(x, y)
+        # reversing because meshgrid generates in order Y and X
+        self.position_field = np.flipud(np.array(np.meshgrid(y, x, indexing="ij")))
         log = logging.getLogger()
         log.warning(
             "==============================================="
@@ -102,7 +104,7 @@ class UnboundedFlowSimulator2D:
     def init_fields(self):
         """Initialize the necessary field arrays, i.e. vorticity, velocity, etc."""
         # Initialize flow field
-        self.primary_scalar_field = np.zeros_like(self.x_grid)
+        self.primary_scalar_field = np.zeros(self.grid_size, dtype=self.real_t)
         self.velocity_field = np.zeros(
             (self.grid_dim, *self.grid_size), dtype=self.real_t
         )
@@ -149,8 +151,8 @@ class UnboundedFlowSimulator2D:
                 gen_penalise_field_boundary_pyst_kernel_2d(
                     width=self.penalty_zone_width,
                     dx=self.dx,
-                    x_grid_field=self.x_grid,
-                    y_grid_field=self.y_grid,
+                    x_grid_field=self.position_field[VectorField.x_axis_idx()],
+                    y_grid_field=self.position_field[VectorField.y_axis_idx()],
                     real_t=self.real_t,
                     num_threads=self.num_threads,
                     fixed_grid_size=self.grid_size,

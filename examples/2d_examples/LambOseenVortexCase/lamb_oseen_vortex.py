@@ -4,32 +4,31 @@ from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
 
 
-def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
+def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
     """
     This example considers a simple case of Lamb-Oseen vortex, advecting with a
     constant velocity in 2D, while it diffuses in time, and involves solving
     the Navier-Stokes equation.
     """
+    grid_dim = 2
     real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
     # Consider a 1 by 1 2D domain
-    x_range = real_t(1.0)
-    grid_size_y = grid_size_x
-    nu = real_t(1e-3)
-    CFL = real_t(0.1)
+    x_range = 1.0
+    nu = 1e-3
     # init vortex at (0.3 0.3)
-    x_cm_start = real_t(0.3)
+    x_cm_start = 0.3
     y_cm_start = x_cm_start
     # start with non-zero to avoid singularity in Lamb-Oseen
-    t_start = real_t(1)
-    t_end = real_t(1.4)
+    t_start = 1.0
+    t_end = 1.4
     # to start with max circulation = 1
-    gamma = real_t(4 * np.pi * nu * t_start)
-
+    gamma = 4 * np.pi * nu * t_start
     flow_sim = sps.UnboundedFlowSimulator2D(
-        grid_size=(grid_size_y, grid_size_x),
+        grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        CFL=CFL,
         flow_type="navier_stokes",
         with_free_stream_flow=True,
         real_t=real_t,
@@ -37,8 +36,8 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     )
 
     flow_sim.vorticity_field[...] = compute_lamb_oseen_vorticity(
-        x=flow_sim.x_grid,
-        y=flow_sim.y_grid,
+        x=flow_sim.position_field[x_axis_idx],
+        y=flow_sim.position_field[y_axis_idx],
         x_cm=x_cm_start,
         y_cm=y_cm_start,
         nu=nu,
@@ -48,10 +47,10 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     )
 
     # Initialize velocity free stream magnitude in X and Y direction
-    velocity_free_stream = np.ones(2, dtype=real_t)
+    velocity_free_stream = np.ones(grid_dim, dtype=real_t)
     flow_sim.velocity_field[...] = compute_lamb_oseen_velocity(
-        x=flow_sim.x_grid,
-        y=flow_sim.y_grid,
+        x=flow_sim.position_field[x_axis_idx],
+        y=flow_sim.position_field[y_axis_idx],
         x_cm=x_cm_start,
         y_cm=y_cm_start,
         nu=nu,
@@ -75,8 +74,8 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
             foto_timer = 0.0
             ax.set_title(f"Vorticity, time: {t:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid,
-                flow_sim.y_grid,
+                flow_sim.position_field[x_axis_idx],
+                flow_sim.position_field[y_axis_idx],
                 flow_sim.vorticity_field,
                 levels=np.linspace(0, 1, 50),
                 extend="both",
@@ -100,11 +99,11 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
 
     # final vortex computation
     t_end = t
-    x_cm_final = x_cm_start + velocity_free_stream[0] * (t_end - t_start)
-    y_cm_final = y_cm_start + velocity_free_stream[1] * (t_end - t_start)
+    x_cm_final = x_cm_start + velocity_free_stream[x_axis_idx] * (t_end - t_start)
+    y_cm_final = y_cm_start + velocity_free_stream[y_axis_idx] * (t_end - t_start)
     final_analytical_vorticity_field = compute_lamb_oseen_vorticity(
-        x=flow_sim.x_grid,
-        y=flow_sim.y_grid,
+        x=flow_sim.position_field[x_axis_idx],
+        y=flow_sim.position_field[y_axis_idx],
         x_cm=x_cm_final,
         y_cm=y_cm_final,
         nu=nu,
@@ -126,8 +125,8 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
     print(f"vorticity L2 error: {l2_error}")
     print(f"vorticity Linf error: {linf_error}")
     final_analytical_velocity_field = compute_lamb_oseen_velocity(
-        x=flow_sim.x_grid,
-        y=flow_sim.y_grid,
+        x=flow_sim.position_field[x_axis_idx],
+        y=flow_sim.position_field[y_axis_idx],
         x_cm=x_cm_final,
         y_cm=y_cm_final,
         nu=nu,
@@ -144,5 +143,4 @@ def lamb_oseen_vortex_flow_case(grid_size_x, num_threads=4, precision="single"):
 
 
 if __name__ == "__main__":
-    grid_size_x = 256
-    lamb_oseen_vortex_flow_case(grid_size_x=grid_size_x)
+    lamb_oseen_vortex_flow_case(grid_size=(256, 256))

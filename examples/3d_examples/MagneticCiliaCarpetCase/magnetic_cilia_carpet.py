@@ -2,6 +2,7 @@ import elastica as ea
 import magneto_pyelastica as mea
 import numpy as np
 from post_processing import plot_video_with_surface
+import sopht_simulator as sps
 
 
 class MagneticCiliaCarpetSimulator:
@@ -32,14 +33,14 @@ class MagneticCiliaCarpetSimulator:
         self.spacing_between_rods = self.rod_base_length  # following Gu2020
         n_elem = n_elem_per_rod
         grid_dim = 3
-        x_axis = 0
-        y_axis = 1
+        x_axis_idx = sps.VectorField.x_axis_idx()
+        y_axis_idx = sps.VectorField.y_axis_idx()
         start_collection = np.zeros((n_rods, grid_dim))
         for i in range(n_rods):
-            start_collection[i, x_axis] = (
+            start_collection[i, x_axis_idx] = (
                 i % num_rods_along_x
             ) * self.spacing_between_rods
-            start_collection[i, y_axis] = (
+            start_collection[i, y_axis_idx] = (
                 i // num_rods_along_x
             ) * self.spacing_between_rods
         direction = np.array([0.0, 0.0, 1.0])
@@ -77,10 +78,16 @@ class MagneticCiliaCarpetSimulator:
         spatial_magnetisation_wavelength = self.carpet_length_x
         spatial_magnetisation_phase_diff = np.pi
         magnetization_angle_x = spatial_magnetisation_phase_diff + (
-            2 * np.pi * start_collection[..., x_axis] / spatial_magnetisation_wavelength
+            2
+            * np.pi
+            * start_collection[..., x_axis_idx]
+            / spatial_magnetisation_wavelength
         )
         magnetization_angle_y = spatial_magnetisation_phase_diff + (
-            2 * np.pi * start_collection[..., y_axis] / spatial_magnetisation_wavelength
+            2
+            * np.pi
+            * start_collection[..., y_axis_idx]
+            / spatial_magnetisation_wavelength
         )
         self.magnetic_rod_list = []
         magnetization_direction_list = []
@@ -240,22 +247,25 @@ class MagneticCiliaCarpetSimulator:
         )
 
         if self.plot_result:
+            x_axis_idx = sps.VectorField.x_axis_idx()
+            y_axis_idx = sps.VectorField.y_axis_idx()
+            z_axis_idx = sps.VectorField.z_axis_idx()
             # Plot the magnetic rod time history
             plot_video_with_surface(
                 self.rod_post_processing_list,
                 fps=self.rendering_fps,
                 step=10,
                 x_limits=(
-                    self.carpet_base_centroid[0] - 0.6 * self.carpet_length_x,
-                    self.carpet_base_centroid[0] + 0.6 * self.carpet_length_x,
+                    self.carpet_base_centroid[x_axis_idx] - 0.6 * self.carpet_length_x,
+                    self.carpet_base_centroid[x_axis_idx] + 0.6 * self.carpet_length_x,
                 ),
                 y_limits=(
-                    self.carpet_base_centroid[1] - 0.6 * self.carpet_length_y,
-                    self.carpet_base_centroid[1] + 0.6 * self.carpet_length_y,
+                    self.carpet_base_centroid[y_axis_idx] - 0.6 * self.carpet_length_y,
+                    self.carpet_base_centroid[y_axis_idx] + 0.6 * self.carpet_length_y,
                 ),
                 z_limits=(
-                    self.carpet_base_centroid[2] - 0.1 * self.rod_base_length,
-                    self.carpet_base_centroid[2] + 1.5 * self.rod_base_length,
+                    self.carpet_base_centroid[z_axis_idx] - 0.1 * self.rod_base_length,
+                    self.carpet_base_centroid[z_axis_idx] + 1.5 * self.rod_base_length,
                 ),
                 vis3D=True,
             )

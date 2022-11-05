@@ -20,34 +20,34 @@ def flow_through_circular_pipe_case(
     """
     This example considers the case of steady flow through a pipe in 3D.
     """
-    dim = 3
+    grid_dim = 3
+    grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
     x_range = 1.0
     nu = 1e-2
-    CFL = 0.1
     flow_sim = sps.UnboundedFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        CFL=CFL,
         flow_type="navier_stokes_with_forcing",
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
     )
-
     # Initialize velocity = c in X direction
     mean_velocity = 1.0
     velocity_free_stream = [mean_velocity, 0.0, 0.0]
-
     # Initialize fixed cylinder (elastica rigid body) with direction along X
     boundary_offset = 2 * flow_sim.dx  # to avoid interpolation at boundaries
     base_length = flow_sim.x_range - 2 * boundary_offset
     cyl_radius = 0.375 * min(flow_sim.y_range, flow_sim.z_range)
-    X_cm = boundary_offset
-    Y_cm = 0.5 * flow_sim.y_range
-    Z_cm = 0.5 * flow_sim.z_range
-    start = np.array([X_cm, Y_cm, Z_cm])
+    x_cm = boundary_offset
+    y_cm = 0.5 * flow_sim.y_range
+    z_cm = 0.5 * flow_sim.z_range
+    start = np.array([x_cm, y_cm, z_cm])
     direction = np.array([1.0, 0.0, 0.0])
     normal = np.array([0.0, 1.0, 0.0])
     density = 1e3
@@ -63,7 +63,7 @@ def flow_through_circular_pipe_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=dim,
+        grid_dim=grid_dim,
         real_t=real_t,
         forcing_grid_cls=sps.OpenEndCircularCylinderForcingGrid,
         num_forcing_points_along_length=num_forcing_points_along_length,
@@ -74,11 +74,15 @@ def flow_through_circular_pipe_case(
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=dim, real_dtype=real_t)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
@@ -91,9 +95,10 @@ def flow_through_circular_pipe_case(
 
     # create fig for plotting flow fields
     fig, ax = sps.create_figure_and_axes(fig_aspect_ratio="default")
-    x_axis = 0
-    grid_size_z, grid_size_y, grid_size_x = flow_sim.grid_size
-    radial_coordinate = flow_sim.y_grid[grid_size_z // 2, ..., grid_size_x // 2] - Y_cm
+    radial_coordinate = (
+        flow_sim.position_field[y_axis_idx, grid_size_z // 2, ..., grid_size_x // 2]
+        - y_cm
+    )
     anal_velocity_profile = analytical_pipe_flow_velocity(
         radial_coordinate=radial_coordinate,
         mean_velocity=mean_velocity,
@@ -107,8 +112,8 @@ def flow_through_circular_pipe_case(
             foto_timer = 0.0
             print(
                 f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
-                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
-                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 "grid deviation L2 error: "
                 f"{cylinder_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
@@ -119,7 +124,7 @@ def flow_through_circular_pipe_case(
             # midplane along X
             sim_velocity_profile = 0.5 * np.sum(
                 flow_sim.velocity_field[
-                    x_axis,
+                    x_axis_idx,
                     grid_size_z // 2 - 1 : grid_size_z // 2 + 1,
                     ...,
                     grid_size_x // 2,

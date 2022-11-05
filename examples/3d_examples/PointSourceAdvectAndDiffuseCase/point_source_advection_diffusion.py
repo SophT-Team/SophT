@@ -12,39 +12,38 @@ def point_source_advection_diffusion_case(
     This example considers a simple case of point source vortex, advecting with a
     constant velocity in 3D, while it diffuses in time.
     """
-    dim = 3
+    grid_dim = 3
+    grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
     # Consider a 1 by 1 3D domain
-    grid_size_x = grid_size
-    grid_size_y = grid_size_x
-    grid_size_z = grid_size_x
     x_range = 1.0
-    nu = real_t(1e-3)
-    CFL = real_t(0.05)
+    nu = 1e-3
     # init vortex at (0.3 0.3, 0.3)
     flow_sim = sps.UnboundedFlowSimulator3D(
-        grid_size=(grid_size_z, grid_size_y, grid_size_x),
+        grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        CFL=CFL,
         flow_type="passive_vector",
         real_t=real_t,
         num_threads=num_threads,
     )
-    x_cm_start = real_t(0.3)
+    x_cm_start = 0.3
     y_cm_start = x_cm_start
     z_cm_start = x_cm_start
     # start with non-zero to avoid singularity in point source
-    t_start = real_t(5)
-    t_end = real_t(5.4)
+    t_start = 5.0
+    t_end = 5.4
     # to start with point source magnitude = 1
-    point_mag = real_t(4 * np.pi * nu * t_start) ** (3 / 2)
+    point_mag = 4.0 * np.pi * nu * t_start**1.5
     vorticity_field = flow_sim.primary_vector_field.view()
-    for i in range(dim):
+    for i in range(grid_dim):
         vorticity_field[i] = compute_diffused_point_source_field(
-            x_grid=flow_sim.x_grid,
-            y_grid=flow_sim.y_grid,
-            z_grid=flow_sim.z_grid,
+            x_grid=flow_sim.position_field[x_axis_idx],
+            y_grid=flow_sim.position_field[y_axis_idx],
+            z_grid=flow_sim.position_field[z_axis_idx],
             x_grid_cm=x_cm_start,
             y_grid_cm=y_cm_start,
             z_grid_cm=z_cm_start,
@@ -55,18 +54,22 @@ def point_source_advection_diffusion_case(
         )
 
     # Initialize velocity = c in X, Y and Z direction
-    velocity_free_stream = real_t(1.0)
+    velocity_free_stream = 1.0
     flow_sim.velocity_field[...] = velocity_free_stream
 
     if save_data:
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array([grid_size_z, grid_size_y, grid_size_x])
-        io = IO(dim=dim, real_dtype=real_t)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(vorticity=vorticity_field)
 
@@ -100,11 +103,11 @@ def point_source_advection_diffusion_case(
     y_cm_final = y_cm_start + velocity_free_stream * (t_end - t_start)
     z_cm_final = z_cm_start + velocity_free_stream * (t_end - t_start)
     final_analytical_vorticity_field = np.zeros_like(vorticity_field)
-    for i in range(dim):
+    for i in range(grid_dim):
         final_analytical_vorticity_field[i] = compute_diffused_point_source_field(
-            x_grid=flow_sim.x_grid,
-            y_grid=flow_sim.y_grid,
-            z_grid=flow_sim.z_grid,
+            x_grid=flow_sim.position_field[x_axis_idx],
+            y_grid=flow_sim.position_field[y_axis_idx],
+            z_grid=flow_sim.position_field[z_axis_idx],
             x_grid_cm=x_cm_final,
             y_grid_cm=y_cm_final,
             z_grid_cm=z_cm_final,
@@ -124,5 +127,5 @@ def point_source_advection_diffusion_case(
 
 
 if __name__ == "__main__":
-    grid_size = 128
-    point_source_advection_diffusion_case(grid_size=grid_size, save_data=True)
+    sim_grid_size = (128, 128, 128)
+    point_source_advection_diffusion_case(grid_size=sim_grid_size, save_data=True)

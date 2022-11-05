@@ -17,14 +17,17 @@ def immersed_magnetic_cilia_carpet_case(
     save_data=False,
 ):
     # ==================FLOW SETUP START=========================
+    grid_dim = 3
+    real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
     z_range, y_range, x_range = domain_range
     grid_size_y = round(y_range / x_range * grid_size_x)
     grid_size_z = round(z_range / x_range * grid_size_x)
     # order Z, Y, X
     grid_size = (grid_size_z, grid_size_y, grid_size_x)
     print(f"Flow grid size:{grid_size}")
-    dim = 3
-    real_t = get_real_t(precision)
     kinematic_viscosity = (
         cilia_carpet_simulator.rod_base_length
         * cilia_carpet_simulator.velocity_scale
@@ -42,7 +45,6 @@ def immersed_magnetic_cilia_carpet_case(
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
     # ==================FLOW SETUP END=========================
-
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     rod_flow_interactor_list = []
     for magnetic_rod in cilia_carpet_simulator.magnetic_rod_list:
@@ -53,7 +55,7 @@ def immersed_magnetic_cilia_carpet_case(
             virtual_boundary_stiffness_coeff=coupling_stiffness,
             virtual_boundary_damping_coeff=coupling_damping,
             dx=flow_sim.dx,
-            grid_dim=dim,
+            grid_dim=grid_dim,
             real_t=real_t,
             num_threads=num_threads,
             forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
@@ -64,28 +66,31 @@ def immersed_magnetic_cilia_carpet_case(
             rod_flow_interactor,
         )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
-
     if save_data:
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=dim, real_dtype=real_t)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize carpet IO
-        carpet_io = IO(dim=dim, real_dtype=real_t)
+        carpet_io = IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
             interactor.forcing_grid.num_lag_nodes
             for interactor in rod_flow_interactor_list
         ]
         carpet_num_lag_nodes = sum(rod_num_lag_nodes_list)
-        carpet_lag_grid_position_field = np.zeros((dim, carpet_num_lag_nodes))
+        carpet_lag_grid_position_field = np.zeros((grid_dim, carpet_num_lag_nodes))
         carpet_lag_grid_forcing_field = np.zeros_like(carpet_lag_grid_position_field)
 
         def update_carpet_lag_grid_fields():
@@ -133,8 +138,9 @@ def immersed_magnetic_cilia_carpet_case(
                 )
             ax.set_title(f"Velocity magnitude, time: {time:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid[:, grid_size_y // 2, :],
-                flow_sim.z_grid[:, grid_size_y // 2, :],
+                flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
+                # TODO function for velocity magnitude
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[
@@ -151,8 +157,8 @@ def immersed_magnetic_cilia_carpet_case(
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             for magnetic_rod in cilia_carpet_simulator.magnetic_rod_list:
                 ax.scatter(
-                    magnetic_rod.position_collection[0],
-                    magnetic_rod.position_collection[2],
+                    magnetic_rod.position_collection[x_axis_idx],
+                    magnetic_rod.position_collection[z_axis_idx],
                     s=5,
                     color="k",
                 )
@@ -168,13 +174,12 @@ def immersed_magnetic_cilia_carpet_case(
             print(
                 f"time: {time:.2f} ({(time/cilia_carpet_simulator.final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
-        # flow_dt = rod_dt
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))

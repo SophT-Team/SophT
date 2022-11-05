@@ -24,9 +24,9 @@ def flow_past_rod_case(
     rho_f = 1.0
     base_length = 1.0
     x_range = 6.0 * base_length
-    X_AXIS = 0
-    Y_AXIS = 1
-    GRID_DIM = 2
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    grid_dim = 2
     grid_size_y, grid_size_x = grid_size
     y_range = grid_size_y / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
@@ -74,7 +74,7 @@ def flow_past_rod_case(
         youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
-    tip_start_position = flow_past_rod.position_collection[(X_AXIS, Y_AXIS), -1]
+    tip_start_position = flow_past_rod.position_collection[(x_axis_idx, y_axis_idx), -1]
     flow_past_sim.append(flow_past_rod)
     flow_past_sim.constrain(flow_past_rod).using(
         ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
@@ -119,7 +119,7 @@ def flow_past_rod_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=GRID_DIM,
+        grid_dim=grid_dim,
         forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
@@ -161,8 +161,8 @@ def flow_past_rod_case(
             foto_timer = 0.0
             ax.set_title(f"Vorticity, time: {time / timescale:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid,
-                flow_sim.y_grid,
+                flow_sim.position_field[x_axis_idx],
+                flow_sim.position_field[y_axis_idx],
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
@@ -170,8 +170,8 @@ def flow_past_rod_case(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
-                flow_past_rod.position_collection[X_AXIS],
-                flow_past_rod.position_collection[Y_AXIS],
+                flow_past_rod.position_collection[x_axis_idx],
+                flow_past_rod.position_collection[y_axis_idx],
                 linewidth=3,
                 color="k",
             )
@@ -191,7 +191,7 @@ def flow_past_rod_case(
             tip_time.append(time / timescale)
             tip_position.append(
                 (
-                    flow_past_rod.position_collection[(X_AXIS, Y_AXIS), -1]
+                    flow_past_rod.position_collection[(x_axis_idx, y_axis_idx), -1]
                     - tip_start_position
                 )
                 / base_length
@@ -235,8 +235,8 @@ def flow_past_rod_case(
     )
 
     plt.figure()
-    plt.plot(np.array(tip_time), np.array(tip_position)[..., X_AXIS], label="X")
-    plt.plot(np.array(tip_time), np.array(tip_position)[..., Y_AXIS], label="Y")
+    plt.plot(np.array(tip_time), np.array(tip_position)[..., x_axis_idx], label="X")
+    plt.plot(np.array(tip_time), np.array(tip_position)[..., y_axis_idx], label="Y")
     plt.legend()
     plt.xlabel("Non-dimensional time")
     plt.ylabel("Tip deflection")
@@ -246,8 +246,8 @@ def flow_past_rod_case(
         fname="rod_diagnostics_vs_time.csv",
         X=np.c_[
             np.array(tip_time),
-            np.array(tip_position)[..., X_AXIS],
-            np.array(tip_position)[..., Y_AXIS],
+            np.array(tip_position)[..., x_axis_idx],
+            np.array(tip_position)[..., y_axis_idx],
         ],
         header="time, tip_x, tip_y",
         delimiter=",",

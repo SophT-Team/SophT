@@ -20,21 +20,22 @@ def flow_past_rod_case(
     flow_precision="single",
     save_diagnostic=False,
 ):
+    grid_dim = 2
+    grid_size_y, grid_size_x = grid_size
+    real_t = get_real_t(flow_precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
     # =================COMMON SIMULATOR STUFF=======================
     nondim_mass_ratio = density_ratio * beam_aspect_ratio
     # last term on rhs corresponds to nondim moment of inertia of plate
     nondim_bending_stiffness = cauchy * (beam_aspect_ratio**3) / 12.0
     print(f"Rod non-dimensional mass ratio: {nondim_mass_ratio:.6f}")
     print(f"Rod non-dimensional bending stiffness: {nondim_bending_stiffness:.6f}")
-    grid_size_y, grid_size_x = grid_size
     velocity_free_stream = 1.0
     rho_f = 1.0
     base_length = 1.0
     x_range = 5.0 * base_length
     y_range = x_range * grid_size_y / grid_size_x
-    X_AXIS = 0
-    Y_AXIS = 1
-    GRID_DIM = 2
     # =================PYELASTICA STUFF BEGIN=====================
 
     class FlowPastRodSimulator(ea.BaseSystemCollection, ea.Constraints, ea.Forcing):
@@ -84,7 +85,7 @@ def flow_past_rod_case(
         youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
-    tip_start_position = flow_past_rod.position_collection[(X_AXIS, Y_AXIS), -1]
+    tip_start_position = flow_past_rod.position_collection[(x_axis_idx, y_axis_idx), -1]
     flow_past_sim.append(flow_past_rod)
     flow_past_sim.constrain(flow_past_rod).using(
         ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
@@ -94,7 +95,6 @@ def flow_past_rod_case(
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
-    real_t = get_real_t(flow_precision)
     # Flow parameters
     # Re = velocity_free_stream * cyl_diameter / nu
     cyl_diameter = base_length * cyl_diameter_to_rod_length
@@ -118,7 +118,7 @@ def flow_past_rod_case(
     top_wall_start = np.array(
         [
             wall_boundary_offset,
-            flow_past_rod.position_collection[Y_AXIS, 0] + 2.0 * cyl_diameter,
+            flow_past_rod.position_collection[y_axis_idx, 0] + 2.0 * cyl_diameter,
             0.0,
         ]
     )
@@ -137,7 +137,7 @@ def flow_past_rod_case(
     bottom_wall_start = np.array(
         [
             wall_boundary_offset,
-            flow_past_rod.position_collection[Y_AXIS, 0] - 2.0 * cyl_diameter,
+            flow_past_rod.position_collection[y_axis_idx, 0] - 2.0 * cyl_diameter,
             0.0,
         ]
     )
@@ -157,8 +157,8 @@ def flow_past_rod_case(
     # and directly use it for setting up the flow interactor.
     # Initialize fixed cylinder (elastica rigid body) with direction along Z
     # for Turek/Hron case diameter / rod_length = 0.1 / 0.35
-    x_cm = flow_past_rod.position_collection[X_AXIS, 0] - 0.5 * cyl_diameter
-    y_cm = flow_past_rod.position_collection[Y_AXIS, 0]
+    x_cm = flow_past_rod.position_collection[x_axis_idx, 0] - 0.5 * cyl_diameter
+    y_cm = flow_past_rod.position_collection[y_axis_idx, 0]
     start = np.array([x_cm, y_cm, 0.0])
     direction = np.array([0.0, 0.0, 1.0])
     normal = np.array([1.0, 0.0, 0.0])
@@ -183,7 +183,7 @@ def flow_past_rod_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=GRID_DIM,
+        grid_dim=grid_dim,
         forcing_grid_cls=sps.CosseratRodEdgeForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
@@ -201,7 +201,7 @@ def flow_past_rod_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=GRID_DIM,
+        grid_dim=grid_dim,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
         real_t=real_t,
         num_forcing_points=cyl_num_forcing_points,
@@ -214,7 +214,7 @@ def flow_past_rod_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=GRID_DIM,
+        grid_dim=grid_dim,
         forcing_grid_cls=sps.CosseratRodNodalForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
@@ -227,7 +227,7 @@ def flow_past_rod_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=GRID_DIM,
+        grid_dim=grid_dim,
         forcing_grid_cls=sps.CosseratRodNodalForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
@@ -266,8 +266,8 @@ def flow_past_rod_case(
             foto_timer = 0.0
             ax.set_title(f"Vorticity, time: {time / timescale:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid,
-                flow_sim.y_grid,
+                flow_sim.position_field[x_axis_idx],
+                flow_sim.position_field[y_axis_idx],
                 flow_sim.vorticity_field,
                 levels=np.linspace(-15, 15, 100),
                 extend="both",
@@ -275,15 +275,15 @@ def flow_past_rod_case(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
-                flow_past_rod.position_collection[X_AXIS],
-                flow_past_rod.position_collection[Y_AXIS],
+                flow_past_rod.position_collection[x_axis_idx],
+                flow_past_rod.position_collection[y_axis_idx],
                 linewidth=3,
                 color="k",
             )
             for flow_body_interactor in flow_body_interactors:
                 ax.scatter(
-                    flow_body_interactor.forcing_grid.position_field[X_AXIS],
-                    flow_body_interactor.forcing_grid.position_field[Y_AXIS],
+                    flow_body_interactor.forcing_grid.position_field[x_axis_idx],
+                    flow_body_interactor.forcing_grid.position_field[y_axis_idx],
                     s=5,
                     color="k",
                 )
@@ -307,14 +307,14 @@ def flow_past_rod_case(
             tip_time.append(time / timescale)
             tip_position.append(
                 (
-                    flow_past_rod.position_collection[(X_AXIS, Y_AXIS), -1]
+                    flow_past_rod.position_collection[(x_axis_idx, y_axis_idx), -1]
                     - tip_start_position
                 )
                 / cyl_diameter
             )
             drag_force = np.sum(
-                cosserat_rod_flow_interactor.lag_grid_forcing_field[X_AXIS]
-            ) + np.sum(cylinder_flow_interactor.lag_grid_forcing_field[X_AXIS])
+                cosserat_rod_flow_interactor.lag_grid_forcing_field[x_axis_idx]
+            ) + np.sum(cylinder_flow_interactor.lag_grid_forcing_field[x_axis_idx])
             drag_coeff.append(abs(drag_force) / drag_force_scale)
 
         # compute timestep
@@ -357,8 +357,8 @@ def flow_past_rod_case(
     )
 
     plt.figure()
-    plt.plot(np.array(tip_time), np.array(tip_position)[..., X_AXIS], label="X")
-    plt.plot(np.array(tip_time), np.array(tip_position)[..., Y_AXIS], label="Y")
+    plt.plot(np.array(tip_time), np.array(tip_position)[..., x_axis_idx], label="X")
+    plt.plot(np.array(tip_time), np.array(tip_position)[..., y_axis_idx], label="Y")
     plt.legend()
     plt.xlabel("Non-dimensional time")
     plt.ylabel("Tip deflection")
@@ -369,8 +369,8 @@ def flow_past_rod_case(
             fname="plate_diagnostics_vs_time.csv",
             X=np.c_[
                 np.array(tip_time),
-                np.array(tip_position)[..., X_AXIS],
-                np.array(tip_position)[..., Y_AXIS],
+                np.array(tip_position)[..., x_axis_idx],
+                np.array(tip_position)[..., y_axis_idx],
                 np.array(drag_coeff),
             ],
             header="time, tip_x, tip_y, drag_coeff",
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     )
     @click.option(
         "--nondim_final_time",
-        default=30.0,
+        default=29.0,
         help="Non-dimensional final simulation time.",
     )
     def simulate_custom_flow_past_rod_case(
