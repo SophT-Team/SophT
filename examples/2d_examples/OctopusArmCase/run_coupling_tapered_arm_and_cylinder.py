@@ -8,7 +8,7 @@ import sopht_simulator as sps
 def tapered_arm_and_cylinder_flow_coupling(
     final_time_by_period,
     grid_size,
-    Re=200,
+    reynolds=200,
     rod_coupling_type="one_way",
     rigid_body_coupling_type="one_way",
     coupling_stiffness=-5e4,
@@ -16,6 +16,10 @@ def tapered_arm_and_cylinder_flow_coupling(
     num_threads=8,
     precision="single",
 ):
+    grid_dim = 2
+    real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
     # =================PYELASTICA STUFF BEGIN=====================
     period = 1
     final_time = period * final_time_by_period
@@ -24,7 +28,6 @@ def tapered_arm_and_cylinder_flow_coupling(
     env.reset()
 
     base_length = env.shearable_rod.rest_lengths.sum()
-
     # Setup activation functions to control muscles
     n_elements = env.shearable_rod.n_elems
 
@@ -57,29 +60,21 @@ def tapered_arm_and_cylinder_flow_coupling(
         # )
 
     # =================PYELASTICA STUFF END=====================
-
     # ==================FLOW SETUP START=========================
-    flow_solver_precision = precision
-    real_t = get_real_t(flow_solver_precision)
-    CFL = 0.1
-    grid_size_x = grid_size
-    grid_size_y = grid_size_x  # // 2
     # 2x1 domain with x_range = 4 * base_length
     x_range = 2 * base_length
     # Flow parameters
     vel_scale = base_length / period
-    nu = base_length * vel_scale / Re
+    nu = base_length * vel_scale / reynolds
     flow_sim = sps.UnboundedFlowSimulator2D(
-        grid_size=(grid_size_y, grid_size_x),
+        grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        CFL=CFL,
         flow_type="navier_stokes_with_forcing",
         real_t=real_t,
         num_threads=num_threads,
     )
     # ==================FLOW SETUP END=========================
-
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     flow_body_interactors = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
@@ -89,7 +84,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=2,
+        grid_dim=grid_dim,
         real_t=real_t,
         num_threads=num_threads,
         forcing_grid_cls=sps.CosseratRodEdgeForcingGrid,
@@ -108,7 +103,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=2,
+        grid_dim=grid_dim,
         real_t=real_t,
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
         num_forcing_points=cyl_num_forcing_points,
@@ -120,12 +115,9 @@ def tapered_arm_and_cylinder_flow_coupling(
             cylinder_flow_interactor,
         )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
-
     # =================TIMESTEPPING====================
-
     # Finalize the pyelastica environment
     _, _ = env.finalize()
-
     time = 0.0
     foto_timer = 0.0
     foto_timer_limit = period / 10
@@ -140,8 +132,8 @@ def tapered_arm_and_cylinder_flow_coupling(
             foto_timer = 0.0
             ax.set_title(f"Vorticity, time: {time:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid,
-                flow_sim.y_grid,
+                flow_sim.position_field[x_axis_idx],
+                flow_sim.position_field[y_axis_idx],
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
@@ -162,16 +154,16 @@ def tapered_arm_and_cylinder_flow_coupling(
                 / fig.dpi
             )
             ax.scatter(
-                element_position[0],
-                element_position[1],
+                element_position[x_axis_idx],
+                element_position[y_axis_idx],
                 s=4 * (scaling_factor * env.shearable_rod.radius) ** 2,
                 c="k",
             )
             # plot rod and cylinder forcing points
             for flow_body_interactor in flow_body_interactors:
                 ax.scatter(
-                    flow_body_interactor.forcing_grid.position_field[0],
-                    flow_body_interactor.forcing_grid.position_field[1],
+                    flow_body_interactor.forcing_grid.position_field[x_axis_idx],
+                    flow_body_interactor.forcing_grid.position_field[y_axis_idx],
                     s=5,
                     color="g",
                 )
@@ -230,7 +222,7 @@ def tapered_arm_and_cylinder_flow_coupling(
 if __name__ == "__main__":
     tapered_arm_and_cylinder_flow_coupling(
         final_time_by_period=5.0,
-        grid_size=512,
+        grid_size=(512, 512),
         rod_coupling_type="two_way",
         rigid_body_coupling_type="two_way",
     )

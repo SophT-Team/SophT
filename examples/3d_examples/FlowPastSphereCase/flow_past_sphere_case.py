@@ -10,8 +10,8 @@ def flow_past_sphere_case(
     grid_size,
     num_forcing_points_along_equator,
     reynolds=100.0,
-    coupling_stiffness=-6e5,
-    coupling_damping=-3.5e2,
+    coupling_stiffness=-6e5 / 4,
+    coupling_damping=-3.5e2 / 4,
     num_threads=4,
     precision="single",
     save_data=False,
@@ -19,11 +19,14 @@ def flow_past_sphere_case(
     """
     This example considers the case of flow past a sphere in 3D.
     """
-    dim = 3
+    grid_dim = 3
+    grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
     x_range = 1.0
     far_field_velocity = 1.0
-    grid_size_z, grid_size_y, grid_size_x = grid_size
     sphere_diameter = 0.4 * min(grid_size_z, grid_size_y) / grid_size_x * x_range
     nu = far_field_velocity * sphere_diameter / reynolds
     flow_sim = sps.UnboundedFlowSimulator3D(
@@ -46,10 +49,10 @@ def flow_past_sphere_case(
     velocity_free_stream = np.array([far_field_velocity, 0.0, 0.0])
 
     # Initialize fixed sphere (elastica rigid body)
-    X_cm = 0.25 * flow_sim.x_range
-    Y_cm = 0.5 * flow_sim.y_range
-    Z_cm = 0.5 * flow_sim.z_range
-    sphere_com = np.array([X_cm, Y_cm, Z_cm])
+    x_cm = 0.25 * flow_sim.x_range
+    y_cm = 0.5 * flow_sim.y_range
+    z_cm = 0.5 * flow_sim.z_range
+    sphere_com = np.array([x_cm, y_cm, z_cm])
     density = 1e3
     sphere = ea.Sphere(
         center=sphere_com, base_radius=(sphere_diameter / 2.0), density=density
@@ -64,7 +67,7 @@ def flow_past_sphere_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=dim,
+        grid_dim=grid_dim,
         real_t=real_t,
         forcing_grid_cls=sps.SphereForcingGrid,
         num_forcing_points_along_equator=num_forcing_points_along_equator,
@@ -75,17 +78,21 @@ def flow_past_sphere_case(
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=dim, real_dtype=real_t)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize sphere IO
-        sphere_io = IO(dim=dim, real_dtype=real_t)
+        sphere_io = IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
         sphere_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=sphere_flow_interactor.forcing_grid.position_field,
@@ -102,14 +109,14 @@ def flow_past_sphere_case(
     # Find the sphere center on euler grid
     # First find the euler grid centers in z direction
     euler_grid_center_in_z_dir = 0.5 * (
-        flow_sim.z_grid[1:, grid_size_y // 2, 0]
-        + flow_sim.z_grid[:-1, grid_size_y // 2, 0]
+        flow_sim.position_field[z_axis_idx, 1:, grid_size_y // 2, 0]
+        + flow_sim.position_field[z_axis_idx, :-1, grid_size_y // 2, 0]
     )
     # Find the sphere center in z direction
     lag_grid_center_in_z_dir = np.mean(
-        sphere_flow_interactor.forcing_grid.position_field[2]
+        sphere_flow_interactor.forcing_grid.position_field[z_axis_idx]
     )
-    # Find the eulerian grid index that has the sphere center (z coordinate)
+    # Find the Eulerian grid index that has the sphere center (z coordinate)
     sphere_center_on_euler_grid_idx = np.argmin(
         np.abs(euler_grid_center_in_z_dir - lag_grid_center_in_z_dir)
     )
@@ -126,9 +133,8 @@ def flow_past_sphere_case(
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             # calculate drag
-            x_axis = 0
             drag_force = np.fabs(
-                np.sum(sphere_flow_interactor.lag_grid_forcing_field[x_axis, ...])
+                np.sum(sphere_flow_interactor.lag_grid_forcing_field[x_axis_idx, ...])
             )
             drag_coeff = drag_force / drag_force_scale
             time.append(t)
@@ -137,7 +143,7 @@ def flow_past_sphere_case(
                 np.mean(
                     np.mean(
                         flow_sim.velocity_field[
-                            0,
+                            x_axis_idx,
                             sphere_center_on_euler_grid_idx : sphere_center_on_euler_grid_idx
                             + 2,
                             grid_size_y // 2 - 1 : grid_size_y // 2 + 1,
@@ -157,11 +163,11 @@ def flow_past_sphere_case(
                 )
             ax.set_title(f"Velocity X comp, time: {t / timescale:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid[:, grid_size_y // 2, :],
-                flow_sim.z_grid[:, grid_size_y // 2, :],
+                flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
                 np.mean(
                     flow_sim.velocity_field[
-                        0, :, grid_size_y // 2 - 1 : grid_size_y // 2 + 1, :
+                        x_axis_idx, :, grid_size_y // 2 - 1 : grid_size_y // 2 + 1, :
                     ],
                     axis=1,
                 ),
@@ -171,8 +177,8 @@ def flow_past_sphere_case(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
-                sphere_flow_interactor.forcing_grid.position_field[0],
-                sphere_flow_interactor.forcing_grid.position_field[2],
+                sphere_flow_interactor.forcing_grid.position_field[x_axis_idx],
+                sphere_flow_interactor.forcing_grid.position_field[z_axis_idx],
                 s=5,
                 color="k",
             )

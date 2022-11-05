@@ -23,11 +23,15 @@ def flow_past_rod_case(
     precision="single",
 ):
     # =================COMMON SIMULATOR STUFF=======================
+    grid_dim = 3
+    grid_size_z, grid_size_y, grid_size_x = grid_size
+    real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
     rho_f = 1.0
     U_free_stream = 1.0
     base_length = 1.0
     x_range = 1.8 * base_length
-    grid_size_z, grid_size_y, grid_size_x = grid_size
     y_range = grid_size_y / grid_size_x * x_range
     z_range = grid_size_z / grid_size_x * x_range
     velocity_free_stream = [U_free_stream, 0.0, 0.0]
@@ -92,8 +96,6 @@ def flow_past_rod_case(
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
-    dim = 3
-    real_t = get_real_t(precision)
     kinematic_viscosity = U_free_stream * base_diameter / reynolds
     flow_sim = sps.UnboundedFlowSimulator3D(
         grid_size=grid_size,
@@ -117,7 +119,7 @@ def flow_past_rod_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=dim,
+        grid_dim=grid_dim,
         real_t=real_t,
         num_threads=num_threads,
         forcing_grid_cls=sps.CosseratRodSurfaceForcingGrid,
@@ -129,7 +131,6 @@ def flow_past_rod_case(
     )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     # =================TIMESTEPPING====================
-
     flow_past_sim.finalize()
     timestepper = ea.PositionVerlet()
     do_step, stages_and_updates = ea.extend_stepper_interface(
@@ -152,8 +153,14 @@ def flow_past_rod_case(
         return np.rad2deg(
             np.fabs(
                 np.arctan(
-                    (rod.position_collection[2, -1] - rod.position_collection[2, 0])
-                    / (rod.position_collection[0, -1] - rod.position_collection[0, 0])
+                    (
+                        rod.position_collection[z_axis_idx, -1]
+                        - rod.position_collection[z_axis_idx, 0]
+                    )
+                    / (
+                        rod.position_collection[x_axis_idx, -1]
+                        - rod.position_collection[x_axis_idx, 0]
+                    )
                 )
             )
         )
@@ -165,8 +172,8 @@ def flow_past_rod_case(
             foto_timer = 0.0
             ax.set_title(f"Velocity magnitude, time: {time / timescale:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid[:, grid_size_y // 2, :],
-                flow_sim.z_grid[:, grid_size_y // 2, :],
+                flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[
@@ -182,8 +189,8 @@ def flow_past_rod_case(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
-                cosserat_rod_flow_interactor.forcing_grid.position_field[0],
-                cosserat_rod_flow_interactor.forcing_grid.position_field[2],
+                cosserat_rod_flow_interactor.forcing_grid.position_field[x_axis_idx],
+                cosserat_rod_flow_interactor.forcing_grid.position_field[z_axis_idx],
                 s=5,
                 color="k",
             )
@@ -291,10 +298,8 @@ if __name__ == "__main__":
         exp_gravitational_acc = 9.80665  # m/s2
 
         exp_mass_ratio = exp_rho_s / exp_rho_f
-        exp_slenderness_ratio = exp_base_length / exp_base_diameter
         exp_base_radius = exp_base_diameter / 2
         exp_base_area = np.pi * exp_base_radius**2
-        exp_volume = exp_base_area * exp_base_length
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
         exp_cauchy_number = (
@@ -323,7 +328,7 @@ if __name__ == "__main__":
         )
         # Final deflection angle Silvaleon 2018 Eq 15
         rod_start_incline_angle = np.deg2rad(
-            90 - 90 / (1 + 3.32 * (Ca_B) ** 1.33) ** 0.407 + 0.5
+            90 - 90 / (1 + 3.32 * Ca_B**1.33) ** 0.407 + 0.5
         )
 
         print(

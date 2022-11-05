@@ -7,14 +7,19 @@ import sopht_simulator as sps
 def immersed_continuum_snake_case(
     final_time_by_period,
     grid_size,
-    Re=10,
+    reynolds=10,
     coupling_type="one_way",
     coupling_stiffness=-1.6e4,
     coupling_damping=-16,
     num_threads=4,
     precision="single",
 ):
+    grid_dim = 2
+    real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
     # =================PYELASTICA STUFF BEGIN=====================
+
     class ImmersedContinuumSnakeSimulator(
         ea.BaseSystemCollection, ea.Forcing, ea.Damping
     ):
@@ -66,7 +71,6 @@ def immersed_continuum_snake_case(
     )
 
     # add damping
-    dl = base_length / n_elem
     damping_constant = 1.0
     rod_dt = 0.5e-4 * period
     snake_sim.dampen(snake_rod).using(
@@ -77,21 +81,15 @@ def immersed_continuum_snake_case(
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
-    flow_solver_precision = precision
-    real_t = get_real_t(flow_solver_precision)
-    CFL = 0.1
-    grid_size_x = grid_size
-    grid_size_y = grid_size_x // 2
     # 2x1 domain with x_range = 4 * base_length
     x_range = 4 * base_length
     # Flow parameters
     vel_scale = base_length / period
-    nu = base_length * vel_scale / Re
+    nu = base_length * vel_scale / reynolds
     flow_sim = sps.UnboundedFlowSimulator2D(
-        grid_size=(grid_size_y, grid_size_x),
+        grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        CFL=CFL,
         flow_type="navier_stokes_with_forcing",
         real_t=real_t,
         num_threads=num_threads,
@@ -106,7 +104,7 @@ def immersed_continuum_snake_case(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=2,
+        grid_dim=grid_dim,
         forcing_grid_cls=sps.CosseratRodElementCentricForcingGrid,
         real_t=real_t,
         num_threads=num_threads,
@@ -138,8 +136,8 @@ def immersed_continuum_snake_case(
             foto_timer = 0.0
             ax.set_title(f"Vorticity, time: {time:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid,
-                flow_sim.y_grid,
+                flow_sim.position_field[x_axis_idx],
+                flow_sim.position_field[y_axis_idx],
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
@@ -147,8 +145,8 @@ def immersed_continuum_snake_case(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
-                snake_rod.position_collection[0],
-                snake_rod.position_collection[1],
+                snake_rod.position_collection[x_axis_idx],
+                snake_rod.position_collection[y_axis_idx],
                 linewidth=3,
                 color="k",
             )
@@ -158,14 +156,13 @@ def immersed_continuum_snake_case(
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"snake com: {np.mean(snake_rod.position_collection[0])}"
+                f"snake com: {np.mean(snake_rod.position_collection[x_axis_idx]):.4f}"
                 "grid deviation L2 error: "
                 f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
-        # flow_dt = rod_dt
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
@@ -195,8 +192,10 @@ def immersed_continuum_snake_case(
 
 
 if __name__ == "__main__":
+    sim_grid_size_x = 256
+    sim_grid_size_y = sim_grid_size_x // 2
     immersed_continuum_snake_case(
         final_time_by_period=20.0,
-        grid_size=256,
+        grid_size=(sim_grid_size_y, sim_grid_size_x),
         coupling_type="two_way",
     )

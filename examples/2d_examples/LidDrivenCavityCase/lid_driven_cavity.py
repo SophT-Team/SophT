@@ -7,7 +7,7 @@ import sopht_simulator as sps
 
 def lid_driven_cavity_case(
     grid_size,
-    Re=100,
+    reynolds=100.0,
     num_threads=4,
     coupling_stiffness=-7.5e2,
     coupling_damping=-3e-1,
@@ -18,19 +18,19 @@ def lid_driven_cavity_case(
     This example considers a lid driven cavity flow using immersed
     boundary forcing.
     """
+    grid_dim = 2
     real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
     # Flow parameters
-    U = 1.0
+    lid_velocity = 1.0
     ldc_side_length = 0.6
-    nu = ldc_side_length * U / Re
-    CFL = 0.1
+    nu = ldc_side_length * lid_velocity / reynolds
     x_range = 1.0
-
     flow_sim = sps.UnboundedFlowSimulator2D(
-        grid_size=(grid_size, grid_size),
+        grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        CFL=CFL,
         flow_type="navier_stokes_with_forcing",
         real_t=real_t,
         num_threads=num_threads,
@@ -42,48 +42,52 @@ def lid_driven_cavity_case(
     num_lag_nodes_per_side = 100
     num_lag_nodes = num_ldc_sides * num_lag_nodes_per_side
     ds = ldc_side_length / num_lag_nodes_per_side
-    lag_grid_position_field = np.zeros((2, num_lag_nodes), dtype=real_t)
+    lag_grid_position_field = np.zeros((grid_dim, num_lag_nodes), dtype=real_t)
     side_coordinates_range = np.linspace(
         0.5 - 0.5 * ldc_side_length + 0.5 * ds,
         0.5 + 0.5 * ldc_side_length - 0.5 * ds,
         num_lag_nodes_per_side,
     )
     # top boundary
-    lag_grid_position_field[0, :num_lag_nodes_per_side] = side_coordinates_range
-    lag_grid_position_field[1, :num_lag_nodes_per_side] = 0.5 + 0.5 * ldc_side_length
-    # right boundary
-    lag_grid_position_field[0, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side] = (
+    lag_grid_position_field[
+        x_axis_idx, :num_lag_nodes_per_side
+    ] = side_coordinates_range
+    lag_grid_position_field[y_axis_idx, :num_lag_nodes_per_side] = (
         0.5 + 0.5 * ldc_side_length
     )
+    # right boundary
     lag_grid_position_field[
-        1, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
+        x_axis_idx, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
+    ] = (0.5 + 0.5 * ldc_side_length)
+    lag_grid_position_field[
+        y_axis_idx, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
     ] = side_coordinates_range
     # bottom boundary
     lag_grid_position_field[
-        0, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
+        x_axis_idx, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
     ] = side_coordinates_range
     lag_grid_position_field[
-        1, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
+        y_axis_idx, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
     ] = (0.5 - 0.5 * ldc_side_length)
     # left boundary
     lag_grid_position_field[
-        0, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
+        x_axis_idx, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
     ] = (0.5 - 0.5 * ldc_side_length)
     lag_grid_position_field[
-        1, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
+        y_axis_idx, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
     ] = side_coordinates_range
 
     lag_grid_velocity_field = np.zeros_like(lag_grid_position_field)
-    lag_grid_velocity_field[0, :num_lag_nodes_per_side] = U
-    ldc_mask = (np.fabs(flow_sim.x_grid - 0.5) < 0.5 * ldc_side_length) * (
-        np.fabs(flow_sim.y_grid - 0.5) < 0.5 * ldc_side_length
-    )
+    lag_grid_velocity_field[x_axis_idx, :num_lag_nodes_per_side] = lid_velocity
+    ldc_mask = (
+        np.fabs(flow_sim.position_field[x_axis_idx] - 0.5) < 0.5 * ldc_side_length
+    ) * (np.fabs(flow_sim.position_field[y_axis_idx] - 0.5) < 0.5 * ldc_side_length)
 
     # Virtual boundary forcing kernels
     virtual_boundary_forcing = VirtualBoundaryForcing(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
-        grid_dim=2,
+        grid_dim=grid_dim,
         dx=flow_sim.dx,
         num_lag_nodes=num_lag_nodes,
         real_t=real_t,
@@ -93,7 +97,7 @@ def lid_driven_cavity_case(
     compute_flow_interaction = virtual_boundary_forcing.compute_interaction_forcing
 
     # iterate
-    timescale = ldc_side_length / U
+    timescale = ldc_side_length / lid_velocity
     t_end_hat = 3.0  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     t = 0.0
@@ -110,17 +114,17 @@ def lid_driven_cavity_case(
             foto_timer = 0.0
             ax.set_title(f"U velocity, t_hat: {t / timescale:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid,
-                flow_sim.y_grid,
-                ldc_mask * flow_sim.velocity_field[0],
+                flow_sim.position_field[x_axis_idx],
+                flow_sim.position_field[y_axis_idx],
+                ldc_mask * flow_sim.velocity_field[x_axis_idx],
                 levels=np.linspace(-0.5, 0.5, 100),
                 extend="both",
                 cmap=sps.lab_cmap,
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
-                lag_grid_position_field[0],
-                lag_grid_position_field[1],
+                lag_grid_position_field[x_axis_idx],
+                lag_grid_position_field[y_axis_idx],
                 s=10,
                 color="k",
             )
@@ -157,10 +161,14 @@ def lid_driven_cavity_case(
 
     if save_diagnostic:
         plt.figure()
+        _, grid_size_x = grid_size
         plt.plot(
-            (flow_sim.y_grid[..., grid_size // 2] - (0.5 - 0.5 * ldc_side_length))
+            (
+                flow_sim.position_field[y_axis_idx, ..., grid_size_x // 2]
+                - (0.5 - 0.5 * ldc_side_length)
+            )
             / ldc_side_length,
-            (ldc_mask * flow_sim.velocity_field)[0, ..., grid_size // 2],
+            (ldc_mask * flow_sim.velocity_field)[x_axis_idx, ..., grid_size_x // 2],
         )
         plt.xlim([0.0, 1.0])
         plt.xlabel("Y")
@@ -169,8 +177,7 @@ def lid_driven_cavity_case(
 
 
 if __name__ == "__main__":
-    grid_size = 256
     lid_driven_cavity_case(
-        grid_size=grid_size,
+        grid_size=(256, 256),
         save_diagnostic=True,
     )

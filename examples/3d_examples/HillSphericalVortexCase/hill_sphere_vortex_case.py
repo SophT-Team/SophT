@@ -16,20 +16,22 @@ def hill_sphere_vortex_case(
     the velocity recovery and vortex stretching steps, for the solver,
     by comparing against analytical expressions.
     """
-    dim = 3
+    grid_dim = 3
+    grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = get_real_t(precision)
-    # Consider a 1 by 1 3D domain
-    grid_size_x = grid_size
-    grid_size_y = grid_size_x
-    grid_size_z = grid_size_x
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
+    # Consider a 1 by 1 by 1 3D domain
     x_range = 1.0
     flow_sim = sps.UnboundedFlowSimulator3D(
-        grid_size=(grid_size_z, grid_size_y, grid_size_x),
+        grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=0.0,
         flow_type="navier_stokes",
         real_t=real_t,
         num_threads=num_threads,
+        navier_stokes_inertial_term_form="advection_stretching_split",
     )
     # init vortex at domain center
     vortex_origin = (
@@ -43,12 +45,16 @@ def hill_sphere_vortex_case(
         free_stream_velocity, vortex_radius, vortex_origin
     )
     flow_sim.vorticity_field[...] = hill_sphere_vortex.get_vorticity(
-        x_grid=flow_sim.x_grid, y_grid=flow_sim.y_grid, z_grid=flow_sim.z_grid
+        x_grid=flow_sim.position_field[x_axis_idx],
+        y_grid=flow_sim.position_field[y_axis_idx],
+        z_grid=flow_sim.position_field[z_axis_idx],
     )
     analytical_velocity_field = hill_sphere_vortex.get_velocity(
-        x_grid=flow_sim.x_grid, y_grid=flow_sim.y_grid, z_grid=flow_sim.z_grid
+        x_grid=flow_sim.position_field[x_axis_idx],
+        y_grid=flow_sim.position_field[y_axis_idx],
+        z_grid=flow_sim.position_field[z_axis_idx],
     )
-    flow_sim.compute_velocity_from_vorticity()
+    flow_sim.compute_flow_velocity(free_stream_velocity=np.zeros(grid_dim))
     numerical_kinetic_energy = (
         0.5 * np.sum(np.square(flow_sim.velocity_field)) * flow_sim.dx**3
     )
@@ -66,13 +72,14 @@ def hill_sphere_vortex_case(
     print(f"Velocity error (%): L2: {l2_norm_error*100}, Linf: {linf_norm_error*100}")
 
     # check centerline velocity (axial velocity along Z axis)
-    z_axis = 2
-    centerline_z = flow_sim.z_grid[..., grid_size_y // 2, grid_size_x // 2]
+    centerline_z = flow_sim.position_field[
+        z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2
+    ]
     sim_centerline_vel_z = flow_sim.velocity_field[
-        z_axis, ..., grid_size_y // 2, grid_size_x // 2
+        z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2
     ]
     anal_centerline_vel_z = analytical_velocity_field[
-        z_axis, ..., grid_size_y // 2, grid_size_x // 2
+        z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2
     ]
     fig, ax = sps.create_figure_and_axes(fig_aspect_ratio="default")
     ax.plot(centerline_z, sim_centerline_vel_z, label="numerical")
@@ -83,15 +90,15 @@ def hill_sphere_vortex_case(
     fig.savefig("centerline_axial_velocity.png")
 
     # check radial velocity (offset midplane)
-    y_axis = 1
     midplane_r = (
-        flow_sim.y_grid[grid_size_z // 3, ..., grid_size_x // 2] - vortex_origin[y_axis]
+        flow_sim.position_field[y_axis_idx, grid_size_z // 3, ..., grid_size_x // 2]
+        - vortex_origin[y_axis_idx]
     )
     sim_midplane_vel_r = flow_sim.velocity_field[
-        y_axis, grid_size_z // 3, ..., grid_size_x // 2
+        y_axis_idx, grid_size_z // 3, ..., grid_size_x // 2
     ]
     anal_midplane_vel_r = analytical_velocity_field[
-        y_axis, grid_size_z // 3, ..., grid_size_x // 2
+        y_axis_idx, grid_size_z // 3, ..., grid_size_x // 2
     ]
     fig2, ax2 = sps.create_figure_and_axes(fig_aspect_ratio="default")
     ax2.plot(midplane_r, sim_midplane_vel_r, label="numerical")
@@ -110,10 +117,14 @@ def hill_sphere_vortex_case(
         dt_by_2_dx=flow_sim.real_t(1.0 / (2 * flow_sim.dx)),
     )
     analytical_vortex_stretching = hill_sphere_vortex.get_vortex_stretching(
-        x_grid=flow_sim.x_grid, y_grid=flow_sim.y_grid, z_grid=flow_sim.z_grid
+        x_grid=flow_sim.position_field[x_axis_idx],
+        y_grid=flow_sim.position_field[y_axis_idx],
+        z_grid=flow_sim.position_field[z_axis_idx],
     )
     _, _, _, _, sphere_r_grid = hill_sphere_vortex.compute_local_coordinates(
-        flow_sim.x_grid, flow_sim.y_grid, flow_sim.z_grid
+        flow_sim.position_field[x_axis_idx],
+        flow_sim.position_field[y_axis_idx],
+        flow_sim.position_field[z_axis_idx],
     )
     # the gradient is discontinous at the boundaries, hence interior
     interior_vortex = sphere_r_grid < 0.9 * hill_sphere_vortex.vortex_radius
@@ -128,12 +139,11 @@ def hill_sphere_vortex_case(
         f"Vortex stretching error (%): L2: {l2_norm_error*100}, Linf: {linf_norm_error*100}"
     )
 
-    x_axis = 0
     sim_midplane_vortex_stretching = numerical_vortex_stretching[
-        x_axis, grid_size_z // 3, ..., grid_size_x // 2
+        x_axis_idx, grid_size_z // 3, ..., grid_size_x // 2
     ]
     anal_midplane_vortex_stretching = analytical_vortex_stretching[
-        x_axis, grid_size_z // 3, ..., grid_size_x // 2
+        x_axis_idx, grid_size_z // 3, ..., grid_size_x // 2
     ]
     fig3, ax3 = sps.create_figure_and_axes(fig_aspect_ratio="default")
     ax3.plot(midplane_r, sim_midplane_vortex_stretching, label="numerical")
@@ -147,11 +157,15 @@ def hill_sphere_vortex_case(
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
-        io_grid_size = np.array([grid_size_z, grid_size_y, grid_size_x])
-        io = IO(dim=dim, real_dtype=real_t)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
+        io_grid_size = np.array(grid_size)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field,
@@ -162,5 +176,5 @@ def hill_sphere_vortex_case(
 
 
 if __name__ == "__main__":
-    grid_size = 128
-    hill_sphere_vortex_case(grid_size=grid_size)
+    sim_grid_size = (128, 128, 128)
+    hill_sphere_vortex_case(grid_size=sim_grid_size)

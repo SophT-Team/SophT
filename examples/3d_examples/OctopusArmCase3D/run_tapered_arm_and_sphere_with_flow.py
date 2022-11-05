@@ -26,12 +26,17 @@ def tapered_arm_and_cylinder_flow_coupling(
     save_data=False,
 ):
     # =================COMMON STUFF BEGIN=====================
+    grid_dim = 3
+    grid_size_z, grid_size_y, grid_size_x = grid_size
+    real_t = get_real_t(precision)
+    x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
+    z_axis_idx = sps.VectorField.z_axis_idx()
     period = 1
     rho_f = 1.0
     base_length = 1
     vel_scale = base_length / period
     final_time = period * non_dimensional_final_time
-    grid_size_z, grid_size_y, grid_size_x = grid_size
     x_range = 1.8 * base_length
     y_range = grid_size_y / grid_size_x * x_range
     z_range = grid_size_z / grid_size_x * x_range
@@ -53,7 +58,9 @@ def tapered_arm_and_cylinder_flow_coupling(
     poisson_ratio = 0.5
     shear_modulus = youngs_modulus / (2 * (1 + poisson_ratio))
 
-    start = np.zeros((3,)) + np.array([0.3 * x_range, 0.5 * y_range, 0.12 * z_range])
+    start = np.zeros(grid_dim) + np.array(
+        [0.3 * x_range, 0.5 * y_range, 0.12 * z_range]
+    )
     direction = np.array([1.0, 0.0, 0.0])
     normal = np.array([0.0, 1.0, 0.0])
 
@@ -73,14 +80,11 @@ def tapered_arm_and_cylinder_flow_coupling(
         shear_modulus=shear_modulus,
     )
     shearable_rod.shear_matrix[2, 2, :] *= Es_Eb
-
     env.reset(youngs_modulus, shearable_rod)
-
     # Add gravity
     env.simulator.constrain(env.shearable_rod).using(
         ea.OneEndFixedBC, constrained_position_idx=(0,), constrained_director_idx=(0,)
     )
-
     # Setup activation functions to control muscles
     activations = []
     activation_functions = []
@@ -120,13 +124,8 @@ def tapered_arm_and_cylinder_flow_coupling(
     )
     env.simulator.append(sphere)
     # =================PYELASTICA STUFF END=====================
-
     # ==================FLOW SETUP START=========================
-    flow_solver_precision = precision
-    real_t = get_real_t(flow_solver_precision)
-
     # Flow parameters
-    dim = 3
     kinematic_viscosity = base_diameter * vel_scale / reynolds_number
     flow_sim = sps.UnboundedFlowSimulator3D(
         grid_size=grid_size,
@@ -141,7 +140,6 @@ def tapered_arm_and_cylinder_flow_coupling(
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
     # ==================FLOW SETUP END=========================
-
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     flow_body_interactors = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
@@ -151,7 +149,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
         dx=flow_sim.dx,
-        grid_dim=dim,
+        grid_dim=grid_dim,
         real_t=real_t,
         num_threads=num_threads,
         forcing_grid_cls=sps.CosseratRodSurfaceForcingGrid,
@@ -172,7 +170,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         virtual_boundary_stiffness_coeff=coupling_stiffness / 5,
         virtual_boundary_damping_coeff=coupling_damping / 5,
         dx=flow_sim.dx,
-        grid_dim=dim,
+        grid_dim=grid_dim,
         real_t=real_t,
         forcing_grid_cls=sps.SphereForcingGrid,
         num_forcing_points_along_equator=num_forcing_points_along_equator,
@@ -188,33 +186,35 @@ def tapered_arm_and_cylinder_flow_coupling(
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=dim, real_dtype=real_t)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize sphere IO
-        rod_io = IO(dim=dim, real_dtype=real_t)
+        rod_io = IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
         rod_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
             lagrangian_grid_name="rod",
             vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
         )
-        sphere_io = IO(dim=dim, real_dtype=real_t)
+        sphere_io = IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
         sphere_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=sphere_flow_interactor.forcing_grid.position_field,
             lagrangian_grid_name="sphere",
             vector_3d=sphere_flow_interactor.lag_grid_forcing_field,
         )
-
     # =================TIMESTEPPING====================
-
     # Finalize the pyelastica environment
     _, _ = env.finalize()
 
@@ -245,8 +245,9 @@ def tapered_arm_and_cylinder_flow_coupling(
                 )
             ax.set_title(f"Vorticity magnitude, time: {time / final_time:.2f}")
             contourf_obj = ax.contourf(
-                flow_sim.x_grid[:, grid_size_y // 2, :],
-                flow_sim.z_grid[:, grid_size_y // 2, :],
+                flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
+                # TODO have a function for computing velocity magnitude
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[
@@ -262,14 +263,14 @@ def tapered_arm_and_cylinder_flow_coupling(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
-                cosserat_rod_flow_interactor.forcing_grid.position_field[0],
-                cosserat_rod_flow_interactor.forcing_grid.position_field[2],
+                cosserat_rod_flow_interactor.forcing_grid.position_field[x_axis_idx],
+                cosserat_rod_flow_interactor.forcing_grid.position_field[z_axis_idx],
                 s=5,
                 color="k",
             )
             ax.scatter(
-                sphere_flow_interactor.forcing_grid.position_field[0],
-                sphere_flow_interactor.forcing_grid.position_field[2],
+                sphere_flow_interactor.forcing_grid.position_field[x_axis_idx],
+                sphere_flow_interactor.forcing_grid.position_field[z_axis_idx],
                 s=5,
                 color="k",
             )
@@ -279,22 +280,20 @@ def tapered_arm_and_cylinder_flow_coupling(
 
             plt.rcParams.update({"font.size": 22})
             fig_2 = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-
             axs = []
             axs.append(plt.subplot2grid((1, 1), (0, 0)))
             axs[0].plot(
-                env.shearable_rod.velocity_collection[0],
+                env.shearable_rod.velocity_collection[x_axis_idx],
             )
             axs[0].plot(
-                env.shearable_rod.velocity_collection[1],
+                env.shearable_rod.velocity_collection[y_axis_idx],
             )
             axs[0].plot(
-                env.shearable_rod.velocity_collection[2],
+                env.shearable_rod.velocity_collection[z_axis_idx],
             )
             axs[0].set_xlabel("idx", fontsize=20)
             axs[0].set_ylabel("vel", fontsize=20)
             axs[0].set_ylim(-1.5, 1.5)
-
             plt.tight_layout()
             fig_2.align_ylabels()
             fig_2.savefig("vel_" + str("%0.5d" % (time * 100)) + ".png")
@@ -309,7 +308,7 @@ def tapered_arm_and_cylinder_flow_coupling(
             print(
                 f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}"
+                f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
@@ -370,7 +369,6 @@ if __name__ == "__main__":
         exp_base_diameter = exp_base_length / 10  # 0.4e-3  # m
         exp_kinematic_viscosity = 1.51e-5 / 5  # m2/s
         exp_U_free_stream = 1.1  # m/s
-
         exp_mass_ratio = exp_rho_s / exp_rho_f
         exp_slenderness_ratio = exp_base_length / exp_base_diameter
         exp_base_radius = exp_base_diameter / 2
@@ -385,20 +383,15 @@ if __name__ == "__main__":
             / exp_bending_rigidity
         )
         exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
-
         # stretch to bending ratio EAL2 / EI
         exp_Ks_Kb = (exp_youngs_modulus * exp_base_area * exp_base_length**2) / (
             exp_youngs_modulus * exp_moment_of_inertia
         )
-
         exp_non_dimensional_final_time = final_time / period
         exp_n_elem = 50
         exp_taper_ratio = 7
-
         print(f"Re: {exp_Re}, Ca: {exp_cauchy_number}, Ks_Kb: {exp_Ks_Kb}")
-
         grid_size = (128, 32, 128)
-
         tapered_arm_and_cylinder_flow_coupling(
             non_dimensional_final_time=exp_non_dimensional_final_time,
             n_elems=exp_n_elem,

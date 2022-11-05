@@ -18,6 +18,7 @@ from sopht.numeric.eulerian_grid_ops import (
     FastDiagPoissonSolver3D,
 )
 from sopht.utils.precision import get_test_tol
+from sopht_simulator.utils.grid_utils import VectorField
 
 
 # TODO refactor 2D and 3D with a common base simulator class
@@ -134,7 +135,8 @@ class UnboundedFlowSimulator3D:
         z = np.linspace(
             eul_grid_shift, self.z_range - eul_grid_shift, grid_size_z
         ).astype(self.real_t)
-        self.z_grid, self.y_grid, self.x_grid = np.meshgrid(z, y, x, indexing="ij")
+        # reversing because meshgrid generates in order Z, Y and X
+        self.position_field = np.flipud(np.array(np.meshgrid(z, y, x, indexing="ij")))
         log = logging.getLogger()
         log.warning(
             "==============================================="
@@ -149,7 +151,7 @@ class UnboundedFlowSimulator3D:
     def init_fields(self):
         """Initialize the necessary field arrays, i.e. vorticity, velocity, etc."""
         # Initialize flow field
-        self.primary_scalar_field = np.zeros_like(self.x_grid)
+        self.primary_scalar_field = np.zeros(self.grid_size, dtype=self.real_t)
         self.velocity_field = np.zeros(
             (self.grid_dim, *self.grid_size), dtype=self.real_t
         )
@@ -248,9 +250,9 @@ class UnboundedFlowSimulator3D:
                 gen_penalise_field_boundary_pyst_kernel_3d(
                     width=self.penalty_zone_width,
                     dx=self.dx,
-                    x_grid_field=self.x_grid,
-                    y_grid_field=self.y_grid,
-                    z_grid_field=self.z_grid,
+                    x_grid_field=self.position_field[VectorField.x_axis_idx()],
+                    y_grid_field=self.position_field[VectorField.y_axis_idx()],
+                    z_grid_field=self.position_field[VectorField.z_axis_idx()],
                     real_t=self.real_t,
                     num_threads=self.num_threads,
                     fixed_grid_size=self.grid_size,
@@ -326,28 +328,29 @@ class UnboundedFlowSimulator3D:
                         num_threads=self.num_threads,
                     )
                 )
-        # free stream velocity stuff
-        if self.with_free_stream_flow:
-            add_fixed_val = gen_add_fixed_val_pyst_kernel_3d(
-                real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
-                num_threads=self.num_threads,
-                field_type="vector",
-            )
-
-            def update_velocity_with_free_stream(free_stream_velocity):
-                add_fixed_val(
-                    sum_field=self.velocity_field,
-                    vector_field=self.velocity_field,
-                    fixed_vals=free_stream_velocity,
+        # free stream velocity stuff (onlu meaningful in navier stokes problems)
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
+            if self.with_free_stream_flow:
+                add_fixed_val = gen_add_fixed_val_pyst_kernel_3d(
+                    real_t=self.real_t,
+                    fixed_grid_size=self.grid_size,
+                    num_threads=self.num_threads,
+                    field_type="vector",
                 )
 
-        else:
+                def update_velocity_with_free_stream(free_stream_velocity):
+                    add_fixed_val(
+                        sum_field=self.velocity_field,
+                        vector_field=self.velocity_field,
+                        fixed_vals=free_stream_velocity,
+                    )
 
-            def update_velocity_with_free_stream(free_stream_velocity):
-                ...
+            else:
 
-        self.update_velocity_with_free_stream = update_velocity_with_free_stream
+                def update_velocity_with_free_stream(free_stream_velocity):
+                    ...
+
+            self.update_velocity_with_free_stream = update_velocity_with_free_stream
 
     def finalise_navier_stokes_timestep(self):
         self.navier_stokes_timestep = None
