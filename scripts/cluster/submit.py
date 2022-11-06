@@ -91,9 +91,9 @@ def create_submit_file(
             "echo Execution dir: $SLURM_SUBMIT_DIR\n",
             "echo Number of processes: $SLURM_NTASKS\n",
             "\n",
-            f"conda activate {environment_name}\n",
+            f"source activate {environment_name}\n",
             f"export OMP_NUM_THREADS={num_threads}\n",
-            f"python -u {program_name} --num_threads {num_threads}  {other_cli_arguments}\n",
+            f"python -u {program_name} --num_threads {num_threads} {other_cli_arguments}\n",
             "\n",
         ]
     )
