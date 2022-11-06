@@ -7,6 +7,7 @@ import sopht_simulator as sps
 
 
 def flow_past_sphere_case(
+    nondim_time,
     grid_size,
     num_forcing_points_along_equator,
     reynolds=100.0,
@@ -102,7 +103,7 @@ def flow_past_sphere_case(
 
     t = 0.0
     timescale = sphere_diameter / far_field_velocity
-    t_end_hat = 10.0  # non-dimensional end time
+    t_end_hat = nondim_time  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     foto_timer = 0.0
     foto_timer_limit = t_end / 40
@@ -236,7 +237,7 @@ if __name__ == "__main__":
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=128, help="Number of grid points in x direction.")
-    @click.option("--reynolds", default=100, help="Reynolds number of flow.")
+    @click.option("--reynolds", default=100.0, help="Reynolds number of flow.")
     def simulate_parallelised_flow_past_sphere(num_threads, nx, reynolds):
         ny = nx // 2
         nz = nx // 2
@@ -251,6 +252,7 @@ if __name__ == "__main__":
         )
         click.echo(f"Flow Reynolds number: {reynolds}")
         flow_past_sphere_case(
+            nondim_time=10.0,
             grid_size=grid_size,
             num_forcing_points_along_equator=num_forcing_points_along_equator,
             num_threads=num_threads,
