@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
+from sopht.utils.IO import IO
 
 
 def flow_past_rod_case(
@@ -18,6 +19,7 @@ def flow_past_rod_case(
     coupling_damping=-20,
     num_threads=4,
     flow_precision="single",
+    save_flow_data=False,
 ):
     grid_dim = 2
     grid_size_y, grid_size_x = grid_size
@@ -233,6 +235,45 @@ def flow_past_rod_case(
     )
     flow_body_interactors.append(bottom_wall_flow_interactor)
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
+    # =================FLOW H5 DUMPING====================
+    if save_flow_data:
+        # setup IO
+        # TODO internalise this in flow simulator as dump_fields
+        io_origin = np.array(
+            [
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
+        )
+        io_dx = flow_sim.dx * np.ones(grid_dim)
+        io_grid_size = np.array(grid_size)
+        io = IO(dim=grid_dim, real_dtype=real_t)
+        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
+        io.add_as_eulerian_fields_for_io(
+            vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
+        )
+        # Initialize rod IO
+        rod_io = IO(dim=grid_dim, real_dtype=real_t)
+        # Add vector field on lagrangian grid
+        rod_io.add_as_lagrangian_fields_for_io(
+            lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
+            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        )
+        # Next we initialise fixed locations IOs and dump then only once
+        fixed_location_interactors = {
+            "top_wall": top_wall_flow_interactor,
+            "bottom_wall": bottom_wall_flow_interactor,
+            "cylinder": cylinder_flow_interactor,
+        }
+        for tag, interactor in fixed_location_interactors.items():
+            body_io = IO(dim=grid_dim, real_dtype=real_t)
+            # Add vector field on lagrangian grid
+            body_io.add_as_lagrangian_fields_for_io(
+                lagrangian_grid=interactor.forcing_grid.position_field,
+                vector_3d=interactor.lag_grid_forcing_field,
+            )
+            body_io.save(h5_file_name=tag + ".h5", time=0.0)
+            del body_io
     # =================TIMESTEPPING====================
     flow_past_sim.finalize()
     timestepper = ea.PositionVerlet()
@@ -299,6 +340,14 @@ def flow_past_rod_case(
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
+            if save_flow_data:
+                io.save(
+                    h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
+                    time=time,
+                )
+                rod_io.save(
+                    h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
+                )
 
         # save diagnostic data
         if data_timer > data_timer_limit or data_timer == 0.0:
@@ -374,6 +423,9 @@ def flow_past_rod_case(
         header="time, tip_x, tip_y, drag_coeff",
         delimiter=",",
     )
+
+    if save_flow_data:
+        sps.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
 
 
 if __name__ == "__main__":
