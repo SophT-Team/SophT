@@ -18,7 +18,6 @@ def flow_past_rod_case(
     coupling_damping=-20,
     num_threads=4,
     flow_precision="single",
-    save_diagnostic=False,
 ):
     grid_dim = 2
     grid_size_y, grid_size_x = grid_size
@@ -364,18 +363,17 @@ def flow_past_rod_case(
     plt.ylabel("Tip deflection")
     plt.savefig("tip_position_vs_time.png")
 
-    if save_diagnostic:
-        np.savetxt(
-            fname="plate_diagnostics_vs_time.csv",
-            X=np.c_[
-                np.array(tip_time),
-                np.array(tip_position)[..., x_axis_idx],
-                np.array(tip_position)[..., y_axis_idx],
-                np.array(drag_coeff),
-            ],
-            header="time, tip_x, tip_y, drag_coeff",
-            delimiter=",",
-        )
+    np.savetxt(
+        fname="plate_diagnostics_vs_time.csv",
+        X=np.c_[
+            np.array(tip_time),
+            np.array(tip_position)[..., x_axis_idx],
+            np.array(tip_position)[..., y_axis_idx],
+            np.array(drag_coeff),
+        ],
+        header="time, tip_x, tip_y, drag_coeff",
+        delimiter=",",
+    )
 
 
 if __name__ == "__main__":
@@ -414,7 +412,6 @@ if __name__ == "__main__":
             cauchy=exp_cauchy,
             non_dim_final_time=nondim_final_time,
             grid_size=sim_grid_size,
-            save_diagnostic=True,
             num_threads=num_threads,
         )
 
