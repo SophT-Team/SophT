@@ -9,13 +9,12 @@ import sopht_simulator as sps
 def flow_past_sphere_case(
     nondim_time,
     grid_size,
-    num_forcing_points_along_equator,
     reynolds=100.0,
     coupling_stiffness=-6e5 / 4,
     coupling_damping=-3.5e2 / 4,
     num_threads=4,
     precision="single",
-    save_data=False,
+    save_flow_data=False,
 ):
     """
     This example considers the case of flow past a sphere in 3D.
@@ -39,6 +38,8 @@ def flow_past_sphere_case(
         flow_type="navier_stokes_with_forcing",
         with_free_stream_flow=True,
         navier_stokes_inertial_term_form="rotational",
+        # filter_vorticity=True,
+        # filter_setting_dict={"order": 1, "type": "multiplicative"},
         # caution will introduce some boundary artifacts
         # poisson_solver_type="fast_diagonalisation",
     )
@@ -61,6 +62,9 @@ def flow_past_sphere_case(
     # Since the sphere is fixed, we don't add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
+    num_forcing_points_along_equator = int(
+        1.875 * sphere_diameter / x_range * grid_size_x
+    )
     sphere_flow_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=sphere,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -75,7 +79,7 @@ def flow_past_sphere_case(
     )
     # ==================FLOW-BODY COMMUNICATOR SETUP END======
 
-    if save_data:
+    if save_flow_data:
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
@@ -106,7 +110,7 @@ def flow_past_sphere_case(
     t_end_hat = nondim_time  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
     foto_timer = 0.0
-    foto_timer_limit = t_end / 40
+    foto_timer_limit = timescale
     # Find the sphere center on euler grid
     # First find the euler grid centers in z direction
     euler_grid_center_in_z_dir = 0.5 * (
@@ -155,7 +159,7 @@ def flow_past_sphere_case(
                     axis=0,  # Average velocities in z
                 )
             )
-            if save_data:
+            if save_flow_data:
                 io.save(
                     h5_file_name="sopht_" + str("%0.4d" % (t * 100)) + ".h5", time=t
                 )
@@ -231,6 +235,9 @@ def flow_past_sphere_case(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 
+    if save_flow_data:
+        sps.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
+
 
 if __name__ == "__main__":
 
@@ -243,21 +250,15 @@ if __name__ == "__main__":
         nz = nx // 2
         # in order Z, Y, X
         grid_size = (nz, ny, nx)
-        num_forcing_points_along_equator = 3 * (nx // 8)
-
         click.echo(f"Number of threads for parallelism: {num_threads}")
         click.echo(f"Grid size: {grid_size}")
-        click.echo(
-            f"num forcing points along equator: {num_forcing_points_along_equator}"
-        )
         click.echo(f"Flow Reynolds number: {reynolds}")
         flow_past_sphere_case(
             nondim_time=10.0,
             grid_size=grid_size,
-            num_forcing_points_along_equator=num_forcing_points_along_equator,
             num_threads=num_threads,
             reynolds=reynolds,
-            save_data=False,
+            save_flow_data=False,
         )
 
     simulate_parallelised_flow_past_sphere()
