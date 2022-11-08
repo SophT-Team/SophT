@@ -1,3 +1,4 @@
+__all__ = ["ElasticNetSimulator"]
 import elastica as ea
 import numpy as np
 from post_processing import plot_video_with_surface
@@ -48,8 +49,6 @@ def compute_non_dimensional_rod_positions(
 class ElasticNetSimulator:
     def __init__(
         self,
-        n_elem_rods_along_x=25,
-        n_elem_rods_along_y=25,
         final_time=2.0,
         num_rods_along_x=4,
         num_rods_along_y=4,
@@ -67,6 +66,10 @@ class ElasticNetSimulator:
             ea.Connections,
         ):
             ...
+
+        # Set number of elements based on the number of rods
+        n_elem_rods_along_x = int(num_rods_along_y // 4 * 25)
+        n_elem_rods_along_y = int(num_rods_along_x // 4 * 25)
 
         self.plot_result = plot_result
         self.net_simulator = BaseSimulator()
@@ -95,8 +98,12 @@ class ElasticNetSimulator:
             start_collection[i + num_rods_along_y, z_axis_idx] = -base_radius
 
         # For plotting elastic net
-        self.elastic_net_length_x = self.spacing_between_rods * (num_rods_along_x - 1)
-        self.elastic_net_length_y = self.spacing_between_rods * (num_rods_along_y - 1)
+        self.elastic_net_length_x = (
+            self.spacing_between_rods * (num_rods_along_x - 1) + 2 * base_radius
+        )
+        self.elastic_net_length_y = (
+            self.spacing_between_rods * (num_rods_along_y - 1) + 2 * base_radius
+        )
 
         # shift the carpet to the provided centroid
         self.elastic_net_base_centroid = elastic_net_base_centroid
@@ -252,6 +259,15 @@ class ElasticNetSimulator:
                 time_step=self.dt,
             )
 
+        ################################
+        # Gravity remove later
+        # Add gravitational forces
+        # gravitational_acc = -9.80665
+        # for rod in self.rod_list:
+        #     self.net_simulator.add_forcing_to(rod).using(
+        #         ea.GravityForces, acc_gravity=np.array([0.0, 0., gravitational_acc])
+        #     )
+
         self.final_time = final_time
         self.total_steps = int(self.final_time / self.dt)
 
@@ -342,9 +358,9 @@ class ElasticNetSimulator:
                 ),
                 z_limits=(
                     self.elastic_net_base_centroid[z_axis_idx]
-                    - 1.0 * self.base_length_rod_along_x,
+                    - 1.0 * self.elastic_net_length_x,
                     self.elastic_net_base_centroid[z_axis_idx]
-                    + 1.0 * self.base_length_rod_along_x,
+                    + 1.0 * self.elastic_net_length_x,
                 ),
                 vis3D=True,
             )
