@@ -1,7 +1,6 @@
 import elastica as ea
 import magneto_pyelastica as mea
 import numpy as np
-from post_processing import plot_video_with_surface
 import sopht_simulator as sps
 
 
@@ -10,7 +9,7 @@ class MagneticCiliaCarpetSimulator:
         self,
         rod_base_length=1.5,
         n_elem_per_rod=25,
-        num_cycles=2.0,
+        num_cycles=0.2,
         num_rods_along_x=8,
         num_rods_along_y=4,
         carpet_base_centroid=np.array([0.0, 0.0, 0.0]),
@@ -251,7 +250,7 @@ class MagneticCiliaCarpetSimulator:
             y_axis_idx = sps.VectorField.y_axis_idx()
             z_axis_idx = sps.VectorField.z_axis_idx()
             # Plot the magnetic rod time history
-            plot_video_with_surface(
+            sps.plot_video_of_rod_surface(
                 self.rod_post_processing_list,
                 fps=self.rendering_fps,
                 step=10,
