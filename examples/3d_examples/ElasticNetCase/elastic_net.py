@@ -1,7 +1,5 @@
-__all__ = ["ElasticNetSimulator"]
 import elastica as ea
 import numpy as np
-from post_processing import plot_video_with_surface
 import sopht_simulator as sps
 from elastica.experimental.connection_contact_joint.parallel_connection import (
     SurfaceJointSideBySide,
@@ -80,6 +78,7 @@ class ElasticNetSimulator:
         self.spacing_between_rods = gap_between_rods + 2 * base_radius
 
         grid_dim = 3
+        rod_dim = 3
         x_axis_idx = sps.VectorField.x_axis_idx()
         y_axis_idx = sps.VectorField.y_axis_idx()
         z_axis_idx = sps.VectorField.z_axis_idx()
@@ -135,7 +134,9 @@ class ElasticNetSimulator:
             # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
             positions = direction.reshape(3, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
-            positions += (start - np.dot(start, direction) * direction).reshape(3, 1)
+            positions += (start - np.dot(start, direction) * direction).reshape(
+                rod_dim, 1
+            )
 
             rod = ea.CosseratRod.straight_rod(
                 n_elem_rods_along_y,
@@ -167,9 +168,11 @@ class ElasticNetSimulator:
                 start_collection[:num_rods_along_y, y_axis_idx],
             )
             # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
-            positions = direction.reshape(3, 1) * non_dimensional_positions
+            positions = direction.reshape(rod_dim, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
-            positions += (start - np.dot(start, direction) * direction).reshape(3, 1)
+            positions += (start - np.dot(start, direction) * direction).reshape(
+                rod_dim, 1
+            )
 
             rod = ea.CosseratRod.straight_rod(
                 n_elem_rods_along_x,
@@ -340,7 +343,7 @@ class ElasticNetSimulator:
             y_axis_idx = sps.VectorField.y_axis_idx()
             z_axis_idx = sps.VectorField.z_axis_idx()
             # Plot the magnetic rod time history
-            plot_video_with_surface(
+            sps.plot_video_of_rod_surface(
                 self.rod_post_processing_list,
                 fps=self.rendering_fps,
                 step=10,
