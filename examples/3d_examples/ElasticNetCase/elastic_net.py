@@ -52,7 +52,7 @@ class ElasticNetSimulator:
         num_rods_along_y=4,
         gap_between_rods=0.2,
         gap_radius_ratio=10,
-        elastic_net_base_centroid=np.array([0.0, 0.0, 0.0]),
+        elastic_net_origin=np.array([0.0, 0.0, 0.0]),
         plot_result=True,
     ):
         class BaseSimulator(
@@ -78,7 +78,7 @@ class ElasticNetSimulator:
         self.spacing_between_rods = gap_between_rods + 2 * base_radius
 
         grid_dim = 3
-        rod_dim = 3
+        rod_dim = grid_dim
         x_axis_idx = sps.VectorField.x_axis_idx()
         y_axis_idx = sps.VectorField.y_axis_idx()
         z_axis_idx = sps.VectorField.z_axis_idx()
@@ -104,17 +104,13 @@ class ElasticNetSimulator:
             self.spacing_between_rods * (num_rods_along_y - 1) + 2 * base_radius
         )
 
-        # shift the carpet to the provided centroid
-        self.elastic_net_base_centroid = elastic_net_base_centroid
-        current_elastic_net_start_centroid = np.mean(start_collection, axis=0)
-        start_collection += (
-            self.elastic_net_base_centroid.reshape(-1, grid_dim)
-            - current_elastic_net_start_centroid
-        )
+        # shift the carpet to the provided origin
+        self.elastic_net_origin = elastic_net_origin
+        start_collection += self.elastic_net_origin.reshape(-1, rod_dim)
 
         normal = np.array([0.0, 0.0, 1.0])
         density = 2.39e3  # kg/m3
-        E = 1.85e5  # Pa
+        youngs_modulus = 1.85e5  # Pa
         shear_modulus = 6.16e4  # Pa
         self.rod_list = []
 
@@ -132,7 +128,7 @@ class ElasticNetSimulator:
                 start_collection[num_rods_along_y:, x_axis_idx],
             )
             # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
-            positions = direction.reshape(3, 1) * non_dimensional_positions
+            positions = direction.reshape(rod_dim, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
             positions += (start - np.dot(start, direction) * direction).reshape(
                 rod_dim, 1
@@ -147,7 +143,7 @@ class ElasticNetSimulator:
                 base_radius,
                 density,
                 0.0,
-                E,
+                youngs_modulus,
                 shear_modulus=shear_modulus,
                 position=positions,
             )
@@ -183,7 +179,7 @@ class ElasticNetSimulator:
                 base_radius,
                 density,
                 0.0,
-                E,
+                youngs_modulus,
                 shear_modulus=shear_modulus,
                 position=positions,
             )
@@ -348,21 +344,21 @@ class ElasticNetSimulator:
                 fps=self.rendering_fps,
                 step=10,
                 x_limits=(
-                    self.elastic_net_base_centroid[x_axis_idx]
+                    self.elastic_net_origin[x_axis_idx]
                     - 1.0 * self.elastic_net_length_x,
-                    self.elastic_net_base_centroid[x_axis_idx]
+                    self.elastic_net_origin[x_axis_idx]
                     + 1.0 * self.elastic_net_length_x,
                 ),
                 y_limits=(
-                    self.elastic_net_base_centroid[y_axis_idx]
+                    self.elastic_net_origin[y_axis_idx]
                     - 1.0 * self.elastic_net_length_y,
-                    self.elastic_net_base_centroid[y_axis_idx]
+                    self.elastic_net_origin[y_axis_idx]
                     + 1.0 * self.elastic_net_length_y,
                 ),
                 z_limits=(
-                    self.elastic_net_base_centroid[z_axis_idx]
+                    self.elastic_net_origin[z_axis_idx]
                     - 1.0 * self.elastic_net_length_x,
-                    self.elastic_net_base_centroid[z_axis_idx]
+                    self.elastic_net_origin[z_axis_idx]
                     + 1.0 * self.elastic_net_length_x,
                 ),
                 vis3D=True,
