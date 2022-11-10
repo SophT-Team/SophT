@@ -6,10 +6,11 @@ from elastic_net import ElasticNetSimulator
 
 
 def immersed_elastic_net_case(
-    elastic_net_sim,
+    elastic_net_sim: ElasticNetSimulator,
     domain_range,
     grid_size_x,
     reynolds=100.0,
+    vel_free_stream=1.0,
     coupling_stiffness=-2e4,
     coupling_damping=-1e1,
     num_threads=4,
@@ -27,15 +28,14 @@ def immersed_elastic_net_case(
     grid_size_z = round(z_range / x_range * grid_size_x)
     # order Z, Y, X
     grid_size = (grid_size_z, grid_size_y, grid_size_x)
-    print(f"Flow grid size:{grid_size}")
-    U_free_stream = 1.0
-    velocity_free_stream = [0.0, 0.0, U_free_stream]
+    print(f"Flow grid size: {grid_size}")
+    velocity_free_stream = [0.0, 0.0, vel_free_stream]
     kinematic_viscosity = (
         max(
             elastic_net_sim.base_length_rod_along_y,
             elastic_net_sim.base_length_rod_along_x,
         )
-        * U_free_stream
+        * vel_free_stream
         / reynolds
     )
     flow_sim = sps.UnboundedFlowSimulator3D(
@@ -126,7 +126,7 @@ def immersed_elastic_net_case(
     # =================TIMESTEPPING====================
     time = 0.0
     foto_timer = 0.0
-    foto_timer_limit = elastic_net_sim.final_time / 100
+    foto_timer_limit = elastic_net_sim.final_time / 50
     time_history = []
 
     # create fig for plotting flow fields
@@ -181,11 +181,18 @@ def immersed_elastic_net_case(
                 grid_dev_error += (
                     flow_body_interactor.get_grid_deviation_error_l2_norm()
                 )
+            net_com_z = np.array(
+                [
+                    rod.position_collection[z_axis_idx].mean()
+                    for rod in elastic_net_sim.rod_list
+                ]
+            ).mean()
             print(
                 f"time: {time:.2f} ({(time / elastic_net_sim.final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
-                f"grid deviation L2 error: {grid_dev_error:.6f}"
+                f"grid deviation L2 error: {grid_dev_error:.6f}, "
+                f"net flow direction com: {net_com_z:.6f}"
             )
 
         # compute timestep
@@ -227,15 +234,11 @@ if __name__ == "__main__":
     final_time = 2.0
     num_rods_along_x = 8  # set >= 2
     num_rods_along_y = 8  # set >= 2
-    # n_elem_per_rod = 20
-
     gap_between_rods = 0.2
     gap_radius_ratio = 10
+    n_elem_per_gap = 8
     base_radius = gap_between_rods / gap_radius_ratio
     spacing_between_rods = gap_between_rods + 2 * base_radius
-
-    # rod_base_length = 1.5
-    # carpet_spacing = rod_base_length
     elastic_net_length_x = (
         num_rods_along_x - 1
     ) * spacing_between_rods + 2 * base_radius
@@ -247,10 +250,10 @@ if __name__ == "__main__":
     domain_y_range = 1.3 * elastic_net_length_y
     domain_z_range = 1.3 * elastic_net_length_x
     offset_between_net_origin_and_flow_grid_center_x = (
-        0.5 * elastic_net_length_x + base_radius
+        0.5 * elastic_net_length_x - base_radius
     )
     offset_between_net_origin_and_flow_grid_center_y = (
-        0.5 * elastic_net_length_y + base_radius
+        0.5 * elastic_net_length_y - base_radius
     )
     elastic_net_origin = np.array(
         [
@@ -259,19 +262,30 @@ if __name__ == "__main__":
             0.25 * domain_z_range,
         ]
     )
+    # nondim characteristic numbers
+    rod_to_fluid_density_ratio = 1e2
+    rho_f = 1.0
+    rod_density = rho_f * rod_to_fluid_density_ratio
+    nondim_youngs_modulus = 1e3
+    vel_free_stream_z = 1.0
+    youngs_modulus = nondim_youngs_modulus * rho_f * vel_free_stream_z**2
 
-    elastic_net_sim = ElasticNetSimulator(
+    elastic_net_simulator = ElasticNetSimulator(
+        rod_density=rod_density,
+        youngs_modulus=youngs_modulus,
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
         final_time=2.0,
         gap_between_rods=gap_between_rods,
         gap_radius_ratio=gap_radius_ratio,
+        num_rod_elements_per_gap=n_elem_per_gap,
         elastic_net_origin=elastic_net_origin,
         plot_result=False,
     )
     immersed_elastic_net_case(
-        elastic_net_sim=elastic_net_sim,
+        elastic_net_sim=elastic_net_simulator,
         reynolds=100.0,
-        grid_size_x=96,
+        vel_free_stream=vel_free_stream_z,
+        grid_size_x=128,
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
     )

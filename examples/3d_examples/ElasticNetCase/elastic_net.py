@@ -48,10 +48,13 @@ class ElasticNetSimulator:
     def __init__(
         self,
         final_time=2.0,
+        rod_density=1e3,
+        youngs_modulus=1e5,
         num_rods_along_x=4,
         num_rods_along_y=4,
         gap_between_rods=0.2,
         gap_radius_ratio=10,
+        num_rod_elements_per_gap=8,
         elastic_net_origin=np.array([0.0, 0.0, 0.0]),
         plot_result=True,
     ):
@@ -66,8 +69,12 @@ class ElasticNetSimulator:
             ...
 
         # Set number of elements based on the number of rods
-        n_elem_rods_along_x = int(num_rods_along_y // 4 * 25)
-        n_elem_rods_along_y = int(num_rods_along_x // 4 * 25)
+        num_gaps_along_x = num_rods_along_y - 1
+        num_gaps_along_y = num_rods_along_x - 1
+        # below 1 is needed for correctly connecting rods
+        # TODO @armantekinalp please clarify
+        n_elem_rods_along_x = 1 + num_gaps_along_y * num_rod_elements_per_gap
+        n_elem_rods_along_y = 1 + num_gaps_along_x * num_rod_elements_per_gap
 
         self.plot_result = plot_result
         self.net_simulator = BaseSimulator()
@@ -109,9 +116,8 @@ class ElasticNetSimulator:
         start_collection += self.elastic_net_origin.reshape(-1, rod_dim)
 
         normal = np.array([0.0, 0.0, 1.0])
-        density = 2.39e3  # kg/m3
-        youngs_modulus = 1.85e5  # Pa
-        shear_modulus = 6.16e4  # Pa
+        poisson_ratio = 0.5
+        shear_modulus = youngs_modulus / (1.0 + poisson_ratio)  # Pa
         self.rod_list = []
 
         # First place the rods that are along the y-axis.
@@ -141,7 +147,7 @@ class ElasticNetSimulator:
                 normal,
                 self.base_length_rod_along_y,
                 base_radius,
-                density,
+                rod_density,
                 0.0,
                 youngs_modulus,
                 shear_modulus=shear_modulus,
@@ -177,7 +183,7 @@ class ElasticNetSimulator:
                 normal,
                 self.base_length_rod_along_x,
                 base_radius,
-                density,
+                rod_density,
                 0.0,
                 youngs_modulus,
                 shear_modulus=shear_modulus,
