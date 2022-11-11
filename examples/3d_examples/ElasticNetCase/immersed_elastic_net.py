@@ -16,7 +16,7 @@ def immersed_elastic_net_case(
     coupling_damping=-1e1,
     num_threads=4,
     precision="single",
-    save_data=False,
+    save_flow_data=False,
 ):
     # ==================FLOW SETUP START=========================
     grid_dim = 3
@@ -73,7 +73,7 @@ def immersed_elastic_net_case(
             rod_flow_interactor,
         )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
-    if save_data:
+    if save_flow_data:
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
@@ -127,7 +127,8 @@ def immersed_elastic_net_case(
     # =================TIMESTEPPING====================
     time = 0.0
     foto_timer = 0.0
-    foto_timer_limit = elastic_net_sim.final_time / 50
+    frames_per_second = 32
+    foto_timer_limit = 1.0 / frames_per_second
     time_history = []
 
     # create fig for plotting flow fields
@@ -137,7 +138,7 @@ def immersed_elastic_net_case(
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            if save_data:
+            if save_flow_data:
                 update_elastic_net_lag_grid_fields()
                 io.save(
                     h5_file_name="flow_" + str("%0.4d" % (time * 100)) + ".h5",
@@ -225,8 +226,11 @@ def immersed_elastic_net_case(
 
     # compile video
     sps.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
+        video_name="flow", image_series_name="snap", frame_rate=frames_per_second
     )
+
+    if save_flow_data:
+        sps.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
 
 
 if __name__ == "__main__":
@@ -309,6 +313,7 @@ if __name__ == "__main__":
             grid_size_x=grid_size_x,
             domain_range=(domain_z_range, domain_y_range, domain_x_range),
             num_threads=num_threads,
+            save_flow_data=False,
         )
 
     simulate_parallelised_immersed_net_case()
