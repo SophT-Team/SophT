@@ -1,3 +1,4 @@
+import click
 import numpy as np
 from sopht.utils.precision import get_real_t
 import sopht_simulator as sps
@@ -236,7 +237,6 @@ if __name__ == "__main__":
     num_rods_along_y = 8  # set >= 2
     gap_between_rods = 0.2
     gap_radius_ratio = 10
-    n_elem_per_gap = 8
     base_radius = gap_between_rods / gap_radius_ratio
     spacing_between_rods = gap_between_rods + 2 * base_radius
     elastic_net_length_x = (
@@ -266,26 +266,49 @@ if __name__ == "__main__":
     rod_to_fluid_density_ratio = 1e2
     rho_f = 1.0
     rod_density = rho_f * rod_to_fluid_density_ratio
-    nondim_youngs_modulus = 1e3
-    vel_free_stream_z = 1.0
-    youngs_modulus = nondim_youngs_modulus * rho_f * vel_free_stream_z**2
 
-    elastic_net_simulator = ElasticNetSimulator(
-        rod_density=rod_density,
-        youngs_modulus=youngs_modulus,
-        num_rods_along_x=num_rods_along_x,
-        num_rods_along_y=num_rods_along_y,
-        final_time=2.0,
-        gap_between_rods=gap_between_rods,
-        gap_radius_ratio=gap_radius_ratio,
-        num_rod_elements_per_gap=n_elem_per_gap,
-        elastic_net_origin=elastic_net_origin,
-        plot_result=False,
+    @click.command()
+    @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
+    @click.option(
+        "--grid_size_x", default=128, help="Number of grid points in x direction."
     )
-    immersed_elastic_net_case(
-        elastic_net_sim=elastic_net_simulator,
-        reynolds=100.0,
-        vel_free_stream=vel_free_stream_z,
-        grid_size_x=128,
-        domain_range=(domain_z_range, domain_y_range, domain_x_range),
+    @click.option("--reynolds", default=100.0, help="Reynolds number of flow.")
+    @click.option(
+        "--nondim_youngs_modulus",
+        default=1e3,
+        help="Non-dimensional Youngs modulus of the net.",
     )
+    def simulate_parallelised_immersed_net_case(
+        num_threads, grid_size_x, reynolds, nondim_youngs_modulus
+    ):
+        vel_free_stream_z = 1.0
+        youngs_modulus = nondim_youngs_modulus * rho_f * vel_free_stream_z**2
+        # discretisation stuff
+        n_elem_per_gap = int(grid_size_x / 16)
+        elastic_net_simulator = ElasticNetSimulator(
+            rod_density=rod_density,
+            youngs_modulus=youngs_modulus,
+            num_rods_along_x=num_rods_along_x,
+            num_rods_along_y=num_rods_along_y,
+            final_time=final_time,
+            gap_between_rods=gap_between_rods,
+            gap_radius_ratio=gap_radius_ratio,
+            num_rod_elements_per_gap=n_elem_per_gap,
+            elastic_net_origin=elastic_net_origin,
+            plot_result=False,
+        )
+        click.echo(f"Number of threads for parallelism: {num_threads}")
+        click.echo(f"Flow Reynolds number: {reynolds}")
+        click.echo(
+            f"Non-dimensional Youngs modulus of the nest: {nondim_youngs_modulus}"
+        )
+        immersed_elastic_net_case(
+            elastic_net_sim=elastic_net_simulator,
+            reynolds=reynolds,
+            vel_free_stream=vel_free_stream_z,
+            grid_size_x=grid_size_x,
+            domain_range=(domain_z_range, domain_y_range, domain_x_range),
+            num_threads=num_threads,
+        )
+
+    simulate_parallelised_immersed_net_case()
