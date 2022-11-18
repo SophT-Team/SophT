@@ -23,7 +23,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     coupling_damping=-1e1,
     num_threads=4,
     precision="single",
-    save_data=False,
+    save_data=True,
 ):
     # =================COMMON STUFF BEGIN=====================
     grid_dim = 3
@@ -204,8 +204,14 @@ def tapered_arm_and_cylinder_flow_coupling(
         # Add vector field on lagrangian grid
         rod_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
-            lagrangian_grid_name="rod",
+            lagrangian_grid_name="rod_forcing_grid",
             vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        )
+        rod_io.add_as_lagrangian_fields_for_io(
+            lagrangian_grid=cosserat_rod_flow_interactor.cosserat_rod.element_position,
+            lagrangian_grid_name="rod_element_position",
+            scalar_3d=cosserat_rod_flow_interactor.cosserat_rod.radius,
+            lagrangian_grid_connect=True,
         )
         sphere_io = IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
@@ -236,6 +242,9 @@ def tapered_arm_and_cylinder_flow_coupling(
                     h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
                     time=time,
                 )
+                # Need to first update element position of rod since this is not updated
+                # when timestepping in elastica (since it is not needed).
+                cosserat_rod_flow_interactor.update_rod_element_position()
                 rod_io.save(
                     h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
                 )

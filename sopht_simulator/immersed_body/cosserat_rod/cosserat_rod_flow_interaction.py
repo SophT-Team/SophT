@@ -39,6 +39,9 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             cosserat_rod=cosserat_rod,
             **forcing_grid_kwargs,
         )
+        self.cosserat_rod = cosserat_rod
+        self.cosserat_rod.element_position = np.zeros((3, cosserat_rod.n_elems))
+        self.update_rod_element_position()
 
         # initialising super class
         super().__init__(
@@ -57,4 +60,10 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             enable_eul_grid_forcing_reset,
             num_threads,
             start_time,
+        )
+
+    def update_rod_element_position(self):
+        self.cosserat_rod.element_position[...] = 0.5 * (
+            self.cosserat_rod.position_collection[..., 1:]
+            + self.cosserat_rod.position_collection[..., :-1]
         )
