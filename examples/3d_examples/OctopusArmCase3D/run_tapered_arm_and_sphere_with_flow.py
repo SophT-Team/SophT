@@ -23,7 +23,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     coupling_damping=-1e1,
     num_threads=4,
     precision="single",
-    save_data=False,
+    save_data=True,
 ):
     # =================COMMON STUFF BEGIN=====================
     grid_dim = 3
@@ -194,19 +194,17 @@ def tapered_arm_and_cylinder_flow_coupling(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
+        # Initialize flow eulerian grid IO
         io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
-        # Initialize sphere IO
-        rod_io = IO(dim=grid_dim, real_dtype=real_t)
-        # Add vector field on lagrangian grid
-        rod_io.add_as_lagrangian_fields_for_io(
-            lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
-            lagrangian_grid_name="rod",
-            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        # Initialize rod io
+        rod_io = sps.CosseratRodIO(
+            cosserat_rod=shearable_rod, dim=grid_dim, real_dtype=real_t
         )
+        # Initialize sphere io
         sphere_io = IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
         sphere_io.add_as_lagrangian_fields_for_io(
@@ -236,7 +234,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                     h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
                     time=time,
                 )
-                rod_io.save(
+                rod_io.save_rod(
                     h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
                 )
                 sphere_io.save(
