@@ -1,12 +1,12 @@
-# SophT-Examples
-Scalable One-stop Platform for Hydroelastic Things (SOPHT) example cases.
+# SophT-Simulator
+Scalable One-stop Platform for Hydroelastic Things (SOPHT) Simulator.
 
 This respository corresponds to the development of flow-structure
-interaction cases (2D and 3D), using `sopht-backend` and `pyelastica`.
+interaction simulator (2D and 3D), using `sopht-backend` and `pyelastica`.
 
 ## Installation
 
-Below are steps of how to install `sopht-examples`. We mainly use `poetry` to manage
+Below are steps of how to install `sopht-simulator`. We mainly use `poetry` to manage
 the project, although most of the important commands will be provided in `Makefile`.
 
 1. Clone!
@@ -18,8 +18,8 @@ First **create the fork repository and clone** to your local machine.
 We recommend using python version above 3.8.0.
 
 ```bash
-conda create --name sopht-examples-env
-conda activate sopht-examples-env
+conda create --name sopht-simulator-env
+conda activate sopht-simulator-env
 conda install python==3.10
 ```
 
