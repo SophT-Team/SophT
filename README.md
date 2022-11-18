@@ -1,4 +1,4 @@
-# SophT
+# SophT-Simulator
 Scalable One-stop Platform for Hydroelastic Things (SOPHT) Simulator.
 
 This respository corresponds to the development of flow-structure
