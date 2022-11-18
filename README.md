@@ -1,5 +1,5 @@
 # SophT
-Scalable One-stop Platform for Hydroelastic Things (SOPHT).
+Scalable One-stop Platform for Hydroelastic Things (SOPHT) Simulator.
 
 This respository corresponds to the development of flow-structure
 interaction simulator (2D and 3D), using `sopht-backend` and `pyelastica`.
