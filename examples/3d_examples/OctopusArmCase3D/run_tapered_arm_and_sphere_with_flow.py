@@ -200,14 +200,6 @@ def tapered_arm_and_cylinder_flow_coupling(
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
-        # Initialize forcing grid IO
-        forcing_grid_io = IO(dim=grid_dim, real_dtype=real_t)
-        # Add vector field on lagrangian grid
-        forcing_grid_io.add_as_lagrangian_fields_for_io(
-            lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
-            lagrangian_grid_name="rod_forcing_grid",
-            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
-        )
         # Initialize rod io
         rod_io = sps.CosseratRodIO(
             cosserat_rod=shearable_rod, dim=grid_dim, real_dtype=real_t
@@ -240,10 +232,6 @@ def tapered_arm_and_cylinder_flow_coupling(
             if save_data:
                 io.save(
                     h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
-                    time=time,
-                )
-                forcing_grid_io.save(
-                    h5_file_name="forcing_grid_" + str("%0.4d" % (time * 100)) + ".h5",
                     time=time,
                 )
                 rod_io.save_rod(
