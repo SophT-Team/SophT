@@ -325,7 +325,7 @@ if __name__ == "__main__":
         click.echo(f"num rod elements: {n_elem}")
         click.echo(f"Free stream flow velocity: {u_free_stream}")
 
-        final_time = 0.1#3.5
+        final_time = 3.5
 
         exp_rho_s = 1e3  # kg/m3
         exp_rho_f = 1.21  # kg/m3
