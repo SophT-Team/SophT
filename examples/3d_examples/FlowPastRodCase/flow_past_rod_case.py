@@ -29,6 +29,7 @@ def flow_past_rod_case(
     grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = get_real_t(precision)
     x_axis_idx = sps.VectorField.x_axis_idx()
+    y_axis_idx = sps.VectorField.y_axis_idx()
     z_axis_idx = sps.VectorField.z_axis_idx()
     rho_f = 1.0
     U_free_stream = 1.0
@@ -143,23 +144,30 @@ def flow_past_rod_case(
         # setup IO
         # TODO internalise this in flow simulator as dump_fields
         io_origin = np.array(
-            [flow_sim.z_grid.min(), flow_sim.y_grid.min(), flow_sim.x_grid.min()]
+            [
+                flow_sim.position_field[z_axis_idx].min(),
+                flow_sim.position_field[y_axis_idx].min(),
+                flow_sim.position_field[x_axis_idx].min(),
+            ]
         )
-        io_dx = flow_sim.dx * np.ones(dim)
+        io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=dim, real_dtype=real_t)
+        io = IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize sphere IO
-        rod_io = IO(dim=dim, real_dtype=real_t)
-        # Add vector field on lagrangian grid
-        rod_io.add_as_lagrangian_fields_for_io(
-            lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
-            lagrangian_grid_name="rod",
-            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        # rod_io = IO(dim=grid_dim, real_dtype=real_t)
+        rod_io = sps.CosseratRodIO(
+            cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
         )
+        # # Add vector field on lagrangian grid
+        # rod_io.add_as_lagrangian_fields_for_io(
+        #     lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
+        #     lagrangian_grid_name="rod",
+        #     vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        # )
 
     time = 0.0
     foto_timer = 0.0
@@ -240,7 +248,7 @@ def flow_past_rod_case(
                     h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
                     time=time,
                 )
-                rod_io.save(
+                rod_io.save_rod(
                     h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
                 )
 
@@ -317,7 +325,7 @@ if __name__ == "__main__":
         click.echo(f"num rod elements: {n_elem}")
         click.echo(f"Free stream flow velocity: {u_free_stream}")
 
-        final_time = 3.5
+        final_time = 0.1#3.5
 
         exp_rho_s = 1e3  # kg/m3
         exp_rho_f = 1.21  # kg/m3
@@ -380,7 +388,7 @@ if __name__ == "__main__":
             n_elem=n_elem,
             rod_start_incline_angle=rod_start_incline_angle,
             num_threads=num_threads,
-            save_data=False,
+            save_data=True,
         )
 
     simulate_flow_past_rod()
