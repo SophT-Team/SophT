@@ -24,9 +24,9 @@ class CosseratRodIO(IO):
             lagrangian_grid_connect=True,
         )
 
-    def save_rod(self, h5_file_name, time=0.0):
+    def save(self, h5_file_name, time=0.0):
         self._update_rod_element_position()
-        self.save(h5_file_name=h5_file_name, time=time)
+        self._save(h5_file_name=h5_file_name, time=time)
 
     def _update_rod_element_position(self):
         self.rod_element_position[...] = 0.5 * (
