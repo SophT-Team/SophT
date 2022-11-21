@@ -248,7 +248,7 @@ def flow_past_rod_case(
                     h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
                     time=time,
                 )
-                rod_io.save_rod(
+                rod_io.save(
                     h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
                 )
 
