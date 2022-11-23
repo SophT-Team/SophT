@@ -104,8 +104,12 @@ def immersed_magnetic_cilia_carpet_case(
     cilia_carpet_simulator.finalize()
     # =================TIMESTEPPING====================
     foto_timer = 0.0
+    period_timer = 0.0
+    period_timer_limit = cilia_carpet_simulator.period
     foto_timer_limit = cilia_carpet_simulator.final_time / 100
     time_history = []
+    avg_vorticity = np.zeros_like(flow_sim.vorticity_field)
+    avg_vorticity_history = []
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
@@ -171,8 +175,17 @@ def immersed_magnetic_cilia_carpet_case(
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
+        # Save averaged vorticity field
+        if period_timer >= period_timer_limit:
+            period_timer = 0.0
+            avg_vorticity_history.append(avg_vorticity.copy())
+            avg_vorticity *= 0.0
+
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
+
+        # Average vorticity field
+        avg_vorticity += flow_sim.vorticity_field * flow_dt / period_timer_limit
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))
@@ -195,18 +208,22 @@ def immersed_magnetic_cilia_carpet_case(
 
         # update timer
         foto_timer += flow_dt
+        period_timer += flow_dt
 
     # compile video
     spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 
+    # save average vorticity
+    np.save("avg_psi.npy", avg_vorticity_history)
+
 
 if __name__ == "__main__":
 
     # setup the structure of the carpet
-    num_rods_along_x = 9  # set >= 2
-    num_rods_along_y = 4  # set >= 2
+    num_rods_along_x = 6  # set >= 2
+    num_rods_along_y = 6  # set >= 2
     n_elem_per_rod = 20
     rod_base_length = 1.5
     carpet_spacing = rod_base_length
@@ -224,13 +241,15 @@ if __name__ == "__main__":
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
         rod_base_length=rod_base_length,
-        num_cycles=2.0,
+        num_cycles=20.0,
+        wavelength_y_factor=1e12,
         carpet_base_centroid=carpet_base_centroid,
         plot_result=False,
     )
     immersed_magnetic_cilia_carpet_case(
         cilia_carpet_simulator=cilia_carpet_simulator,
-        reynolds=10.0,
+        reynolds=5.0,
         grid_size_x=128,
+        num_threads=4,
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
     )
