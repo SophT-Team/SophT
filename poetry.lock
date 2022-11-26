@@ -62,6 +62,21 @@ python-versions = ">=3.7"
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "cma"
+version = "3.2.2"
+description = "CMA-ES, Covariance Matrix Adaptation Evolution Strategy for non-linear numerical optimization in Python"
+category = "main"
+optional = true
+python-versions = "*"
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+constrained-solution-tracking = ["moarchiving"]
+plotting = ["matplotlib"]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -92,7 +107,7 @@ name = "coomm"
 version = "0.0.1.post2"
 description = "Control Oriented Muscle Model of an octopus arm"
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.7.0"
 
 [package.dependencies]
@@ -245,11 +260,13 @@ name = "magneto-pyelastica"
 version = "0.0.1"
 description = "Python software for simulating magnetic Cosserat rods."
 category = "main"
-optional = false
+optional = true
 python-versions = ">=3.8,<3.11"
 develop = false
 
 [package.dependencies]
+cma = {version = "^3.2.2", extras = ["examples"], optional = true}
+matplotlib = {version = "^3.3.2", extras = ["examples"], optional = true}
 pyelastica = "^0.3"
 
 [package.extras]
@@ -668,7 +685,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "8cc49e7c779bad7ee378f652bd6affbe5110ecd344fcd9e7d20158bbb6fd16b5"
+content-hash = "52cb43818ef9282f1df419a3e9792526f6344d015c7eea6de161490e0b14a5aa"
 
 [metadata.files]
 appdirs = [
@@ -709,6 +726,10 @@ cfgv = [
 click = [
     {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
     {file = "click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
+]
+cma = [
+    {file = "cma-3.2.2-py2.py3-none-any.whl", hash = "sha256:0e3994b1f93c065b3eb2e68dbc589d9e694e191698d0aa58cb70cbdb803ade4e"},
+    {file = "cma-3.2.2.tar.gz", hash = "sha256:47ac71ddd2b9a922daa601516064a585a1a3dbbae7802bca935db25e525547eb"},
 ]
 colorama = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
