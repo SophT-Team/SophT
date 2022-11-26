@@ -30,17 +30,17 @@ pre-commit-install:
 .PHONY: black
 black:
 	poetry run black --version
-	poetry run black --config pyproject.toml sopht_simulator examples tests scripts
+	poetry run black --config pyproject.toml sopht examples tests scripts
 
 .PHONY: black-check
 black-check:
 	poetry run black --version
-	poetry run black --diff --check --config pyproject.toml sopht_simulator examples tests scripts
+	poetry run black --diff --check --config pyproject.toml sopht examples tests scripts
 
 .PHONY: flake8
 flake8:
 	poetry run flake8 --version
-	poetry run flake8 sopht_simulator tests scripts
+	poetry run flake8 sopht tests scripts
 
 .PHONY: format-codestyle
 format-codestyle: black flake8
@@ -57,11 +57,11 @@ tests:
 
 .PHONY: test_coverage
 test_coverage:
-	NUMBA_DISABLE_JIT=1 poetry run pytest --cov=sopht_simulator
+	NUMBA_DISABLE_JIT=1 poetry run pytest --cov=sopht
 
 .PHONY: test_coverage_xml
 test_coverage_xml:
-	NUMBA_DISABLE_JIT=1 poetry run pytest --cov=sopht_simulator --cov-report=xml
+	NUMBA_DISABLE_JIT=1 poetry run pytest --cov=sopht --cov-report=xml
 
 .PHONY: update-dev-deps
 update-dev-deps:
