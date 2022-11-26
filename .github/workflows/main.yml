@@ -56,7 +56,7 @@ jobs:
           poetry install
       # Runs a single command using the runners shell
       - name: Welcome message
-        run: echo Hello, world! Welcome to SophT-Examples build, lets start testing!
+        run: echo Hello, world! Welcome to SophT build, lets start testing!
       # Run style checks (black and flake8)
       - name: Run style checks
         run: |
