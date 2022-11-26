@@ -1,9 +1,8 @@
 import elastica as ea
 import numpy as np
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 import click
-from sopht.utils.IO import IO
 
 
 def flow_past_rod_case(
@@ -27,10 +26,10 @@ def flow_past_rod_case(
     # =================COMMON SIMULATOR STUFF=======================
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     rho_f = 1.0
     U_free_stream = 1.0
     base_length = 1.0
@@ -152,22 +151,15 @@ def flow_past_rod_case(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize sphere IO
-        # rod_io = IO(dim=grid_dim, real_dtype=real_t)
-        rod_io = sps.CosseratRodIO(
+        rod_io = spu.CosseratRodIO(
             cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
         )
-        # # Add vector field on lagrangian grid
-        # rod_io.add_as_lagrangian_fields_for_io(
-        #     lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
-        #     lagrangian_grid_name="rod",
-        #     vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
-        # )
 
     time = 0.0
     foto_timer = 0.0
@@ -179,7 +171,7 @@ def flow_past_rod_case(
     force_history = []
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     def rod_incline_angle_with_horizon(rod: type(ea.CosseratRod)):
         return np.rad2deg(
@@ -217,7 +209,7 @@ def flow_past_rod_case(
                 ),
                 levels=50,
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -226,7 +218,7 @@ def flow_past_rod_case(
                 s=5,
                 color="k",
             )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
             time_history.append(time)
@@ -279,7 +271,7 @@ def flow_past_rod_case(
         foto_timer += flow_dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=30
     )
 

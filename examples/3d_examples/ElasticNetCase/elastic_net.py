@@ -1,6 +1,6 @@
 import elastica as ea
 import numpy as np
-import sopht_simulator as sps
+import sopht.utils as spu
 from elastica.experimental.connection_contact_joint.parallel_connection import (
     SurfaceJointSideBySide,
     get_connection_vector_straight_straight_rod,
@@ -86,9 +86,9 @@ class ElasticNetSimulator:
 
         grid_dim = 3
         rod_dim = grid_dim
-        x_axis_idx = sps.VectorField.x_axis_idx()
-        y_axis_idx = sps.VectorField.y_axis_idx()
-        z_axis_idx = sps.VectorField.z_axis_idx()
+        x_axis_idx = spu.VectorField.x_axis_idx()
+        y_axis_idx = spu.VectorField.y_axis_idx()
+        z_axis_idx = spu.VectorField.z_axis_idx()
         start_collection = np.zeros((n_rods, grid_dim))
 
         # Compute rod start positions, first rods along y then rods along x.
@@ -341,11 +341,11 @@ class ElasticNetSimulator:
         )
 
         if self.plot_result:
-            x_axis_idx = sps.VectorField.x_axis_idx()
-            y_axis_idx = sps.VectorField.y_axis_idx()
-            z_axis_idx = sps.VectorField.z_axis_idx()
+            x_axis_idx = spu.VectorField.x_axis_idx()
+            y_axis_idx = spu.VectorField.y_axis_idx()
+            z_axis_idx = spu.VectorField.z_axis_idx()
             # Plot the magnetic rod time history
-            sps.plot_video_of_rod_surface(
+            spu.plot_video_of_rod_surface(
                 self.rod_post_processing_list,
                 fps=self.rendering_fps,
                 step=10,

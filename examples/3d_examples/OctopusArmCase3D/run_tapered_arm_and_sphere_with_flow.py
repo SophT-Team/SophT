@@ -1,10 +1,9 @@
 import numpy as np
-from sopht.utils.precision import get_real_t
 from set_environment_tapered_arm_and_sphere_with_flow import Environment
 from arm_functions import SigmoidActivationLongitudinalMuscles  # , LocalActivation
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 import elastica as ea
-from sopht.utils.IO import IO
 import click
 from matplotlib import pyplot as plt
 
@@ -28,10 +27,10 @@ def tapered_arm_and_cylinder_flow_coupling(
     # =================COMMON STUFF BEGIN=====================
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     period = 1
     rho_f = 1.0
     base_length = 1
@@ -195,17 +194,17 @@ def tapered_arm_and_cylinder_flow_coupling(
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
         # Initialize flow eulerian grid IO
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize rod io
-        rod_io = sps.CosseratRodIO(
+        rod_io = spu.CosseratRodIO(
             cosserat_rod=shearable_rod, dim=grid_dim, real_dtype=real_t
         )
         # Initialize sphere io
-        sphere_io = IO(dim=grid_dim, real_dtype=real_t)
+        sphere_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
         sphere_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=sphere_flow_interactor.forcing_grid.position_field,
@@ -222,7 +221,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     time_history = []
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     while time < final_time:
 
@@ -272,7 +271,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 s=5,
                 color="k",
             )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
 
@@ -342,10 +341,10 @@ def tapered_arm_and_cylinder_flow_coupling(
         foto_timer += flow_dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="rod_vel", image_series_name="vel", frame_rate=10
     )
 

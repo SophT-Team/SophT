@@ -1,9 +1,8 @@
 import click
 import elastica as ea
 import numpy as np
-from sopht.utils.IO import IO
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def flow_past_sphere_case(
@@ -21,10 +20,10 @@ def flow_past_sphere_case(
     """
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     x_range = 1.0
     far_field_velocity = 1.0
     sphere_diameter = 0.4 * min(grid_size_z, grid_size_y) / grid_size_x * x_range
@@ -91,13 +90,13 @@ def flow_past_sphere_case(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize sphere IO
-        sphere_io = IO(dim=grid_dim, real_dtype=real_t)
+        sphere_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
         sphere_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=sphere_flow_interactor.forcing_grid.position_field,
@@ -130,7 +129,7 @@ def flow_past_sphere_case(
     flow_vel_along_sphere_center = []
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     # iterate
     while t < t_end:
@@ -178,7 +177,7 @@ def flow_past_sphere_case(
                 ),
                 levels=50,
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -187,7 +186,7 @@ def flow_past_sphere_case(
                 s=5,
                 color="k",
             )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
             print(
@@ -211,7 +210,7 @@ def flow_past_sphere_case(
         t = t + dt
         foto_timer += dt
 
-    fig, ax = sps.create_figure_and_axes(fig_aspect_ratio="default")
+    fig, ax = spu.create_figure_and_axes(fig_aspect_ratio="default")
     ax.plot(np.array(time), np.array(drag_coeffs), label="numerical")
     ax.set_xlabel("Time")
     ax.set_ylabel("Drag coefficient")
@@ -231,12 +230,12 @@ def flow_past_sphere_case(
     )
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 
     if save_flow_data:
-        sps.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
+        spu.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
 
 
 if __name__ == "__main__":

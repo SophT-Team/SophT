@@ -1,7 +1,7 @@
 import elastica as ea
 import numpy as np
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def immersed_continuum_snake_case(
@@ -15,9 +15,9 @@ def immersed_continuum_snake_case(
     precision="single",
 ):
     grid_dim = 2
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
     # =================PYELASTICA STUFF BEGIN=====================
 
     class ImmersedContinuumSnakeSimulator(
@@ -127,7 +127,7 @@ def immersed_continuum_snake_case(
     foto_timer_limit = period / 10
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     while time < final_time:
 
@@ -141,7 +141,7 @@ def immersed_continuum_snake_case(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.plot(
@@ -150,7 +150,7 @@ def immersed_continuum_snake_case(
                 linewidth=3,
                 color="k",
             )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             print(
@@ -186,7 +186,7 @@ def immersed_continuum_snake_case(
         foto_timer += flow_dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 

@@ -2,8 +2,8 @@ import elastica as ea
 import click
 import matplotlib.pyplot as plt
 import numpy as np
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def flow_past_cylinder_boundary_forcing_case(
@@ -22,9 +22,9 @@ def flow_past_cylinder_boundary_forcing_case(
     """
     grid_dim = 2
     grid_size_y, grid_size_x = grid_size
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
     # Flow parameters
     velocity_scale = 1.0
     velocity_free_stream = np.zeros(grid_dim)
@@ -84,7 +84,7 @@ def flow_past_cylinder_boundary_forcing_case(
     drag_coeffs = []
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     while time < final_time:
 
@@ -98,7 +98,7 @@ def flow_past_cylinder_boundary_forcing_case(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-25, 25, 100),
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -107,7 +107,7 @@ def flow_past_cylinder_boundary_forcing_case(
                 s=4,
                 color="k",
             )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             print(
@@ -141,7 +141,7 @@ def flow_past_cylinder_boundary_forcing_case(
         data_timer += dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 

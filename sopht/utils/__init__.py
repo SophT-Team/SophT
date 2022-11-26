@@ -1,4 +1,4 @@
-from .lab_cmap import lab_cmap
+from .lab_cmap import get_lab_cmap
 from .plot_field import create_figure_and_axes, save_and_clear_fig
 from .post_process import make_video_from_image_series, make_dir_and_transfer_h5_data
 from .field import VectorField

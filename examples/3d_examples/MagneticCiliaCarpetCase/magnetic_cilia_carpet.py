@@ -1,7 +1,7 @@
 import elastica as ea
 import magneto_pyelastica as mea
 import numpy as np
-import sopht_simulator as sps
+import sopht.utils as spu
 
 
 class MagneticCiliaCarpetSimulator:
@@ -32,8 +32,8 @@ class MagneticCiliaCarpetSimulator:
         self.spacing_between_rods = self.rod_base_length  # following Gu2020
         n_elem = n_elem_per_rod
         grid_dim = 3
-        x_axis_idx = sps.VectorField.x_axis_idx()
-        y_axis_idx = sps.VectorField.y_axis_idx()
+        x_axis_idx = spu.VectorField.x_axis_idx()
+        y_axis_idx = spu.VectorField.y_axis_idx()
         start_collection = np.zeros((n_rods, grid_dim))
         for i in range(n_rods):
             start_collection[i, x_axis_idx] = (
@@ -246,11 +246,11 @@ class MagneticCiliaCarpetSimulator:
         )
 
         if self.plot_result:
-            x_axis_idx = sps.VectorField.x_axis_idx()
-            y_axis_idx = sps.VectorField.y_axis_idx()
-            z_axis_idx = sps.VectorField.z_axis_idx()
+            x_axis_idx = spu.VectorField.x_axis_idx()
+            y_axis_idx = spu.VectorField.y_axis_idx()
+            z_axis_idx = spu.VectorField.z_axis_idx()
             # Plot the magnetic rod time history
-            sps.plot_video_of_rod_surface(
+            spu.plot_video_of_rod_surface(
                 self.rod_post_processing_list,
                 fps=self.rendering_fps,
                 step=10,
