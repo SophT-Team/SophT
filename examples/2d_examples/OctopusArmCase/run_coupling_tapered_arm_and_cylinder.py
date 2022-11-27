@@ -1,8 +1,8 @@
 import numpy as np
-from sopht.utils.precision import get_real_t
 from set_environment_tapered_arm_cylinder import Environment
 from arm_functions import SigmoidActivationLongitudinalMuscles  # , LocalActivation
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def tapered_arm_and_cylinder_flow_coupling(
@@ -17,9 +17,9 @@ def tapered_arm_and_cylinder_flow_coupling(
     precision="single",
 ):
     grid_dim = 2
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
     # =================PYELASTICA STUFF BEGIN=====================
     period = 1
     final_time = period * final_time_by_period
@@ -123,7 +123,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     foto_timer_limit = period / 10
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     while time < final_time:
 
@@ -137,7 +137,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 flow_sim.vorticity_field,
                 levels=np.linspace(-5, 5, 100),
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             element_position = 0.5 * (
@@ -167,7 +167,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                     s=5,
                     color="g",
                 )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
             )
             grid_dev_error = 0.0
@@ -214,7 +214,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         foto_timer += flow_dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 

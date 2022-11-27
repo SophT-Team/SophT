@@ -1,2 +1,0 @@
-from sopht_simulator.flow.flow_simulators_2d import UnboundedFlowSimulator2D
-from sopht_simulator.flow.flow_simulators_3d import UnboundedFlowSimulator3D

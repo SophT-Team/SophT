@@ -1,8 +1,7 @@
 from hill_sphere_vortex_helpers import HillSphereVortex
 import numpy as np
-from sopht.utils.IO import IO
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def hill_sphere_vortex_case(
@@ -18,10 +17,10 @@ def hill_sphere_vortex_case(
     """
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     # Consider a 1 by 1 by 1 3D domain
     x_range = 1.0
     flow_sim = sps.UnboundedFlowSimulator3D(
@@ -81,7 +80,7 @@ def hill_sphere_vortex_case(
     anal_centerline_vel_z = analytical_velocity_field[
         z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2
     ]
-    fig, ax = sps.create_figure_and_axes(fig_aspect_ratio="default")
+    fig, ax = spu.create_figure_and_axes(fig_aspect_ratio="default")
     ax.plot(centerline_z, sim_centerline_vel_z, label="numerical")
     ax.plot(centerline_z, anal_centerline_vel_z, label="analytical")
     ax.legend()
@@ -100,7 +99,7 @@ def hill_sphere_vortex_case(
     anal_midplane_vel_r = analytical_velocity_field[
         y_axis_idx, grid_size_z // 3, ..., grid_size_x // 2
     ]
-    fig2, ax2 = sps.create_figure_and_axes(fig_aspect_ratio="default")
+    fig2, ax2 = spu.create_figure_and_axes(fig_aspect_ratio="default")
     ax2.plot(midplane_r, sim_midplane_vel_r, label="numerical")
     ax2.plot(midplane_r, anal_midplane_vel_r, label="analytical")
     ax2.legend()
@@ -145,7 +144,7 @@ def hill_sphere_vortex_case(
     anal_midplane_vortex_stretching = analytical_vortex_stretching[
         x_axis_idx, grid_size_z // 3, ..., grid_size_x // 2
     ]
-    fig3, ax3 = sps.create_figure_and_axes(fig_aspect_ratio="default")
+    fig3, ax3 = spu.create_figure_and_axes(fig_aspect_ratio="default")
     ax3.plot(midplane_r, sim_midplane_vortex_stretching, label="numerical")
     ax3.plot(midplane_r, anal_midplane_vortex_stretching, label="analytical")
     ax3.legend()
@@ -165,7 +164,7 @@ def hill_sphere_vortex_case(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field,

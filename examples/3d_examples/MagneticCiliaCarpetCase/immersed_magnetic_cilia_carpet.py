@@ -1,7 +1,6 @@
 import numpy as np
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
-from sopht.utils.IO import IO
+import sopht.simulator as sps
+import sopht.utils as spu
 from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
@@ -18,10 +17,10 @@ def immersed_magnetic_cilia_carpet_case(
 ):
     # ==================FLOW SETUP START=========================
     grid_dim = 3
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     z_range, y_range, x_range = domain_range
     grid_size_y = round(y_range / x_range * grid_size_x)
     grid_size_z = round(z_range / x_range * grid_size_x)
@@ -78,13 +77,13 @@ def immersed_magnetic_cilia_carpet_case(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize carpet IO
-        carpet_io = IO(dim=grid_dim, real_dtype=real_t)
+        carpet_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
             interactor.forcing_grid.num_lag_nodes
             for interactor in rod_flow_interactor_list
@@ -120,7 +119,7 @@ def immersed_magnetic_cilia_carpet_case(
     time_history = []
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
     # iterate
     while time < cilia_carpet_simulator.final_time:
         # Save data
@@ -162,7 +161,7 @@ def immersed_magnetic_cilia_carpet_case(
                     s=5,
                     color="k",
                 )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
             time_history.append(time)
@@ -205,7 +204,7 @@ def immersed_magnetic_cilia_carpet_case(
         foto_timer += flow_dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 

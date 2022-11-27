@@ -1,8 +1,7 @@
 from point_source_helpers import compute_diffused_point_source_field
 import numpy as np
-from sopht.utils.IO import IO
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def point_source_advection_diffusion_case(
@@ -14,10 +13,10 @@ def point_source_advection_diffusion_case(
     """
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     # Consider a 1 by 1 3D domain
     x_range = 1.0
     nu = 1e-3
@@ -69,7 +68,7 @@ def point_source_advection_diffusion_case(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array([grid_size_z, grid_size_y, grid_size_x])
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(vorticity=vorticity_field)
 

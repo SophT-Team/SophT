@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def lid_driven_cavity_case(
@@ -19,9 +19,9 @@ def lid_driven_cavity_case(
     boundary forcing.
     """
     grid_dim = 2
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
     # Flow parameters
     lid_velocity = 1.0
     ldc_side_length = 0.6
@@ -105,7 +105,7 @@ def lid_driven_cavity_case(
     foto_timer_limit = t_end / 50
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     while t < t_end:
 
@@ -119,7 +119,7 @@ def lid_driven_cavity_case(
                 ldc_mask * flow_sim.velocity_field[x_axis_idx],
                 levels=np.linspace(-0.5, 0.5, 100),
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
@@ -128,7 +128,7 @@ def lid_driven_cavity_case(
                 s=10,
                 color="k",
             )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
             print(
@@ -155,7 +155,7 @@ def lid_driven_cavity_case(
         foto_timer += dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 

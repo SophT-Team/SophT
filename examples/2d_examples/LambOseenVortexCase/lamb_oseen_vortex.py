@@ -1,7 +1,7 @@
 from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 import numpy as np
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
@@ -11,9 +11,9 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
     the Navier-Stokes equation.
     """
     grid_dim = 2
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
     # Consider a 1 by 1 2D domain
     x_range = 1.0
     nu = 1e-3
@@ -65,7 +65,7 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
     foto_timer_limit = (t_end - t_start) / 25
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
 
     while t < t_end:
 
@@ -79,10 +79,10 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
                 flow_sim.vorticity_field,
                 levels=np.linspace(0, 1, 50),
                 extend="both",
-                cmap=sps.lab_cmap,
+                cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
             )
             print(
@@ -113,7 +113,7 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
     )
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 

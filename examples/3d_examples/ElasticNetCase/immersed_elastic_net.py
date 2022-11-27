@@ -1,8 +1,7 @@
 import click
 import numpy as np
-from sopht.utils.precision import get_real_t
-import sopht_simulator as sps
-from sopht.utils.IO import IO
+import sopht.simulator as sps
+import sopht.utils as spu
 from elastic_net import ElasticNetSimulator
 
 
@@ -20,10 +19,10 @@ def immersed_elastic_net_case(
 ):
     # ==================FLOW SETUP START=========================
     grid_dim = 3
-    real_t = get_real_t(precision)
-    x_axis_idx = sps.VectorField.x_axis_idx()
-    y_axis_idx = sps.VectorField.y_axis_idx()
-    z_axis_idx = sps.VectorField.z_axis_idx()
+    real_t = spu.get_real_t(precision)
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
     z_range, y_range, x_range = domain_range
     grid_size_y = round(y_range / x_range * grid_size_x)
     grid_size_z = round(z_range / x_range * grid_size_x)
@@ -85,13 +84,13 @@ def immersed_elastic_net_case(
         )
         io_dx = flow_sim.dx * np.ones(grid_dim)
         io_grid_size = np.array(grid_size)
-        io = IO(dim=grid_dim, real_dtype=real_t)
+        io = spu.IO(dim=grid_dim, real_dtype=real_t)
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize carpet IO
-        elastic_net_io = IO(dim=grid_dim, real_dtype=real_t)
+        elastic_net_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
             interactor.forcing_grid.num_lag_nodes
             for interactor in rod_flow_interactor_list
@@ -132,7 +131,7 @@ def immersed_elastic_net_case(
     time_history = []
 
     # create fig for plotting flow fields
-    fig, ax = sps.create_figure_and_axes()
+    fig, ax = spu.create_figure_and_axes()
     # iterate
     while time < elastic_net_sim.final_time:
         # Save data
@@ -174,7 +173,7 @@ def immersed_elastic_net_case(
                     s=5,
                     color="k",
                 )
-            sps.save_and_clear_fig(
+            spu.save_and_clear_fig(
                 fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
             )
             time_history.append(time)
@@ -225,12 +224,12 @@ def immersed_elastic_net_case(
         foto_timer += flow_dt
 
     # compile video
-    sps.make_video_from_image_series(
+    spu.make_video_from_image_series(
         video_name="flow", image_series_name="snap", frame_rate=frames_per_second
     )
 
     if save_flow_data:
-        sps.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
+        spu.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
 
 
 if __name__ == "__main__":
