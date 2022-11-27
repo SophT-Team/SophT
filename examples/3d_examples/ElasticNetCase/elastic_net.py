@@ -37,9 +37,11 @@ def compute_non_dimensional_rod_positions(
         np.linspace(0, 1, n_elem)
     )
     positions = np.zeros((n_elem + 1))
-    base_length = element_positions[1] - element_positions[0]
-    positions[:-1] = element_positions - base_length / 2
-    positions[-1] = element_positions[-1] + base_length / 2
+    element_length = element_positions[1] - element_positions[0]
+    positions[:-1] = element_positions - element_length / 2
+    positions[-1] = element_positions[-1] + element_length / 2
+
+    base_length = (positions[1:] - positions[:-1]).sum()
 
     return positions, base_length
 
@@ -245,7 +247,7 @@ class ElasticNetSimulator:
         ), "Not all rods are connected, change number of elements of rods along y or along x"
 
         # add damping
-        damping_constant = 0.5
+        damping_constant = 0.01
         for i in range(num_rods_along_y):
             dl = self.base_length_rod_along_y / n_elem_rods_along_y
             self.dt = 0.1 * dl
