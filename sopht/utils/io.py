@@ -625,7 +625,7 @@ class CosseratRodIO(IO):
         self.cosserat_rod = cosserat_rod
 
         # Initialize rod element position
-        self.rod_element_position = np.zeros((3, cosserat_rod.n_elems))
+        self.rod_element_position = np.zeros((self.dim, cosserat_rod.n_elems))
         self._update_rod_element_position()
 
         # Add the element position to IO
@@ -642,6 +642,6 @@ class CosseratRodIO(IO):
 
     def _update_rod_element_position(self):
         self.rod_element_position[...] = 0.5 * (
-            self.cosserat_rod.position_collection[..., 1:]
-            + self.cosserat_rod.position_collection[..., :-1]
+            self.cosserat_rod.position_collection[: self.dim, 1:]
+            + self.cosserat_rod.position_collection[: self.dim, :-1]
         )
