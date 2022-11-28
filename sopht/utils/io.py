@@ -626,7 +626,7 @@ class CosseratRodIO(IO):
 
         # Initialize rod element position
         self.rod_element_position = np.zeros((3, cosserat_rod.n_elems))
-        self._update_rod_element_position
+        self._update_rod_element_position()
 
         # Add the element position to IO
         self.add_as_lagrangian_fields_for_io(
