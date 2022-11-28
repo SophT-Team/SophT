@@ -32,8 +32,8 @@ def immersed_elastic_net_case(
     velocity_free_stream = [0.0, 0.0, vel_free_stream]
     kinematic_viscosity = (
         max(
-            elastic_net_sim.base_length_rod_along_y,
-            elastic_net_sim.base_length_rod_along_x,
+            elastic_net_sim.elastic_net_length_x,
+            elastic_net_sim.elastic_net_length_y,
         )
         * vel_free_stream
         / reynolds
@@ -235,7 +235,6 @@ def immersed_elastic_net_case(
 if __name__ == "__main__":
 
     # setup the structure of the carpet
-    final_time = 2.0
     num_rods_along_x = 8  # set >= 2
     num_rods_along_y = 8  # set >= 2
     gap_between_rods = 0.2
@@ -281,8 +280,13 @@ if __name__ == "__main__":
         default=1e3,
         help="Non-dimensional Youngs modulus of the net.",
     )
+    @click.option("--final_time", default=2.0, help="Final simulation time.")
     def simulate_parallelised_immersed_net_case(
-        num_threads, grid_size_x, reynolds, nondim_youngs_modulus
+        num_threads,
+        grid_size_x,
+        reynolds,
+        nondim_youngs_modulus,
+        final_time,
     ):
         vel_free_stream_z = 1.0
         youngs_modulus = nondim_youngs_modulus * rho_f * vel_free_stream_z**2
