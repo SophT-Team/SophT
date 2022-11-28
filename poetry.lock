@@ -682,10 +682,13 @@ platformdirs = ">=2.4,<3"
 docs = ["proselint (>=0.13)", "sphinx (>=5.3)", "sphinx-argparse (>=0.3.2)", "sphinx-rtd-theme (>=1)", "towncrier (>=22.8)"]
 testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=21.3)", "pytest (>=7.0.1)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.2)", "pytest-mock (>=3.6.1)", "pytest-randomly (>=3.10.3)", "pytest-timeout (>=2.1)"]
 
+[extras]
+examples = ["click", "coomm", "magneto_pyelastica"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "52cb43818ef9282f1df419a3e9792526f6344d015c7eea6de161490e0b14a5aa"
+content-hash = "ff23c02948da3f36af07526e731e40d836fda24ba0f910946f4255f99d0fffdc"
 
 [metadata.files]
 appdirs = [

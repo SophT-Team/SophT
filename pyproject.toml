@@ -41,6 +41,9 @@ pytest = "^7.0.1"
 coverage = "^6.3.2"
 pytest-cov = "^3.0.0"
 
+[tool.poetry.extras]
+examples = ["click", "coomm", "magneto_pyelastica"]
+
 [tool.black]
 # https://github.com/psf/black
 target-version = ["py38"]
