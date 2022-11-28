@@ -147,11 +147,8 @@ def flow_past_rod_case(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize rod IO
-        rod_io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        # Add vector field on lagrangian grid
-        rod_io.add_as_lagrangian_fields_for_io(
-            lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
-            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+        rod_io = spu.CosseratRodIO(
+            cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
         )
 
     # =================TIMESTEPPING====================
