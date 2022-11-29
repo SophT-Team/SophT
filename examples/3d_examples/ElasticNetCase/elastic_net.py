@@ -247,10 +247,10 @@ class ElasticNetSimulator:
         ), "Not all rods are connected, change number of elements of rods along y or along x"
 
         # add damping
-        damping_constant = 0.01
+        damping_constant = 0.2
         for i in range(num_rods_along_y):
             dl = self.base_length_rod_along_y / n_elem_rods_along_y
-            self.dt = 0.1 * dl
+            self.dt = 0.05 * dl
             self.net_simulator.dampen(self.rod_list[i]).using(
                 ea.AnalyticalLinearDamper,
                 damping_constant=damping_constant,
@@ -259,7 +259,7 @@ class ElasticNetSimulator:
 
         for i in range(num_rods_along_x):
             dl = self.base_length_rod_along_x / n_elem_rods_along_x
-            self.dt = 0.1 * dl
+            self.dt = 0.05 * dl
             self.net_simulator.dampen(self.rod_list[i + num_rods_along_y]).using(
                 ea.AnalyticalLinearDamper,
                 damping_constant=damping_constant,

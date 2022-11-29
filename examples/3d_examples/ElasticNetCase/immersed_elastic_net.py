@@ -9,7 +9,7 @@ def immersed_elastic_net_case(
     elastic_net_sim: ElasticNetSimulator,
     domain_range,
     grid_size_x,
-    reynolds=100.0,
+    reynolds,
     vel_free_stream=1.0,
     coupling_stiffness=-2e4,
     coupling_damping=-1e1,
