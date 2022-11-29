@@ -15,7 +15,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         eul_grid_velocity_field: np.ndarray,
         body_flow_forces: np.ndarray,
         body_flow_torques: np.ndarray,
-        forcing_grid: type(ImmersedBodyForcingGrid),
+        forcing_grid_cls: type(ImmersedBodyForcingGrid),
         virtual_boundary_stiffness_coeff: float,
         virtual_boundary_damping_coeff: float,
         dx: float,
@@ -26,12 +26,16 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
+        **forcing_grid_kwargs,
     ):
         """Class initialiser."""
         # These are meant to be specialised/created in the derived classes
         self.body_flow_forces = body_flow_forces
         self.body_flow_torques = body_flow_torques
-        self.forcing_grid = forcing_grid
+        self.forcing_grid = forcing_grid_cls(
+            grid_dim=grid_dim,
+            **forcing_grid_kwargs,
+        )
         # these hold references to Eulerian fields
         self.eul_grid_forcing_field = eul_grid_forcing_field.view()
         self.eul_grid_velocity_field = eul_grid_velocity_field.view()

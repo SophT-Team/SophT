@@ -30,11 +30,7 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         """Class initialiser."""
         body_flow_forces = np.zeros((3, 1))
         body_flow_torques = np.zeros((3, 1))
-        forcing_grid = forcing_grid_cls(
-            grid_dim=grid_dim,
-            rigid_body=rigid_body,
-            **forcing_grid_kwargs,
-        )
+        forcing_grid_kwargs["rigid_body"] = rigid_body
 
         # initialising super class
         super().__init__(
@@ -42,7 +38,7 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
             eul_grid_velocity_field,
             body_flow_forces,
             body_flow_torques,
-            forcing_grid,
+            forcing_grid_cls,
             virtual_boundary_stiffness_coeff,
             virtual_boundary_damping_coeff,
             dx,
@@ -53,4 +49,5 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
             enable_eul_grid_forcing_reset,
             num_threads,
             start_time,
+            **forcing_grid_kwargs,
         )

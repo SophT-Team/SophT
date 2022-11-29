@@ -34,11 +34,7 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
         body_flow_torques = np.zeros(
             (3, cosserat_rod.n_elems),
         )
-        forcing_grid = forcing_grid_cls(
-            grid_dim=grid_dim,
-            cosserat_rod=cosserat_rod,
-            **forcing_grid_kwargs,
-        )
+        forcing_grid_kwargs["cosserat_rod"] = cosserat_rod
 
         # initialising super class
         super().__init__(
@@ -46,7 +42,7 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             eul_grid_velocity_field,
             body_flow_forces,
             body_flow_torques,
-            forcing_grid,
+            forcing_grid_cls,
             virtual_boundary_stiffness_coeff,
             virtual_boundary_damping_coeff,
             dx,
@@ -57,4 +53,5 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             enable_eul_grid_forcing_reset,
             num_threads,
             start_time,
+            **forcing_grid_kwargs,
         )
