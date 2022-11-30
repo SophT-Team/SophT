@@ -21,6 +21,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     # =================PYELASTICA STUFF BEGIN=====================
+
     class ImmersedFlexiblePendulumSimulator(
         ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
     ):

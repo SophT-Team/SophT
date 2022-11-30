@@ -1,6 +1,6 @@
 import numpy as np
 from set_environment_tapered_arm_and_sphere_with_flow import Environment
-from arm_functions import SigmoidActivationLongitudinalMuscles  # , LocalActivation
+from arm_functions_3d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
 import sopht.simulator as sps
 import sopht.utils as spu
 import elastica as ea

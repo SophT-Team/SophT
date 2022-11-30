@@ -27,7 +27,7 @@ class SigmoidActivationLongitudinalMuscles:
         self.activation_level_end = activation_level_end
         self.activation_lower_threshold = activation_lower_threshold
 
-    def apply_activation(self, system, activation, time: np.float64 = 0.0):
+    def apply_activation(self, system, activation, time: float = 0.0):
         n_elems = self.end_idx - self.start_idx
         index = np.arange(0, n_elems, dtype=np.int64)
         fiber_activation = np.zeros((n_elems))
@@ -77,7 +77,7 @@ class LocalActivation:
         self.start_idx = int(start_idx)
         self.end_idx = int(end_idx)
 
-    def apply_activation(self, system, activation, time: np.float64 = 0.0):
+    def apply_activation(self, system, activation, time: float = 0.0):
 
         time = round(time, 5)
         factor = 0.0

@@ -233,7 +233,7 @@ class ArmEnvironment:
         # Position of the rod cannot be NaN, it is not valid, stop the simulation
         invalid_values_condition = _isnan_check(self.shearable_rod.position_collection)
 
-        if invalid_values_condition == True:
+        if invalid_values_condition:
             print("NaN detected in the simulation !!!!!!!!")
             done = True
 

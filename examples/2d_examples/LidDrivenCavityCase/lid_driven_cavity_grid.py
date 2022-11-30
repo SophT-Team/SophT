@@ -94,6 +94,16 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
         # during initialisation
         pass
 
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
+        # This field is added to make this class concrete
+        pass
+
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         return self.side_length / self.num_lag_nodes_per_side

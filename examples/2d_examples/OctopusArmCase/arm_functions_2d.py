@@ -1,7 +1,8 @@
 import elastica as ea
 import numpy as np
 from numba import njit
-from elastica._linalg import _batch_norm
+from elastica._linalg import _batch_norm, _batch_dot
+from elastica.interaction import elements_to_nodes_inplace
 
 
 # Sigmoid activation functions
@@ -28,7 +29,7 @@ class SigmoidActivationLongitudinalMuscles:
         self.activation_level_end = activation_level_end
         self.activation_lower_threshold = activation_lower_threshold
 
-    def apply_activation(self, system, activation, time: np.float64 = 0.0):
+    def apply_activation(self, system, activation, time: float = 0.0):
         n_elems = self.end_idx - self.start_idx
         index = np.arange(0, n_elems, dtype=np.int64)
         fiber_activation = np.zeros((n_elems))
@@ -78,7 +79,7 @@ class LocalActivation:
         self.start_idx = int(start_idx)
         self.end_idx = int(end_idx)
 
-    def apply_activation(self, system, activation, time: np.float64 = 0.0):
+    def apply_activation(self, system, activation, time: float = 0.0):
 
         time = round(time, 5)
         factor = 0.0
@@ -112,10 +113,6 @@ class LocalActivation:
     # Drag force
 
 
-from elastica._linalg import _batch_dot
-from elastica.interaction import elements_to_nodes_inplace
-
-
 class DragForceOnStraightRods(ea.NoForces):
     def __init__(self, cd_perpendicular, cd_tangent, rho_water, start_time=0.0):
         self.cd_perpendicular = cd_perpendicular
@@ -123,7 +120,7 @@ class DragForceOnStraightRods(ea.NoForces):
         self.rho_water = rho_water
         self.start_time = start_time
 
-    def apply_forces(self, system, time: np.float64 = 0.0):
+    def apply_forces(self, system, time: float = 0.0):
         if time > self.start_time:
             self._apply_forces(
                 self.cd_perpendicular,
