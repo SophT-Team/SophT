@@ -1,7 +1,6 @@
 from .rigid_body_forcing_grids import (
     TwoDimensionalCylinderForcingGrid,
     CircularCylinderForcingGrid,
-    SquareCylinderForcingGrid,
     ThreeDimensionalRigidBodyForcingGrid,
     OpenEndCircularCylinderForcingGrid,
     SphereForcingGrid,

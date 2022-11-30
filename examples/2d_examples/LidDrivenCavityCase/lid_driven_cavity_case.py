@@ -1,19 +1,20 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 import sopht.simulator as sps
 import sopht.utils as spu
+from lid_driven_cavity_grid import LidDrivenCavityForcingGrid
+from typing import Tuple
 
 
 def lid_driven_cavity_case(
-    grid_size,
-    reynolds=100.0,
-    num_threads=4,
-    coupling_stiffness=-7.5e2,
-    coupling_damping=-3e-1,
-    precision="single",
-    save_diagnostic=False,
-):
+    grid_size: Tuple[float, float],
+    reynolds: float = 100.0,
+    num_threads: int = 4,
+    coupling_stiffness: float = -5e4,
+    coupling_damping: float = -20,
+    precision: str = "single",
+    save_diagnostic: bool = False,
+) -> None:
     """
     This example considers a lid driven cavity flow using immersed
     boundary forcing.
@@ -36,65 +37,32 @@ def lid_driven_cavity_case(
         num_threads=num_threads,
     )
 
-    # Initialize virtual forcing grid for ldc boundaries
-    # TODO refactor as 4 fixed osserat rods
-    num_ldc_sides = 4
-    num_lag_nodes_per_side = 100
-    num_lag_nodes = num_ldc_sides * num_lag_nodes_per_side
-    ds = ldc_side_length / num_lag_nodes_per_side
-    lag_grid_position_field = np.zeros((grid_dim, num_lag_nodes), dtype=real_t)
-    side_coordinates_range = np.linspace(
-        0.5 - 0.5 * ldc_side_length + 0.5 * ds,
-        0.5 + 0.5 * ldc_side_length - 0.5 * ds,
-        num_lag_nodes_per_side,
-    )
-    # top boundary
-    lag_grid_position_field[
-        x_axis_idx, :num_lag_nodes_per_side
-    ] = side_coordinates_range
-    lag_grid_position_field[y_axis_idx, :num_lag_nodes_per_side] = (
-        0.5 + 0.5 * ldc_side_length
-    )
-    # right boundary
-    lag_grid_position_field[
-        x_axis_idx, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
-    ] = (0.5 + 0.5 * ldc_side_length)
-    lag_grid_position_field[
-        y_axis_idx, num_lag_nodes_per_side : 2 * num_lag_nodes_per_side
-    ] = side_coordinates_range
-    # bottom boundary
-    lag_grid_position_field[
-        x_axis_idx, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
-    ] = side_coordinates_range
-    lag_grid_position_field[
-        y_axis_idx, 2 * num_lag_nodes_per_side : 3 * num_lag_nodes_per_side
-    ] = (0.5 - 0.5 * ldc_side_length)
-    # left boundary
-    lag_grid_position_field[
-        x_axis_idx, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
-    ] = (0.5 - 0.5 * ldc_side_length)
-    lag_grid_position_field[
-        y_axis_idx, 3 * num_lag_nodes_per_side : 4 * num_lag_nodes_per_side
-    ] = side_coordinates_range
-
-    lag_grid_velocity_field = np.zeros_like(lag_grid_position_field)
-    lag_grid_velocity_field[x_axis_idx, :num_lag_nodes_per_side] = lid_velocity
-    ldc_mask = (
-        np.fabs(flow_sim.position_field[x_axis_idx] - 0.5) < 0.5 * ldc_side_length
-    ) * (np.fabs(flow_sim.position_field[y_axis_idx] - 0.5) < 0.5 * ldc_side_length)
-
-    # Virtual boundary forcing kernels
-    virtual_boundary_forcing = VirtualBoundaryForcing(
+    # Initialize lid driven cavity forcing grid
+    num_lag_nodes_per_side = grid_size[x_axis_idx] * 3 // 8
+    ldc_com = (0.5, 0.5)
+    ldc_flow_interactor = sps.ImmersedBodyFlowInteraction(
+        eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=flow_sim.velocity_field,
+        body_flow_forces=np.zeros((grid_dim, 1)),
+        body_flow_torques=np.zeros((grid_dim, 1)),
         virtual_boundary_stiffness_coeff=coupling_stiffness,
         virtual_boundary_damping_coeff=coupling_damping,
-        grid_dim=grid_dim,
         dx=flow_sim.dx,
-        num_lag_nodes=num_lag_nodes,
+        grid_dim=grid_dim,
         real_t=real_t,
-        enable_eul_grid_forcing_reset=False,
-        num_threads=num_threads,
+        forcing_grid_cls=LidDrivenCavityForcingGrid,
+        num_lag_nodes_per_side=num_lag_nodes_per_side,
+        side_length=ldc_side_length,
+        lid_velocity=lid_velocity,
+        cavity_com=ldc_com,
     )
-    compute_flow_interaction = virtual_boundary_forcing.compute_interaction_forcing
+    ldc_mask = (
+        np.fabs(flow_sim.position_field[x_axis_idx] - ldc_com[x_axis_idx])
+        < 0.5 * ldc_side_length
+    ) * (
+        np.fabs(flow_sim.position_field[y_axis_idx] - ldc_com[y_axis_idx])
+        < 0.5 * ldc_side_length
+    )
 
     # iterate
     timescale = ldc_side_length / lid_velocity
@@ -123,8 +91,8 @@ def lid_driven_cavity_case(
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
-                lag_grid_position_field[x_axis_idx],
-                lag_grid_position_field[y_axis_idx],
+                ldc_flow_interactor.forcing_grid.position_field[x_axis_idx],
+                ldc_flow_interactor.forcing_grid.position_field[y_axis_idx],
                 s=10,
                 color="k",
             )
@@ -139,13 +107,8 @@ def lid_driven_cavity_case(
         dt = flow_sim.compute_stable_timestep()
 
         # compute flow forcing and timestep forcing
-        virtual_boundary_forcing.time_step(dt=dt)
-        compute_flow_interaction(
-            eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
-            eul_grid_velocity_field=flow_sim.velocity_field,
-            lag_grid_position_field=lag_grid_position_field,
-            lag_grid_velocity_field=lag_grid_velocity_field,
-        )
+        ldc_flow_interactor.time_step(dt=dt)
+        ldc_flow_interactor()
 
         # timestep the flow
         flow_sim.time_step(dt)
