@@ -44,7 +44,7 @@ black-check:
 .PHONY: flake8
 flake8:
 	poetry run flake8 --version
-	poetry run flake8 ./
+	poetry run flake8 sopht tests scripts examples
 
 .PHONY: mypy
 mypy:
