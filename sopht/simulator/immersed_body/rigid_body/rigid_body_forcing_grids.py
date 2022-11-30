@@ -183,21 +183,19 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        rigid_body: type(ea.Cylinder),
+        rigid_body: ea.Cylinder,
         num_forcing_points_along_length: int,
-    ):
+    ) -> None:
         self.num_forcing_points_along_length = num_forcing_points_along_length
         cylinder_circumference = 2 * np.pi * rigid_body.radius
         # keep same density of points along surface
         self.num_forcing_points_along_circumference = int(
-            self.num_forcing_points_along_length
-            * cylinder_circumference
-            / rigid_body.length
-        )
-        if self.num_forcing_points_along_circumference == 0:
-            raise RuntimeError(
-                "Too thin cylinder! Use a line source forcing grid instead!"
+            np.ceil(
+                self.num_forcing_points_along_length
+                * cylinder_circumference
+                / rigid_body.length
             )
+        )
         num_lag_nodes = (
             self.num_forcing_points_along_length
             * self.num_forcing_points_along_circumference
@@ -234,7 +232,7 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_maximum_lagrangian_grid_spacing(self):
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
         return max(

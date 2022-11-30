@@ -6,6 +6,7 @@ from sopht.utils import get_test_tol
 from tests.test_simulator.test_immersed_body.rigid_body.test_derived_rigid_bodies import (
     mock_xy_plane,
 )
+import sopht.utils as spu
 
 
 def mock_2d_cylinder():
@@ -19,7 +20,7 @@ def mock_2d_cylinder():
         start, direction, normal, base_length, cyl_radius, density=1e3
     )
     cylinder.velocity_collection[...] = 3.0
-    cylinder.omega_collection[...] = 4.0
+    cylinder.omega_collection[spu.VectorField.z_axis_idx()] = 4.0
     return cylinder
 
 
@@ -402,4 +403,156 @@ def test_rectangular_plane_grid_spacing(num_forcing_points_along_length):
     )
     max_grid_spacing = rect_plane_forcing_grid.get_maximum_lagrangian_grid_spacing()
     correct_max_grid_spacing = plane.length / num_forcing_points_along_length
+    assert correct_max_grid_spacing == max_grid_spacing
+
+
+@pytest.mark.parametrize("num_forcing_points_along_length", [8, 16])
+def test_open_end_3d_circular_cylinder_grid_kinematics(num_forcing_points_along_length):
+    cylinder = mock_2d_cylinder()
+    grid_dim = 3
+    circ_cyl_forcing_grid = sps.OpenEndCircularCylinderForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points_along_length=num_forcing_points_along_length,
+    )
+    cylinder_circumference = 2 * np.pi * cylinder.radius
+    # keep same density of points along surface
+    num_forcing_points_along_circumference = int(
+        np.ceil(
+            num_forcing_points_along_length * cylinder_circumference / cylinder.length
+        )
+    )
+    num_forcing_points = (
+        num_forcing_points_along_length * num_forcing_points_along_circumference
+    )
+    assert circ_cyl_forcing_grid.rigid_body is cylinder
+    assert circ_cyl_forcing_grid.position_field.shape == (grid_dim, num_forcing_points)
+    assert circ_cyl_forcing_grid.velocity_field.shape == (grid_dim, num_forcing_points)
+
+    # check if grid position consistent
+    cylinder_com = cylinder.position_collection
+    moment_arm = circ_cyl_forcing_grid.position_field - cylinder_com
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
+    grid_distance_from_center_line = np.linalg.norm(moment_arm[:z_axis_idx], axis=0)
+    # check if all points are at distance = radius from center line
+    np.testing.assert_allclose(grid_distance_from_center_line, cylinder.radius)
+
+    # check if location of points on circumference is correct
+    d_theta = 2 * np.pi / num_forcing_points_along_circumference
+    correct_angular_grid = np.tile(
+        np.linspace(
+            d_theta / 2.0,
+            2 * np.pi - d_theta / 2.0,
+            num_forcing_points_along_circumference,
+        ),
+        (num_forcing_points_along_length,),
+    )
+    sine_of_angular_grid = (
+        circ_cyl_forcing_grid.position_field[y_axis_idx] - cylinder_com[y_axis_idx]
+    )
+    cos_of_angular_grid = (
+        circ_cyl_forcing_grid.position_field[x_axis_idx] - cylinder_com[x_axis_idx]
+    )
+    # since arctan2 gives values in range (-pi, pi)
+    test_angular_grid = (
+        np.arctan2(sine_of_angular_grid, cos_of_angular_grid) + 2 * np.pi
+    ) % (2 * np.pi)
+    np.testing.assert_allclose(test_angular_grid, correct_angular_grid)
+    # check if axial locations are correct
+    correct_length_grid = cylinder_com[z_axis_idx] + np.repeat(
+        np.linspace(
+            -0.5 * cylinder.length,
+            0.5 * cylinder.length,
+            num_forcing_points_along_length,
+        ),
+        num_forcing_points_along_circumference,
+    )
+    np.testing.assert_allclose(
+        circ_cyl_forcing_grid.position_field[z_axis_idx], correct_length_grid
+    )
+
+    # check if velocities are correct
+    correct_velocity_field = np.zeros_like(circ_cyl_forcing_grid.velocity_field)
+    cylinder_com_velocity = cylinder.velocity_collection[..., 0]
+    # vel = v_com + omega cross r
+    correct_velocity_field[x_axis_idx] = (
+        cylinder_com_velocity[x_axis_idx]
+        - moment_arm[y_axis_idx] * cylinder.omega_collection[z_axis_idx, 0]
+    )
+    correct_velocity_field[y_axis_idx] = (
+        cylinder_com_velocity[y_axis_idx]
+        + moment_arm[x_axis_idx] * cylinder.omega_collection[z_axis_idx, 0]
+    )
+    correct_velocity_field[z_axis_idx] = cylinder_com_velocity[z_axis_idx]
+    np.testing.assert_allclose(
+        correct_velocity_field, circ_cyl_forcing_grid.velocity_field
+    )
+
+
+@pytest.mark.parametrize("num_forcing_points_along_length", [8, 16])
+def test_open_end_3d_circular_cylinder_grid_force_transfer(
+    num_forcing_points_along_length,
+):
+    cylinder = mock_2d_cylinder()
+    grid_dim = 3
+    circ_cyl_forcing_grid = sps.OpenEndCircularCylinderForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points_along_length=num_forcing_points_along_length,
+    )
+    cyl_dim = grid_dim
+    body_flow_forces = np.zeros((cyl_dim, 1))
+    body_flow_torques = np.zeros_like(body_flow_forces)
+    lag_grid_forcing_field = np.zeros((grid_dim, circ_cyl_forcing_grid.num_lag_nodes))
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
+    uniform_forcing = (2.0, 3.0, 0.0)
+    for axis in [x_axis_idx, y_axis_idx, z_axis_idx]:
+        lag_grid_forcing_field[axis] = uniform_forcing[axis]
+    circ_cyl_forcing_grid.transfer_forcing_from_grid_to_body(
+        body_flow_forces=body_flow_forces,
+        body_flow_torques=body_flow_torques,
+        lag_grid_forcing_field=lag_grid_forcing_field,
+    )
+    correct_body_flow_forces = np.zeros_like(body_flow_forces)
+    # negative sum
+    for axis in [x_axis_idx, y_axis_idx, z_axis_idx]:
+        correct_body_flow_forces[axis] = (
+            -uniform_forcing[axis] * circ_cyl_forcing_grid.num_lag_nodes
+        )
+    np.testing.assert_allclose(body_flow_forces, correct_body_flow_forces)
+
+    cylinder_com = cylinder.position_collection
+    moment_arm = circ_cyl_forcing_grid.position_field - cylinder_com
+    correct_body_flow_torques = np.zeros_like(correct_body_flow_forces)
+    correct_body_flow_torques[z_axis_idx] = -np.sum(
+        moment_arm[x_axis_idx] * uniform_forcing[y_axis_idx]
+        - moment_arm[y_axis_idx] * uniform_forcing[x_axis_idx]
+    )
+    np.testing.assert_allclose(
+        body_flow_torques,
+        correct_body_flow_torques,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("num_forcing_points_along_length", [8, 16])
+def test_open_end_3d_circular_cylinder_grid_spacing(num_forcing_points_along_length):
+    cylinder = mock_2d_cylinder()
+    grid_dim = 3
+    circ_cyl_forcing_grid = sps.OpenEndCircularCylinderForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points_along_length=num_forcing_points_along_length,
+    )
+    max_grid_spacing = circ_cyl_forcing_grid.get_maximum_lagrangian_grid_spacing()
+    cylinder_circumference = 2 * np.pi * cylinder.radius
+    correct_max_grid_spacing = max(
+        cylinder_circumference
+        / circ_cyl_forcing_grid.num_forcing_points_along_circumference,
+        cylinder.length / num_forcing_points_along_length,
+    )
     assert correct_max_grid_spacing == max_grid_spacing
