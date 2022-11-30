@@ -4,6 +4,7 @@ from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from .immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
+from typing import Type
 
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
@@ -15,7 +16,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         eul_grid_velocity_field: np.ndarray,
         body_flow_forces: np.ndarray,
         body_flow_torques: np.ndarray,
-        forcing_grid_cls: type(ImmersedBodyForcingGrid),
+        forcing_grid_cls: Type[ImmersedBodyForcingGrid],
         virtual_boundary_stiffness_coeff: float,
         virtual_boundary_damping_coeff: float,
         dx: float,

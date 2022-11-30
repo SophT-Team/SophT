@@ -46,11 +46,15 @@ flake8:
 	poetry run flake8 --version
 	poetry run flake8 sopht tests scripts
 
+.PHONY: mypy
+mypy:
+	poetry run mypy sopht
+
 .PHONY: format-codestyle
-format-codestyle: black flake8
+format-codestyle: black flake8 mypy
 
 .PHONY: check-codestyle
-check-codestyle: black-check flake8
+check-codestyle: black-check flake8 mypy
 
 .PHONY: formatting
 formatting: format-codestyle

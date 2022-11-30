@@ -8,7 +8,7 @@ from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
-    def __init__(self, grid_dim: int, cosserat_rod: type(ea.CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         num_lag_nodes = cosserat_rod.n_elems + 1
         super().__init__(grid_dim, num_lag_nodes)
         self.cosserat_rod = cosserat_rod
@@ -79,7 +79,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
-    def __init__(self, grid_dim: int, cosserat_rod: type(ea.CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         num_lag_nodes = cosserat_rod.n_elems
         super().__init__(grid_dim, num_lag_nodes)
         self.cosserat_rod = cosserat_rod
@@ -134,7 +134,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(self, grid_dim: int, cosserat_rod: type(ea.CosseratRod)):
+    def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         if grid_dim != 2:
             raise ValueError(
                 "Invalid grid dimensions. Cosserat rod edge forcing grid is only "
@@ -298,9 +298,9 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        cosserat_rod: type(ea.CosseratRod),
+        cosserat_rod: ea.CosseratRod,
         surface_grid_density_for_largest_element: int,
-    ):
+    ) -> None:
         if grid_dim != 3:
             raise ValueError(
                 "Invalid grid dimensions. Cosserat rod surface forcing grid is only "

@@ -16,7 +16,7 @@ def gen_laplacian_filter_kernel_3d(
     field_buffer: np.ndarray,
     real_t: Type,
     num_threads: Union[bool, int] = False,
-    fixed_grid_size: Union[bool, Tuple] = False,
+    fixed_grid_size: Union[Tuple, bool] = False,
     field_type: str = "scalar",
     filter_type: str = "multiplicative",
 ):
@@ -46,7 +46,7 @@ def gen_laplacian_filter_kernel_3d(
     # we can add dtype checks later
     grid_info = (
         f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if fixed_grid_size
+        if type(fixed_grid_size) is tuple
         else "3D"
     )
 
