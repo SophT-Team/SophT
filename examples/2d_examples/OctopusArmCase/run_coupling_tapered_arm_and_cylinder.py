@@ -1,6 +1,6 @@
 import numpy as np
 from set_environment_tapered_arm_cylinder import Environment
-from arm_functions import SigmoidActivationLongitudinalMuscles  # , LocalActivation
+from arm_functions_2d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
 import sopht.simulator as sps
 import sopht.utils as spu
 

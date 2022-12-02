@@ -34,23 +34,27 @@ pre-commit-install:
 .PHONY: black
 black:
 	poetry run black --version
-	poetry run black --config pyproject.toml sopht examples tests scripts
+	poetry run black ./
 
 .PHONY: black-check
 black-check:
 	poetry run black --version
-	poetry run black --diff --check --config pyproject.toml sopht examples tests scripts
+	poetry run black --diff --check ./
 
 .PHONY: flake8
 flake8:
 	poetry run flake8 --version
-	poetry run flake8 sopht tests scripts
+	poetry run flake8 sopht tests scripts examples
+
+.PHONY: mypy
+mypy:
+	poetry run mypy ./
 
 .PHONY: format-codestyle
-format-codestyle: black flake8
+format-codestyle: black flake8 mypy
 
 .PHONY: check-codestyle
-check-codestyle: black-check flake8
+check-codestyle: black-check flake8 mypy
 
 .PHONY: formatting
 formatting: format-codestyle

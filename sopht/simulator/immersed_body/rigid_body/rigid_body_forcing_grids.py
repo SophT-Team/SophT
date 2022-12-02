@@ -14,8 +14,8 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
     """
 
     def __init__(
-        self, grid_dim: int, num_lag_nodes: int, rigid_body: type(ea.Cylinder)
-    ):
+        self, grid_dim: int, num_lag_nodes: int, rigid_body: ea.Cylinder
+    ) -> None:
         if grid_dim != 2:
             raise ValueError(
                 "Invalid grid dimensions. 2D cylinder forcing grid is only "
@@ -86,8 +86,8 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
     """
 
     def __init__(
-        self, grid_dim: int, rigid_body: type(ea.Cylinder), num_forcing_points: int
-    ):
+        self, grid_dim: int, rigid_body: ea.Cylinder, num_forcing_points: int
+    ) -> None:
         super().__init__(
             grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body
         )
@@ -117,8 +117,8 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid of a 3D rigid body with cross-section."""
 
     def __init__(
-        self, grid_dim: int, num_lag_nodes: int, rigid_body: type(ea.RigidBodyBase)
-    ):
+        self, grid_dim: int, num_lag_nodes: int, rigid_body: ea.RigidBodyBase
+    ) -> None:
         if grid_dim != 3:
             raise ValueError(
                 "Invalid grid dimensions. 3D Rigid body forcing grid is only "
@@ -248,9 +248,9 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        rigid_body: type(ea.Sphere),
+        rigid_body: ea.Sphere,
         num_forcing_points_along_equator: int,
-    ):
+    ) -> None:
         self.num_forcing_points_along_equator = num_forcing_points_along_equator
         polar_angle_grid = np.linspace(
             0, np.pi, self.num_forcing_points_along_equator // 2
@@ -265,9 +265,9 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         super().__init__(
             grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
         )
-        global_frame_relative_position_x = np.array([])
-        global_frame_relative_position_y = np.array([])
-        global_frame_relative_position_z = np.array([])
+        global_frame_relative_position_x = np.array([], dtype=float)
+        global_frame_relative_position_y = np.array([], dtype=float)
+        global_frame_relative_position_z = np.array([], dtype=float)
         for num_forcing_points_along_latitude, polar_angle in zip(
             num_forcing_points_along_latitudes, polar_angle_grid
         ):
@@ -332,9 +332,9 @@ class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def __init__(
         self,
         grid_dim: int,
-        rigid_body: type(RectangularPlane),
+        rigid_body: RectangularPlane,
         num_forcing_points_along_length: int,
-    ):
+    ) -> None:
         self.num_forcing_points_along_length = num_forcing_points_along_length
         self.num_forcing_points_along_breadth = int(
             num_forcing_points_along_length * rigid_body.breadth / rigid_body.length

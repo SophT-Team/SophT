@@ -620,7 +620,7 @@ class CosseratRodIO(IO):
     Derived IO class for Cosserat rod IO.
     """
 
-    def __init__(self, cosserat_rod: type(CosseratRod), dim, real_dtype=np.float64):
+    def __init__(self, cosserat_rod: CosseratRod, dim, real_dtype=np.float64):
         super().__init__(dim, real_dtype)
         self.cosserat_rod = cosserat_rod
 

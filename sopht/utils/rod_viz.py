@@ -38,7 +38,7 @@ def plot_video_of_rod_surface(  # noqa C901
     sphere_flag = False
     if kwargs.__contains__("sphere_history"):
         sphere_flag = True
-        sphere_history = kwargs.get("sphere_history")
+        sphere_history = kwargs["sphere_history"]
         n_visualized_spheres = len(sphere_history)  # should be one for now
 
         def sphere_history_unpacker(sph_idx, t_idx):
@@ -80,7 +80,7 @@ def plot_video_of_rod_surface(  # noqa C901
         ax.set_zlim(*zlim)
         ax.set_box_aspect((difference(xlim), difference(ylim), difference(zlim)))
         time_idx = 0
-        rod_scatters = [None for _ in range(n_visualized_rods)]
+        rod_scatters = []
 
         for rod_idx in range(n_visualized_rods):
             inst_position, inst_radius = rod_history_unpacker(rod_idx, time_idx)
@@ -92,17 +92,18 @@ def plot_video_of_rod_surface(  # noqa C901
             scaling_factor = (
                 ax.get_window_extent().width / max_axis_length * 72.0 / fig.dpi
             )
-
-            rod_scatters[rod_idx] = ax.scatter(
-                inst_position[VectorField.x_axis_idx()],
-                inst_position[VectorField.y_axis_idx()],
-                inst_position[VectorField.z_axis_idx()],
-                # for circle s = 4/pi*area = 4 * r^2
-                s=4 * (scaling_factor * inst_radius) ** 2,
+            rod_scatters.append(
+                ax.scatter(
+                    inst_position[VectorField.x_axis_idx()],
+                    inst_position[VectorField.y_axis_idx()],
+                    inst_position[VectorField.z_axis_idx()],
+                    # for circle s = 4/pi*area = 4 * r^2
+                    s=4 * (scaling_factor * inst_radius) ** 2,
+                )
             )
 
         if sphere_flag:
-            sphere_artists = [None for _ in range(n_visualized_spheres)]
+            sphere_artists = []
             for sphere_idx in range(n_visualized_spheres):
                 sphere_position, sphere_radius = sphere_history_unpacker(
                     sphere_idx, time_idx
@@ -110,12 +111,14 @@ def plot_video_of_rod_surface(  # noqa C901
                 scaling_factor = (
                     ax.get_window_extent().width / max_axis_length * 72.0 / fig.dpi
                 )
-                sphere_artists[sphere_idx] = ax.scatter(
-                    sphere_position[VectorField.x_axis_idx()],
-                    sphere_position[VectorField.y_axis_idx()],
-                    sphere_position[VectorField.z_axis_idx()],
-                    # for circle s = 4/pi*area = 4 * r^2
-                    s=4 * (scaling_factor * sphere_radius) ** 2,
+                sphere_artists.append(
+                    ax.scatter(
+                        sphere_position[VectorField.x_axis_idx()],
+                        sphere_position[VectorField.y_axis_idx()],
+                        sphere_position[VectorField.z_axis_idx()],
+                        # for circle s = 4/pi*area = 4 * r^2
+                        s=4 * (scaling_factor * sphere_radius) ** 2,
+                    )
                 )
                 # sphere_radius,
                 # color=sphere_cmap(sphere_idx),)
@@ -184,35 +187,41 @@ def plot_video_of_rod_surface(  # noqa C901
         ax.set_ylim(*ylim)
 
         time_idx = 0
-        rod_lines = [None for _ in range(n_visualized_rods)]
-        rod_com_lines = [None for _ in range(n_visualized_rods)]
-        rod_scatters = [None for _ in range(n_visualized_rods)]
+        rod_lines = []
+        rod_com_lines = []
+        rod_scatters = []
 
         for rod_idx in range(n_visualized_rods):
             inst_position, inst_radius = rod_history_unpacker(rod_idx, time_idx)
             if not inst_position.shape[1] == inst_radius.shape[0]:
                 inst_position = 0.5 * (inst_position[..., 1:] + inst_position[..., :-1])
-            rod_lines[rod_idx] = ax.plot(
-                inst_position[VectorField.x_axis_idx()],
-                inst_position[VectorField.y_axis_idx()],
-                "r",
-                lw=0.5,
-            )[0]
+            rod_lines.append(
+                ax.plot(
+                    inst_position[VectorField.x_axis_idx()],
+                    inst_position[VectorField.y_axis_idx()],
+                    "r",
+                    lw=0.5,
+                )[0]
+            )
             inst_com = com_history_unpacker(rod_idx)
-            rod_com_lines[rod_idx] = ax.plot(
-                inst_com[VectorField.x_axis_idx()],
-                inst_com[VectorField.y_axis_idx()],
-                "k--",
-                lw=2.0,
-            )[0]
+            rod_com_lines.append(
+                ax.plot(
+                    inst_com[VectorField.x_axis_idx()],
+                    inst_com[VectorField.y_axis_idx()],
+                    "k--",
+                    lw=2.0,
+                )[0]
+            )
 
             scaling_factor = (
                 ax.get_window_extent().width / max_axis_length * 72.0 / fig.dpi
             )
-            rod_scatters[rod_idx] = ax.scatter(
-                inst_position[VectorField.x_axis_idx()],
-                inst_position[VectorField.y_axis_idx()],
-                s=4 * (scaling_factor * inst_radius) ** 2,
+            rod_scatters.append(
+                ax.scatter(
+                    inst_position[VectorField.x_axis_idx()],
+                    inst_position[VectorField.y_axis_idx()],
+                    s=4 * (scaling_factor * inst_radius) ** 2,
+                )
             )
 
         if sphere_flag:

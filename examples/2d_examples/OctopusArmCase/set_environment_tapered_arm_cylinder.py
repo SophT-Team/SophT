@@ -2,7 +2,7 @@ from collections import defaultdict
 import numpy as np
 import elastica as ea
 from elastica._calculus import _isnan_check
-from arm_functions import StraightRodCallBack, CylinderCallBack
+from arm_functions_2d import StraightRodCallBack, CylinderCallBack
 
 
 from coomm.actuations.muscles import (
@@ -300,7 +300,7 @@ class ArmEnvironment:
         # Position of the rod cannot be NaN, it is not valid, stop the simulation
         invalid_values_condition = _isnan_check(self.shearable_rod.position_collection)
 
-        if invalid_values_condition == True:
+        if invalid_values_condition:
             print("NaN detected in the simulation !!!!!!!!")
             done = True
 
