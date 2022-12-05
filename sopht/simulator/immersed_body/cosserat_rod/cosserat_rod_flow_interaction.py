@@ -26,7 +26,7 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
         enable_eul_grid_forcing_reset=False,
         num_threads=False,
         start_time=0.0,
-        **forcing_grid_kwargs: dict,
+        **forcing_grid_kwargs,
     ) -> None:
         """Class initialiser."""
         body_flow_forces = np.zeros(
