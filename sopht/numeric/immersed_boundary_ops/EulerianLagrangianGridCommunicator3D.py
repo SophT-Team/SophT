@@ -118,9 +118,9 @@ def generate_local_eulerian_grid_support_of_lagrangian_grid_kernel_3d(
 
         """
         # dtype of nearest_grid_index takes care of type casting to int
-        nearest_eul_grid_index_to_lag_grid[...] = (
-            lag_positions - eul_grid_coord_shift
-        ) // dx
+        nearest_eul_grid_index_to_lag_grid[...] = np.rint(
+            (lag_positions - eul_grid_coord_shift) / dx
+        )
         # TODO We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         # get relative distance (support) of body
