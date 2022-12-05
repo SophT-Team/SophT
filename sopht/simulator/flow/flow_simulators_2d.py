@@ -27,6 +27,7 @@ class UnboundedFlowSimulator2D:
         with_free_stream_flow=False,
         real_t=np.float32,
         num_threads=1,
+        time: float = 0.0,
         **kwargs,
     ):
         """Class initialiser
@@ -40,6 +41,7 @@ class UnboundedFlowSimulator2D:
         :param with_free_stream_flow: has free stream flow or not
         :param real_t: precision of the solver
         :param num_threads: number of threads
+        :param time: simulator time at initialisation
 
         Notes
         -----
@@ -54,6 +56,7 @@ class UnboundedFlowSimulator2D:
         self.with_free_stream_flow = with_free_stream_flow
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
+        self.time = time
         supported_flow_types = [
             "passive_scalar",
             "navier_stokes",
@@ -195,12 +198,21 @@ class UnboundedFlowSimulator2D:
 
     def finalise_flow_timestep(self):
         # defqult time step
-        self.time_step = self.advection_and_diffusion_timestep
+        self.flow_time_step = self.advection_and_diffusion_timestep
 
         if self.flow_type == "navier_stokes":
-            self.time_step = self.navier_stokes_timestep
+            self.flow_time_step = self.navier_stokes_timestep
         elif self.flow_type == "navier_stokes_with_forcing":
-            self.time_step = self.navier_stokes_with_forcing_timestep
+            self.flow_time_step = self.navier_stokes_with_forcing_timestep
+
+    def update_simulator_time(self, dt: float) -> None:
+        """Updates simulator time."""
+        self.time += dt
+
+    def time_step(self, dt: float, **kwargs) -> None:
+        """Final simulator time step"""
+        self.flow_time_step(dt=dt, **kwargs)
+        self.update_simulator_time(dt=dt)
 
     def advection_and_diffusion_timestep(self, dt, **kwargs):
         self.advection_timestep(
