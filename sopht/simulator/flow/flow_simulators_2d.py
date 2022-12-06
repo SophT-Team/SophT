@@ -12,6 +12,7 @@ from sopht.numeric.eulerian_grid_ops import (
 )
 from sopht.utils.precision import get_test_tol
 from sopht.utils.field import VectorField
+from typing import Tuple, Type, Callable
 
 
 class UnboundedFlowSimulator2D:
@@ -19,17 +20,16 @@ class UnboundedFlowSimulator2D:
 
     def __init__(
         self,
-        grid_size,
-        x_range,
-        kinematic_viscosity,
-        CFL=0.1,
-        flow_type="passive_scalar",
-        with_free_stream_flow=False,
-        real_t=np.float32,
-        num_threads=1,
+        grid_size: Tuple[int, int],
+        x_range: float,
+        kinematic_viscosity: float,
+        CFL: float = 0.1,
+        flow_type: str = "passive_scalar",
+        real_t: Type = np.float32,
+        num_threads: int = 1,
         time: float = 0.0,
         **kwargs,
-    ):
+    ) -> None:
         """Class initialiser
 
         :param grid_size: Grid size of simulator
@@ -38,7 +38,6 @@ class UnboundedFlowSimulator2D:
         :param CFL: Courant Freidrich Lewy number (advection timestep)
         :param flow_type: Nature of the simulator, can be "passive_scalar" (default value),
         "navier_stokes" or "navier_stokes_with_forcing"
-        :param with_free_stream_flow: has free stream flow or not
         :param real_t: precision of the solver
         :param num_threads: number of threads
         :param time: simulator time at initialisation
@@ -53,7 +52,6 @@ class UnboundedFlowSimulator2D:
         self.real_t = real_t
         self.num_threads = num_threads
         self.flow_type = flow_type
-        self.with_free_stream_flow = with_free_stream_flow
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
         self.time = time
@@ -64,13 +62,10 @@ class UnboundedFlowSimulator2D:
         ]
         if self.flow_type not in supported_flow_types:
             raise ValueError("Invalid flow type given")
-        if self.flow_type == "passive_scalar" and self.with_free_stream_flow:
-            raise ValueError(
-                "Free stream flow not defined for passive advection diffusion!"
-            )
         self.init_domain()
         self.init_fields()
         if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
+            self.with_free_stream_flow = kwargs.get("with_free_stream_flow", False)
             if "penalty_zone_width" in kwargs:
                 self.penalty_zone_width = kwargs.get("penalty_zone_width")
             else:
@@ -78,7 +73,7 @@ class UnboundedFlowSimulator2D:
         self.compile_kernels()
         self.finalise_flow_timestep()
 
-    def init_domain(self):
+    def init_domain(self) -> None:
         """Initialize the domain i.e. grid coordinates. etc."""
         grid_size_y, grid_size_x = self.grid_size
         self.y_range = self.x_range * grid_size_y / grid_size_x
@@ -102,7 +97,7 @@ class UnboundedFlowSimulator2D:
             "\n==============================================="
         )
 
-    def init_fields(self):
+    def init_fields(self) -> None:
         """Initialize the necessary field arrays, i.e. vorticity, velocity, etc."""
         # Initialize flow field
         self.primary_scalar_field = np.zeros(self.grid_size, dtype=self.real_t)
@@ -119,7 +114,7 @@ class UnboundedFlowSimulator2D:
             # this one holds the forcing from bodies
             self.eul_grid_forcing_field = np.zeros_like(self.velocity_field)
 
-    def compile_kernels(self):
+    def compile_kernels(self) -> None:
         """Compile necessary kernels based on flow type"""
         self.diffusion_timestep = gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
             real_t=self.real_t,
@@ -173,33 +168,38 @@ class UnboundedFlowSimulator2D:
                 num_threads=self.num_threads,
                 field_type="vector",
             )
-        # free stream velocity stuff
-        if self.with_free_stream_flow:
-            add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
-                real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
-                num_threads=self.num_threads,
-                field_type="vector",
-            )
-
-            def update_velocity_with_free_stream(free_stream_velocity):
-                add_fixed_val(
-                    sum_field=self.velocity_field,
-                    vector_field=self.velocity_field,
-                    fixed_vals=free_stream_velocity,
+        # free stream velocity stuff (only meaningful in navier stokes problems)
+        if self.flow_type in ["navier_stokes", "navier_stokes_with_forcing"]:
+            if self.with_free_stream_flow:
+                add_fixed_val = gen_add_fixed_val_pyst_kernel_2d(
+                    real_t=self.real_t,
+                    fixed_grid_size=self.grid_size,
+                    num_threads=self.num_threads,
+                    field_type="vector",
                 )
 
-        else:
+                def update_velocity_with_free_stream(
+                    free_stream_velocity: np.ndarray,
+                ) -> None:
+                    add_fixed_val(
+                        sum_field=self.velocity_field,
+                        vector_field=self.velocity_field,
+                        fixed_vals=free_stream_velocity,
+                    )
 
-            def update_velocity_with_free_stream(free_stream_velocity):
-                ...
+            else:
 
-        self.update_velocity_with_free_stream = update_velocity_with_free_stream
+                def update_velocity_with_free_stream(
+                    free_stream_velocity: np.ndarray,
+                ) -> None:
+                    ...
 
-    def finalise_flow_timestep(self):
+            self.update_velocity_with_free_stream = update_velocity_with_free_stream
+
+    def finalise_flow_timestep(self) -> None:
+        self.flow_time_step: Callable
         # defqult time step
         self.flow_time_step = self.advection_and_diffusion_timestep
-
         if self.flow_type == "navier_stokes":
             self.flow_time_step = self.navier_stokes_timestep
         elif self.flow_type == "navier_stokes_with_forcing":
@@ -214,7 +214,7 @@ class UnboundedFlowSimulator2D:
         self.flow_time_step(dt=dt, **kwargs)
         self.update_simulator_time(dt=dt)
 
-    def advection_and_diffusion_timestep(self, dt, **kwargs):
+    def advection_and_diffusion_timestep(self, dt: float, **kwargs) -> None:
         self.advection_timestep(
             field=self.primary_scalar_field,
             advection_flux=self.buffer_scalar_field,
@@ -229,7 +229,7 @@ class UnboundedFlowSimulator2D:
 
     def compute_velocity_from_vorticity(
         self,
-    ):
+    ) -> None:
         self.penalise_field_towards_boundary(field=self.vorticity_field)
         self.unbounded_poisson_solver.solve(
             solution_field=self.stream_func_field,
@@ -241,12 +241,16 @@ class UnboundedFlowSimulator2D:
             prefactor=self.real_t(0.5 / self.dx),
         )
 
-    def navier_stokes_timestep(self, dt, free_stream_velocity=(0.0, 0.0)):
+    def navier_stokes_timestep(
+        self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)
+    ):
         self.advection_and_diffusion_timestep(dt=dt)
         self.compute_velocity_from_vorticity()
         self.update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 
-    def navier_stokes_with_forcing_timestep(self, dt, free_stream_velocity=(0.0, 0.0)):
+    def navier_stokes_with_forcing_timestep(
+        self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)
+    ) -> None:
         self.update_vorticity_from_velocity_forcing(
             vorticity_field=self.vorticity_field,
             velocity_forcing_field=self.eul_grid_forcing_field,
@@ -257,7 +261,9 @@ class UnboundedFlowSimulator2D:
             vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim
         )
 
-    def compute_stable_timestep(self, dt_prefac=1, precision="single"):
+    def compute_stable_timestep(
+        self, dt_prefac: float = 1, precision: str = "single"
+    ) -> float:
         """Compute stable timestep based on advection and diffusion limits."""
         # This may need a numba or pystencil version
         velocity_mag_field = self.buffer_scalar_field.view()

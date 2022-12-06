@@ -7,7 +7,7 @@ from typing import Tuple
 
 
 def lid_driven_cavity_case(
-    grid_size: Tuple[float, float],
+    grid_size: Tuple[int, int],
     reynolds: float = 100.0,
     num_threads: int = 4,
     coupling_stiffness: float = -5e4,
