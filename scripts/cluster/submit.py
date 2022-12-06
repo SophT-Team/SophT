@@ -29,24 +29,25 @@ export OMP_NUM_THREADS=32
 $PROJECT/.conda/envs/(env_name)/bin/python -u (program_name)
 
 """
+from typing import Dict, Union
 
 
 def create_submit_file(
-    program_name,
-    environment_name,
-    cluster_info_dict,
-    output_file_name=None,
-    error_file_name=None,
-    partition="shared",
-    num_nodes=1,
-    num_threads=4,
-    memory=64,
-    time="48:00:00",
-    verbose=False,
-    mail_user=None,
-    mail_type=None,
-    other_cli_arguments="",
-):
+    program_name: str,
+    environment_name: str,
+    cluster_info_dict: Dict,
+    output_file_name: Union[str, None] = None,
+    error_file_name: Union[str, None] = None,
+    partition: str = "shared",
+    num_nodes: int = 1,
+    num_threads: int = 4,
+    memory: int = 64,
+    time: str = "48:00:00",
+    verbose: bool = False,
+    mail_user: Union[str, None] = None,
+    mail_type: Union[str, None] = None,
+    other_cli_arguments: str = "",
+) -> None:
 
     filename = "submit_" + program_name.replace(".py", ".sh")
     f = open(filename, "w")
