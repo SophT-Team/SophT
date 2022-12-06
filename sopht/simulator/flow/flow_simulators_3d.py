@@ -33,11 +33,11 @@ class UnboundedFlowSimulator3D:
         flow_type: str = "passive_scalar",
         real_t: Type = np.float32,
         num_threads: int = 1,
-        filter_vorticity=False,
-        poisson_solver_type="greens_function_convolution",
+        filter_vorticity: bool = False,
+        poisson_solver_type: str = "greens_function_convolution",
         time: float = 0.0,
         **kwargs,
-    ):
+    ) -> None:
         """Class initialiser
 
         :param grid_size: Grid size of simulator
