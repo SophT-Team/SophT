@@ -4,17 +4,17 @@ from matplotlib import cm
 from tqdm import tqdm
 from matplotlib.patches import Circle
 import matplotlib.animation as animation
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Tuple
 from sopht.utils.field import VectorField
 
 
 def plot_video_of_rod_surface(  # noqa C901
     rods_history: Sequence[Dict],
     video_name="video.mp4",
-    fps=60,
-    step=1,
+    fps: int = 60,
+    step: int = 1,
     **kwargs,
-):
+) -> None:
     plt.rcParams.update({"font.size": 22})
     folder_name = kwargs.get("folder_name", "")
     # 2d case <always 2d case for now>
@@ -24,14 +24,14 @@ def plot_video_of_rod_surface(  # noqa C901
     n_visualized_rods = len(rods_history)  # should be one for now
 
     # Rod info
-    def rod_history_unpacker(rod_idx, t_idx):
+    def rod_history_unpacker(rod_idx: int, t_idx: int) -> Tuple[np.ndarray, np.ndarray]:
         return (
             rods_history[rod_idx]["position"][t_idx],
             rods_history[rod_idx]["radius"][t_idx],
         )
 
     # Rod center of mass
-    def com_history_unpacker(rod_idx):
+    def com_history_unpacker(rod_idx: int) -> np.ndarray:
         return rods_history[rod_idx]["com"][time_idx]
 
     # Generate target sphere data
@@ -41,7 +41,9 @@ def plot_video_of_rod_surface(  # noqa C901
         sphere_history = kwargs["sphere_history"]
         n_visualized_spheres = len(sphere_history)  # should be one for now
 
-        def sphere_history_unpacker(sph_idx, t_idx):
+        def sphere_history_unpacker(
+            sph_idx: int, t_idx: int
+        ) -> Tuple[np.ndarray, np.ndarray]:
             return (
                 sphere_history[sph_idx]["position"][t_idx],
                 sphere_history[sph_idx]["radius"][t_idx],
@@ -60,7 +62,7 @@ def plot_video_of_rod_surface(  # noqa C901
     ylim = kwargs.get("y_limits", (-1.0, 1.0))
     zlim = kwargs.get("z_limits", (-0.05, 1.0))
 
-    def difference(x):
+    def difference(x: Tuple[float, float]) -> float:
         return x[1] - x[0]
 
     max_axis_length = max(difference(xlim), difference(ylim))

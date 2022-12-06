@@ -3,7 +3,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib import cm
 
 
-def get_lab_cmap(res: int = 256):
+def get_lab_cmap(res: int = 256) -> ListedColormap:
     """Returns Custom map resembling Orange-Blue scheme"""
     top = cm.get_cmap("Oranges", res)
     bottom = cm.get_cmap("Blues", res)

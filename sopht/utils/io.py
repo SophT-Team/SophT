@@ -2,6 +2,7 @@
 import h5py
 import numpy as np
 from elastica.rod.cosserat_rod import CosseratRod
+from typing import Dict, Type, List
 
 
 class IO:
@@ -29,7 +30,7 @@ class IO:
                                 (Fields)   (Fields)             (Fields)   (Fields)
     """
 
-    def __init__(self, dim, real_dtype=np.float64):
+    def __init__(self, dim: int, real_dtype: Type = np.float64) -> None:
         """Class initializer."""
         self.dim = dim
         assert self.dim == 2 or self.dim == 3, "Invalid dimension (only 2D and 3D)"
@@ -39,23 +40,23 @@ class IO:
         # Initialize dictionaries for fields for IO and their
         # corresponding field_type ('Scalar' or 'Vector') Eulerian grid
         self.eulerian_grid_defined = False
-        self.eulerian_fields = {}
-        self.eulerian_fields_type = {}
+        self.eulerian_fields: Dict = {}
+        self.eulerian_fields_type: Dict = {}
 
         # Lagrangian grid
-        self.lagrangian_fields = {}
-        self.lagrangian_fields_type = {}
-        self.lagrangian_grids = {}
-        self.lagrangian_fields_with_grid_name = {}
+        self.lagrangian_fields: Dict = {}
+        self.lagrangian_fields_type: Dict = {}
+        self.lagrangian_grids: Dict = {}
+        self.lagrangian_fields_with_grid_name: Dict = {}
         self.lagrangian_grid_count = 0
-        self.lagrangian_grid_connection = {}
+        self.lagrangian_grid_connection: Dict = {}
 
     def define_eulerian_grid(
         self,
-        origin,
-        dx,
-        grid_size,
-    ):
+        origin: np.ndarray,
+        dx: np.ndarray,
+        grid_size: np.ndarray,
+    ) -> None:
         """
         Define the Eulerian grid mesh.
 
@@ -79,7 +80,7 @@ class IO:
         self.eulerian_grid_size = grid_size  # z,y,x
         self.eulerian_grid_defined = True
 
-    def add_as_eulerian_fields_for_io(self, **fields_for_io):
+    def add_as_eulerian_fields_for_io(self, **fields_for_io) -> None:
         """Add Eulerian fields to be saved/loaded.
 
         Eulerian grid needs to be defined first using `define_eulerian_grid(...)` call.
@@ -112,11 +113,11 @@ class IO:
 
     def add_as_lagrangian_fields_for_io(
         self,
-        lagrangian_grid,
-        lagrangian_grid_name=None,
-        lagrangian_grid_connect=False,
+        lagrangian_grid: np.ndarray,
+        lagrangian_grid_name: str = None,
+        lagrangian_grid_connect: bool = False,
         **fields_for_io,
-    ):
+    ) -> None:
         """
         Add lagrangian fields to be saved/loaded.
 
@@ -175,7 +176,7 @@ class IO:
                     f"(scalar / vector) based on field dimension {field.shape}"
                 )
 
-    def save(self, h5_file_name, time=0.0):  # noqa: C901
+    def save(self, h5_file_name: str, time: float = 0.0) -> None:  # noqa: C901
         """
         This is a wrapper function to call _save function.
 
@@ -189,7 +190,7 @@ class IO:
 
         self._save(h5_file_name, time)
 
-    def _save(self, h5_file_name, time=0.0):  # noqa: C901
+    def _save(self, h5_file_name: str, time: float = 0.0) -> None:  # noqa: C901
         """
         Save added fields to hdf5 file.
 
@@ -301,7 +302,7 @@ class IO:
         if self.lagrangian_fields:
             self.generate_xdmf_lagrangian(h5_file_name=h5_file_name, time=time)
 
-    def load(self, h5_file_name):  # noqa: C901
+    def load(self, h5_file_name: str) -> None:  # noqa: C901
         """Load fields from hdf5 file.
 
         Field arrays need to be allocated and added to `eulerian_fields` and/or
@@ -313,7 +314,7 @@ class IO:
             String containing name of the hdf5 file.
         """
         with h5py.File(h5_file_name, "r") as f:
-            keys = []
+            keys: List = []
             f.visit(keys.append)
 
             # Load time
@@ -419,7 +420,7 @@ class IO:
 
         return time
 
-    def generate_xdmf_eulerian(self, h5_file_name, time=0.0):
+    def generate_xdmf_eulerian(self, h5_file_name: str, time: float = 0.0) -> None:
         """Generate XDMF description file for Eulerian fields.
 
         Currently, the XDMF file is generated for Paraview visualization only.
@@ -515,7 +516,7 @@ class IO:
         with open(h5_file_name.replace(".h5", "_eulerian.xmf"), "w") as f:
             f.write(xdmffile)
 
-    def generate_xdmf_lagrangian(self, h5_file_name, time):
+    def generate_xdmf_lagrangian(self, h5_file_name: str, time: float) -> None:
         """Generate XDMF description file for Lagrangian fields.
 
         Currently, the XDMF file is generated for Paraview visualization only.
@@ -620,7 +621,9 @@ class CosseratRodIO(IO):
     Derived IO class for Cosserat rod IO.
     """
 
-    def __init__(self, cosserat_rod: CosseratRod, dim, real_dtype=np.float64):
+    def __init__(
+        self, cosserat_rod: CosseratRod, dim: int, real_dtype: Type = np.float64
+    ) -> None:
         super().__init__(dim, real_dtype)
         self.cosserat_rod = cosserat_rod
 
@@ -636,11 +639,11 @@ class CosseratRodIO(IO):
             lagrangian_grid_connect=True,
         )
 
-    def save(self, h5_file_name, time=0.0):
+    def save(self, h5_file_name: str, time: float = 0.0) -> None:
         self._update_rod_element_position()
         self._save(h5_file_name=h5_file_name, time=time)
 
-    def _update_rod_element_position(self):
+    def _update_rod_element_position(self) -> None:
         self.rod_element_position[...] = 0.5 * (
             self.cosserat_rod.position_collection[: self.dim, 1:]
             + self.cosserat_rod.position_collection[: self.dim, :-1]

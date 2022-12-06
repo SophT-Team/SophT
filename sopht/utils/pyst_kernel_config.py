@@ -15,7 +15,7 @@ def get_pyst_dtype(real_t: Type) -> str:
 
 def get_pyst_kernel_config(
     real_t: Type, num_threads: int, iteration_slice: Tuple = None
-):
+) -> ps.CreateKernelConfig:
     """Returns the pystencils kernel config based on the data
     dtype and number of threads"""
     pyst_dtype = get_pyst_dtype(real_t)

@@ -1,6 +1,6 @@
 def make_video_from_image_series(
     video_name: str, image_series_name: str, frame_rate: int
-):
+) -> None:
     """Makes a video using ffmpeg from series of images"""
     import os
 
@@ -17,7 +17,7 @@ def make_video_from_image_series(
     os.system(f"rm -f {image_series_name}*.png")
 
 
-def make_dir_and_transfer_h5_data(dir_name: str, clean_dir: bool = True):
+def make_dir_and_transfer_h5_data(dir_name: str, clean_dir: bool = True) -> None:
     """Makes a new directory and transfers h5 flow data files to the directory"""
     import os
 

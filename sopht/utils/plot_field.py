@@ -1,6 +1,11 @@
-def create_figure_and_axes(fig_aspect_ratio=1.0):
+from typing import Tuple
+import matplotlib.pyplot as plt
+
+
+def create_figure_and_axes(
+    fig_aspect_ratio: float = 1.0,
+) -> Tuple[plt.Figure, plt.Axes]:
     """Creates figure and axes for plotting contour fields"""
-    import matplotlib.pyplot as plt
 
     plt.style.use("seaborn")
     fig = plt.figure(frameon=True, dpi=150)
@@ -12,7 +17,9 @@ def create_figure_and_axes(fig_aspect_ratio=1.0):
     return fig, ax
 
 
-def save_and_clear_fig(fig, ax, cbar=None, file_name=""):
+def save_and_clear_fig(
+    fig: plt.Figure, ax: plt.Axes, cbar: plt.Figure.colorbar = None, file_name: str = ""
+) -> None:
     """Save figure and clear for next iteration"""
     fig.savefig(
         file_name,
