@@ -20,6 +20,9 @@ def point_source_advection_diffusion_case(
     # Consider a 1 by 1 3D domain
     x_range = 1.0
     nu = 1e-3
+    # start with non-zero to avoid singularity in point source
+    t_start = 5.0
+    t_end = 5.4
     # init vortex at (0.3 0.3, 0.3)
     flow_sim = sps.UnboundedFlowSimulator3D(
         grid_size=grid_size,
@@ -28,13 +31,11 @@ def point_source_advection_diffusion_case(
         flow_type="passive_vector",
         real_t=real_t,
         num_threads=num_threads,
+        time=t_start,
     )
     x_cm_start = 0.3
     y_cm_start = x_cm_start
     z_cm_start = x_cm_start
-    # start with non-zero to avoid singularity in point source
-    t_start = 5.0
-    t_end = 5.4
     # to start with point source magnitude = 1
     point_mag = 4.0 * np.pi * nu * t_start**1.5
     vorticity_field = flow_sim.primary_vector_field.view()
@@ -72,32 +73,33 @@ def point_source_advection_diffusion_case(
         io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
         io.add_as_eulerian_fields_for_io(vorticity=vorticity_field)
 
-    t = t_start
     foto_timer = 0.0
     foto_timer_limit = (t_end - t_start) / 20
 
     # iterate
-    while t < t_end:
+    while flow_sim.time < t_end:
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             print(
-                f"time: {t:.2f} ({((t-t_start)/(t_end-t_start)*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({((flow_sim.time-t_start)/(t_end-t_start)*100):2.1f}%), "
                 f"max_vort: {np.amax(vorticity_field):.4f}"
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (t * 100)) + ".h5", time=t
+                    h5_file_name="sopht_"
+                    + str("%0.4d" % (flow_sim.time * 100))
+                    + ".h5",
+                    time=flow_sim.time,
                 )
 
         dt = flow_sim.compute_stable_timestep()
         flow_sim.time_step(dt=dt)
 
-        t = t + dt
         foto_timer += dt
 
     # final vortex computation
-    t_end = t
+    t_end = flow_sim.time
     x_cm_final = x_cm_start + velocity_free_stream * (t_end - t_start)
     y_cm_final = y_cm_start + velocity_free_stream * (t_end - t_start)
     z_cm_final = z_cm_start + velocity_free_stream * (t_end - t_start)

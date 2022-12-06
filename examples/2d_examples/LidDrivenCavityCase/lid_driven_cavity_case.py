@@ -68,19 +68,18 @@ def lid_driven_cavity_case(
     timescale = ldc_side_length / lid_velocity
     t_end_hat = 3.0  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
-    t = 0.0
     foto_timer = 0.0
     foto_timer_limit = t_end / 50
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
 
-    while t < t_end:
+    while flow_sim.time < t_end:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            ax.set_title(f"U velocity, t_hat: {t / timescale:.2f}")
+            ax.set_title(f"U velocity, t_hat: {flow_sim.time / timescale:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx],
                 flow_sim.position_field[y_axis_idx],
@@ -97,10 +96,13 @@ def lid_driven_cavity_case(
                 color="k",
             )
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
@@ -113,8 +115,7 @@ def lid_driven_cavity_case(
         # timestep the flow
         flow_sim.time_step(dt)
 
-        # update time
-        t = t + dt
+        # update timer
         foto_timer += dt
 
     # compile video

@@ -148,7 +148,6 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     pendulum_sim.finalize()
     timestepper = ea.PositionVerlet()
     do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, pendulum_sim)
-    time = 0.0
     foto_timer = 0.0
     foto_timer_limit = final_time / 50
     T = []
@@ -158,12 +157,12 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
 
-    while time < final_time:
+    while flow_sim.time < final_time:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            ax.set_title(f"Vorticity, time: {time:.2f}")
+            ax.set_title(f"Vorticity, time: {flow_sim.time:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx],
                 flow_sim.position_field[y_axis_idx],
@@ -181,7 +180,10 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
                     color="k",
                 )
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
@@ -189,13 +191,13 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
                     flow_body_interactor.get_grid_deviation_error_l2_norm()
                 )
             print(
-                f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
             # dump forces
-            T.append(time)
+            T.append(flow_sim.time)
             cylinder_force.append(
                 np.linalg.norm(cylinder_flow_interactor.body_flow_forces)
             )
@@ -209,7 +211,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
         local_rod_dt = flow_dt / rod_time_steps
-        rod_time = time
+        rod_time = flow_sim.time
         for i in range(rod_time_steps):
             rod_time = do_step(
                 timestepper, stages_and_updates, pendulum_sim, rod_time, local_rod_dt
@@ -225,8 +227,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         # timestep the flow
         flow_sim.time_step(dt=flow_dt)
 
-        # update simulation time
-        time += flow_dt
+        # update timers
         foto_timer += flow_dt
 
     # compile video

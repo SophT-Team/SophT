@@ -41,6 +41,7 @@ def flow_past_cylinder_boundary_forcing_case(
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
+        time=0.0,
     )
 
     # Initialize fixed cylinder (elastica rigid body) with direction along Z
@@ -74,7 +75,6 @@ def flow_past_cylinder_boundary_forcing_case(
     # iterate
     timescale = cyl_radius / velocity_scale
     final_time = nondim_final_time * timescale  # dimensional end time
-    time = 0.0
     foto_timer = 0.0
     foto_timer_limit = final_time / 50
 
@@ -86,12 +86,12 @@ def flow_past_cylinder_boundary_forcing_case(
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
 
-    while time < final_time:
+    while flow_sim.time < final_time:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            ax.set_title(f"Vorticity, time: {time / timescale:.2f}")
+            ax.set_title(f"Vorticity, time: {flow_sim.time / timescale:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx],
                 flow_sim.position_field[y_axis_idx],
@@ -108,10 +108,13 @@ def flow_past_cylinder_boundary_forcing_case(
                 color="k",
             )
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (time * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {time:.2f} ({(time / final_time * 100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 "grid deviation L2 error: "
                 f"{cylinder_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
@@ -120,7 +123,7 @@ def flow_past_cylinder_boundary_forcing_case(
         # track diagnostic data
         if data_timer >= data_timer_limit or data_timer == 0:
             data_timer = 0.0
-            drag_coeffs_time.append(time / timescale)
+            drag_coeffs_time.append(flow_sim.time / timescale)
             # calculate drag
             F = np.sum(cylinder_flow_interactor.lag_grid_forcing_field[x_axis_idx, ...])
             drag_coeff = np.fabs(F) / velocity_scale / velocity_scale / cyl_radius
@@ -135,8 +138,7 @@ def flow_past_cylinder_boundary_forcing_case(
         # timestep the flow
         flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
-        # update time
-        time += dt
+        # update timers
         foto_timer += dt
         data_timer += dt
 

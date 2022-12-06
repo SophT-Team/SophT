@@ -28,6 +28,7 @@ def test_flow_sim_2d_navier_stokes_with_forcing_timestep(
     dx = real_t(x_range / grid_size_x)
     dt = 2.0
     free_stream_velocity = np.array([3.0, 4.0])
+    init_time = 1.0
     flow_sim = sps.UnboundedFlowSimulator2D(
         grid_size=grid_size,
         x_range=x_range,
@@ -36,7 +37,9 @@ def test_flow_sim_2d_navier_stokes_with_forcing_timestep(
         with_free_stream_flow=with_free_stream,
         real_t=real_t,
         num_threads=num_threads,
+        time=init_time,
     )
+    ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
     flow_sim.vorticity_field[...] = np.random.rand(
         *flow_sim.vorticity_field.shape
@@ -128,6 +131,7 @@ def test_flow_sim_2d_navier_stokes_with_forcing_timestep(
     if with_free_stream:
         ref_velocity_field[...] += free_stream_velocity.reshape(grid_dim, 1, 1)
 
+    assert flow_sim.time == ref_time
     np.testing.assert_allclose(flow_sim.eul_grid_forcing_field, 0.0)
     np.testing.assert_allclose(flow_sim.vorticity_field, ref_vorticity_field)
     np.testing.assert_allclose(flow_sim.velocity_field, ref_velocity_field)
