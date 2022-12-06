@@ -87,7 +87,6 @@ def flow_through_circular_pipe_case(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
 
-    t = 0.0
     t_end = 1.0
     foto_timer = 0.0
     foto_timer_limit = t_end / 40
@@ -105,12 +104,12 @@ def flow_through_circular_pipe_case(
     )
 
     # iterate
-    while t < t_end:
+    while flow_sim.time < t_end:
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             print(
-                f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 "grid deviation L2 error: "
@@ -118,7 +117,10 @@ def flow_through_circular_pipe_case(
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (t * 100)) + ".h5", time=t
+                    h5_file_name="sopht_"
+                    + str("%0.4d" % (flow_sim.time * 100))
+                    + ".h5",
+                    time=flow_sim.time,
                 )
             # midplane along X
             sim_velocity_profile = 0.5 * np.sum(
@@ -138,7 +140,9 @@ def flow_through_circular_pipe_case(
             ax.set_xlabel("Y")
             ax.set_ylabel("axial velocity")
             spu.save_and_clear_fig(
-                fig, ax, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
+                fig,
+                ax,
+                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
 
         dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
@@ -151,7 +155,6 @@ def flow_through_circular_pipe_case(
         flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
         # update timers
-        t = t + dt
         foto_timer += dt
 
     # compile video

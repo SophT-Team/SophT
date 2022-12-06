@@ -161,7 +161,6 @@ def flow_past_rod_case(
             cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
         )
 
-    time = 0.0
     foto_timer = 0.0
     timescale = base_length / U_free_stream
     final_time = non_dim_final_time * timescale
@@ -190,11 +189,11 @@ def flow_past_rod_case(
         )
 
     # iterate
-    while time < final_time:
+    while flow_sim.time < final_time:
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            ax.set_title(f"Velocity magnitude, time: {time / timescale:.2f}")
+            ax.set_title(f"Velocity magnitude, time: {flow_sim.time / timescale:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
@@ -219,14 +218,17 @@ def flow_past_rod_case(
                 color="k",
             )
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
             )
-            time_history.append(time)
+            time_history.append(flow_sim.time)
             rod_angle.append(rod_incline_angle_with_horizon(flow_past_rod))
             forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
             force_history.append(forces.copy())
             print(
-                f"time: {time:.2f} ({(time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"rod angle: {rod_incline_angle_with_horizon(flow_past_rod):2.2f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f},"
@@ -237,11 +239,14 @@ def flow_past_rod_case(
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (time * 100)) + ".h5",
-                    time=time,
+                    h5_file_name="sopht_"
+                    + str("%0.4d" % (flow_sim.time * 100))
+                    + ".h5",
+                    time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (time * 100)) + ".h5", time=time
+                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    time=flow_sim.time,
                 )
 
         # compute timestep
@@ -251,7 +256,7 @@ def flow_past_rod_case(
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
         local_rod_dt = flow_dt / rod_time_steps
-        rod_time = time
+        rod_time = flow_sim.time
         for i in range(rod_time_steps):
             rod_time = do_step(
                 timestepper, stages_and_updates, flow_past_sim, rod_time, local_rod_dt
@@ -266,8 +271,7 @@ def flow_past_rod_case(
             free_stream_velocity=velocity_free_stream,
         )
 
-        # update simulation time
-        time += flow_dt
+        # update timer
         foto_timer += flow_dt
 
     # compile video

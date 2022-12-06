@@ -124,7 +124,6 @@ def immersed_elastic_net_case(
         )
     elastic_net_sim.finalize()
     # =================TIMESTEPPING====================
-    time = 0.0
     foto_timer = 0.0
     frames_per_second = 32
     foto_timer_limit = 1.0 / frames_per_second
@@ -133,21 +132,23 @@ def immersed_elastic_net_case(
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
     # iterate
-    while time < elastic_net_sim.final_time:
+    while flow_sim.time < elastic_net_sim.final_time:
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             if save_flow_data:
                 update_elastic_net_lag_grid_fields()
                 io.save(
-                    h5_file_name="flow_" + str("%0.4d" % (time * 100)) + ".h5",
-                    time=time,
+                    h5_file_name="flow_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    time=flow_sim.time,
                 )
                 elastic_net_io.save(
-                    h5_file_name="lag_grid_" + str("%0.4d" % (time * 100)) + ".h5",
-                    time=time,
+                    h5_file_name="lag_grid_"
+                    + str("%0.4d" % (flow_sim.time * 100))
+                    + ".h5",
+                    time=flow_sim.time,
                 )
-            ax.set_title(f"Velocity magnitude, time: {time:.2f}")
+            ax.set_title(f"Velocity magnitude, time: {flow_sim.time:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
@@ -174,9 +175,12 @@ def immersed_elastic_net_case(
                     color="k",
                 )
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.5d" % (time * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
             )
-            time_history.append(time)
+            time_history.append(flow_sim.time)
             grid_dev_error = 0.0
             for flow_body_interactor in rod_flow_interactor_list:
                 grid_dev_error += (
@@ -189,7 +193,7 @@ def immersed_elastic_net_case(
                 ]
             ).mean()
             print(
-                f"time: {time:.2f} ({(time / elastic_net_sim.final_time * 100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / elastic_net_sim.final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}, "
@@ -202,7 +206,7 @@ def immersed_elastic_net_case(
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, elastic_net_sim.dt))
         local_rod_dt = flow_dt / rod_time_steps
-        rod_time = time
+        rod_time = flow_sim.time
         for i in range(rod_time_steps):
             # timestep the cilia simulator
             rod_time = elastic_net_sim.time_step(time=rod_time, time_step=local_rod_dt)
@@ -219,8 +223,7 @@ def immersed_elastic_net_case(
             free_stream_velocity=velocity_free_stream,
         )
 
-        # update simulation time
-        time += flow_dt
+        # update timer
         foto_timer += flow_dt
 
     # compile video

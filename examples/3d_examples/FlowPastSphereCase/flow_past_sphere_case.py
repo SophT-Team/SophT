@@ -37,6 +37,7 @@ def flow_past_sphere_case(
         flow_type="navier_stokes_with_forcing",
         with_free_stream_flow=True,
         navier_stokes_inertial_term_form="rotational",
+        time=0.0,
         # filter_vorticity=True,
         # filter_setting_dict={"order": 1, "type": "multiplicative"},
         # caution will introduce some boundary artifacts
@@ -104,7 +105,6 @@ def flow_past_sphere_case(
             vector_3d=sphere_flow_interactor.lag_grid_forcing_field,
         )
 
-    t = 0.0
     timescale = sphere_diameter / far_field_velocity
     t_end_hat = nondim_time  # non-dimensional end time
     t_end = t_end_hat * timescale  # dimensional end time
@@ -132,7 +132,7 @@ def flow_past_sphere_case(
     fig, ax = spu.create_figure_and_axes()
 
     # iterate
-    while t < t_end:
+    while flow_sim.time < t_end:
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -141,7 +141,7 @@ def flow_past_sphere_case(
                 np.sum(sphere_flow_interactor.lag_grid_forcing_field[x_axis_idx, ...])
             )
             drag_coeff = drag_force / drag_force_scale
-            time.append(t)
+            time.append(flow_sim.time)
             drag_coeffs.append(drag_coeff)
             flow_vel_along_sphere_center.append(
                 np.mean(
@@ -160,12 +160,18 @@ def flow_past_sphere_case(
             )
             if save_flow_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (t * 100)) + ".h5", time=t
+                    h5_file_name="sopht_"
+                    + str("%0.4d" % (flow_sim.time * 100))
+                    + ".h5",
+                    time=flow_sim.time,
                 )
                 sphere_io.save(
-                    h5_file_name="sphere_" + str("%0.4d" % (t * 100)) + ".h5", time=t
+                    h5_file_name="sphere_"
+                    + str("%0.4d" % (flow_sim.time * 100))
+                    + ".h5",
+                    time=flow_sim.time,
                 )
-            ax.set_title(f"Velocity X comp, time: {t / timescale:.2f}")
+            ax.set_title(f"Velocity X comp, time: {flow_sim.time / timescale:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
@@ -187,10 +193,13 @@ def flow_past_sphere_case(
                 color="k",
             )
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {t:.2f} ({(t/t_end*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time/t_end*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"drag coeff: {drag_coeff:.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f} "
@@ -207,7 +216,6 @@ def flow_past_sphere_case(
         flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
         # update timers
-        t = t + dt
         foto_timer += dt
 
     fig, ax = spu.create_figure_and_axes(fig_aspect_ratio="default")

@@ -34,6 +34,7 @@ class UnboundedFlowSimulator3D:
         num_threads=1,
         filter_vorticity=False,
         poisson_solver_type="greens_function_convolution",
+        time: float = 0.0,
         **kwargs,
     ):
         """Class initialiser
@@ -50,6 +51,7 @@ class UnboundedFlowSimulator3D:
         needed for stability sometimes
         :param poisson_solver_type: Type of the poisson solver algorithm, can be
         "greens_function_convolution" or "fast_diagonalisation"
+        :param time: simulator time at initialisation
 
         Notes
         -----
@@ -63,6 +65,7 @@ class UnboundedFlowSimulator3D:
         self.flow_type = flow_type
         self.kinematic_viscosity = kinematic_viscosity
         self.CFL = CFL
+        self.time = time
         self.filter_vorticity = filter_vorticity
         self.poisson_solver_type = poisson_solver_type
         supported_flow_types = [
@@ -365,13 +368,22 @@ class UnboundedFlowSimulator3D:
     def finalise_flow_timestep(self):
         self.finalise_navier_stokes_timestep()
         # defqult time step
-        self.time_step = self.scalar_advection_and_diffusion_timestep
+        self.flow_time_step = self.scalar_advection_and_diffusion_timestep
         if self.flow_type == "passive_vector":
-            self.time_step = self.vector_advection_and_diffusion_timestep
+            self.flow_time_step = self.vector_advection_and_diffusion_timestep
         elif self.flow_type == "navier_stokes":
-            self.time_step = self.navier_stokes_timestep
+            self.flow_time_step = self.navier_stokes_timestep
         elif self.flow_type == "navier_stokes_with_forcing":
-            self.time_step = self.navier_stokes_with_forcing_timestep
+            self.flow_time_step = self.navier_stokes_with_forcing_timestep
+
+    def update_simulator_time(self, dt: float) -> None:
+        """Updates simulator time."""
+        self.time += dt
+
+    def time_step(self, dt: float, **kwargs) -> None:
+        """Final simulator time step"""
+        self.flow_time_step(dt=dt, **kwargs)
+        self.update_simulator_time(dt=dt)
 
     def scalar_advection_and_diffusion_timestep(self, dt, **kwargs):
         self.advection_timestep(

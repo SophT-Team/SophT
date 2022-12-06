@@ -33,6 +33,7 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
+        time=t_start,
     )
 
     flow_sim.vorticity_field[...] = compute_lamb_oseen_vorticity(
@@ -60,19 +61,18 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
     )
 
     # iterate
-    t = t_start
     foto_timer = 0.0
     foto_timer_limit = (t_end - t_start) / 25
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
 
-    while t < t_end:
+    while flow_sim.time < t_end:
 
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
-            ax.set_title(f"Vorticity, time: {t:.2f}")
+            ax.set_title(f"Vorticity, time: {flow_sim.time:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx],
                 flow_sim.position_field[y_axis_idx],
@@ -83,22 +83,24 @@ def lamb_oseen_vortex_flow_case(grid_size, num_threads=4, precision="single"):
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             spu.save_and_clear_fig(
-                fig, ax, cbar, file_name="snap_" + str("%0.4d" % (t * 100)) + ".png"
+                fig,
+                ax,
+                cbar,
+                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {t:.2f} ({((t-t_start)/(t_end-t_start)*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({((flow_sim.time-t_start)/(t_end-t_start)*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
         dt = flow_sim.compute_stable_timestep()
         flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
-        # update time
-        t = t + dt
+        # update timer
         foto_timer += dt
 
     # final vortex computation
-    t_end = t
+    t_end = flow_sim.time
     x_cm_final = x_cm_start + velocity_free_stream[x_axis_idx] * (t_end - t_start)
     y_cm_final = y_cm_start + velocity_free_stream[y_axis_idx] * (t_end - t_start)
     final_analytical_vorticity_field = compute_lamb_oseen_vorticity(
