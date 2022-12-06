@@ -4,7 +4,7 @@ from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from .immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
-from typing import Type
+from typing import Type, Union
 
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
@@ -21,14 +21,14 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         virtual_boundary_damping_coeff: float,
         dx: float,
         grid_dim: int,
-        real_t=np.float64,
-        eul_grid_coord_shift=None,
-        interp_kernel_width=None,
-        enable_eul_grid_forcing_reset=False,
-        num_threads=False,
-        start_time=0.0,
+        real_t: Type = np.float64,
+        eul_grid_coord_shift: Union[float, None] = None,
+        interp_kernel_width: Union[float, None] = None,
+        enable_eul_grid_forcing_reset: bool = False,
+        num_threads: Union[int, bool] = False,
+        start_time: float = 0.0,
         **forcing_grid_kwargs,
-    ):
+    ) -> None:
         """Class initialiser."""
         # These are meant to be specialised/created in the derived classes
         self.body_flow_forces = body_flow_forces
@@ -97,7 +97,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             start_time,
         )
 
-    def compute_interaction_on_lag_grid(self):
+    def compute_interaction_on_lag_grid(self) -> None:
         """Compute interaction forces on the Lagrangian forcing grid."""
         self.forcing_grid.compute_lag_grid_position_field()
         self.forcing_grid.compute_lag_grid_velocity_field()
@@ -107,7 +107,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             lag_grid_velocity_field=self.forcing_grid.velocity_field,
         )
 
-    def __call__(self):
+    def __call__(self) -> None:
         # call the full interaction (eul and lag field force computation)
         self.forcing_grid.compute_lag_grid_position_field()
         self.forcing_grid.compute_lag_grid_velocity_field()
@@ -118,7 +118,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             lag_grid_velocity_field=self.forcing_grid.velocity_field,
         )
 
-    def compute_flow_forces_and_torques(self):
+    def compute_flow_forces_and_torques(self) -> None:
         """Compute flow forces and torques on the body from forces on Lagrangian grid."""
         self.compute_interaction_on_lag_grid()
         self.forcing_grid.transfer_forcing_from_grid_to_body(
@@ -127,7 +127,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             lag_grid_forcing_field=self.lag_grid_forcing_field,
         )
 
-    def get_grid_deviation_error_l2_norm(self):
+    def get_grid_deviation_error_l2_norm(self) -> float:
         """
         Computes and returns L2 norm of deviation error between flow
         and body grids.

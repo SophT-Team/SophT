@@ -8,12 +8,12 @@ import numpy as np
 class RectangularPlane(ea.RigidBodyBase):
     def __init__(
         self,
-        origin,
-        plane_normal,
-        plane_tangent_along_length,
-        plane_length,
-        plane_breadth,
-    ):
+        origin: np.ndarray,
+        plane_normal: np.ndarray,
+        plane_tangent_along_length: np.ndarray,
+        plane_length: float,
+        plane_breadth: float,
+    ) -> None:
         """
         Rigid rectangular plane initializer.
 

@@ -5,6 +5,7 @@ from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 from sopht.simulator.immersed_body.rigid_body.derived_rigid_bodies import (
     RectangularPlane,
 )
+from typing import Union
 
 
 class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
@@ -26,7 +27,7 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
         self.local_frame_relative_position_field = np.zeros_like(self.position_field)
         self.global_frame_relative_position_field = np.zeros_like(self.position_field)
 
-    def compute_lag_grid_position_field(self):
+    def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the cylinder boundary"""
         self.global_frame_relative_position_field[...] = np.dot(
             self.cylinder.director_collection[: self.grid_dim, : self.grid_dim, 0].T,
@@ -37,7 +38,7 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
             + self.global_frame_relative_position_field
         )
 
-    def compute_lag_grid_velocity_field(self):
+    def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the cylinder boundary"""
         # d3 aligned along Z while d1 and d2 along XY plane...
         # Can be shown that omega local and global lie along d3 (Z axis)
@@ -56,10 +57,10 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
 
     def transfer_forcing_from_grid_to_body(
         self,
-        body_flow_forces,
-        body_flow_torques,
-        lag_grid_forcing_field,
-    ):
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
         """Transfer forcing from lagrangian forcing grid to the cylinder"""
         # negative sign due to Newtons third law
         body_flow_forces[: self.grid_dim] = -np.sum(
@@ -75,7 +76,7 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
             + self.global_frame_relative_position_field[1] * lag_grid_forcing_field[0]
         )
 
-    def get_maximum_lagrangian_grid_spacing(self):
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
 
 
@@ -107,17 +108,20 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_maximum_lagrangian_grid_spacing(self):
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
         return self.cylinder.radius * (2.0 * np.pi / self.num_lag_nodes)
+
+
+SupportedRigidBody3D = Union[ea.Cylinder, ea.Sphere, RectangularPlane]
 
 
 class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid of a 3D rigid body with cross-section."""
 
     def __init__(
-        self, grid_dim: int, num_lag_nodes: int, rigid_body: ea.RigidBodyBase
+        self, grid_dim: int, num_lag_nodes: int, rigid_body: SupportedRigidBody3D
     ) -> None:
         if grid_dim != 3:
             raise ValueError(
@@ -129,7 +133,7 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
         self.local_frame_relative_position_field = np.zeros_like(self.position_field)
         self.global_frame_relative_position_field = np.zeros_like(self.position_field)
 
-    def compute_lag_grid_position_field(self):
+    def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the rigid body boundary"""
         self.global_frame_relative_position_field[...] = np.dot(
             self.rigid_body.director_collection[:, :, 0].T,
@@ -140,7 +144,7 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
             + self.global_frame_relative_position_field
         )
 
-    def compute_lag_grid_velocity_field(self):
+    def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the rigid body boundary"""
         global_frame_omega = np.dot(
             self.rigid_body.director_collection[:, :, 0].T,
@@ -153,10 +157,10 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
 
     def transfer_forcing_from_grid_to_body(
         self,
-        body_flow_forces,
-        body_flow_torques,
-        lag_grid_forcing_field,
-    ):
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
         """Transfer forcing from lagrangian forcing grid to the rigid body"""
         # negative sign due to Newtons third law
         body_flow_forces[...] = -np.sum(lag_grid_forcing_field, axis=1).reshape(-1, 1)
@@ -172,7 +176,7 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
             ).reshape(-1, 1),
         )
 
-    def get_maximum_lagrangian_grid_spacing(self):
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
 
 
@@ -306,14 +310,14 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_maximum_lagrangian_grid_spacing(self):
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
         return self.rigid_body.radius * (
             2 * np.pi / self.num_forcing_points_along_equator
         )
 
-    def compute_lag_grid_position_field(self):
+    def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the rigid sphere.
 
         Since this is a sphere, the local frame concept is redundant,
@@ -374,6 +378,6 @@ class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-    def get_maximum_lagrangian_grid_spacing(self):
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         return self.grid_spacing

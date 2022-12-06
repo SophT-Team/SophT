@@ -12,11 +12,13 @@ class FlowForces(NoForces):
         body_flow_interactor: Union[
             CosseratRodFlowInteraction, RigidBodyFlowInteraction
         ],
-    ):
+    ) -> None:
         super(NoForces, self).__init__()
         self.body_flow_interactor = body_flow_interactor
 
-    def apply_forces(self, system: Union[CosseratRod, RigidBodyBase], time=0.0):
+    def apply_forces(
+        self, system: Union[CosseratRod, RigidBodyBase], time: float = 0.0
+    ) -> None:
         self.body_flow_interactor.compute_flow_forces_and_torques()
         system.external_forces += self.body_flow_interactor.body_flow_forces
         system.external_torques += self.body_flow_interactor.body_flow_torques

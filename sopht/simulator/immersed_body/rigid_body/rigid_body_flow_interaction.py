@@ -4,7 +4,7 @@ from sopht.simulator.immersed_body import (
     ImmersedBodyForcingGrid,
     ImmersedBodyFlowInteraction,
 )
-from typing import Type
+from typing import Type, Union
 
 
 class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
@@ -20,12 +20,12 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         dx: float,
         grid_dim: int,
         forcing_grid_cls: Type[ImmersedBodyForcingGrid],
-        real_t=np.float64,
-        eul_grid_coord_shift=None,
-        interp_kernel_width=None,
-        enable_eul_grid_forcing_reset=False,
-        num_threads=False,
-        start_time=0.0,
+        real_t: Type = np.float64,
+        eul_grid_coord_shift: Union[float, None] = None,
+        interp_kernel_width: Union[float, None] = None,
+        enable_eul_grid_forcing_reset: bool = False,
+        num_threads: Union[int, bool] = False,
+        start_time: float = 0.0,
         **forcing_grid_kwargs,
     ) -> None:
         """Class initialiser."""
