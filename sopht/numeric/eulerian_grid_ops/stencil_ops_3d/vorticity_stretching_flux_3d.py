@@ -99,6 +99,12 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
         def vorticity_stretching_flux_with_ghost_zone_reset_pyst_kernel_3d(
             vorticity_stretching_flux_field, vorticity_field, velocity_field, prefactor
         ):
+            """Vorticity stretching flux kernel in 3D, with resetting of ghost zone.
+
+            Computes the vorticity stretching flux in 3D, for a 3D
+            vorticity_field (3, n, n, n) and velocity_field (3, n, n, n), and
+            stores result in vorticity_stretching_flux_field (3, n, n, n).
+            """
             vorticity_stretching_flux_pyst_kernel_3d(
                 vorticity_stretching_flux_field=vorticity_stretching_flux_field,
                 vorticity_field=vorticity_field,
