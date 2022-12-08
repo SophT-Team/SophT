@@ -5,10 +5,14 @@ from sopht.numeric.eulerian_grid_ops.stencil_ops_3d.elementwise_ops_3d import (
     gen_set_fixed_val_at_boundaries_pyst_kernel_3d,
 )
 from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
+from typing import Union, Tuple, Type
 
 
 def gen_vorticity_stretching_flux_pyst_kernel_3d(
-    real_t, num_threads=False, fixed_grid_size=False
+    real_t: Type,
+    num_threads: Union[bool, int] = False,
+    fixed_grid_size: Union[Tuple, int] = False,
+    reset_ghost_zone: bool = True,
 ):
     # TODO expand docs
     """3D Vorticity stretching flux kernel generator."""
@@ -46,15 +50,6 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
         config=kernel_config,
     ).compile()
 
-    # to set boundary zone = 0
-    boundary_width = 1
-    set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
-        real_t=real_t,
-        width=boundary_width,
-        num_threads=num_threads,
-        field_type="vector",
-    )
-
     def vorticity_stretching_flux_pyst_kernel_3d(
         vorticity_stretching_flux_field, vorticity_field, velocity_field, prefactor
     ):
@@ -89,10 +84,31 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
             prefactor=prefactor,
         )
 
-        # set boundary unaffected points to 0
-        # TODO need one sided corrections?
-        set_fixed_val_at_boundaries_3d(
-            vector_field=vorticity_stretching_flux_field, fixed_vals=[0, 0, 0]
+    if not reset_ghost_zone:
+        return vorticity_stretching_flux_pyst_kernel_3d
+    else:
+        # to set boundary zone = 0
+        boundary_width = 1
+        set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
+            real_t=real_t,
+            width=boundary_width,
+            num_threads=num_threads,
+            field_type="vector",
         )
 
-    return vorticity_stretching_flux_pyst_kernel_3d
+        def vorticity_stretching_flux_with_ghost_zone_reset_pyst_kernel_3d(
+            vorticity_stretching_flux_field, vorticity_field, velocity_field, prefactor
+        ):
+            vorticity_stretching_flux_pyst_kernel_3d(
+                vorticity_stretching_flux_field=vorticity_stretching_flux_field,
+                vorticity_field=vorticity_field,
+                velocity_field=velocity_field,
+                prefactor=prefactor,
+            )
+            # set boundary unaffected points to 0
+            # TODO need one sided corrections?
+            set_fixed_val_at_boundaries_3d(
+                vector_field=vorticity_stretching_flux_field, fixed_vals=[0, 0, 0]
+            )
+
+        return vorticity_stretching_flux_with_ghost_zone_reset_pyst_kernel_3d
