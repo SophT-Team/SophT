@@ -10,7 +10,7 @@ from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_confi
 from typing import Union, Tuple, Type
 
 
-def gen_laplacian_filter_kernel_3d(
+def gen_laplacian_filter_kernel_3d(  # noqa: C901
     filter_order: int,
     filter_flux_buffer: np.ndarray,
     field_buffer: np.ndarray,

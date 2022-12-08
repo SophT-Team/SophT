@@ -11,7 +11,7 @@ from typing import Union, Tuple, Type
 def gen_vorticity_stretching_flux_pyst_kernel_3d(
     real_t: Type,
     num_threads: Union[bool, int] = False,
-    fixed_grid_size: Union[Tuple, int] = False,
+    fixed_grid_size: Union[Tuple, bool] = False,
     reset_ghost_zone: bool = True,
 ):
     # TODO expand docs
@@ -21,7 +21,7 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
     # we can add dtype checks later
     grid_info = (
         f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if fixed_grid_size
+        if type(fixed_grid_size) is tuple
         else "3D"
     )
 
