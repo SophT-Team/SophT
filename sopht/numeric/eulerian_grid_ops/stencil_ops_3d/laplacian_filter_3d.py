@@ -19,6 +19,7 @@ def gen_laplacian_filter_kernel_3d(
     fixed_grid_size: Union[Tuple, bool] = False,
     field_type: str = "scalar",
     filter_type: str = "multiplicative",
+    reset_ghost_zone: bool = True,
 ):
     """
     Laplacian filter kernel generator. Based on the field type
@@ -95,21 +96,14 @@ def gen_laplacian_filter_kernel_3d(
     elementwise_saxpby_3d = gen_elementwise_saxpby_pyst_kernel_3d(
         real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
     )
-    # to set boundary zone = 0
-    boundary_width = 1
-    set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
-        real_t=real_t,
-        width=boundary_width,
-        # complexity of this operation is O(N^2), hence setting serial version
-        num_threads=False,
-        field_type="scalar",
-    )
 
-    def scalar_field_multiplicative_filter_kernel_3d(scalar_field):
+    def scalar_field_multiplicative_filter_without_ghost_zone_reset_kernel_3d(
+        scalar_field,
+    ):
         """
-        Applies multiplicative Laplacian filter on any scalar field.
+        Applies multiplicative Laplacian filter on any scalar field, without resetting
+        of ghost zone.
         """
-        set_fixed_val_at_boundaries_3d(field=filter_flux_buffer, fixed_val=0)
         elementwise_copy_3d(field=field_buffer, rhs_field=scalar_field)
         for _ in range(filter_order):
             # Laplacian filter in x direction
@@ -130,12 +124,13 @@ def gen_laplacian_filter_kernel_3d(
             field_2_prefac=-1.0,
         )
 
-    def scalar_field_convolution_filter_kernel_3d(scalar_field):
+    def scalar_field_convolution_filter_without_ghost_zone_reset_kernel_3d(
+        scalar_field,
+    ):
         """
-        Applies convolution Laplacian filter on any scalar field.
+        Applies convolution Laplacian filter on any scalar field, without resetting of
+        ghost zone.
         """
-        set_fixed_val_at_boundaries_3d(field=filter_flux_buffer, fixed_val=0)
-
         # Laplacian filter in x direction
         elementwise_copy_3d(field=field_buffer, rhs_field=scalar_field)
         for _ in range(filter_order):
@@ -173,6 +168,55 @@ def gen_laplacian_filter_kernel_3d(
             field_1_prefac=1.0,
             field_2=filter_flux_buffer,
             field_2_prefac=-1.0,
+        )
+
+    if not reset_ghost_zone:
+        scalar_field_multiplicative_filter_kernel_3d = (
+            scalar_field_multiplicative_filter_without_ghost_zone_reset_kernel_3d
+        )
+        scalar_field_convolution_filter_kernel_3d = (
+            scalar_field_convolution_filter_without_ghost_zone_reset_kernel_3d
+        )
+    else:
+        # to set boundary zone = 0
+        boundary_width = 1
+        set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
+            real_t=real_t,
+            width=boundary_width,
+            # complexity of this operation is O(N^2), hence setting serial version
+            num_threads=False,
+            field_type="scalar",
+        )
+
+        def scalar_field_multiplicative_filter_with_ghost_zone_reset_kernel_3d(
+            scalar_field,
+        ):
+            """
+            Applies multiplicative Laplacian filter on any scalar field, with resetting
+            of ghost zone.
+            """
+            set_fixed_val_at_boundaries_3d(field=filter_flux_buffer, fixed_val=0)
+            scalar_field_multiplicative_filter_without_ghost_zone_reset_kernel_3d(
+                scalar_field=scalar_field
+            )
+
+        def scalar_field_convolution_filter_with_ghost_zone_reset_kernel_3d(
+            scalar_field,
+        ):
+            """
+            Applies convolution Laplacian filter on any scalar field, with resetting of
+            ghost zone.
+            """
+            set_fixed_val_at_boundaries_3d(field=filter_flux_buffer, fixed_val=0)
+            scalar_field_convolution_filter_without_ghost_zone_reset_kernel_3d(
+                scalar_field=scalar_field
+            )
+
+        scalar_field_multiplicative_filter_kernel_3d = (
+            scalar_field_multiplicative_filter_with_ghost_zone_reset_kernel_3d
+        )
+        scalar_field_convolution_filter_kernel_3d = (
+            scalar_field_convolution_filter_with_ghost_zone_reset_kernel_3d
         )
 
     scalar_field_filter_kernel_3d = None

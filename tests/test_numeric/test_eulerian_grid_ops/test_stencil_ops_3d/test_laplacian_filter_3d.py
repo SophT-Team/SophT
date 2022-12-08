@@ -157,12 +157,14 @@ def test_laplacian_filter_constant_field(
 @pytest.mark.parametrize("filter_order", [1, 2])
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
 @pytest.mark.parametrize("filter_type", ["convolution", "multiplicative"])
+@pytest.mark.parametrize("reset_ghost_zone", [True, False])
 def test_laplacian_filter_random_field(
     n_values,
     precision,
     filter_order,
     field_type,
     filter_type,
+    reset_ghost_zone,
 ):
     real_t = get_real_t(precision)
     dim = 3
@@ -177,7 +179,9 @@ def test_laplacian_filter_random_field(
         if field_type == "scalar"
         else np.zeros_like(test_field[0])
     )
-    filter_flux_buffer = np.zeros_like(field_buffer)
+    filter_flux_buffer = (
+        np.ones_like(field_buffer) if reset_ghost_zone else np.zeros_like(field_buffer)
+    )
     laplacian_filter = gen_laplacian_filter_kernel_3d(
         filter_order=filter_order,
         field_buffer=field_buffer,
@@ -187,6 +191,7 @@ def test_laplacian_filter_random_field(
         num_threads=psutil.cpu_count(logical=False),
         field_type=field_type,
         filter_type=filter_type,
+        reset_ghost_zone=reset_ghost_zone,
     )
 
     laplacian_filter(test_field)
