@@ -39,6 +39,9 @@ def gen_laplacian_filter_kernel_3d(
 
     assert filter_order >= 0 and isinstance(filter_order, int), "Invalid filter order"
     assert field_type == "scalar" or field_type == "vector", "Invalid field type"
+    assert filter_flux_buffer_boundary_width > 0 and isinstance(
+        filter_flux_buffer_boundary_width, int
+    ), "Invalid value for filter flux buffer boundary zone"
     supported_filter_types = ["multiplicative", "convolution"]
     if filter_type not in supported_filter_types:
         raise ValueError("Invalid filter type")
