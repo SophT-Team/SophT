@@ -19,6 +19,7 @@ def gen_laplacian_filter_kernel_3d(
     fixed_grid_size: Union[Tuple, bool] = False,
     field_type: str = "scalar",
     filter_type: str = "multiplicative",
+    filter_flux_buffer_boundary_width: int = 1,
 ):
     """
     Laplacian filter kernel generator. Based on the field type
@@ -96,7 +97,7 @@ def gen_laplacian_filter_kernel_3d(
         real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
     )
     # to set boundary zone = 0
-    boundary_width = 1
+    boundary_width = filter_flux_buffer_boundary_width
     set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
         real_t=real_t,
         width=boundary_width,
