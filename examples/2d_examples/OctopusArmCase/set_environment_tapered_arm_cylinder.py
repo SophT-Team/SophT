@@ -3,8 +3,6 @@ import numpy as np
 import elastica as ea
 from elastica._calculus import _isnan_check
 from arm_functions_2d import StraightRodCallBack, CylinderCallBack
-
-
 from coomm.actuations.muscles import (
     force_length_weight_poly,
 )
@@ -15,6 +13,8 @@ from coomm.actuations.muscles import (
     TransverseMuscle,
     ApplyMuscleGroups,
 )
+from typing import List, Dict, Tuple
+from typing import Union
 
 
 class BaseSimulator(
@@ -31,11 +31,11 @@ class BaseSimulator(
 class ArmEnvironment:
     def __init__(
         self,
-        final_time,
-        time_step=1.0e-5,
-        rendering_fps=30,
-        COLLECT_DATA_FOR_POSTPROCESSING=True,
-    ):
+        final_time: float,
+        time_step: float = 1.0e-5,
+        rendering_fps: int = 30,
+        COLLECT_DATA_FOR_POSTPROCESSING: bool = True,
+    ) -> None:
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
 
@@ -48,22 +48,22 @@ class ArmEnvironment:
 
     def get_systems(
         self,
-    ):
+    ) -> List[ea.CosseratRod]:
         return [self.shearable_rod]
 
     def get_data(
         self,
-    ):
+    ) -> List[Dict]:
         return [self.rod_parameters_dict]
 
-    def set_arm(self):
+    def set_arm(self) -> None:
         base_length, radius = self.set_rod()
         self.set_muscles(radius[0], self.shearable_rod)
 
-    def setup(self):
+    def setup(self) -> None:
         self.set_arm()
 
-    def set_rod(self):
+    def set_rod(self) -> Tuple[float, np.ndarray]:
         """Set up a rod"""
         n_elements = 50  # number of discretized elements of the arm
         base_length = 0.2  # total length of the arm
@@ -111,14 +111,14 @@ class ArmEnvironment:
         )
         self.simulator.append(self.cylinder)
 
-        self.rod_parameters_dict = defaultdict(list)
+        self.rod_parameters_dict: Dict = defaultdict(list)
         self.simulator.collect_diagnostics(self.shearable_rod).using(
             StraightRodCallBack,
             step_skip=self.step_skip,
             callback_params=self.rod_parameters_dict,
         )
 
-        self.cylinder_parameters_dict = defaultdict(list)
+        self.cylinder_parameters_dict: Dict = defaultdict(list)
         self.simulator.collect_diagnostics(self.cylinder).using(
             CylinderCallBack,
             step_skip=self.step_skip,
@@ -127,7 +127,7 @@ class ArmEnvironment:
 
         """ Set up boundary conditions """
         self.simulator.constrain(self.shearable_rod).using(
-            ea.OneEndFixedRod,
+            ea.OneEndFixedBC,
             constrained_position_idx=(0,),
             constrained_director_idx=(0,),
         )
@@ -145,10 +145,12 @@ class ArmEnvironment:
 
         return base_length, radius
 
-    def set_muscles(self, base_radius, arm):
+    def set_muscles(self, base_radius: np.ndarray, arm: ea.CosseratRod) -> None:
         """Add muscle actuation"""
 
-        def add_muscle_actuation(radius_base, arm):
+        def add_muscle_actuation(
+            radius_base: np.ndarray, arm: ea.CosseratRod
+        ) -> List[MuscleGroup]:
 
             muscle_groups = []
 
@@ -251,7 +253,7 @@ class ArmEnvironment:
             return muscle_groups
 
         self.muscle_groups = add_muscle_actuation(base_radius, arm)
-        self.muscle_callback_params_list = [
+        self.muscle_callback_params_list: List = [
             defaultdict(list) for _ in self.muscle_groups
         ]
         self.simulator.add_forcing_to(self.shearable_rod).using(
@@ -261,14 +263,14 @@ class ArmEnvironment:
             callback_params_list=self.muscle_callback_params_list,
         )
 
-    def reset(self):
+    def reset(self) -> None:
         self.simulator = BaseSimulator()
 
         self.setup()
 
         """ Finalize the simulator and create time stepper """
 
-    def finalize(self):
+    def finalize(self) -> Tuple[int, List[ea.CosseratRod]]:
         self.simulator.finalize()
         self.do_step, self.stages_and_updates = ea.extend_stepper_interface(
             self.StatefulStepper, self.simulator
@@ -280,7 +282,9 @@ class ArmEnvironment:
         """
         return self.total_steps, self.get_systems()
 
-    def step(self, time, muscle_activations):
+    def step(
+        self, time: float, muscle_activations: List[np.ndarray]
+    ) -> Tuple[float, List[ea.CosseratRod], bool]:
 
         """Set muscle activations"""
         for muscle_group, activation in zip(self.muscle_groups, muscle_activations):
@@ -311,7 +315,7 @@ class ArmEnvironment:
         """
         return time, self.get_systems(), done
 
-    def save_data(self, filename="simulation", **kwargs):
+    def save_data(self, filename: str = "simulation", **kwargs) -> None:
         # Save data in numpy format
         import os
 
@@ -321,34 +325,28 @@ class ArmEnvironment:
         os.makedirs(save_folder, exist_ok=True)
 
         self.post_processing_dict_list = [self.rod_parameters_dict]
-
         time = np.array(self.post_processing_dict_list[0]["time"])
         number_of_straight_rods = 1
-        if number_of_straight_rods > 0:
-            n_elems_straight_rods = self.shearable_rod.n_elems
-            straight_rods_position_history = np.zeros(
-                (
-                    number_of_straight_rods,
-                    time.shape[0],
-                    3,
-                    n_elems_straight_rods + 1,
-                )
+        n_elems_straight_rods = self.shearable_rod.n_elems
+        straight_rods_position_history = np.zeros(
+            (
+                number_of_straight_rods,
+                time.shape[0],
+                3,
+                n_elems_straight_rods + 1,
             )
-            straight_rods_radius_history = np.zeros(
-                (number_of_straight_rods, time.shape[0], n_elems_straight_rods)
+        )
+        straight_rods_radius_history = np.zeros(
+            (number_of_straight_rods, time.shape[0], n_elems_straight_rods)
+        )
+
+        for i in range(number_of_straight_rods):
+            straight_rods_position_history[i, :, :, :] = np.array(
+                self.post_processing_dict_list[i]["position"]
             )
-
-            for i in range(number_of_straight_rods):
-                straight_rods_position_history[i, :, :, :] = np.array(
-                    self.post_processing_dict_list[i]["position"]
-                )
-                straight_rods_radius_history[i, :, :] = np.array(
-                    self.post_processing_dict_list[i]["radius"]
-                )
-
-        else:
-            straight_rods_position_history = None
-            straight_rods_radius_history = None
+            straight_rods_radius_history[i, :, :] = np.array(
+                self.post_processing_dict_list[i]["radius"]
+            )
 
         np.savez(
             os.path.join(save_folder, "octopus_arm_test.npz"),
@@ -359,11 +357,11 @@ class ArmEnvironment:
 
 
 class Environment(ArmEnvironment):
-    def get_systems(self):
+    def get_systems(self) -> List[Union[ea.CosseratRod, ea.Cylinder]]:
         return [self.shearable_rod, self.cylinder]
 
-    def get_data(self):
+    def get_data(self) -> List[Dict]:
         return [self.rod_parameters_dict, self.cylinder_parameters_dict]
 
-    def setup(self):
+    def setup(self) -> None:
         self.set_arm()

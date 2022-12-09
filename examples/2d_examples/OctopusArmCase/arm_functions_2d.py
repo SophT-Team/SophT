@@ -1,24 +1,21 @@
 import elastica as ea
 import numpy as np
-from numba import njit
-from elastica._linalg import _batch_norm, _batch_dot
-from elastica.interaction import elements_to_nodes_inplace
 
 
 # Sigmoid activation functions
 class SigmoidActivationLongitudinalMuscles:
     def __init__(
         self,
-        beta,
-        tau,
-        start_time,
-        end_time,
-        start_idx,
-        end_idx,
-        activation_level_max=1.0,
-        activation_level_end=0.0,
-        activation_lower_threshold=2e-3,
-    ):
+        beta: float,
+        tau: float,
+        start_time: float,
+        end_time: float,
+        start_idx: int,
+        end_idx: int,
+        activation_level_max: float = 1.0,
+        activation_level_end: float = 0.0,
+        activation_lower_threshold: float = 2e-3,
+    ) -> None:
         self.beta = beta
         self.tau = tau
         self.start_time = start_time
@@ -29,7 +26,9 @@ class SigmoidActivationLongitudinalMuscles:
         self.activation_level_end = activation_level_end
         self.activation_lower_threshold = activation_lower_threshold
 
-    def apply_activation(self, system, activation, time: float = 0.0):
+    def apply_activation(
+        self, system, activation: np.ndarray, time: float = 0.0
+    ) -> None:
         n_elems = self.end_idx - self.start_idx
         index = np.arange(0, n_elems, dtype=np.int64)
         fiber_activation = np.zeros((n_elems))
@@ -65,13 +64,13 @@ class SigmoidActivationLongitudinalMuscles:
 class LocalActivation:
     def __init__(
         self,
-        ramp_interval,
-        ramp_up_time,
-        ramp_down_time,
-        start_idx,
-        end_idx,
-        activation_level=1.0,
-    ):
+        ramp_interval: float,
+        ramp_up_time: float,
+        ramp_down_time: float,
+        start_idx: int,
+        end_idx: int,
+        activation_level: float = 1.0,
+    ) -> None:
         self.ramp = ramp_interval
         self.ramp_up_time = ramp_up_time
         self.ramp_down_time = ramp_down_time
@@ -79,7 +78,9 @@ class LocalActivation:
         self.start_idx = int(start_idx)
         self.end_idx = int(end_idx)
 
-    def apply_activation(self, system, activation, time: float = 0.0):
+    def apply_activation(
+        self, system, activation: np.ndarray, time: float = 0.0
+    ) -> None:
 
         time = round(time, 5)
         factor = 0.0
@@ -110,74 +111,6 @@ class LocalActivation:
         if fiber_activation > 0.0:
             activation[self.start_idx : self.end_idx] = fiber_activation
 
-    # Drag force
-
-
-class DragForceOnStraightRods(ea.NoForces):
-    def __init__(self, cd_perpendicular, cd_tangent, rho_water, start_time=0.0):
-        self.cd_perpendicular = cd_perpendicular
-        self.cd_tangent = cd_tangent
-        self.rho_water = rho_water
-        self.start_time = start_time
-
-    def apply_forces(self, system, time: float = 0.0):
-        if time > self.start_time:
-            self._apply_forces(
-                self.cd_perpendicular,
-                self.cd_tangent,
-                self.rho_water,
-                system.radius,
-                system.lengths,
-                system.tangents,
-                system.velocity_collection,
-                system.external_forces,
-            )
-
-    @staticmethod
-    @njit(cache=True)
-    def _apply_forces(
-        cd_perpendicular,
-        cd_tangent,
-        rho_water,
-        radius,
-        lengths,
-        tangents,
-        velocity_collection,
-        external_forces,
-    ):
-        projected_area = 2 * radius * lengths
-        surface_area = np.pi * projected_area
-
-        element_velocity = 0.5 * (
-            velocity_collection[:, 1:] + velocity_collection[:, :-1]
-        )
-
-        tangent_velocity = _batch_dot(element_velocity, tangents) * tangents
-        perpendicular_velocity = element_velocity - tangent_velocity
-
-        tangent_velocity_mag = _batch_norm(tangent_velocity)
-        perpendicular_velocity_mag = _batch_norm(perpendicular_velocity)
-
-        forces_in_tangent_dir = (
-            0.5
-            * rho_water
-            * surface_area
-            * cd_tangent
-            * tangent_velocity_mag
-            * tangent_velocity
-        )
-        forces_in_perpendicular_dir = (
-            0.5
-            * rho_water
-            * projected_area
-            * cd_perpendicular
-            * perpendicular_velocity_mag
-            * perpendicular_velocity
-        )
-
-        elements_to_nodes_inplace(-forces_in_tangent_dir, external_forces)
-        elements_to_nodes_inplace(-forces_in_perpendicular_dir, external_forces)
-
 
 # Call back functions
 class StraightRodCallBack(ea.CallBackBaseClass):
@@ -185,12 +118,14 @@ class StraightRodCallBack(ea.CallBackBaseClass):
     Call back function for two arm octopus
     """
 
-    def __init__(self, step_skip: int, callback_params: dict):
+    def __init__(self, step_skip: int, callback_params: dict) -> None:
         ea.CallBackBaseClass.__init__(self)
         self.every = step_skip
         self.callback_params = callback_params
 
-    def make_callback(self, system, time, current_step: int):
+    def make_callback(
+        self, system: ea.CosseratRod, time: float, current_step: int
+    ) -> None:
         if current_step % self.every == 0:
             self.callback_params["time"].append(time)
             self.callback_params["step"].append(current_step)
@@ -225,11 +160,12 @@ class StraightRodCallBack(ea.CallBackBaseClass):
 
 
 class CylinderCallBack(ea.CallBackBaseClass):
-    def __init__(self, step_skip: int, callback_params: dict):
+    def __init__(self, step_skip: int, callback_params: dict) -> None:
+        ea.CallBackBaseClass.__init__(self)
         self.every = step_skip
         self.callback_params = callback_params
 
-    def save_params(self, system, time):
+    def save_params(self, system: ea.Cylinder, time: float) -> None:
         self.callback_params["time"].append(time)
         self.callback_params["radius"].append(system.radius)
         self.callback_params["height"].append(system.length)

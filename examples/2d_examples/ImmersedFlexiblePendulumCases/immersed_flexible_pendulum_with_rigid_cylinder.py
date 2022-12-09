@@ -3,19 +3,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sopht.simulator as sps
 import sopht.utils as spu
+from typing import Tuple, Union, List
 
 
 def immersed_flexible_pendulum_with_rigid_cylinder_case(
-    final_time,
-    grid_size,
-    rod_start_incline_angle,
-    coupling_stiffness=-2e4,
-    coupling_damping=-1e1,
-    rod_coupling_type="two_way",
-    rigid_body_coupling_type="one_way",
-    num_threads=4,
-    precision="single",
-):
+    final_time: float,
+    grid_size: Tuple[int, int],
+    rod_start_incline_angle: float,
+    coupling_stiffness: float = -2e4,
+    coupling_damping: float = -1e1,
+    rod_coupling_type: str = "two_way",
+    rigid_body_coupling_type: str = "one_way",
+    num_threads: int = 4,
+    precision: str = "single",
+) -> None:
     grid_dim = 2
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
@@ -102,7 +103,9 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     # ==================FLOW SETUP END=========================
 
     # ==================FLOW-BODY COMMUNICATORS SETUP START======
-    flow_body_interactors = []
+    flow_body_interactors: List[
+        Union[sps.RigidBodyFlowInteraction, sps.CosseratRodFlowInteraction]
+    ] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=pendulum_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,

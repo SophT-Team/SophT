@@ -4,22 +4,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
+from typing import List, Tuple, Union
 
 
 def flow_past_rod_case(
-    non_dim_final_time,
-    grid_size,
-    reynolds,
-    cyl_diameter_to_rod_length,
-    beam_aspect_ratio,
-    density_ratio,
-    cauchy,
-    coupling_stiffness=-5e4,
-    coupling_damping=-20,
-    num_threads=4,
-    flow_precision="single",
-    save_flow_data=False,
-):
+    non_dim_final_time: float,
+    grid_size: Tuple[int, int],
+    reynolds: float,
+    cyl_diameter_to_rod_length: float,
+    beam_aspect_ratio: float,
+    density_ratio: float,
+    cauchy: float,
+    coupling_stiffness: float = -5e4,
+    coupling_damping: float = -20,
+    num_threads: int = 4,
+    flow_precision: str = "single",
+    save_flow_data: bool = False,
+) -> None:
     grid_dim = 2
     grid_size_y, grid_size_x = grid_size
     real_t = spu.get_real_t(flow_precision)
@@ -175,7 +176,9 @@ def flow_past_rod_case(
     # Since the cylinder is fixed, we don't add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    flow_body_interactors = []
+    flow_body_interactors: List[
+        Union[sps.RigidBodyFlowInteraction, sps.CosseratRodFlowInteraction]
+    ] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=flow_past_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -450,8 +453,8 @@ if __name__ == "__main__":
         help="Non-dimensional final simulation time.",
     )
     def simulate_custom_flow_past_rod_case(
-        num_threads, sim_grid_size_x, nondim_final_time
-    ):
+        num_threads: int, sim_grid_size_x: int, nondim_final_time: float
+    ) -> None:
         sim_grid_size_y = sim_grid_size_x * 3 // 8
         sim_grid_size = (sim_grid_size_y, sim_grid_size_x)
         click.echo(f"Number of threads for parallelism: {num_threads}")

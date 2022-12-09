@@ -1,7 +1,18 @@
 import numpy as np
+import sopht.utils as spu
+from typing import Type, Union
 
 
-def compute_lamb_oseen_vorticity(x, y, x_cm, y_cm, nu, gamma, t, real_t):
+def compute_lamb_oseen_vorticity(
+    x: Union[float, np.ndarray],
+    y: Union[float, np.ndarray],
+    x_cm: float,
+    y_cm: float,
+    nu: float,
+    gamma: float,
+    t: float,
+    real_t: Type,
+) -> Union[float, np.ndarray]:
     """
     Compute Lamb-Oseen vorticity based on:
     x, y: Cartesian coordinates
@@ -21,7 +32,17 @@ def compute_lamb_oseen_vorticity(x, y, x_cm, y_cm, nu, gamma, t, real_t):
     ).astype(real_t)
 
 
-def compute_lamb_oseen_velocity(x, y, x_cm, y_cm, nu, gamma, t, real_t):
+def compute_lamb_oseen_velocity(
+    x: np.ndarray,
+    y: np.ndarray,
+    x_cm: float,
+    y_cm: float,
+    nu: float,
+    gamma: float,
+    t: float,
+    real_t: Type,
+) -> np.ndarray:
+
     """
     Compute Lamb-Oseen velocity based on:
     x, y: Cartesian coordinates
@@ -44,7 +65,7 @@ def compute_lamb_oseen_velocity(x, y, x_cm, y_cm, nu, gamma, t, real_t):
 
     velocity_field = np.zeros((2, *x.shape), dtype=real_t)
 
-    velocity_field[0] = velocity_theta * (-sin_theta)
-    velocity_field[1] = velocity_theta * cos_theta
+    velocity_field[spu.VectorField.x_axis_idx()] = velocity_theta * (-sin_theta)
+    velocity_field[spu.VectorField.y_axis_idx()] = velocity_theta * cos_theta
 
     return velocity_field

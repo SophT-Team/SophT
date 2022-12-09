@@ -3,19 +3,20 @@ from set_environment_tapered_arm_cylinder import Environment
 from arm_functions_2d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
 import sopht.simulator as sps
 import sopht.utils as spu
+from typing import List, Tuple, Union
 
 
 def tapered_arm_and_cylinder_flow_coupling(
-    final_time_by_period,
-    grid_size,
-    reynolds=200,
-    rod_coupling_type="one_way",
-    rigid_body_coupling_type="one_way",
-    coupling_stiffness=-5e4,
-    coupling_damping=-5e1,
-    num_threads=8,
-    precision="single",
-):
+    final_time_by_period: float,
+    grid_size: Tuple[int, int],
+    reynolds: float = 200.0,
+    rod_coupling_type: str = "one_way",
+    rigid_body_coupling_type: str = "one_way",
+    coupling_stiffness: float = -5e4,
+    coupling_damping: float = -5e1,
+    num_threads: int = 4,
+    precision: str = "single",
+) -> None:
     grid_dim = 2
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
@@ -76,7 +77,10 @@ def tapered_arm_and_cylinder_flow_coupling(
     )
     # ==================FLOW SETUP END=========================
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    flow_body_interactors = []
+    # flow_body_interactors = []
+    flow_body_interactors: List[
+        Union[sps.RigidBodyFlowInteraction, sps.CosseratRodFlowInteraction]
+    ] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=env.shearable_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,

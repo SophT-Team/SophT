@@ -4,22 +4,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
+from typing import Tuple
 
 
 def flow_past_rod_case(
-    nondim_final_time,
-    grid_size,
-    reynolds,
-    nondim_bending_stiffness,
-    nondim_mass_ratio,
-    froude,
-    num_threads,
-    rod_start_incline_angle=0.0,
-    coupling_stiffness=-8e4,
-    coupling_damping=-30,
-    precision="single",
-    save_flow_data=False,
-):
+    nondim_final_time: float,
+    grid_size: Tuple[int, int],
+    reynolds: float,
+    nondim_bending_stiffness: float,
+    nondim_mass_ratio: float,
+    froude: float,
+    num_threads: int,
+    rod_start_incline_angle: float = 0.0,
+    coupling_stiffness: float = -8e4,
+    coupling_damping: float = -30,
+    precision: str = "single",
+    save_flow_data: bool = False,
+) -> None:
     # =================COMMON SIMULATOR STUFF=======================
     velocity_free_stream = 1.0
     rho_f = 1.0
@@ -324,14 +325,14 @@ if __name__ == "__main__":
         help="Froude number.",
     )
     def simulate_custom_flow_past_rod_case(
-        num_threads,
-        sim_grid_size_x,
-        nondim_final_time,
-        reynolds,
-        nondim_bending_stiffness,
-        nondim_mass_ratio,
-        froude,
-    ):
+        num_threads: int,
+        sim_grid_size_x: int,
+        nondim_final_time: float,
+        reynolds: float,
+        nondim_bending_stiffness: float,
+        nondim_mass_ratio: float,
+        froude: float,
+    ) -> None:
         sim_grid_size_y = sim_grid_size_x // 2
         sim_grid_size = (sim_grid_size_y, sim_grid_size_x)
         click.echo(f"Number of threads for parallelism: {num_threads}")
