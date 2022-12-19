@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-from typing import List, Tuple, Union
 
 
 def flow_past_rod_case(
     non_dim_final_time: float,
-    grid_size: Tuple[int, int],
+    grid_size: tuple[int, int],
     reynolds: float,
     cyl_diameter_to_rod_length: float,
     beam_aspect_ratio: float,
@@ -176,8 +175,8 @@ def flow_past_rod_case(
     # Since the cylinder is fixed, we don't add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    flow_body_interactors: List[
-        Union[sps.RigidBodyFlowInteraction, sps.CosseratRodFlowInteraction]
+    flow_body_interactors: list[
+        sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction
     ] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=flow_past_rod,

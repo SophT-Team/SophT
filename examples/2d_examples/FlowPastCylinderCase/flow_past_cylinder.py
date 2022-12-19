@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-from typing import Tuple
 
 
 def flow_past_cylinder_boundary_forcing_case(
     nondim_final_time: float,
-    grid_size: Tuple[int, int],
+    grid_size: tuple[int, int],
     reynolds: float,
     coupling_stiffness: float = -5e4,
     coupling_damping: float = -20,

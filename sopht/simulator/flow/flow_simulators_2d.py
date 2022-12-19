@@ -12,7 +12,7 @@ from sopht.numeric.eulerian_grid_ops import (
 )
 from sopht.utils.precision import get_test_tol
 from sopht.utils.field import VectorField
-from typing import Tuple, Type, Callable
+from typing import Callable
 
 
 class UnboundedFlowSimulator2D:
@@ -20,12 +20,12 @@ class UnboundedFlowSimulator2D:
 
     def __init__(
         self,
-        grid_size: Tuple[int, int],
+        grid_size: tuple[int, int],
         x_range: float,
         kinematic_viscosity: float,
         CFL: float = 0.1,
         flow_type: str = "passive_scalar",
-        real_t: Type = np.float32,
+        real_t: type = np.float32,
         num_threads: int = 1,
         time: float = 0.0,
         **kwargs,
@@ -79,10 +79,10 @@ class UnboundedFlowSimulator2D:
         self.y_range = self.x_range * grid_size_y / grid_size_x
         self.dx = self.real_t(self.x_range / grid_size_x)
         eul_grid_shift = self.dx / 2.0
-        x = np.linspace(
+        x: np.ndarray = np.linspace(
             eul_grid_shift, self.x_range - eul_grid_shift, grid_size_x
         ).astype(self.real_t)
-        y = np.linspace(
+        y: np.ndarray = np.linspace(
             eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y
         ).astype(self.real_t)
         # reversing because meshgrid generates in order Y and X
@@ -100,8 +100,10 @@ class UnboundedFlowSimulator2D:
     def init_fields(self) -> None:
         """Initialize the necessary field arrays, i.e. vorticity, velocity, etc."""
         # Initialize flow field
-        self.primary_scalar_field = np.zeros(self.grid_size, dtype=self.real_t)
-        self.velocity_field = np.zeros(
+        self.primary_scalar_field: np.ndarray = np.zeros(
+            self.grid_size, dtype=self.real_t
+        )
+        self.velocity_field: np.ndarray = np.zeros(
             (self.grid_dim, *self.grid_size), dtype=self.real_t
         )
         # we use the same buffer for advection, diffusion and velocity recovery

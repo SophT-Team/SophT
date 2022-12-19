@@ -5,8 +5,11 @@ import sopht.utils as spu
 
 
 def point_source_advection_diffusion_case(
-    grid_size, num_threads=4, precision="single", save_data=False
-):
+    grid_size: tuple[int, int, int],
+    num_threads: int = 4,
+    precision: str = "single",
+    save_data: bool = False,
+) -> None:
     """
     This example considers a simple case of point source vortex, advecting with a
     constant velocity in 3D, while it diffuses in time.

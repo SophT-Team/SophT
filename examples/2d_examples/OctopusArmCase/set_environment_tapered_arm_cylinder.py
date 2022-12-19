@@ -13,8 +13,6 @@ from coomm.actuations.muscles import (
     TransverseMuscle,
     ApplyMuscleGroups,
 )
-from typing import List, Dict, Tuple
-from typing import Union
 
 
 class BaseSimulator(
@@ -48,12 +46,12 @@ class ArmEnvironment:
 
     def get_systems(
         self,
-    ) -> List[ea.CosseratRod]:
+    ) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
     def get_data(
         self,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         return [self.rod_parameters_dict]
 
     def set_arm(self) -> None:
@@ -63,7 +61,7 @@ class ArmEnvironment:
     def setup(self) -> None:
         self.set_arm()
 
-    def set_rod(self) -> Tuple[float, np.ndarray]:
+    def set_rod(self) -> tuple[float, np.ndarray]:
         """Set up a rod"""
         n_elements = 50  # number of discretized elements of the arm
         base_length = 0.2  # total length of the arm
@@ -111,14 +109,14 @@ class ArmEnvironment:
         )
         self.simulator.append(self.cylinder)
 
-        self.rod_parameters_dict: Dict = defaultdict(list)
+        self.rod_parameters_dict: dict = defaultdict(list)
         self.simulator.collect_diagnostics(self.shearable_rod).using(
             StraightRodCallBack,
             step_skip=self.step_skip,
             callback_params=self.rod_parameters_dict,
         )
 
-        self.cylinder_parameters_dict: Dict = defaultdict(list)
+        self.cylinder_parameters_dict: dict = defaultdict(list)
         self.simulator.collect_diagnostics(self.cylinder).using(
             CylinderCallBack,
             step_skip=self.step_skip,
@@ -150,7 +148,7 @@ class ArmEnvironment:
 
         def add_muscle_actuation(
             radius_base: np.ndarray, arm: ea.CosseratRod
-        ) -> List[MuscleGroup]:
+        ) -> list[MuscleGroup]:
 
             muscle_groups = []
 
@@ -253,7 +251,7 @@ class ArmEnvironment:
             return muscle_groups
 
         self.muscle_groups = add_muscle_actuation(base_radius, arm)
-        self.muscle_callback_params_list: List = [
+        self.muscle_callback_params_list: list = [
             defaultdict(list) for _ in self.muscle_groups
         ]
         self.simulator.add_forcing_to(self.shearable_rod).using(
@@ -270,7 +268,7 @@ class ArmEnvironment:
 
         """ Finalize the simulator and create time stepper """
 
-    def finalize(self) -> Tuple[int, List[ea.CosseratRod]]:
+    def finalize(self) -> tuple[int, list[ea.CosseratRod]]:
         self.simulator.finalize()
         self.do_step, self.stages_and_updates = ea.extend_stepper_interface(
             self.StatefulStepper, self.simulator
@@ -283,8 +281,8 @@ class ArmEnvironment:
         return self.total_steps, self.get_systems()
 
     def step(
-        self, time: float, muscle_activations: List[np.ndarray]
-    ) -> Tuple[float, List[ea.CosseratRod], bool]:
+        self, time: float, muscle_activations: list[np.ndarray]
+    ) -> tuple[float, list[ea.CosseratRod], bool]:
 
         """Set muscle activations"""
         for muscle_group, activation in zip(self.muscle_groups, muscle_activations):
@@ -357,10 +355,10 @@ class ArmEnvironment:
 
 
 class Environment(ArmEnvironment):
-    def get_systems(self) -> List[Union[ea.CosseratRod, ea.Cylinder]]:
+    def get_systems(self) -> list[ea.CosseratRod | ea.Cylinder]:
         return [self.shearable_rod, self.cylinder]
 
-    def get_data(self) -> List[Dict]:
+    def get_data(self) -> list[dict]:
         return [self.rod_parameters_dict, self.cylinder_parameters_dict]
 
     def setup(self) -> None:

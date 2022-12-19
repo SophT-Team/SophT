@@ -5,11 +5,11 @@ import sopht.utils as spu
 
 
 def hill_sphere_vortex_case(
-    grid_size,
-    num_threads=4,
-    precision="single",
-    save_data=False,
-):
+    grid_size: tuple[int, int, int],
+    num_threads: int = 4,
+    precision: str = "single",
+    save_data: bool = False,
+) -> None:
     """
     This test case considers the Hill's spherical vortex, and tests
     the velocity recovery and vortex stretching steps, for the solver,

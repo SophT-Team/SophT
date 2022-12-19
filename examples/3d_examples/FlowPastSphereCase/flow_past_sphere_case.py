@@ -6,22 +6,22 @@ import sopht.utils as spu
 
 
 def flow_past_sphere_case(
-    nondim_time,
-    grid_size,
-    reynolds=100.0,
-    coupling_stiffness=-6e5 / 4,
-    coupling_damping=-3.5e2 / 4,
-    num_threads=4,
-    precision="single",
-    save_flow_data=False,
-):
+    nondim_time: float,
+    grid_size: tuple[int, int, int],
+    reynolds: float = 100.0,
+    coupling_stiffness: float = -6e5 / 4,
+    coupling_damping: float = -3.5e2 / 4,
+    num_threads: int = 4,
+    precision: str = "single",
+    save_flow_data: bool = False,
+) -> None:
     """
     This example considers the case of flow past a sphere in 3D.
     """
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = spu.get_real_t(precision)
-    x_axis_idx = spu.VectorField.x_axis_idx()
+    x_axis_idx: int = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
     x_range = 1.0
@@ -121,8 +121,8 @@ def flow_past_sphere_case(
         sphere_flow_interactor.forcing_grid.position_field[z_axis_idx]
     )
     # Find the Eulerian grid index that has the sphere center (z coordinate)
-    sphere_center_on_euler_grid_idx = np.argmin(
-        np.abs(euler_grid_center_in_z_dir - lag_grid_center_in_z_dir)
+    sphere_center_on_euler_grid_idx = int(
+        np.argmin(np.abs(euler_grid_center_in_z_dir - lag_grid_center_in_z_dir))
     )
     time = []
     drag_coeffs = []
@@ -252,7 +252,9 @@ if __name__ == "__main__":
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=128, help="Number of grid points in x direction.")
     @click.option("--reynolds", default=100.0, help="Reynolds number of flow.")
-    def simulate_parallelised_flow_past_sphere(num_threads, nx, reynolds):
+    def simulate_parallelised_flow_past_sphere(
+        num_threads: int, nx: int, reynolds: float
+    ) -> None:
         ny = nx // 2
         nz = nx // 2
         # in order Z, Y, X

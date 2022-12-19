@@ -17,7 +17,7 @@ from sopht.numeric.eulerian_grid_ops import (
 )
 from sopht.utils.precision import get_test_tol
 from sopht.utils.field import VectorField
-from typing import Tuple, Type, Union, Callable
+from typing import Type, Callable
 
 
 # TODO refactor 2D and 3D with a common base simulator class
@@ -26,7 +26,7 @@ class UnboundedFlowSimulator3D:
 
     def __init__(
         self,
-        grid_size: Tuple[int, int, int],
+        grid_size: tuple[int, int, int],
         x_range: float,
         kinematic_viscosity: float,
         CFL: float = 0.1,
@@ -224,9 +224,7 @@ class UnboundedFlowSimulator3D:
                 )
             )
             grid_size_z, grid_size_y, grid_size_x = self.grid_size
-            self.unbounded_poisson_solver: Union[
-                UnboundedPoissonSolverPYFFTW3D, FastDiagPoissonSolver3D
-            ]
+            self.unbounded_poisson_solver: UnboundedPoissonSolverPYFFTW3D | FastDiagPoissonSolver3D
             if self.poisson_solver_type == "greens_function_convolution":
                 self.unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW3D(
                     grid_size_z=grid_size_z,

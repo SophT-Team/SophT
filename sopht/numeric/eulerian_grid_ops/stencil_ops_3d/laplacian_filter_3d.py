@@ -7,16 +7,15 @@ from sopht.numeric.eulerian_grid_ops.stencil_ops_3d import (
     gen_set_fixed_val_at_boundaries_pyst_kernel_3d,
 )
 from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
-from typing import Union, Tuple, Type
 
 
 def gen_laplacian_filter_kernel_3d(
     filter_order: int,
     filter_flux_buffer: np.ndarray,
     field_buffer: np.ndarray,
-    real_t: Type,
-    num_threads: Union[bool, int] = False,
-    fixed_grid_size: Union[Tuple, bool] = False,
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple | bool = False,
     field_type: str = "scalar",
     filter_type: str = "multiplicative",
     filter_flux_buffer_boundary_width: int = 1,

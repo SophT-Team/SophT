@@ -4,18 +4,20 @@ import sopht.simulator as sps
 import sopht.utils as spu
 
 
-def analytical_pipe_flow_velocity(radial_coordinate, mean_velocity, pipe_radius):
+def analytical_pipe_flow_velocity(
+    radial_coordinate: float | np.ndarray, mean_velocity: float, pipe_radius: float
+) -> float | np.ndarray:
     return 2.0 * mean_velocity * (1.0 - (radial_coordinate / pipe_radius) ** 2)
 
 
 def flow_through_circular_pipe_case(
-    grid_size,
-    coupling_stiffness=-4e5,
-    coupling_damping=-2.5e2,
-    num_threads=4,
-    precision="single",
-    save_data=False,
-):
+    grid_size: tuple[int, int, int],
+    coupling_stiffness: float = -4e5,
+    coupling_damping: float = -2.5e2,
+    num_threads: int = 4,
+    precision: str = "single",
+    save_data: bool = False,
+) -> None:
     """
     This example considers the case of steady flow through a pipe in 3D.
     """
@@ -135,8 +137,8 @@ def flow_through_circular_pipe_case(
             ax.plot(radial_coordinate, sim_velocity_profile, label="numerical")
             ax.plot(radial_coordinate, anal_velocity_profile, label="analytical")
             ax.legend()
-            ax.set_xlim([-cyl_radius, cyl_radius])
-            ax.set_ylim([0.0, 2.5 * mean_velocity])
+            ax.set_xlim(-cyl_radius, cyl_radius)
+            ax.set_ylim(0.0, 2.5 * mean_velocity)
             ax.set_xlabel("Y")
             ax.set_ylabel("axial velocity")
             spu.save_and_clear_fig(
