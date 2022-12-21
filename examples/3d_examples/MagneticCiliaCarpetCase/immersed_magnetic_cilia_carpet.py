@@ -39,7 +39,6 @@ def immersed_magnetic_cilia_carpet_case(
         flow_type="navier_stokes_with_forcing",
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )

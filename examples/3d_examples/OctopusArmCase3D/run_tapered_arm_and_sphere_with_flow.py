@@ -134,7 +134,6 @@ def tapered_arm_and_cylinder_flow_coupling(
         with_free_stream_flow=False,
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
