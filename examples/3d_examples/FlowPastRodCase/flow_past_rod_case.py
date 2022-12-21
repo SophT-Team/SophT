@@ -107,7 +107,6 @@ def flow_past_rod_case(
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )

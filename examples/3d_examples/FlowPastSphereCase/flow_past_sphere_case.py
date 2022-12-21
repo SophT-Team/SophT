@@ -36,7 +36,6 @@ def flow_past_sphere_case(
         num_threads=num_threads,
         flow_type="navier_stokes_with_forcing",
         with_free_stream_flow=True,
-        navier_stokes_inertial_term_form="rotational",
         time=0.0,
         # filter_vorticity=True,
         # filter_setting_dict={"order": 1, "type": "multiplicative"},
