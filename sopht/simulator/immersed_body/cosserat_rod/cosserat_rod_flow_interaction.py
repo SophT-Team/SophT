@@ -4,7 +4,7 @@ from sopht.simulator.immersed_body import (
     ImmersedBodyForcingGrid,
     ImmersedBodyFlowInteraction,
 )
-from typing import Type, Union
+from typing import Type, Optional
 
 
 class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
@@ -20,11 +20,11 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
         dx: float,
         grid_dim: int,
         forcing_grid_cls: Type[ImmersedBodyForcingGrid],
-        real_t: Type = np.float64,
-        eul_grid_coord_shift: Union[float, None] = None,
-        interp_kernel_width: Union[float, None] = None,
+        real_t: type = np.float64,
+        eul_grid_coord_shift: Optional[float] = None,
+        interp_kernel_width: Optional[float] = None,
         enable_eul_grid_forcing_reset: bool = False,
-        num_threads: Union[int, bool] = False,
+        num_threads: int | bool = False,
         start_time: float = 0.0,
         **forcing_grid_kwargs,
     ) -> None:

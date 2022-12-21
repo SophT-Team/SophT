@@ -4,7 +4,7 @@ from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from .immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
-from typing import Type, Union
+from typing import Type, Optional
 
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
@@ -21,11 +21,11 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         virtual_boundary_damping_coeff: float,
         dx: float,
         grid_dim: int,
-        real_t: Type = np.float64,
-        eul_grid_coord_shift: Union[float, None] = None,
-        interp_kernel_width: Union[float, None] = None,
+        real_t: type = np.float64,
+        eul_grid_coord_shift: Optional[float] = None,
+        interp_kernel_width: Optional[float] = None,
         enable_eul_grid_forcing_reset: bool = False,
-        num_threads: Union[int, bool] = False,
+        num_threads: int | bool = False,
         start_time: float = 0.0,
         **forcing_grid_kwargs,
     ) -> None:

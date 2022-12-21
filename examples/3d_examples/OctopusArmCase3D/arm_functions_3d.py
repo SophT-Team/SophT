@@ -5,17 +5,17 @@ import numpy as np
 class SigmoidActivationLongitudinalMuscles:
     def __init__(
         self,
-        beta,
-        tau,
-        start_time,
-        end_time,
-        start_non_dim_length,
-        end_non_dim_length,
-        n_elems,
-        activation_level_max=1.0,
-        activation_level_end=0.0,
-        activation_lower_threshold=2e-3,
-    ):
+        beta: float,
+        tau: float,
+        start_time: float,
+        end_time: float,
+        start_non_dim_length: float,
+        end_non_dim_length: float,
+        n_elems: int,
+        activation_level_max: float = 1.0,
+        activation_level_end: float = 0.0,
+        activation_lower_threshold: float = 2e-3,
+    ) -> None:
         self.beta = beta
         self.tau = tau / n_elems
         self.start_time = start_time
@@ -27,10 +27,10 @@ class SigmoidActivationLongitudinalMuscles:
         self.activation_level_end = activation_level_end
         self.activation_lower_threshold = activation_lower_threshold
 
-    def apply_activation(self, system, activation, time: float = 0.0):
+    def apply_activation(self, system, activation: np.ndarray, time: float = 0.0):
         n_elems = self.end_idx - self.start_idx
         index = np.arange(0, n_elems, dtype=np.int64)
-        fiber_activation = np.zeros((n_elems))
+        fiber_activation = np.zeros(n_elems)
         activation *= 0
 
         time = round(time, 5)
@@ -63,13 +63,13 @@ class SigmoidActivationLongitudinalMuscles:
 class LocalActivation:
     def __init__(
         self,
-        ramp_interval,
-        ramp_up_time,
-        ramp_down_time,
-        start_idx,
-        end_idx,
-        activation_level=1.0,
-    ):
+        ramp_interval: float,
+        ramp_up_time: float,
+        ramp_down_time: float,
+        start_idx: int,
+        end_idx: int,
+        activation_level: float = 1.0,
+    ) -> None:
         self.ramp = ramp_interval
         self.ramp_up_time = ramp_up_time
         self.ramp_down_time = ramp_down_time
@@ -77,22 +77,23 @@ class LocalActivation:
         self.start_idx = int(start_idx)
         self.end_idx = int(end_idx)
 
-    def apply_activation(self, system, activation, time: float = 0.0):
+    def apply_activation(self, system, activation: np.ndarray, time: float = 0.0):
 
         time = round(time, 5)
         factor = 0.0
-        if (time - self.ramp_up_time) <= 0:
+        if time <= self.ramp_up_time:
             factor = 0.0
-        elif (time - self.ramp_up_time) > 0 and (time - self.ramp_up_time) <= self.ramp:
+        elif time > self.ramp_up_time and (time - self.ramp_up_time) <= self.ramp:
             factor = (
                 1 + np.sin(np.pi * (time - self.ramp_up_time) / self.ramp - np.pi / 2)
             ) / 2
-        elif (time - self.ramp_up_time) > 0 and (time - self.ramp_down_time) < 0:
+        elif time > self.ramp_up_time and (time - self.ramp_down_time) < 0:
             factor = 1.0
 
-        elif (time - self.ramp_down_time) > 0 and (
-            time - self.ramp_down_time
-        ) / self.ramp < 1.0:
+        elif (
+            time > self.ramp_down_time
+            and (time - self.ramp_down_time) / self.ramp < 1.0
+        ):
             factor = (
                 1
                 - (

@@ -7,16 +7,16 @@ from elastic_net import ElasticNetSimulator
 
 def immersed_elastic_net_case(
     elastic_net_sim: ElasticNetSimulator,
-    domain_range,
-    grid_size_x,
-    reynolds,
-    vel_free_stream=1.0,
-    coupling_stiffness=-2e4,
-    coupling_damping=-1e1,
-    num_threads=4,
-    precision="single",
-    save_flow_data=False,
-):
+    domain_range: tuple[float, float, float],
+    grid_size_x: int,
+    reynolds: float,
+    vel_free_stream: float = 1.0,
+    coupling_stiffness: float = -2e4,
+    coupling_damping: float = -1e1,
+    num_threads: int = 4,
+    precision: str = "single",
+    save_flow_data: bool = False,
+) -> None:
     # ==================FLOW SETUP START=========================
     grid_dim = 3
     real_t = spu.get_real_t(precision)
@@ -46,7 +46,6 @@ def immersed_elastic_net_case(
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
@@ -285,12 +284,12 @@ if __name__ == "__main__":
     )
     @click.option("--final_time", default=2.0, help="Final simulation time.")
     def simulate_parallelised_immersed_net_case(
-        num_threads,
-        grid_size_x,
-        reynolds,
-        nondim_youngs_modulus,
-        final_time,
-    ):
+        num_threads: int,
+        grid_size_x: int,
+        reynolds: float,
+        nondim_youngs_modulus: float,
+        final_time: float,
+    ) -> None:
         vel_free_stream_z = 1.0
         youngs_modulus = nondim_youngs_modulus * rho_f * vel_free_stream_z**2
         # discretisation stuff

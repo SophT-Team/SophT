@@ -6,21 +6,21 @@ from sopht.numeric.eulerian_grid_ops.stencil_ops_3d import (
     gen_elementwise_saxpby_pyst_kernel_3d,
     gen_set_fixed_val_at_boundaries_pyst_kernel_3d,
 )
-from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
-from typing import Union, Tuple, Type
+import sopht.utils as spu
+from typing import Callable
 
 
 def gen_laplacian_filter_kernel_3d(
     filter_order: int,
     filter_flux_buffer: np.ndarray,
     field_buffer: np.ndarray,
-    real_t: Type,
-    num_threads: Union[bool, int] = False,
-    fixed_grid_size: Union[Tuple, bool] = False,
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple[int, int, int] | bool = False,
     field_type: str = "scalar",
     filter_type: str = "multiplicative",
     filter_flux_buffer_boundary_width: int = 1,
-):
+) -> Callable:
     """
     Laplacian filter kernel generator. Based on the field type
     filter kernels for both scalar and vectorial field can be constructed.
@@ -38,24 +38,20 @@ def gen_laplacian_filter_kernel_3d(
     """
 
     assert filter_order >= 0 and isinstance(filter_order, int), "Invalid filter order"
-    assert field_type == "scalar" or field_type == "vector", "Invalid field type"
     assert filter_flux_buffer_boundary_width > 0 and isinstance(
         filter_flux_buffer_boundary_width, int
     ), "Invalid value for filter flux buffer boundary zone"
-    supported_filter_types = ["multiplicative", "convolution"]
-    if filter_type not in supported_filter_types:
-        raise ValueError("Invalid filter type")
-    pyst_dtype = get_pyst_dtype(real_t)
-    kernel_config = get_pyst_kernel_config(real_t, num_threads)
+    pyst_dtype = spu.get_pyst_dtype(real_t)
+    kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
     grid_info = (
         f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple
+        if type(fixed_grid_size) is tuple[int, ...]
         else "3D"
     )
 
     @ps.kernel
-    def _laplacian_filter_3d_x():
+    def _laplacian_filter_3d_x() -> None:
         filter_flux, field = ps.fields(
             f"filter_flux, field : {pyst_dtype}[{grid_info}]"
         )
@@ -68,7 +64,7 @@ def gen_laplacian_filter_kernel_3d(
     ).compile()
 
     @ps.kernel
-    def _laplacian_filter_3d_y():
+    def _laplacian_filter_3d_y() -> None:
         filter_flux, field = ps.fields(
             f"filter_flux, field : {pyst_dtype}[{grid_info}]"
         )
@@ -81,7 +77,7 @@ def gen_laplacian_filter_kernel_3d(
     ).compile()
 
     @ps.kernel
-    def _laplacian_filter_3d_z():
+    def _laplacian_filter_3d_z() -> None:
         filter_flux, field = ps.fields(
             f"filter_flux, field : {pyst_dtype}[{grid_info}]"
         )
@@ -109,7 +105,7 @@ def gen_laplacian_filter_kernel_3d(
         field_type="scalar",
     )
 
-    def scalar_field_multiplicative_filter_kernel_3d(scalar_field):
+    def scalar_field_multiplicative_filter_kernel_3d(scalar_field: np.ndarray) -> None:
         """
         Applies multiplicative Laplacian filter on any scalar field.
         """
@@ -134,7 +130,7 @@ def gen_laplacian_filter_kernel_3d(
             field_2_prefac=-1.0,
         )
 
-    def scalar_field_convolution_filter_kernel_3d(scalar_field):
+    def scalar_field_convolution_filter_kernel_3d(scalar_field: np.ndarray) -> None:
         """
         Applies convolution Laplacian filter on any scalar field.
         """
@@ -179,22 +175,31 @@ def gen_laplacian_filter_kernel_3d(
             field_2_prefac=-1.0,
         )
 
-    scalar_field_filter_kernel_3d = None
-    if filter_type == "multiplicative":
-        scalar_field_filter_kernel_3d = scalar_field_multiplicative_filter_kernel_3d
-    elif filter_type == "convolution":
-        scalar_field_filter_kernel_3d = scalar_field_convolution_filter_kernel_3d
+    match filter_type:
+        case "multiplicative":
+            scalar_field_filter_kernel_3d = scalar_field_multiplicative_filter_kernel_3d
+        case "convolution":
+            scalar_field_filter_kernel_3d = scalar_field_convolution_filter_kernel_3d
+        case _:
+            raise ValueError("Invalid filter type")
+
     # Depending on the field type return the relevant filter implementation
-    if field_type == "scalar":
-        return scalar_field_filter_kernel_3d
-    elif field_type == "vector":
+    match field_type:
+        case "scalar":
+            return scalar_field_filter_kernel_3d
+        case "vector":
+            x_axis_idx = spu.VectorField.x_axis_idx()
+            y_axis_idx = spu.VectorField.y_axis_idx()
+            z_axis_idx = spu.VectorField.z_axis_idx()
 
-        def vector_filed_filter_kernel_3d(vector_field):
-            """
-            Applies laplacian filter on any vector field.
-            """
-            scalar_field_filter_kernel_3d(scalar_field=vector_field[0])
-            scalar_field_filter_kernel_3d(scalar_field=vector_field[1])
-            scalar_field_filter_kernel_3d(scalar_field=vector_field[2])
+            def vector_filed_filter_kernel_3d(vector_field: np.ndarray) -> None:
+                """
+                Applies laplacian filter on any vector field.
+                """
+                scalar_field_filter_kernel_3d(scalar_field=vector_field[x_axis_idx])
+                scalar_field_filter_kernel_3d(scalar_field=vector_field[y_axis_idx])
+                scalar_field_filter_kernel_3d(scalar_field=vector_field[z_axis_idx])
 
-        return vector_filed_filter_kernel_3d
+            return vector_filed_filter_kernel_3d
+        case _:
+            raise ValueError("Invalid field type")

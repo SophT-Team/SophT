@@ -5,16 +5,16 @@ from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
 def immersed_magnetic_cilia_carpet_case(
-    cilia_carpet_simulator,
-    domain_range,
-    grid_size_x,
-    reynolds=100.0,
-    coupling_stiffness=-2e4,
-    coupling_damping=-1e1,
-    num_threads=4,
-    precision="single",
-    save_data=False,
-):
+    cilia_carpet_simulator: MagneticCiliaCarpetSimulator,
+    domain_range: tuple[float, float, float],
+    grid_size_x: int,
+    reynolds: float = 100.0,
+    coupling_stiffness: float = -2e4,
+    coupling_damping: float = -1e1,
+    num_threads: int = 4,
+    precision: str = "single",
+    save_data: bool = False,
+) -> None:
     # ==================FLOW SETUP START=========================
     grid_dim = 3
     real_t = spu.get_real_t(precision)
@@ -39,7 +39,6 @@ def immersed_magnetic_cilia_carpet_case(
         flow_type="navier_stokes_with_forcing",
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )

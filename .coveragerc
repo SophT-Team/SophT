@@ -16,4 +16,5 @@ branch = True
 omit =
     # omit anything in a .local directory anywhere
     */.local/*
+    */experimental/*
     */rod_viz.py

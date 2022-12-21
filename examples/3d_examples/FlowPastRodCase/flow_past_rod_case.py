@@ -6,23 +6,23 @@ import click
 
 
 def flow_past_rod_case(
-    non_dim_final_time,
-    n_elem,
-    grid_size,
-    surface_grid_density_for_largest_element,
-    cauchy_number,
-    mass_ratio,
-    froude_number,
-    stretch_bending_ratio,
-    poisson_ratio=0.5,
-    reynolds=100.0,
-    coupling_stiffness=-2e5,
-    coupling_damping=-1e2,
-    rod_start_incline_angle=0.0,
-    num_threads=4,
-    precision="single",
-    save_data=False,
-):
+    non_dim_final_time: float,
+    n_elem: int,
+    grid_size: tuple[int, int, int],
+    surface_grid_density_for_largest_element: int,
+    cauchy_number: float,
+    mass_ratio: float,
+    froude_number: float,
+    stretch_bending_ratio: float,
+    poisson_ratio: float = 0.5,
+    reynolds: float = 100.0,
+    coupling_stiffness: float = -2e5,
+    coupling_damping: float = -1e2,
+    rod_start_incline_angle: float = 0.0,
+    num_threads: int = 4,
+    precision: str = "single",
+    save_data: bool = False,
+) -> None:
     # =================COMMON SIMULATOR STUFF=======================
     grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
@@ -107,7 +107,6 @@ def flow_past_rod_case(
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="rotational",
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
@@ -172,7 +171,7 @@ def flow_past_rod_case(
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
 
-    def rod_incline_angle_with_horizon(rod: type(ea.CosseratRod)):
+    def rod_incline_angle_with_horizon(rod: ea.CosseratRod):
         return np.rad2deg(
             np.fabs(
                 np.arctan(
@@ -305,7 +304,7 @@ if __name__ == "__main__":
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=128, help="Number of grid points in x direction.")
     @click.option("--u_free_stream", default=1.1, help="Free stream flow velocity.")
-    def simulate_flow_past_rod(num_threads, nx, u_free_stream):
+    def simulate_flow_past_rod(num_threads: int, nx: int, u_free_stream: float) -> None:
         ny = nx // 4
         nz = nx
         # in order Z, Y, X

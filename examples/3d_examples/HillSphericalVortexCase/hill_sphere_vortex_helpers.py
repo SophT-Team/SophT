@@ -1,4 +1,5 @@
 import numpy as np
+import sopht.utils as spu
 
 
 class HillSphereVortex:
@@ -15,12 +16,20 @@ class HillSphereVortex:
     Methods (pp. 407-417). Springer, Cham.
     """
 
-    def __init__(self, free_stream_velocity, vortex_radius, vortex_origin):
+    def __init__(
+        self,
+        free_stream_velocity: float,
+        vortex_radius: float,
+        vortex_origin: tuple[float, float, float],
+    ) -> None:
         self.free_stream_velocity = free_stream_velocity
         self.vortex_radius = vortex_radius
         self.vortex_origin = vortex_origin
+        self.grid_dim = 3
 
-    def compute_local_coordinates(self, x_grid, y_grid, z_grid):
+    def compute_local_coordinates(
+        self, x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         x_origin, y_origin, z_origin = self.vortex_origin
         local_x_grid = x_grid - x_origin
         local_y_grid = y_grid - y_origin
@@ -31,11 +40,13 @@ class HillSphereVortex:
         )
         return local_x_grid, local_y_grid, local_z_grid, cylinder_r_grid, sphere_r_grid
 
-    def get_inside_vortex_mask(self, sphere_r_grid):
+    def get_inside_vortex_mask(self, sphere_r_grid: np.ndarray) -> np.ndarray:
         inside_vortex = sphere_r_grid < self.vortex_radius
         return inside_vortex
 
-    def get_vorticity(self, x_grid, y_grid, z_grid):
+    def get_vorticity(
+        self, x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray
+    ) -> np.ndarray:
         (
             local_x_grid,
             local_y_grid,
@@ -52,12 +63,18 @@ class HillSphereVortex:
             / self.vortex_radius**2
         )
         grid_size = x_grid.shape
-        vorticity = np.zeros((3, *grid_size))
-        vorticity[0] = -vorticity_mag * local_y_grid / cylinder_r_grid
-        vorticity[1] = vorticity_mag * local_x_grid / cylinder_r_grid
+        vorticity = np.zeros((self.grid_dim, *grid_size))
+        vorticity[spu.VectorField.x_axis_idx()] = (
+            -vorticity_mag * local_y_grid / cylinder_r_grid
+        )
+        vorticity[spu.VectorField.y_axis_idx()] = (
+            vorticity_mag * local_x_grid / cylinder_r_grid
+        )
         return vorticity
 
-    def get_velocity(self, x_grid, y_grid, z_grid):
+    def get_velocity(
+        self, x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray
+    ) -> np.ndarray:
         (
             local_x_grid,
             local_y_grid,
@@ -67,7 +84,7 @@ class HillSphereVortex:
         ) = self.compute_local_coordinates(x_grid, y_grid, z_grid)
         inside_vortex = self.get_inside_vortex_mask(sphere_r_grid)
         grid_size = x_grid.shape
-        velocity = np.zeros((3, *grid_size))
+        velocity = np.zeros((self.grid_dim, *grid_size))
         radial_velocity = (
             1.5
             * self.free_stream_velocity
@@ -78,9 +95,13 @@ class HillSphereVortex:
             inside_vortex
             + (1 - inside_vortex) * (self.vortex_radius / sphere_r_grid) ** 5
         )
-        velocity[0] = radial_velocity * local_x_grid / cylinder_r_grid
-        velocity[1] = radial_velocity * local_y_grid / cylinder_r_grid
-        velocity[2] = inside_vortex * (
+        velocity[spu.VectorField.x_axis_idx()] = (
+            radial_velocity * local_x_grid / cylinder_r_grid
+        )
+        velocity[spu.VectorField.y_axis_idx()] = (
+            radial_velocity * local_y_grid / cylinder_r_grid
+        )
+        velocity[spu.VectorField.z_axis_idx()] = inside_vortex * (
             -1.5
             * self.free_stream_velocity
             * (2 * np.square(cylinder_r_grid) + np.square(local_z_grid))
@@ -94,7 +115,7 @@ class HillSphereVortex:
         )
         return velocity
 
-    def get_kinetic_energy(self):
+    def get_kinetic_energy(self) -> float:
         kinetic_energy = (
             10.0
             * np.pi
@@ -104,7 +125,9 @@ class HillSphereVortex:
         )
         return kinetic_energy
 
-    def get_vortex_stretching(self, x_grid, y_grid, z_grid):
+    def get_vortex_stretching(
+        self, x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray
+    ) -> np.ndarray:
         (
             local_x_grid,
             local_y_grid,
@@ -122,7 +145,11 @@ class HillSphereVortex:
             / self.vortex_radius**4
         )
         grid_size = x_grid.shape
-        vortex_stretching = np.zeros((3, *grid_size))
-        vortex_stretching[0] = -vortex_stretching_mag * local_y_grid / cylinder_r_grid
-        vortex_stretching[1] = vortex_stretching_mag * local_x_grid / cylinder_r_grid
+        vortex_stretching = np.zeros((self.grid_dim, *grid_size))
+        vortex_stretching[spu.VectorField.x_axis_idx()] = (
+            -vortex_stretching_mag * local_y_grid / cylinder_r_grid
+        )
+        vortex_stretching[spu.VectorField.y_axis_idx()] = (
+            vortex_stretching_mag * local_x_grid / cylinder_r_grid
+        )
         return vortex_stretching

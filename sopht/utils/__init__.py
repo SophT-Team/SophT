@@ -5,3 +5,4 @@ from .field import VectorField
 from .io import IO, CosseratRodIO
 from .rod_viz import plot_video_of_rod_surface
 from .precision import get_real_t, get_test_tol
+from .pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
