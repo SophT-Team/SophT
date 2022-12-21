@@ -47,7 +47,7 @@ examples = ["click", "coomm", "magneto_pyelastica"]
 
 [tool.black]
 # https://github.com/psf/black
-target-version = ["py38"]
+target-version = ["py310"]
 line-length = 88
 color = true
 
