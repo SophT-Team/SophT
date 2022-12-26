@@ -503,7 +503,7 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pystencils"
-version = "1.1"
+version = "1.1.1"
 description = "Speeding up stencil computations on CPUs and GPUs"
 category = "main"
 optional = false
@@ -1307,7 +1307,7 @@ pyparsing = [
     {file = "pyparsing-3.0.9.tar.gz", hash = "sha256:2b020ecf7d21b687f219b71ecad3631f644a47f01403fa1d1036b0c6416d70fb"},
 ]
 pystencils = [
-    {file = "pystencils-1.1.tar.gz", hash = "sha256:2ca6b043250d9ded1c9dbe6ff21afebd09fa7c3ed0f24b0a13afd124e4ddef04"},
+    {file = "pystencils-1.1.1.tar.gz", hash = "sha256:477a5445d7a7d47a206b538a71f4b301af6ad011fd5a7e06f0b1dd6273c8c50a"},
 ]
 pytest = [
     {file = "pytest-7.2.0-py3-none-any.whl", hash = "sha256:892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71"},
