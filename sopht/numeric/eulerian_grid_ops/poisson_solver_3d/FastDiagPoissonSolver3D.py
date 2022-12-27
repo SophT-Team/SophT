@@ -1,8 +1,9 @@
 """Poisson solver kernels in 3D via Fast Diagonalisation."""
 import numpy as np
 import numpy.linalg as la
-
 import scipy.sparse as spp
+import sopht.utils as spu
+from typing import Literal
 
 
 class FastDiagPoissonSolver3D:
@@ -10,13 +11,15 @@ class FastDiagPoissonSolver3D:
 
     def __init__(
         self,
-        grid_size_z,
-        grid_size_y,
-        grid_size_x,
-        dx,
-        real_t=np.float64,
-        bc_type="homogenous_neumann_along_xyz",
-    ):
+        grid_size_z: int,
+        grid_size_y: int,
+        grid_size_x: int,
+        dx: float,
+        real_t: type = np.float64,
+        bc_type: Literal[
+            "homogenous_neumann_along_xyz"
+        ] = "homogenous_neumann_along_xyz",
+    ) -> None:
         """Class initialiser."""
         self.dx = dx
         self.grid_size_z = grid_size_z
@@ -29,18 +32,23 @@ class FastDiagPoissonSolver3D:
             poisson_matrix_x,
             poisson_matrix_y,
             poisson_matrix_z,
-        ) = self.construct_poisson_matrices()
-        self.apply_boundary_conds_to_poisson_matrices(
+        ) = self._construct_poisson_matrices()
+        self._apply_boundary_conds_to_poisson_matrices(
             poisson_matrix_x, poisson_matrix_y, poisson_matrix_z
         )
-        self.compute_spectral_decomp_of_poisson_matrices(
+        self._compute_spectral_decomp_of_poisson_matrices(
             poisson_matrix_x, poisson_matrix_y, poisson_matrix_z
         )
 
         # allocate buffer for spectral field manipulation
         self.spectral_field_buffer = np.zeros_like(self.inv_eig_val_matrix)
 
-    def construct_poisson_matrices(self):
+        # vector field solve stuff
+        self.x_axis_idx = spu.VectorField.x_axis_idx()
+        self.y_axis_idx = spu.VectorField.y_axis_idx()
+        self.z_axis_idx = spu.VectorField.z_axis_idx()
+
+    def _construct_poisson_matrices(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Construct the finite difference Poisson matrices."""
         # TODO can add higher order options..
         inv_dx2 = self.real_t(1 / self.dx / self.dx)
@@ -68,12 +76,12 @@ class FastDiagPoissonSolver3D:
 
         return poisson_matrix_x, poisson_matrix_y, poisson_matrix_z
 
-    def apply_boundary_conds_to_poisson_matrices(
+    def _apply_boundary_conds_to_poisson_matrices(
         self,
-        poisson_matrix_x,
-        poisson_matrix_y,
-        poisson_matrix_z,
-    ):
+        poisson_matrix_x: np.ndarray,
+        poisson_matrix_y: np.ndarray,
+        poisson_matrix_z: np.ndarray,
+    ) -> None:
         """Apply boundary conditions to Poisson matrices."""
         inv_dx2 = self.real_t(1 / self.dx / self.dx)
         if self.bc_type == "homogenous_neumann_along_xyz":
@@ -86,9 +94,12 @@ class FastDiagPoissonSolver3D:
             poisson_matrix_z[0, 0] = inv_dx2
             poisson_matrix_z[-1, -1] = inv_dx2
 
-    def compute_spectral_decomp_of_poisson_matrices(
-        self, poisson_matrix_x, poisson_matrix_y, poisson_matrix_z
-    ):
+    def _compute_spectral_decomp_of_poisson_matrices(
+        self,
+        poisson_matrix_x: np.ndarray,
+        poisson_matrix_y: np.ndarray,
+        poisson_matrix_z: np.ndarray,
+    ) -> None:
         """Compute spectral decomposition (eigenvalue and vectors) of the matrices."""
         eig_vals_x, eig_vecs_x = la.eig(poisson_matrix_x)
         # sort eigenvalues in decreasing order
@@ -116,15 +127,15 @@ class FastDiagPoissonSolver3D:
 
         eig_val_matrix = (
             np.tile(
-                eig_vals_z.reshape(self.grid_size_z, 1, 1),
+                eig_vals_z.reshape((self.grid_size_z, 1, 1)),
                 reps=(1, self.grid_size_y, self.grid_size_x),
             )
             + np.tile(
-                eig_vals_y.reshape(1, self.grid_size_y, 1),
+                eig_vals_y.reshape((1, self.grid_size_y, 1)),
                 reps=(self.grid_size_z, 1, self.grid_size_x),
             )
             + np.tile(
-                eig_vals_x.reshape(1, 1, self.grid_size_x),
+                eig_vals_x.reshape((1, 1, self.grid_size_x)),
                 reps=(self.grid_size_z, self.grid_size_y, 1),
             )
         )
@@ -133,7 +144,7 @@ class FastDiagPoissonSolver3D:
             eig_val_matrix[-1, -1, -1] = np.inf
         self.inv_eig_val_matrix = self.real_t(1) / eig_val_matrix
 
-    def solve(self, solution_field, rhs_field):
+    def solve(self, solution_field: np.ndarray, rhs_field: np.ndarray) -> None:
         """Solve Poisson equation in 3D: -del^2(solution_field) = rhs_field."""
         # transform to spectral space ("forward transform")
         # hit last x index
@@ -170,18 +181,23 @@ class FastDiagPoissonSolver3D:
             self.eig_vecs_z, self.spectral_field_buffer, axes=(1, 0)
         )
 
-    def vector_field_solve(self, solution_vector_field, rhs_vector_field):
+    def vector_field_solve(
+        self, solution_vector_field: np.ndarray, rhs_vector_field: np.ndarray
+    ) -> None:
         """Poisson equation solver method in 3D.
 
         Solves 3 Poisson equations in 3D for each of the components of:
         solution_vector_field and rhs_vector_field.
         """
         self.solve(
-            solution_field=solution_vector_field[0], rhs_field=rhs_vector_field[0]
+            solution_field=solution_vector_field[self.x_axis_idx],
+            rhs_field=rhs_vector_field[self.x_axis_idx],
         )
         self.solve(
-            solution_field=solution_vector_field[1], rhs_field=rhs_vector_field[1]
+            solution_field=solution_vector_field[self.y_axis_idx],
+            rhs_field=rhs_vector_field[self.y_axis_idx],
         )
         self.solve(
-            solution_field=solution_vector_field[2], rhs_field=rhs_vector_field[2]
+            solution_field=solution_vector_field[self.z_axis_idx],
+            rhs_field=rhs_vector_field[self.z_axis_idx],
         )

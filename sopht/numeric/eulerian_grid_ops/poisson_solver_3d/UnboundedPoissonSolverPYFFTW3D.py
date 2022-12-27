@@ -1,12 +1,7 @@
 """Unbounded Poisson solver kernels 3D via PyFFTW."""
 import numpy as np
-
-from sopht.numeric.eulerian_grid_ops.poisson_solver_3d.FFTPyFFTW3D import FFTPyFFTW3D
-from sopht.numeric.eulerian_grid_ops.stencil_ops_3d.elementwise_ops_3d import (
-    gen_elementwise_complex_product_pyst_kernel_3d,
-    gen_elementwise_copy_pyst_kernel_3d,
-    gen_set_fixed_val_pyst_kernel_3d,
-)
+import sopht.numeric.eulerian_grid_ops as spne
+import sopht.utils as spu
 
 
 class UnboundedPoissonSolverPYFFTW3D:
@@ -14,13 +9,13 @@ class UnboundedPoissonSolverPYFFTW3D:
 
     def __init__(
         self,
-        grid_size_z,
-        grid_size_y,
-        grid_size_x,
-        x_range=1.0,
-        num_threads=1,
-        real_t=np.float64,
-    ):
+        grid_size_z: int,
+        grid_size_y: int,
+        grid_size_x: int,
+        x_range: float = 1.0,
+        num_threads: int = 1,
+        real_t: type = np.float64,
+    ) -> None:
         """Class initialiser."""
         self.grid_size_z = grid_size_z
         self.grid_size_y = grid_size_y
@@ -31,7 +26,7 @@ class UnboundedPoissonSolverPYFFTW3D:
         self.dx = real_t(x_range / grid_size_x)
         self.num_threads = num_threads
         self.real_t = real_t
-        pyfftw_construct = FFTPyFFTW3D(
+        pyfftw_construct = spne.FFTPyFFTW3D(
             # 2 because FFTs taken on doubled domain
             grid_size_z=2 * grid_size_z,
             grid_size_y=2 * grid_size_y,
@@ -48,21 +43,25 @@ class UnboundedPoissonSolverPYFFTW3D:
         # TODO avoid this allocation if possible, currently needed to do SIMD and
         #  parallel fourier space convolution
         self.convolution_buffer = np.zeros_like(self.domain_doubled_fourier_buffer)
-        self.construct_fourier_greens_function_field()
+        self._construct_fourier_greens_function_field()
         self.fourier_greens_function_times_dx_cubed = (
             self.domain_doubled_fourier_buffer * (self.dx**3)
         )
-        self.gen_elementwise_operation_kernels()
+        self._gen_elementwise_operation_kernels()
+        # vector field solve stuff
+        self.x_axis_idx = spu.VectorField.x_axis_idx()
+        self.y_axis_idx = spu.VectorField.y_axis_idx()
+        self.z_axis_idx = spu.VectorField.z_axis_idx()
 
-    def construct_fourier_greens_function_field(self):
+    def _construct_fourier_greens_function_field(self) -> None:
         """Construct the unbounded Greens function."""
-        x_double = np.linspace(
+        x_double: np.ndarray = np.linspace(
             0, 2 * self.x_range - self.dx, 2 * self.grid_size_x
         ).astype(self.real_t)
-        y_double = np.linspace(
+        y_double: np.ndarray = np.linspace(
             0, 2 * self.y_range - self.dx, 2 * self.grid_size_y
         ).astype(self.real_t)
-        z_double = np.linspace(
+        z_double: np.ndarray = np.linspace(
             0, 2 * self.z_range - self.dx, 2 * self.grid_size_z
         ).astype(self.real_t)
         # operations after this preserve dtype
@@ -83,10 +82,10 @@ class UnboundedPoissonSolverPYFFTW3D:
             output_array=self.domain_doubled_fourier_buffer,
         )
 
-    def gen_elementwise_operation_kernels(self):
+    def _gen_elementwise_operation_kernels(self) -> None:
         """Compile funcs for elementwise ops on buffers."""
         # both of these operate on domain doubled arrays
-        self.set_fixed_val_kernel_3d = gen_set_fixed_val_pyst_kernel_3d(
+        self.set_fixed_val_kernel_3d = spne.gen_set_fixed_val_pyst_kernel_3d(
             real_t=self.real_t,
             num_threads=self.num_threads,
             fixed_grid_size=(
@@ -96,20 +95,20 @@ class UnboundedPoissonSolverPYFFTW3D:
             ),
         )
         # TODO add kernel strides info to enable fixed size version
-        self.elementwise_copy_kernel_3d = gen_elementwise_copy_pyst_kernel_3d(
+        self.elementwise_copy_kernel_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
             real_t=self.real_t,
             num_threads=self.num_threads,
         )
         # this one operates on fourier buffer
         # TODO add kernel strides info to enable fixed size version
         self.elementwise_complex_product_kernel_3d = (
-            gen_elementwise_complex_product_pyst_kernel_3d(
+            spne.gen_elementwise_complex_product_pyst_kernel_3d(
                 real_t=self.real_t,
                 num_threads=self.num_threads,
             )
         )
 
-    def solve(self, solution_field, rhs_field):
+    def solve(self, solution_field: np.ndarray, rhs_field: np.ndarray) -> None:
         """Unbounded Poisson solver method.
 
         Solves Poisson equation in 3D: -del^2(solution_field) = rhs_field
@@ -149,7 +148,9 @@ class UnboundedPoissonSolverPYFFTW3D:
             ],
         )
 
-    def vector_field_solve(self, solution_vector_field, rhs_vector_field):
+    def vector_field_solve(
+        self, solution_vector_field: np.ndarray, rhs_vector_field: np.ndarray
+    ) -> None:
         """Unbounded Poisson solver method (vector field solve).
 
         Solves 3 Poisson equations in 3D for each component:
@@ -158,11 +159,14 @@ class UnboundedPoissonSolverPYFFTW3D:
         domain doubling trick (Hockney and Eastwood).
         """
         self.solve(
-            solution_field=solution_vector_field[0], rhs_field=rhs_vector_field[0]
+            solution_field=solution_vector_field[self.x_axis_idx],
+            rhs_field=rhs_vector_field[self.x_axis_idx],
         )
         self.solve(
-            solution_field=solution_vector_field[1], rhs_field=rhs_vector_field[1]
+            solution_field=solution_vector_field[self.y_axis_idx],
+            rhs_field=rhs_vector_field[self.y_axis_idx],
         )
         self.solve(
-            solution_field=solution_vector_field[2], rhs_field=rhs_vector_field[2]
+            solution_field=solution_vector_field[self.z_axis_idx],
+            rhs_field=rhs_vector_field[self.z_axis_idx],
         )
