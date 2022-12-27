@@ -1,25 +1,27 @@
 """Kernels for computing diffusion flux in 2D."""
+import numpy as np
 import pystencils as ps
-from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
-    gen_set_fixed_val_at_boundaries_pyst_kernel_2d,
-)
-from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
+import sopht.numeric.eulerian_grid_ops as spne
+import sopht.utils as spu
 import sympy as sp
+from typing import Callable
 
 
 def gen_diffusion_flux_pyst_kernel_2d(
-    real_t,
-    num_threads=False,
-    fixed_grid_size=False,
-    reset_ghost_zone=True,
-):
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple[int, int] | bool = False,
+    reset_ghost_zone: bool = True,
+) -> Callable:
     # TODO expand docs
     """2D Diffusion flux kernel generator."""
-    pyst_dtype = get_pyst_dtype(real_t)
-    kernel_config = get_pyst_kernel_config(real_t, num_threads)
+    pyst_dtype = spu.get_pyst_dtype(real_t)
+    kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
     grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}" if fixed_grid_size else "2D"
+        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}"
+        if type(fixed_grid_size) is tuple[int, ...]
+        else "2D"
     )
 
     @ps.kernel
@@ -36,33 +38,34 @@ def gen_diffusion_flux_pyst_kernel_2d(
         _diffusion_stencil_2d, config=kernel_config
     ).compile()
 
-    if not reset_ghost_zone:
-        return diffusion_flux_kernel_2d
-    else:
-        # to set boundary zone = 0
-        boundary_width = 1
-        set_fixed_val_at_boundaries_2d = gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
-            real_t=real_t,
-            width=boundary_width,
-            # complexity of this operation is O(N), hence setting serial version
-            num_threads=False,
-            field_type="scalar",
-        )
-
-        def diffusion_flux_with_ghost_zone_reset_pyst_kernel_2d(
-            diffusion_flux, field, prefactor
-        ):
-            """Diffusion flux in 2D, with resetting of ghost zone.
-
-            Computes diffusion flux of 2D scalar field (field)
-            into scalar 2D field (diffusion_flux).
-            """
-            diffusion_flux_kernel_2d(
-                diffusion_flux=diffusion_flux, field=field, prefactor=prefactor
+    match reset_ghost_zone:
+        case False:
+            return diffusion_flux_kernel_2d
+        case True:
+            # to set boundary zone = 0
+            boundary_width = 1
+            set_fixed_val_at_boundaries_2d = spne.gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
+                real_t=real_t,
+                width=boundary_width,
+                # complexity of this operation is O(N), hence setting serial version
+                num_threads=False,
+                field_type="scalar",
             )
 
-            # set boundary unaffected points to 0
-            # TODO need one sided corrections?
-            set_fixed_val_at_boundaries_2d(field=diffusion_flux, fixed_val=0)
+            def diffusion_flux_with_ghost_zone_reset_pyst_kernel_2d(
+                diffusion_flux: np.ndarray, field: np.ndarray, prefactor: float
+            ) -> None:
+                """Diffusion flux in 2D, with resetting of ghost zone.
 
-        return diffusion_flux_with_ghost_zone_reset_pyst_kernel_2d
+                Computes diffusion flux of 2D scalar field (field)
+                into scalar 2D field (diffusion_flux).
+                """
+                diffusion_flux_kernel_2d(
+                    diffusion_flux=diffusion_flux, field=field, prefactor=prefactor
+                )
+
+                # set boundary unaffected points to 0
+                # TODO need one sided corrections?
+                set_fixed_val_at_boundaries_2d(field=diffusion_flux, fixed_val=0)
+
+            return diffusion_flux_with_ghost_zone_reset_pyst_kernel_2d

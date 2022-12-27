@@ -1,13 +1,9 @@
 """Kernels applying laplacian filter on 3d grid for scalar and vector fields"""
 import numpy as np
 import pystencils as ps
-from sopht.numeric.eulerian_grid_ops.stencil_ops_3d import (
-    gen_elementwise_copy_pyst_kernel_3d,
-    gen_elementwise_saxpby_pyst_kernel_3d,
-    gen_set_fixed_val_at_boundaries_pyst_kernel_3d,
-)
+import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable
+from typing import Callable, Literal
 
 
 def gen_laplacian_filter_kernel_3d(
@@ -17,8 +13,8 @@ def gen_laplacian_filter_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int, int] | bool = False,
-    field_type: str = "scalar",
-    filter_type: str = "multiplicative",
+    field_type: Literal["scalar", "vector"] = "scalar",
+    filter_type: Literal["multiplicative", "convolution"] = "multiplicative",
     filter_flux_buffer_boundary_width: int = 1,
 ) -> Callable:
     """
@@ -89,15 +85,15 @@ def gen_laplacian_filter_kernel_3d(
         _laplacian_filter_3d_z, config=kernel_config
     ).compile()
 
-    elementwise_copy_3d = gen_elementwise_copy_pyst_kernel_3d(
+    elementwise_copy_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
         real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
     )
-    elementwise_saxpby_3d = gen_elementwise_saxpby_pyst_kernel_3d(
+    elementwise_saxpby_3d = spne.gen_elementwise_saxpby_pyst_kernel_3d(
         real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
     )
     # to set boundary zone = 0
     boundary_width = filter_flux_buffer_boundary_width
-    set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
+    set_fixed_val_at_boundaries_3d = spne.gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
         real_t=real_t,
         width=boundary_width,
         # complexity of this operation is O(N^2), hence setting serial version

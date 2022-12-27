@@ -1,22 +1,20 @@
 """Kernels for penalising field boundary in 2D."""
 import numpy as np
-
 import pystencils as ps
-
 import sympy as sp
-
-from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
+import sopht.utils as spu
+from typing import Callable
 
 
 def gen_penalise_field_boundary_pyst_kernel_2d(
-    width,
-    dx,
-    x_grid_field,
-    y_grid_field,
-    real_t,
-    num_threads=False,
-    fixed_grid_size=False,
-):
+    width: int,
+    dx: float,
+    x_grid_field: np.ndarray,
+    y_grid_field: np.ndarray,
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple[int, int] | bool = False,
+) -> Callable:
     # TODO expand docs
     """2D penalise field boundary kernel generator."""
     assert width >= 0 and isinstance(width, int), "invalid zone width"
@@ -24,13 +22,15 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
     if width == 0:
         # bypass option to prevent penalisation, done this way since by
         # default to avoid artifacts one must use penalisation...
-        def penalise_field_boundary_pyst_kernel_2d(field):
+        def penalise_field_boundary_pyst_kernel_2d(field: np.ndarray) -> None:
             pass
 
     else:
-        pyst_dtype = get_pyst_dtype(real_t)
+        pyst_dtype = spu.get_pyst_dtype(real_t)
         grid_info = (
-            f"{fixed_grid_size[0]}, {fixed_grid_size[1]}" if fixed_grid_size else "2D"
+            f"{fixed_grid_size[0]}, {fixed_grid_size[1]}"
+            if type(fixed_grid_size) is tuple[int, ...]
+            else "2D"
         )
         x_grid_field_start = x_grid_field[0, 0]
         y_grid_field_start = y_grid_field[0, 0]
@@ -40,13 +40,13 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
         sine_prefactor = (np.pi / 2) / (width * dx)
 
         x_front_boundary_slice = ps.make_slice[:, :width]
-        x_front_boundary_kernel_config = get_pyst_kernel_config(
+        x_front_boundary_kernel_config = spu.get_pyst_kernel_config(
             real_t,
             num_threads,
             iteration_slice=x_front_boundary_slice,
         )
         x_back_boundary_slice = ps.make_slice[:, -width:]
-        x_back_boundary_kernel_config = get_pyst_kernel_config(
+        x_back_boundary_kernel_config = spu.get_pyst_kernel_config(
             real_t,
             num_threads,
             iteration_slice=x_back_boundary_slice,
@@ -81,13 +81,13 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
         ).compile()
 
         y_front_boundary_slice = ps.make_slice[:width, :]
-        y_front_boundary_kernel_config = get_pyst_kernel_config(
+        y_front_boundary_kernel_config = spu.get_pyst_kernel_config(
             real_t,
             num_threads,
             iteration_slice=y_front_boundary_slice,
         )
         y_back_boundary_slice = ps.make_slice[-width:, :]
-        y_back_boundary_kernel_config = get_pyst_kernel_config(
+        y_back_boundary_kernel_config = spu.get_pyst_kernel_config(
             real_t,
             num_threads,
             iteration_slice=y_back_boundary_slice,
@@ -121,7 +121,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
             config=y_back_boundary_kernel_config,
         ).compile()
 
-        def penalise_field_boundary_pyst_kernel_2d(field):
+        def penalise_field_boundary_pyst_kernel_2d(field: np.ndarray) -> None:
             """2D penalise field boundary kernel.
 
             Penalises field on the boundaries in a sine wave fashion

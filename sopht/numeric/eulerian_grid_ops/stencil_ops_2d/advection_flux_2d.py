@@ -1,25 +1,25 @@
 """Kernels for computing advection flux in 2D."""
 import numpy as np
-
 import pystencils as ps
-
 import sympy as sp
-
-from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
+import sopht.utils as spu
+from typing import Callable
 
 
 def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
-    real_t, num_threads=False, fixed_grid_size=False
-):
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple[int, int] | bool = False,
+) -> Callable:
     # TODO expand docs
     """2D conservative ENO3 advection flux kernel generator."""
-    pyst_dtype = "float32" if real_t == np.float32 else "float64"
-    kernel_config = ps.CreateKernelConfig(
-        data_type=pyst_dtype, default_number_float=pyst_dtype, cpu_openmp=num_threads
-    )
+    pyst_dtype = spu.get_pyst_dtype(real_t)
+    kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
     grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}" if fixed_grid_size else "2D"
+        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}"
+        if type(fixed_grid_size) is tuple[int, ...]
+        else "2D"
     )
 
     @ps.kernel
@@ -123,34 +123,39 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
     _advection_flux_y_back_conservative_eno3_kernel_2d = ps.create_kernel(
         _advection_flux_y_back_conservative_eno3_stencil_2d, config=kernel_config
     ).compile()
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
 
     def advection_flux_conservative_eno3_pyst_kernel_2d(
-        advection_flux, field, velocity, inv_dx
-    ):
+        advection_flux: np.ndarray,
+        field: np.ndarray,
+        velocity: np.ndarray,
+        inv_dx: float,
+    ) -> None:
         # TODO expand docs
         """2D conservative ENO3 advection flux kernel."""
         _advection_flux_x_front_conservative_eno3_kernel_2d(
             advection_flux=advection_flux,
             field=field,
-            velocity_x=velocity[0],
+            velocity_x=velocity[x_axis_idx],
             inv_dx=inv_dx,
         )
         _advection_flux_x_back_conservative_eno3_kernel_2d(
             advection_flux=advection_flux,
             field=field,
-            velocity_x=velocity[0],
+            velocity_x=velocity[x_axis_idx],
             inv_dx=inv_dx,
         )
         _advection_flux_y_front_conservative_eno3_kernel_2d(
             advection_flux=advection_flux,
             field=field,
-            velocity_y=velocity[1],
+            velocity_y=velocity[y_axis_idx],
             inv_dx=inv_dx,
         )
         _advection_flux_y_back_conservative_eno3_kernel_2d(
             advection_flux=advection_flux,
             field=field,
-            velocity_y=velocity[1],
+            velocity_y=velocity[y_axis_idx],
             inv_dx=inv_dx,
         )
 
