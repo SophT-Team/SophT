@@ -1,12 +1,6 @@
 """Unbounded Poisson solver kernels 2D via PyFFTW."""
 import numpy as np
-
-from sopht.numeric.eulerian_grid_ops.poisson_solver_2d.FFTPyFFTW2D import FFTPyFFTW2D
-from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
-    gen_elementwise_complex_product_pyst_kernel_2d,
-    gen_elementwise_copy_pyst_kernel_2d,
-    gen_set_fixed_val_pyst_kernel_2d,
-)
+import sopht.numeric.eulerian_grid_ops as spne
 
 
 class UnboundedPoissonSolverPYFFTW2D:
@@ -14,12 +8,12 @@ class UnboundedPoissonSolverPYFFTW2D:
 
     def __init__(
         self,
-        grid_size_y,
-        grid_size_x,
-        x_range=1.0,
-        num_threads=1,
-        real_t=np.float64,
-    ):
+        grid_size_y: int,
+        grid_size_x: int,
+        x_range: float = 1.0,
+        num_threads: int = 1,
+        real_t: type = np.float64,
+    ) -> None:
         """Class initialiser."""
         self.grid_size_y = grid_size_y
         self.grid_size_x = grid_size_x
@@ -28,7 +22,7 @@ class UnboundedPoissonSolverPYFFTW2D:
         self.dx = real_t(x_range / grid_size_x)
         self.num_threads = num_threads
         self.real_t = real_t
-        pyfftw_construct = FFTPyFFTW2D(
+        pyfftw_construct = spne.FFTPyFFTW2D(
             # 2 because FFTs taken on doubled domain
             grid_size_y=2 * grid_size_y,
             grid_size_x=2 * grid_size_x,
@@ -44,18 +38,18 @@ class UnboundedPoissonSolverPYFFTW2D:
         # TODO avoid this allocation if possible, currently needed to do SIMD and
         #  parallel fourier space convolution
         self.convolution_buffer = np.zeros_like(self.domain_doubled_fourier_buffer)
-        self.construct_fourier_greens_function_field()
+        self._construct_fourier_greens_function_field()
         self.fourier_greens_function_times_dx_squared = (
             self.domain_doubled_fourier_buffer * (self.dx**2)
         )
-        self.gen_elementwise_operation_kernels()
+        self._gen_elementwise_operation_kernels()
 
-    def construct_fourier_greens_function_field(self):
+    def _construct_fourier_greens_function_field(self) -> None:
         """Construct the unbounded Greens function."""
-        x_double = np.linspace(
+        x_double: np.ndarray = np.linspace(
             0, 2 * self.x_range - self.dx, 2 * self.grid_size_x
         ).astype(self.real_t)
-        y_double = np.linspace(
+        y_double: np.ndarray = np.linspace(
             0, 2 * self.y_range - self.dx, 2 * self.grid_size_y
         ).astype(self.real_t)
         # operations after this preserve dtype
@@ -75,10 +69,10 @@ class UnboundedPoissonSolverPYFFTW2D:
             output_array=self.domain_doubled_fourier_buffer,
         )
 
-    def gen_elementwise_operation_kernels(self):
+    def _gen_elementwise_operation_kernels(self) -> None:
         """Compile funcs for elementwise ops on buffers."""
         # both of these operate on domain doubled arrays
-        self.set_fixed_val_kernel_2d = gen_set_fixed_val_pyst_kernel_2d(
+        self.set_fixed_val_kernel_2d = spne.gen_set_fixed_val_pyst_kernel_2d(
             real_t=self.real_t,
             num_threads=self.num_threads,
             fixed_grid_size=(
@@ -87,20 +81,20 @@ class UnboundedPoissonSolverPYFFTW2D:
             ),
         )
         # TODO add kernel strides info to enable fixed size version
-        self.elementwise_copy_kernel_2d = gen_elementwise_copy_pyst_kernel_2d(
+        self.elementwise_copy_kernel_2d = spne.gen_elementwise_copy_pyst_kernel_2d(
             real_t=self.real_t,
             num_threads=self.num_threads,
         )
         # this one operates on fourier buffer
         # TODO add kernel strides info to enable fixed size version
         self.elementwise_complex_product_kernel_2d = (
-            gen_elementwise_complex_product_pyst_kernel_2d(
+            spne.gen_elementwise_complex_product_pyst_kernel_2d(
                 real_t=self.real_t,
                 num_threads=self.num_threads,
             )
         )
 
-    def solve(self, solution_field, rhs_field):
+    def solve(self, solution_field: np.ndarray, rhs_field: np.ndarray) -> None:
         """Unbounded Poisson solver method.
 
         Solves Poisson equation in 2D: -del^2(solution_field) = rhs_field

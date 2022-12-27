@@ -16,7 +16,7 @@ First **create the fork repository and clone** to your local machine.
 
 2. Virtual python workspace: `conda`, `pyenv`, or `venv`.
 
-We recommend using python version above 3.8.0.
+We recommend using python version above 3.10.
 
 ```bash
 conda create --name sopht-env
