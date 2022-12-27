@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable
+from typing import Callable, Literal
 
 
 class UnboundedFlowSimulator2D:
@@ -14,7 +14,9 @@ class UnboundedFlowSimulator2D:
         x_range: float,
         kinematic_viscosity: float,
         CFL: float = 0.1,
-        flow_type: str = "passive_scalar",
+        flow_type: Literal[
+            "passive_scalar", "navier_stokes", "navier_stokes_with_forcing"
+        ] = "passive_scalar",
         real_t: type = np.float32,
         num_threads: int = 1,
         time: float = 0.0,
