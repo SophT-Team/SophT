@@ -1,23 +1,25 @@
 """Kernels for computing vorticity stretching flux in 3D."""
+import numpy as np
 import pystencils as ps
 import sympy as sp
-from sopht.numeric.eulerian_grid_ops.stencil_ops_3d.elementwise_ops_3d import (
-    gen_set_fixed_val_at_boundaries_pyst_kernel_3d,
-)
-from sopht.utils.pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
+import sopht.numeric.eulerian_grid_ops as spne
+import sopht.utils as spu
+from typing import Callable
 
 
 def gen_vorticity_stretching_flux_pyst_kernel_3d(
-    real_t, num_threads=False, fixed_grid_size=False
-):
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple[int, int, int] | bool = False,
+) -> Callable:
     # TODO expand docs
     """3D Vorticity stretching flux kernel generator."""
-    pyst_dtype = get_pyst_dtype(real_t)
-    kernel_config = get_pyst_kernel_config(real_t, num_threads)
+    pyst_dtype = spu.get_pyst_dtype(real_t)
+    kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
     grid_info = (
         f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if fixed_grid_size
+        if type(fixed_grid_size) is tuple[int, ...]
         else "3D"
     )
 
@@ -48,16 +50,24 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
 
     # to set boundary zone = 0
     boundary_width = 1
-    set_fixed_val_at_boundaries_3d = gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
-        real_t=real_t,
-        width=boundary_width,
-        num_threads=num_threads,
-        field_type="vector",
+    set_fixed_val_at_boundaries_3d = (
+        spne.gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
+            real_t=real_t,
+            width=boundary_width,
+            num_threads=num_threads,
+            field_type="vector",
+        )
     )
+    x_axis_idx = spu.VectorField.x_axis_idx()
+    y_axis_idx = spu.VectorField.y_axis_idx()
+    z_axis_idx = spu.VectorField.z_axis_idx()
 
     def vorticity_stretching_flux_pyst_kernel_3d(
-        vorticity_stretching_flux_field, vorticity_field, velocity_field, prefactor
-    ):
+        vorticity_stretching_flux_field: np.ndarray,
+        vorticity_field: np.ndarray,
+        velocity_field: np.ndarray,
+        prefactor: float,
+    ) -> None:
         """Vorticity stretching flux kernel in 3D.
 
         Computes the vorticity stretching flux in 3D, for a 3D
@@ -65,27 +75,33 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
         stores result in vorticity_stretching_flux_field (3, n, n, n).
         """
         _vorticity_stretching_flux_single_comp_kernel_3d(
-            vorticity_stretching_flux_field_comp=vorticity_stretching_flux_field[0],
-            velocity_field_comp=velocity_field[0],
-            vorticity_field_x=vorticity_field[0],
-            vorticity_field_y=vorticity_field[1],
-            vorticity_field_z=vorticity_field[2],
+            vorticity_stretching_flux_field_comp=vorticity_stretching_flux_field[
+                x_axis_idx
+            ],
+            velocity_field_comp=velocity_field[x_axis_idx],
+            vorticity_field_x=vorticity_field[x_axis_idx],
+            vorticity_field_y=vorticity_field[y_axis_idx],
+            vorticity_field_z=vorticity_field[z_axis_idx],
             prefactor=prefactor,
         )
         _vorticity_stretching_flux_single_comp_kernel_3d(
-            vorticity_stretching_flux_field_comp=vorticity_stretching_flux_field[1],
-            velocity_field_comp=velocity_field[1],
-            vorticity_field_x=vorticity_field[0],
-            vorticity_field_y=vorticity_field[1],
-            vorticity_field_z=vorticity_field[2],
+            vorticity_stretching_flux_field_comp=vorticity_stretching_flux_field[
+                y_axis_idx
+            ],
+            velocity_field_comp=velocity_field[y_axis_idx],
+            vorticity_field_x=vorticity_field[x_axis_idx],
+            vorticity_field_y=vorticity_field[y_axis_idx],
+            vorticity_field_z=vorticity_field[z_axis_idx],
             prefactor=prefactor,
         )
         _vorticity_stretching_flux_single_comp_kernel_3d(
-            vorticity_stretching_flux_field_comp=vorticity_stretching_flux_field[2],
-            velocity_field_comp=velocity_field[2],
-            vorticity_field_x=vorticity_field[0],
-            vorticity_field_y=vorticity_field[1],
-            vorticity_field_z=vorticity_field[2],
+            vorticity_stretching_flux_field_comp=vorticity_stretching_flux_field[
+                z_axis_idx
+            ],
+            velocity_field_comp=velocity_field[z_axis_idx],
+            vorticity_field_x=vorticity_field[x_axis_idx],
+            vorticity_field_y=vorticity_field[y_axis_idx],
+            vorticity_field_z=vorticity_field[z_axis_idx],
             prefactor=prefactor,
         )
 

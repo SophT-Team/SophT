@@ -12,7 +12,7 @@ def get_real_t(precision: str = "single") -> type:
         raise ValueError("Precision argument must be single or double")
 
 
-def get_test_tol(precision: str = "single") -> np.float32 | np.float64:
+def get_test_tol(precision: str = "single") -> float:
     """Return the testing tolerance based on precision."""
     real_t = get_real_t(precision=precision)
     return real_t(1e3) * np.finfo(real_t).eps
