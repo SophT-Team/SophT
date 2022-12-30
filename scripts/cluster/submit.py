@@ -47,6 +47,7 @@ def create_submit_file(
     mail_user: Union[str, None] = None,
     mail_type: Union[str, None] = None,
     other_cli_arguments: str = "",
+    **kwargs,
 ) -> None:
 
     filename = "submit_" + program_name.replace(".py", ".sh")
@@ -64,6 +65,13 @@ def create_submit_file(
             f"#SBATCH --mem={memory}G\n",
         ]
     )
+    if "memory" in kwargs:
+        memory = kwargs.get("memory")
+        f.writelines(
+            [
+                f"#SBATCH --mem={memory}G\n",
+            ]
+        )
 
     if not output_file_name:
         output_file_name = "%x_%j.out"
@@ -108,6 +116,10 @@ if __name__ == "__main__":
         "account": "mcb200029p",
         "shared": "RM-shared",
         "compute": "RM",
+    }
+    stampede_info_dict = {
+        "account": "TG-MCB190004",
+        "compute": "icx-normal",
     }
     program_name = "run_tapered_arm_and_sphere_with_flow.py"
     environment_name = "sopht-examples-env"

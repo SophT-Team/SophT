@@ -19,3 +19,6 @@ If you are not using all 128 cores on a single node (say you only need 4 cores f
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=4
 ```
+
+### Some notes on Stampede2
+On Stampede2, setting up memory is not available please do not set memory.
