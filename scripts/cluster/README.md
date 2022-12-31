@@ -19,3 +19,18 @@ If you are not using all 128 cores on a single node (say you only need 4 cores f
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=4
 ```
+
+### Some notes on Stampede2
+On Stampede2, setting up memory is not available please do not set memory.
+
+`anaconda` is not available as a module and needs to be installed manually. 
+
+Additionally, while setting up `sopht` the `PYTHONPATH` variable holds the path to old Python 2.7
+version hdf5. To avoid this remnant from affecting `sopht` installation, run the following command
+after you create the Conda environment and before you install the package:
+```
+echo $PYTHONPATH
+unset PYTHONPATH
+echo $PYTHONPATH
+```
+This should remove the older references and ensure smooth installation of `sopht`.
