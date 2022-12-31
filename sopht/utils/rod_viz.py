@@ -4,12 +4,12 @@ from matplotlib import cm
 from tqdm import tqdm
 from matplotlib.patches import Circle
 import matplotlib.animation as animation
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 from sopht.utils.field import VectorField
 
 
 def plot_video_of_rod_surface(  # noqa C901
-    rods_history: Sequence[Dict],
+    rods_history: Sequence[dict],
     video_name="video.mp4",
     fps: int = 60,
     step: int = 1,
@@ -24,7 +24,7 @@ def plot_video_of_rod_surface(  # noqa C901
     n_visualized_rods = len(rods_history)  # should be one for now
 
     # Rod info
-    def rod_history_unpacker(rod_idx: int, t_idx: int) -> Tuple[np.ndarray, np.ndarray]:
+    def rod_history_unpacker(rod_idx: int, t_idx: int) -> tuple[np.ndarray, np.ndarray]:
         return (
             rods_history[rod_idx]["position"][t_idx],
             rods_history[rod_idx]["radius"][t_idx],
@@ -43,7 +43,7 @@ def plot_video_of_rod_surface(  # noqa C901
 
         def sphere_history_unpacker(
             sph_idx: int, t_idx: int
-        ) -> Tuple[np.ndarray, np.ndarray]:
+        ) -> tuple[np.ndarray, np.ndarray]:
             return (
                 sphere_history[sph_idx]["position"][t_idx],
                 sphere_history[sph_idx]["radius"][t_idx],
@@ -62,7 +62,7 @@ def plot_video_of_rod_surface(  # noqa C901
     ylim = kwargs.get("y_limits", (-1.0, 1.0))
     zlim = kwargs.get("z_limits", (-0.05, 1.0))
 
-    def difference(x: Tuple[float, float]) -> float:
+    def difference(x: tuple[float, float]) -> float:
         return x[1] - x[0]
 
     max_axis_length = max(difference(xlim), difference(ylim))

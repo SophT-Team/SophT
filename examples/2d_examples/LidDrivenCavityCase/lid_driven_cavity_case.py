@@ -3,11 +3,10 @@ import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
 from lid_driven_cavity_grid import LidDrivenCavityForcingGrid
-from typing import Tuple
 
 
 def lid_driven_cavity_case(
-    grid_size: Tuple[int, int],
+    grid_size: tuple[int, int],
     reynolds: float = 100.0,
     num_threads: int = 4,
     coupling_stiffness: float = -5e4,

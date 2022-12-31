@@ -2,7 +2,6 @@
 import h5py
 import numpy as np
 from elastica.rod.cosserat_rod import CosseratRod
-from typing import Dict, Type, List
 
 
 class IO:
@@ -30,7 +29,7 @@ class IO:
                                 (Fields)   (Fields)             (Fields)   (Fields)
     """
 
-    def __init__(self, dim: int, real_dtype: Type = np.float64) -> None:
+    def __init__(self, dim: int, real_dtype: type = np.float64) -> None:
         """Class initializer."""
         self.dim = dim
         assert self.dim == 2 or self.dim == 3, "Invalid dimension (only 2D and 3D)"
@@ -40,16 +39,16 @@ class IO:
         # Initialize dictionaries for fields for IO and their
         # corresponding field_type ('Scalar' or 'Vector') Eulerian grid
         self.eulerian_grid_defined = False
-        self.eulerian_fields: Dict = {}
-        self.eulerian_fields_type: Dict = {}
+        self.eulerian_fields: dict = {}
+        self.eulerian_fields_type: dict = {}
 
         # Lagrangian grid
-        self.lagrangian_fields: Dict = {}
-        self.lagrangian_fields_type: Dict = {}
-        self.lagrangian_grids: Dict = {}
-        self.lagrangian_fields_with_grid_name: Dict = {}
+        self.lagrangian_fields: dict = {}
+        self.lagrangian_fields_type: dict = {}
+        self.lagrangian_grids: dict = {}
+        self.lagrangian_fields_with_grid_name: dict = {}
         self.lagrangian_grid_count = 0
-        self.lagrangian_grid_connection: Dict = {}
+        self.lagrangian_grid_connection: dict = {}
 
     def define_eulerian_grid(
         self,
@@ -314,7 +313,7 @@ class IO:
             String containing name of the hdf5 file.
         """
         with h5py.File(h5_file_name, "r") as f:
-            keys: List = []
+            keys: list = []
             f.visit(keys.append)
 
             # Load time
@@ -622,7 +621,7 @@ class CosseratRodIO(IO):
     """
 
     def __init__(
-        self, cosserat_rod: CosseratRod, dim: int, real_dtype: Type = np.float64
+        self, cosserat_rod: CosseratRod, dim: int, real_dtype: type = np.float64
     ) -> None:
         super().__init__(dim, real_dtype)
         self.cosserat_rod = cosserat_rod

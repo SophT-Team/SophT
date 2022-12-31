@@ -1,8 +1,8 @@
 """Poisson solver kernels in 2D via Fast Diagonalisation."""
 import numpy as np
 import numpy.linalg as la
-
 import scipy.sparse as spp
+from typing import Literal
 
 
 class FastDiagPoissonSolver2D:
@@ -10,12 +10,12 @@ class FastDiagPoissonSolver2D:
 
     def __init__(
         self,
-        grid_size_y,
-        grid_size_x,
-        dx,
-        real_t=np.float64,
-        bc_type="homogenous_neumann_along_xy",
-    ):
+        grid_size_y: int,
+        grid_size_x: int,
+        dx: float,
+        real_t: type = np.float64,
+        bc_type: Literal["homogenous_neumann_along_xy"] = "homogenous_neumann_along_xy",
+    ) -> None:
         """Class initialiser."""
         self.dx = dx
         self.grid_size_y = grid_size_y
@@ -23,18 +23,18 @@ class FastDiagPoissonSolver2D:
         self.real_t = real_t
         self.bc_type = bc_type
 
-        poisson_matrix_x, poisson_matrix_y = self.construct_poisson_matrices()
-        self.apply_boundary_conds_to_poisson_matrices(
+        poisson_matrix_x, poisson_matrix_y = self._construct_poisson_matrices()
+        self._apply_boundary_conds_to_poisson_matrices(
             poisson_matrix_x, poisson_matrix_y
         )
-        self.compute_spectral_decomp_of_poisson_matrices(
+        self._compute_spectral_decomp_of_poisson_matrices(
             poisson_matrix_x, poisson_matrix_y
         )
 
         # allocate buffer for spectral field manipulation
         self.spectral_field_buffer = np.zeros_like(self.inv_eig_val_matrix)
 
-    def construct_poisson_matrices(self):
+    def _construct_poisson_matrices(self) -> tuple[np.ndarray, np.ndarray]:
         """Construct the finite difference Poisson matrices."""
         # TODO can add higher order options..
         inv_dx2 = self.real_t(1 / self.dx / self.dx)
@@ -55,9 +55,9 @@ class FastDiagPoissonSolver2D:
 
         return poisson_matrix_x, poisson_matrix_y
 
-    def apply_boundary_conds_to_poisson_matrices(
-        self, poisson_matrix_x, poisson_matrix_y
-    ):
+    def _apply_boundary_conds_to_poisson_matrices(
+        self, poisson_matrix_x: np.ndarray, poisson_matrix_y: np.ndarray
+    ) -> None:
         """Apply boundary conditions to Poisson matrices."""
         inv_dx2 = self.real_t(1 / self.dx / self.dx)
         if self.bc_type == "homogenous_neumann_along_xy":
@@ -68,9 +68,9 @@ class FastDiagPoissonSolver2D:
             poisson_matrix_y[0, 0] = inv_dx2
             poisson_matrix_y[-1, -1] = inv_dx2
 
-    def compute_spectral_decomp_of_poisson_matrices(
-        self, poisson_matrix_x, poisson_matrix_y
-    ):
+    def _compute_spectral_decomp_of_poisson_matrices(
+        self, poisson_matrix_x: np.ndarray, poisson_matrix_y: np.ndarray
+    ) -> None:
         """Compute spectral decomposition (eigenvalue and vectors) of the matrices."""
         eig_vals_x, eig_vecs_x = la.eig(poisson_matrix_x)
         # sort eigenvalues in decreasing order
@@ -96,7 +96,7 @@ class FastDiagPoissonSolver2D:
             eig_val_matrix[-1, -1] = np.inf
         self.inv_eig_val_matrix = self.real_t(1) / eig_val_matrix
 
-    def solve(self, solution_field, rhs_field):
+    def solve(self, solution_field: np.ndarray, rhs_field: np.ndarray) -> None:
         """Solve Poisson equation in 2D: -del^2(solution_field) = rhs_field."""
         # transform to spectral space ("forward transform")
         la.multi_dot(

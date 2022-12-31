@@ -3,21 +3,18 @@ from sopht.simulator.immersed_body import (
     RigidBodyFlowInteraction,
 )
 from elastica import CosseratRod, NoForces, RigidBodyBase
-from typing import Union
 
 
 class FlowForces(NoForces):
     def __init__(
         self,
-        body_flow_interactor: Union[
-            CosseratRodFlowInteraction, RigidBodyFlowInteraction
-        ],
+        body_flow_interactor: CosseratRodFlowInteraction | RigidBodyFlowInteraction,
     ) -> None:
         super(NoForces, self).__init__()
         self.body_flow_interactor = body_flow_interactor
 
     def apply_forces(
-        self, system: Union[CosseratRod, RigidBodyBase], time: float = 0.0
+        self, system: CosseratRod | RigidBodyBase, time: float = 0.0
     ) -> None:
         self.body_flow_interactor.compute_flow_forces_and_torques()
         system.external_forces += self.body_flow_interactor.body_flow_forces

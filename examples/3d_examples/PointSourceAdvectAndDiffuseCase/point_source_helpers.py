@@ -2,17 +2,17 @@ import numpy as np
 
 
 def compute_diffused_point_source_field(
-    x_grid,
-    y_grid,
-    z_grid,
-    x_grid_cm,
-    y_grid_cm,
-    z_grid_cm,
-    nu,
-    point_mag,
-    t,
-    real_dtype,
-):
+    x_grid: np.ndarray,
+    y_grid: np.ndarray,
+    z_grid: np.ndarray,
+    x_grid_cm: float,
+    y_grid_cm: float,
+    z_grid_cm: float,
+    nu: float,
+    point_mag: float,
+    t: float,
+    real_dtype: type,
+) -> np.ndarray:
     """
     Compute diffused point source based on:
     x_grid, y_grid, z_grid: Cartesian coordinates

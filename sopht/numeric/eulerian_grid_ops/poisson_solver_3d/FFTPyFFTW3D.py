@@ -1,6 +1,5 @@
 """Class for performing FFT via PyFFTW in 3D."""
 import numpy as np
-
 import pyfftw
 
 
@@ -9,12 +8,12 @@ class FFTPyFFTW3D:
 
     def __init__(
         self,
-        grid_size_z,
-        grid_size_y,
-        grid_size_x,
-        num_threads=1,
-        real_t=np.float64,
-    ):
+        grid_size_z: int,
+        grid_size_y: int,
+        grid_size_x: int,
+        num_threads: int = 1,
+        real_t: type = np.float64,
+    ) -> None:
         """Class initialiser."""
         self.grid_size_z = grid_size_z
         self.grid_size_y = grid_size_y
@@ -24,7 +23,7 @@ class FFTPyFFTW3D:
         self.complex_dtype = np.complex64 if real_t == np.float32 else np.complex128
         self._create_fftw_plan()
 
-    def _create_fftw_plan(self):
+    def _create_fftw_plan(self) -> None:
         """Create FFTW plan objects necessary for executing FFT later."""
         self.field_pyfftw_buffer = pyfftw.empty_aligned(
             (self.grid_size_z, self.grid_size_y, self.grid_size_x),
@@ -57,7 +56,12 @@ class FFTPyFFTW3D:
             self.fourier_field_pyfftw_buffer, threads=self.num_threads
         )
 
-    def fft_ifft_plan_kernel(self, fourier_field, inv_fourier_field, field):
+    def fft_ifft_plan_kernel(
+        self,
+        fourier_field: np.ndarray,
+        inv_fourier_field: np.ndarray,
+        field: np.ndarray,
+    ) -> None:
         """Perform forward and backward transforms."""
         # Only used for benchmarking fft and ifft together
         self.fft_plan(input_array=field, output_array=fourier_field)

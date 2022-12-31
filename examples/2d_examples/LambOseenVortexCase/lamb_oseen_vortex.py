@@ -2,11 +2,10 @@ from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_v
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-from typing import Tuple
 
 
 def lamb_oseen_vortex_flow_case(
-    grid_size: Tuple[int, int], num_threads: int = 4, precision: str = "single"
+    grid_size: tuple[int, int], num_threads: int = 4, precision: str = "single"
 ) -> None:
     """
     This example considers a simple case of Lamb-Oseen vortex, advecting with a
@@ -51,7 +50,7 @@ def lamb_oseen_vortex_flow_case(
     )
 
     # Initialize velocity free stream magnitude in X and Y direction
-    velocity_free_stream = np.ones(grid_dim, dtype=real_t)
+    velocity_free_stream: np.ndarray = np.ones(grid_dim, dtype=real_t)
     flow_sim.velocity_field[...] = compute_lamb_oseen_velocity(
         x=flow_sim.position_field[x_axis_idx],
         y=flow_sim.position_field[y_axis_idx],

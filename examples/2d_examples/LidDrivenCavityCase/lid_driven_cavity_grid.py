@@ -1,7 +1,6 @@
 import numpy as np
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 import sopht.utils as spu
-from typing import Tuple
 
 
 class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
@@ -16,7 +15,7 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
         num_lag_nodes_per_side: int,
         side_length: float,
         lid_velocity: float,
-        cavity_com: Tuple[float, float],
+        cavity_com: tuple[float, float],
     ) -> None:
         self.side_length = side_length
         self.num_lag_nodes_per_side = num_lag_nodes_per_side

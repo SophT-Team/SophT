@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-from typing import Tuple
 
 
 def flow_past_rod_case(
     nondim_final_time: float,
-    grid_size: Tuple[int, int],
+    grid_size: tuple[int, int],
     reynolds: float,
     nondim_bending_stiffness: float,
     nondim_mass_ratio: float,

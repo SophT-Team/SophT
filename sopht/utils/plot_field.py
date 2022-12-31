@@ -1,10 +1,9 @@
-from typing import Tuple
 import matplotlib.pyplot as plt
 
 
 def create_figure_and_axes(
-    fig_aspect_ratio: float = 1.0,
-) -> Tuple[plt.Figure, plt.Axes]:
+    fig_aspect_ratio: float | str = 1.0,
+) -> tuple[plt.Figure, plt.Axes]:
     """Creates figure and axes for plotting contour fields"""
 
     plt.style.use("seaborn")

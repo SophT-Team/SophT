@@ -29,11 +29,11 @@ class BaseSimulator(
 class ArmEnvironment:
     def __init__(
         self,
-        final_time,
-        time_step=1.0e-5,
-        rendering_fps=30,
-        COLLECT_DATA_FOR_POSTPROCESSING=True,
-    ):
+        final_time: float,
+        time_step: float = 1.0e-5,
+        rendering_fps: int = 30,
+        COLLECT_DATA_FOR_POSTPROCESSING: bool = True,
+    ) -> None:
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
 
@@ -46,17 +46,17 @@ class ArmEnvironment:
 
     def get_systems(
         self,
-    ):
+    ) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
-    def set_arm(self, E, rod):
+    def set_arm(self, E: float, rod: ea.CosseratRod) -> None:
         self.set_rod(E, rod)
         self.set_muscles(self.shearable_rod)
 
-    def setup(self, E, rod):
+    def setup(self, E: float, rod: ea.CosseratRod) -> None:
         self.set_arm(E, rod)
 
-    def set_rod(self, E, rod):
+    def set_rod(self, E: float, rod: ea.CosseratRod) -> None:
         """Set up a rod"""
 
         self.E = E
@@ -84,10 +84,10 @@ class ArmEnvironment:
             time_step=self.time_step,
         )
 
-    def set_muscles(self, arm):
+    def set_muscles(self, arm: ea.CosseratRod) -> None:
         """Add muscle actuation"""
 
-        def add_muscle_actuation(arm):
+        def add_muscle_actuation(arm: ea.CosseratRod) -> list[MuscleGroup]:
             radius_base = 0.012
             muscle_groups = []
             LM_ratio_muscle_position = 0.0075 / radius_base
@@ -184,7 +184,7 @@ class ArmEnvironment:
             return muscle_groups
 
         self.muscle_groups = add_muscle_actuation(arm)
-        self.muscle_callback_params_list = [
+        self.muscle_callback_params_list: list = [
             defaultdict(list) for _ in self.muscle_groups
         ]
         self.simulator.add_forcing_to(self.shearable_rod).using(
@@ -194,14 +194,14 @@ class ArmEnvironment:
             callback_params_list=self.muscle_callback_params_list,
         )
 
-    def reset(self, E, rod):
+    def reset(self, E: float, rod: ea.CosseratRod) -> None:
         self.simulator = BaseSimulator()
 
         self.setup(E, rod)
 
         """ Finalize the simulator and create time stepper """
 
-    def finalize(self):
+    def finalize(self) -> tuple[int, list[ea.CosseratRod]]:
         self.simulator.finalize()
         self.do_step, self.stages_and_updates = ea.extend_stepper_interface(
             self.StatefulStepper, self.simulator
@@ -213,7 +213,9 @@ class ArmEnvironment:
         """
         return self.total_steps, self.get_systems()
 
-    def step(self, time, muscle_activations):
+    def step(
+        self, time: float, muscle_activations: list[np.ndarray]
+    ) -> tuple[float, list[ea.CosseratRod], bool]:
 
         """Set muscle activations"""
         for muscle_group, activation in zip(self.muscle_groups, muscle_activations):
@@ -246,8 +248,8 @@ class ArmEnvironment:
 
 
 class Environment(ArmEnvironment):
-    def get_systems(self):
+    def get_systems(self) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
-    def setup(self, E, rod):
+    def setup(self, E: float, rod: ea.CosseratRod) -> None:
         self.set_arm(E, rod)

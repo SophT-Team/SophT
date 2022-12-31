@@ -1,30 +1,29 @@
 """Kernels for performing advection timestep in 2D."""
-from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.advection_flux_2d import (
-    gen_advection_flux_conservative_eno3_pyst_kernel_2d,
-)
-from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
-    gen_elementwise_sum_pyst_kernel_2d,
-    gen_set_fixed_val_pyst_kernel_2d,
-)
+import numpy as np
+
+import sopht.numeric.eulerian_grid_ops as spne
+from typing import Callable
 
 
 def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
-    real_t, num_threads=False, fixed_grid_size=False
-):
+    real_t: type,
+    num_threads: bool | int = False,
+    fixed_grid_size: tuple[int, int] | bool = False,
+) -> Callable:
     # TODO expand docs
     """2D Advection (ENO3 stencil) Euler forward timestep generator."""
-    elementwise_sum_pyst_kernel_2d = gen_elementwise_sum_pyst_kernel_2d(
+    elementwise_sum_pyst_kernel_2d = spne.gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=fixed_grid_size,
         num_threads=num_threads,
     )
-    set_fixed_val_pyst_kernel_2d = gen_set_fixed_val_pyst_kernel_2d(
+    set_fixed_val_pyst_kernel_2d = spne.gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=fixed_grid_size,
         num_threads=num_threads,
     )
     advection_flux_conservative_eno3_pyst_kernel_2d = (
-        gen_advection_flux_conservative_eno3_pyst_kernel_2d(
+        spne.gen_advection_flux_conservative_eno3_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=fixed_grid_size,
             num_threads=num_threads,
@@ -32,8 +31,11 @@ def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
     )
 
     def advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
-        field, advection_flux, velocity, dt_by_dx
-    ):
+        field: np.ndarray,
+        advection_flux: np.ndarray,
+        velocity: np.ndarray,
+        dt_by_dx: float,
+    ) -> None:
         """2D Advection (ENO3 stencil) Euler forward timestep.
 
         Performs an inplace advection timestep (using ENO3 stencil)

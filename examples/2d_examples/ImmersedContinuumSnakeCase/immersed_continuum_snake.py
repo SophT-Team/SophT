@@ -2,12 +2,11 @@ import elastica as ea
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-from typing import Tuple
 
 
 def immersed_continuum_snake_case(
     final_time_by_period: float,
-    grid_size: Tuple[int, int],
+    grid_size: tuple[int, int],
     reynolds: float = 10,
     coupling_type: str = "one_way",
     coupling_stiffness: float = -1.6e4,

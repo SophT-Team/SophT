@@ -9,8 +9,10 @@ from scipy.interpolate import interp1d
 
 
 def compute_non_dimensional_rod_positions(
-    n_elem, num_rods_along_perp_axis, rod_positions_along_perp_axis
-):
+    n_elem: int,
+    num_rods_along_perp_axis: int,
+    rod_positions_along_perp_axis: np.ndarray,
+) -> tuple[np.ndarray, float]:
     """
     This function is used to compute the node positions of rods such that element centers of rods are
     at same position as the perpendicular rod element positions.
@@ -49,17 +51,17 @@ def compute_non_dimensional_rod_positions(
 class ElasticNetSimulator:
     def __init__(
         self,
-        final_time=2.0,
-        rod_density=1e3,
-        youngs_modulus=1e5,
-        num_rods_along_x=4,
-        num_rods_along_y=4,
-        gap_between_rods=0.2,
-        gap_radius_ratio=10,
+        final_time: float = 2.0,
+        rod_density: float = 1e3,
+        youngs_modulus: float = 1e5,
+        num_rods_along_x: int = 4,
+        num_rods_along_y: int = 4,
+        gap_between_rods: float = 0.2,
+        gap_radius_ratio: float = 10,
         num_rod_elements_per_gap=8,
-        elastic_net_origin=np.array([0.0, 0.0, 0.0]),
-        plot_result=True,
-    ):
+        elastic_net_origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        plot_result: bool = True,
+    ) -> None:
         class BaseSimulator(
             ea.BaseSystemCollection,
             ea.Constraints,
@@ -280,7 +282,7 @@ class ElasticNetSimulator:
 
         if plot_result:
             self.rendering_fps = 30
-            self.rod_post_processing_list = []
+            self.rod_post_processing_list: list[dict] = []
             self.add_callback()
 
         self.timestepper = ea.PositionVerlet()
@@ -288,10 +290,10 @@ class ElasticNetSimulator:
             self.timestepper, self.net_simulator
         )
 
-    def finalize(self):
+    def finalize(self) -> None:
         self.net_simulator.finalize()
 
-    def add_callback(self):
+    def add_callback(self) -> None:
         # Add callbacks
         class BeamCallBack(ea.CallBackBaseClass):
             def __init__(self, step_skip: int, callback_params: dict):
@@ -324,7 +326,7 @@ class ElasticNetSimulator:
                 callback_params=self.rod_post_processing_list[idx],
             )
 
-    def time_step(self, time, time_step):
+    def time_step(self, time: float, time_step: float) -> float:
         """Time step the simulator"""
         time = self.do_step(
             self.timestepper,
@@ -337,7 +339,7 @@ class ElasticNetSimulator:
 
     def run(
         self,
-    ):
+    ) -> None:
         ea.integrate(
             self.timestepper, self.net_simulator, self.final_time, self.total_steps
         )

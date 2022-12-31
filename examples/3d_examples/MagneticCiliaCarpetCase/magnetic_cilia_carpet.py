@@ -7,14 +7,14 @@ import sopht.utils as spu
 class MagneticCiliaCarpetSimulator:
     def __init__(
         self,
-        rod_base_length=1.5,
-        n_elem_per_rod=25,
-        num_cycles=0.2,
-        num_rods_along_x=8,
-        num_rods_along_y=4,
-        carpet_base_centroid=np.array([0.0, 0.0, 0.0]),
-        plot_result=True,
-    ):
+        rod_base_length: float = 1.5,
+        n_elem_per_rod: int = 25,
+        num_cycles: float = 0.2,
+        num_rods_along_x: int = 8,
+        num_rods_along_y: int = 4,
+        carpet_base_centroid: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        plot_result: bool = True,
+    ) -> None:
         class MagneticBeamSimulator(
             ea.BaseSystemCollection,
             ea.Constraints,
@@ -183,7 +183,7 @@ class MagneticCiliaCarpetSimulator:
 
         if plot_result:
             self.rendering_fps = 30
-            self.rod_post_processing_list = []
+            self.rod_post_processing_list: list[dict] = []
             self.add_callback()
 
         self.timestepper = ea.PositionVerlet()
@@ -191,10 +191,10 @@ class MagneticCiliaCarpetSimulator:
             self.timestepper, self.magnetic_beam_sim
         )
 
-    def finalize(self):
+    def finalize(self) -> None:
         self.magnetic_beam_sim.finalize()
 
-    def add_callback(self):
+    def add_callback(self) -> None:
         # Add callbacks
         class MagneticBeamCallBack(ea.CallBackBaseClass):
             def __init__(self, step_skip: int, callback_params: dict):
@@ -227,7 +227,7 @@ class MagneticCiliaCarpetSimulator:
                 callback_params=self.rod_post_processing_list[idx],
             )
 
-    def time_step(self, time, time_step):
+    def time_step(self, time: float, time_step: float) -> float:
         """Time step the simulator"""
         time = self.do_step(
             self.timestepper,
@@ -240,7 +240,7 @@ class MagneticCiliaCarpetSimulator:
 
     def run(
         self,
-    ):
+    ) -> None:
         ea.integrate(
             self.timestepper, self.magnetic_beam_sim, self.final_time, self.total_steps
         )

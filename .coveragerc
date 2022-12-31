@@ -8,6 +8,10 @@ exclude_lines =
     def __repr__
     from
     import
+    # pystencil kernel symbolic stuff
+    ps.fields
+    sp.symbols
+    @=
 show_missing = true
 
 [run]
@@ -16,4 +20,5 @@ branch = True
 omit =
     # omit anything in a .local directory anywhere
     */.local/*
+    */experimental/*
     */rod_viz.py
