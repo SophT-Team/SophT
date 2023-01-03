@@ -31,7 +31,8 @@ pyelastica = "^0.3"
 matplotlib = "^3.3.2"
 click = {version = "^8.1", optional = true, extras = ["examples"]}
 coomm = {version = ">=0.0.1.post2", optional = true, extras = ["examples"]}
-magneto_pyelastica = {git = "https://github.com/armantekinalp/MagnetoPyElastica.git", rev = "main", optional = true, extras = ["examples"]}
+magneto_pyelastica = {version = ">=0.0.1", optional = true, extras = ["examples"]}
+
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
