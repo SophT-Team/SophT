@@ -5,10 +5,10 @@ from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
 def immersed_magnetic_cilia_carpet_case(
-<<<<<<< HEAD
     cilia_carpet_simulator: MagneticCiliaCarpetSimulator,
     domain_range: tuple[float, float, float],
     grid_size_x: int,
+    datapath: str,
     reynolds: float = 100.0,
     coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e1,
@@ -16,19 +16,6 @@ def immersed_magnetic_cilia_carpet_case(
     precision: str = "single",
     save_data: bool = False,
 ) -> None:
-=======
-    cilia_carpet_simulator,
-    domain_range,
-    grid_size_x,
-    datapath,
-    reynolds=100.0,
-    coupling_stiffness=-2e4,
-    coupling_damping=-1e1,
-    num_threads=4,
-    precision="single",
-    save_data=False,
-):
->>>>>>> dbbb099 (fix: fix magnetization in one direction only, and add data saving feature to immersed_magnetic_cilia_carpet.py)
     # ==================FLOW SETUP START=========================
     grid_dim = 3
     real_t = spu.get_real_t(precision)
