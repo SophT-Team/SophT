@@ -26,6 +26,7 @@ class MagneticCiliaCarpetSimulator:
         wavelength_y_factor=1.0,
         angular_frequency_degree=10.0,
         carpet_base_centroid=np.array([0.0, 0.0, 0.0]),
+        magnetization_2d=False,
         plot_result=True,
     ):
 >>>>>>> 5fc7717 (Update: parameter changes)
@@ -89,20 +90,20 @@ class MagneticCiliaCarpetSimulator:
         )
         self.carpet_length_x = self.spacing_between_rods * (num_rods_along_x - 1)
         self.carpet_length_y = self.spacing_between_rods * (num_rods_along_y - 1)
-        spatial_magnetisation_wavelength_x = self.carpet_length_x * wavelength_x_factor
-        spatial_magnetisation_wavelength_y = self.carpet_length_y * wavelength_y_factor
         spatial_magnetisation_phase_diff = np.pi
         magnetization_angle_x = spatial_magnetisation_phase_diff + (
             2
             * np.pi
             * start_collection[..., x_axis_idx]
-            / spatial_magnetisation_wavelength_x
+            / (self.carpet_length_x + self.spacing_between_rods)
+            / wavelength_x_factor
         )
         magnetization_angle_y = spatial_magnetisation_phase_diff + (
             2
             * np.pi
             * start_collection[..., y_axis_idx]
-            / spatial_magnetisation_wavelength_y
+            / (self.carpet_length_y + self.spacing_between_rods)
+            / wavelength_y_factor
         )
         self.magnetic_rod_list = []
         magnetization_direction_list = []
@@ -116,24 +117,33 @@ class MagneticCiliaCarpetSimulator:
         )
 
         for i in range(n_rods):
-            magnetization_direction = (
-                np.array(
+            if not magnetization_2d:
+                magnetization_direction = np.array(
                     [
                         np.sin(magnetization_angle_x[i]),
-                        np.sin(magnetization_angle_y[i]),
-                        np.cos(magnetization_angle_x[i])
-                        + np.cos(magnetization_angle_y[i]),
+                        0.0,
+                        np.cos(magnetization_angle_x[i]),
                     ]
-                ).reshape(3, 1)
-                * np.ones(n_elem)
-                / np.sqrt(
-                    2
-                    + 2
-                    * np.cos(magnetization_angle_x[i])
-                    * np.cos(magnetization_angle_y[i])
-                    + 1e-12
+                ).reshape(3, 1) * np.ones(n_elem)
+            else:
+                magnetization_direction = (
+                    np.array(
+                        [
+                            np.sin(magnetization_angle_x[i]),
+                            np.sin(magnetization_angle_y[i]),
+                            np.cos(magnetization_angle_x[i])
+                            + np.cos(magnetization_angle_y[i]),
+                        ]
+                    ).reshape(3, 1)
+                    * np.ones(n_elem)
+                    / np.sqrt(
+                        2
+                        + 2
+                        * np.cos(magnetization_angle_x[i])
+                        * np.cos(magnetization_angle_y[i])
+                        + 1e-12
+                    )
                 )
-            )
             magnetic_rod = ea.CosseratRod.straight_rod(
                 n_elem,
                 start_collection[i],
@@ -287,6 +297,10 @@ class MagneticCiliaCarpetSimulator:
 
 
 if __name__ == "__main__":
-    cilia_carpet_sim = MagneticCiliaCarpetSimulator()
+    cilia_carpet_sim = MagneticCiliaCarpetSimulator(
+        num_cycles=1.0,
+        wavelength_y_factor=1e14,
+        wavelength_x_factor=2.0,
+    )
     cilia_carpet_sim.finalize()
     cilia_carpet_sim.run()

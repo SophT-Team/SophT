@@ -5,6 +5,7 @@ from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
 def immersed_magnetic_cilia_carpet_case(
+<<<<<<< HEAD
     cilia_carpet_simulator: MagneticCiliaCarpetSimulator,
     domain_range: tuple[float, float, float],
     grid_size_x: int,
@@ -15,6 +16,19 @@ def immersed_magnetic_cilia_carpet_case(
     precision: str = "single",
     save_data: bool = False,
 ) -> None:
+=======
+    cilia_carpet_simulator,
+    domain_range,
+    grid_size_x,
+    datapath,
+    reynolds=100.0,
+    coupling_stiffness=-2e4,
+    coupling_damping=-1e1,
+    num_threads=4,
+    precision="single",
+    save_data=False,
+):
+>>>>>>> dbbb099 (fix: fix magnetization in one direction only, and add data saving feature to immersed_magnetic_cilia_carpet.py)
     # ==================FLOW SETUP START=========================
     grid_dim = 3
     real_t = spu.get_real_t(precision)
@@ -33,7 +47,7 @@ def immersed_magnetic_cilia_carpet_case(
     )
     flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
-        x_range=domain_x_range,
+        x_range=x_range,
         kinematic_viscosity=kinematic_viscosity,
         with_forcing=True,
         real_t=real_t,
@@ -108,8 +122,11 @@ def immersed_magnetic_cilia_carpet_case(
     period_timer_limit = cilia_carpet_simulator.period
     foto_timer_limit = cilia_carpet_simulator.final_time / 100
     time_history = []
+
+    # Data saving
     avg_vorticity = np.zeros_like(flow_sim.vorticity_field)
-    avg_vorticity_history = []
+    avg_velocity = np.zeros_like(flow_sim.velocity_field)
+    no_period = 0
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
@@ -178,14 +195,25 @@ def immersed_magnetic_cilia_carpet_case(
         # Save averaged vorticity field
         if period_timer >= period_timer_limit:
             period_timer = 0.0
-            avg_vorticity_history.append(avg_vorticity.copy())
+            np.save(
+                f"{datapath}/avg_psi_Re_{int(reynolds)}_" f"period_{no_period}.npy",
+                avg_vorticity.copy(),
+            )
+            np.save(
+                f"{datapath}/avg_vel_Re_{int(reynolds)}_" f"period_{no_period}.npy",
+                avg_velocity.copy(),
+            )
+
             avg_vorticity *= 0.0
+            avg_velocity *= 0.0
+            no_period += 1
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
 
         # Average vorticity field
         avg_vorticity += flow_sim.vorticity_field * flow_dt / period_timer_limit
+        avg_velocity += flow_sim.velocity_field * flow_dt / period_timer_limit
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))
@@ -215,15 +243,12 @@ def immersed_magnetic_cilia_carpet_case(
         video_name="flow", image_series_name="snap", frame_rate=10
     )
 
-    # save average vorticity
-    np.save("avg_psi.npy", avg_vorticity_history)
-
 
 if __name__ == "__main__":
 
     # setup the structure of the carpet
-    num_rods_along_x = 6  # set >= 2
-    num_rods_along_y = 6  # set >= 2
+    num_rods_along_x = 8  # set >= 2
+    num_rods_along_y = 4  # set >= 2
     n_elem_per_rod = 20
     rod_base_length = 1.5
     carpet_spacing = rod_base_length
@@ -241,7 +266,7 @@ if __name__ == "__main__":
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
         rod_base_length=rod_base_length,
-        num_cycles=20.0,
+        num_cycles=10.0,
         wavelength_y_factor=1e12,
         carpet_base_centroid=carpet_base_centroid,
         plot_result=False,
@@ -250,6 +275,7 @@ if __name__ == "__main__":
         cilia_carpet_simulator=cilia_carpet_simulator,
         reynolds=5.0,
         grid_size_x=128,
-        num_threads=4,
+        num_threads=32,
+        datapath="data",
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
     )
