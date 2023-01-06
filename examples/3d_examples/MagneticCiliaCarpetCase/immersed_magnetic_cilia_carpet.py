@@ -9,7 +9,6 @@ def immersed_magnetic_cilia_carpet_case(
     womersley: float,
     domain_range: tuple[float, float, float],
     grid_size_x: int,
-    datapath: str,
     coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e1,
     num_threads: int = 4,
@@ -42,6 +41,11 @@ def immersed_magnetic_cilia_carpet_case(
         filter_vorticity=True,
         filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
+
+    # Averaged fields
+    avg_vorticity = np.zeros_like(flow_sim.vorticity_field)
+    avg_velocity = np.zeros_like(flow_sim.velocity_field)
+
     # ==================FLOW SETUP END=========================
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     rod_flow_interactor_list = []
@@ -73,6 +77,15 @@ def immersed_magnetic_cilia_carpet_case(
                 "velocity": flow_sim.velocity_field,
             },
         )
+
+        # Setup average Eulerian field IO
+        avg_io = spu.IO(dim=grid_dim, real_dtype=real_t)
+        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
+        io.add_as_eulerian_fields_for_io(
+            avg_vorticity=avg_vorticity,
+            avg_velocity=avg_velocity,
+        )
+
         # Initialize carpet IO
         carpet_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
@@ -107,12 +120,8 @@ def immersed_magnetic_cilia_carpet_case(
     foto_timer = 0.0
     period_timer = 0.0
     period_timer_limit = cilia_carpet_simulator.period
-    foto_timer_limit = cilia_carpet_simulator.final_time / 100
+    foto_timer_limit = cilia_carpet_simulator.period / 20
     time_history = []
-
-    # Data saving
-    avg_vorticity = np.zeros_like(flow_sim.vorticity_field)
-    avg_velocity = np.zeros_like(flow_sim.velocity_field)
     no_period = 0
 
     # create fig for plotting flow fields
@@ -182,14 +191,11 @@ def immersed_magnetic_cilia_carpet_case(
         # Save averaged vorticity field
         if period_timer >= period_timer_limit:
             period_timer = 0.0
-            np.save(
-                f"{datapath}/avg_psi_mn_{int(womersley)}_period_{no_period}.npy",
-                avg_vorticity.copy(),
-            )
-            np.save(
-                f"{datapath}/avg_vel_mn_{int(womersley)}_period_{no_period}.npy",
-                avg_velocity.copy(),
-            )
+            if save_data:
+                avg_io.save(
+                    h5_file_name=f"avg_flow_{no_period}.h5",
+                    time=flow_sim.time,
+                )
 
             avg_vorticity *= 0.0
             avg_velocity *= 0.0
@@ -263,6 +269,5 @@ if __name__ == "__main__":
         womersley=3.0,
         grid_size_x=128,
         num_threads=4,
-        datapath="data",
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
     )
