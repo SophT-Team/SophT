@@ -237,13 +237,24 @@ def immersed_magnetic_cilia_carpet_case(
     )
 
 
-if __name__ == "__main__":
-
-    # setup the structure of the carpet
-    num_rods_along_x = 8  # set >= 2
-    num_rods_along_y = 4  # set >= 2
-    n_elem_per_rod = 20
-    rod_base_length = 1.5
+def run_immersed_magnetic_cilia_carpet(
+    womersley: float,
+    magnetic_elastic_ratio: float,
+    num_rods_along_x: int,
+    num_rods_along_y: int,
+    num_cycles: float,
+    rod_base_length: float = 1.5,
+    grid_size_x: int = 128,
+    n_elem_per_rod: int = 20,
+    num_threads: int = 4,
+    coupling_stiffness: float = -2e4,
+    coupling_damping: float = -1e1,
+    precision: str = "single",
+    save_data: bool = False,
+):
+    assert (
+        num_rods_along_x >= 2 and num_rods_along_y >= 2
+    ), "num_rod along x and y must be no less than 2"
     carpet_spacing = rod_base_length
     carpet_length_x = (num_rods_along_x - 1) * carpet_spacing
     carpet_length_y = (num_rods_along_y - 1) * carpet_spacing
@@ -255,19 +266,33 @@ if __name__ == "__main__":
         [0.5 * domain_x_range, 0.5 * domain_y_range, 0.1 * domain_z_range]
     )
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
-        magnetic_elastic_ratio=3.3,
+        magnetic_elastic_ratio=magnetic_elastic_ratio,
         rod_base_length=rod_base_length,
         n_elem_per_rod=n_elem_per_rod,
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
-        num_cycles=10.0,
+        num_cycles=num_cycles,
         carpet_base_centroid=carpet_base_centroid,
         plot_result=False,
     )
     immersed_magnetic_cilia_carpet_case(
         cilia_carpet_simulator=cilia_carpet_simulator,
-        womersley=3.0,
-        grid_size_x=128,
-        num_threads=4,
+        womersley=womersley,
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
+        grid_size_x=grid_size_x,
+        num_threads=num_threads,
+        coupling_stiffness=coupling_stiffness,
+        coupling_damping=coupling_damping,
+        precision=precision,
+        save_data=save_data,
+    )
+
+
+if __name__ == "__main__":
+    run_immersed_magnetic_cilia_carpet(
+        womersley=3.0,
+        magnetic_elastic_ratio=3.3,
+        num_rods_along_x=8,
+        num_rods_along_y=4,
+        num_cycles=2,
     )
