@@ -6,10 +6,10 @@ from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 def immersed_magnetic_cilia_carpet_case(
     cilia_carpet_simulator: MagneticCiliaCarpetSimulator,
+    womersley: float,
     domain_range: tuple[float, float, float],
     grid_size_x: int,
     datapath: str,
-    reynolds: float = 100.0,
     coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e1,
     num_threads: int = 4,
@@ -28,9 +28,9 @@ def immersed_magnetic_cilia_carpet_case(
     grid_size = (grid_size_z, grid_size_y, grid_size_x)
     print(f"Flow grid size:{grid_size}")
     kinematic_viscosity = (
-        cilia_carpet_simulator.rod_base_length
-        * cilia_carpet_simulator.velocity_scale
-        / reynolds
+        cilia_carpet_simulator.angular_frequency
+        * cilia_carpet_simulator.rod_base_length**2
+        / womersley**2
     )
     flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
@@ -183,11 +183,11 @@ def immersed_magnetic_cilia_carpet_case(
         if period_timer >= period_timer_limit:
             period_timer = 0.0
             np.save(
-                f"{datapath}/avg_psi_Re_{int(reynolds)}_" f"period_{no_period}.npy",
+                f"{datapath}/avg_psi_mn_{int(womersley)}_period_{no_period}.npy",
                 avg_vorticity.copy(),
             )
             np.save(
-                f"{datapath}/avg_vel_Re_{int(reynolds)}_" f"period_{no_period}.npy",
+                f"{datapath}/avg_vel_mn_{int(womersley)}_period_{no_period}.npy",
                 avg_velocity.copy(),
             )
 
@@ -249,20 +249,20 @@ if __name__ == "__main__":
         [0.5 * domain_x_range, 0.5 * domain_y_range, 0.1 * domain_z_range]
     )
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
+        magnetic_elastic_ratio=3.3,
+        rod_base_length=rod_base_length,
         n_elem_per_rod=n_elem_per_rod,
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
-        rod_base_length=rod_base_length,
         num_cycles=10.0,
-        wavelength_y_factor=1e12,
         carpet_base_centroid=carpet_base_centroid,
         plot_result=False,
     )
     immersed_magnetic_cilia_carpet_case(
         cilia_carpet_simulator=cilia_carpet_simulator,
-        reynolds=5.0,
+        womersley=3.0,
         grid_size_x=128,
-        num_threads=32,
+        num_threads=4,
         datapath="data",
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
     )

@@ -7,14 +7,14 @@ import sopht.utils as spu
 class MagneticCiliaCarpetSimulator:
     def __init__(
         self,
+        magnetic_elastic_ratio: float,  # MBAL2_EI, (Wang 2019)
         rod_base_length: float = 1.5,
         n_elem_per_rod: int = 25,
-        num_cycles: float = 0.2,
+        num_cycles: float = 2.0,
         num_rods_along_x: int = 8,
         num_rods_along_y: int = 4,
         wavelength_x_factor: float = 1.0,
         wavelength_y_factor: float = 1.0,
-        angular_frequency_degree: float = 10.0,
         carpet_base_centroid: np.ndarray = np.array([0.0, 0.0, 0.0]),
         magnetization_2d: bool = False,
         plot_result: bool = True,
@@ -30,10 +30,26 @@ class MagneticCiliaCarpetSimulator:
 
         self.plot_result = plot_result
         self.magnetic_beam_sim = MagneticBeamSimulator()
-        # setting up test params
-        n_rods = num_rods_along_x * num_rods_along_y
+
+        # ====================== Setting up test params ====================
+        # Key parameters
         self.rod_base_length = rod_base_length
+        self.angular_frequency = np.deg2rad(10.0)
+        magnetic_field_strength = 80e-3
+        youngs_modulus = 1.85e5
+        density = 2.39e3
+        aspect_ratio = 5.0
+        shear_modulus = 6.16e4
+        spatial_magnetisation_phase_diff = np.pi  # Antiplectic
+
+        # Derived parameters
         self.spacing_between_rods = self.rod_base_length  # following Gu2020
+        self.period = 2.0 * np.pi / self.angular_frequency
+        self.carpet_length_x = self.spacing_between_rods * (num_rods_along_x - 1)
+        self.carpet_length_y = self.spacing_between_rods * (num_rods_along_y - 1)
+
+        # ==================== Setting up the carpet grid ===================
+        n_rods = num_rods_along_x * num_rods_along_y
         n_elem = n_elem_per_rod
         grid_dim = 3
         x_axis_idx = spu.VectorField.x_axis_idx()
@@ -46,42 +62,31 @@ class MagneticCiliaCarpetSimulator:
             start_collection[i, y_axis_idx] = (
                 i // num_rods_along_x
             ) * self.spacing_between_rods
+
+        # Shift the carpet to the provided centroid
+        self.carpet_base_centroid = carpet_base_centroid
+        current_carpet_start_centroid = np.mean(start_collection, axis=0)
+        start_collection += (
+            self.carpet_base_centroid.reshape(-1, grid_dim)
+            - current_carpet_start_centroid
+        )
+
         direction = np.array([0.0, 0.0, 1.0])
         normal = np.array([0.0, 1.0, 0.0])
-        aspect_ratio = 5.0
-        base_radius = rod_base_length / aspect_ratio / 2.0
+        base_radius = self.rod_base_length / aspect_ratio / 2.0
         base_area = np.pi * base_radius**2
         volume = base_area * self.rod_base_length
         moment_of_inertia = np.pi / 4 * base_radius**4
-        density = 2.39e3  # kg/m3
-        E = 1.85e5  # Pa
-        shear_modulus = 6.16e4  # Pa
 
-        # Parameters are from Gu2020
-        angular_frequency = np.deg2rad(
-            angular_frequency_degree
-        )  # angular frequency of the rotating magnetic field
-        self.period = 2.0 * np.pi / angular_frequency
-        self.velocity_scale = self.rod_base_length * angular_frequency
-        magnetic_field_strength = 80e-3  # 80mT
-        # MBAL2_EI is a non-dimensional number from Wang 2019
-        MBAL2_EI = (
-            3.82e-5
-            * magnetic_field_strength
-            * 4e-3
-            / (1.85e5 * np.pi / 4 * 0.4e-3**4)
-        )  # Magnetization magnitude * B * Length/(EI)
+        # Add magnetization to rods
+        spatial_magnetisation_wavelength_x = self.carpet_length_x * wavelength_x_factor
+        spatial_magnetisation_wavelength_y = self.carpet_length_y * wavelength_y_factor
         magnetization_density = (
-            MBAL2_EI
-            * E
+            magnetic_elastic_ratio
+            * youngs_modulus
             * moment_of_inertia
             / (volume * magnetic_field_strength * self.rod_base_length)
         )
-        self.carpet_length_x = self.spacing_between_rods * (num_rods_along_x - 1)
-        self.carpet_length_y = self.spacing_between_rods * (num_rods_along_y - 1)
-        spatial_magnetisation_wavelength_x = self.carpet_length_x * wavelength_x_factor
-        spatial_magnetisation_wavelength_y = self.carpet_length_y * wavelength_y_factor
-        spatial_magnetisation_phase_diff = np.pi
         magnetization_angle_x = spatial_magnetisation_phase_diff + (
             2
             * np.pi
@@ -96,14 +101,6 @@ class MagneticCiliaCarpetSimulator:
         )
         self.magnetic_rod_list = []
         magnetization_direction_list = []
-
-        # shift the carpet to the provided centroid
-        self.carpet_base_centroid = carpet_base_centroid
-        current_carpet_start_centroid = np.mean(start_collection, axis=0)
-        start_collection += (
-            self.carpet_base_centroid.reshape(-1, grid_dim)
-            - current_carpet_start_centroid
-        )
 
         for i in range(n_rods):
             if not magnetization_2d:
@@ -142,7 +139,7 @@ class MagneticCiliaCarpetSimulator:
                 base_radius,
                 density,
                 0.0,
-                E,
+                youngs_modulus,
                 shear_modulus=shear_modulus,
             )
             self.magnetic_beam_sim.append(magnetic_rod)
@@ -161,7 +158,7 @@ class MagneticCiliaCarpetSimulator:
         magnetic_field_object = mea.SingleModeOscillatingMagneticField(
             magnetic_field_amplitude=magnetic_field_strength * np.array([1, 1e-2, 1]),
             magnetic_field_angular_frequency=np.array(
-                [angular_frequency, 0, angular_frequency]
+                [self.angular_frequency, 0, self.angular_frequency]
             ),
             magnetic_field_phase_difference=np.array([0, np.pi / 2, np.pi / 2]),
             ramp_interval=0.01,
@@ -286,6 +283,6 @@ class MagneticCiliaCarpetSimulator:
 
 
 if __name__ == "__main__":
-    cilia_carpet_sim = MagneticCiliaCarpetSimulator()
+    cilia_carpet_sim = MagneticCiliaCarpetSimulator(magnetic_elastic_ratio=3.3)
     cilia_carpet_sim.finalize()
     cilia_carpet_sim.run()
