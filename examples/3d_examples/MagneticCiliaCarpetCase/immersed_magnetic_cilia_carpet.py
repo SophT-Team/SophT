@@ -80,8 +80,8 @@ def immersed_magnetic_cilia_carpet_case(
 
         # Setup average Eulerian field IO
         avg_io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
-        io.add_as_eulerian_fields_for_io(
+        avg_io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
+        avg_io.add_as_eulerian_fields_for_io(
             avg_vorticity=avg_vorticity,
             avg_velocity=avg_velocity,
         )
@@ -245,7 +245,7 @@ def run_immersed_magnetic_cilia_carpet(
     num_cycles: float,
     rod_base_length: float = 1.5,
     grid_size_x: int = 128,
-    n_elem_per_rod: int = 20,
+    rod_elem_prefactor: float = 0.125,
     num_threads: int = 4,
     coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e1,
@@ -265,6 +265,7 @@ def run_immersed_magnetic_cilia_carpet(
     carpet_base_centroid = np.array(
         [0.5 * domain_x_range, 0.5 * domain_y_range, 0.1 * domain_z_range]
     )
+    n_elem_per_rod = int(grid_size_x * rod_elem_prefactor)
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
         magnetic_elastic_ratio=magnetic_elastic_ratio,
         rod_base_length=rod_base_length,
