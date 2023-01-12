@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 from typing import Type
+from abc import abstractmethod
 
 
 class FlowSimulator:
@@ -97,18 +98,22 @@ class FlowSimulator:
             "\n==============================================="
         )
 
+    @abstractmethod
     def _init_fields(self) -> None:
         """Initialize the necessary field arrays"""
         ...
 
+    @abstractmethod
     def _compile_kernels(self) -> None:
         """Compile necessary kernels based on flow type"""
         ...
 
+    @abstractmethod
     def _flow_time_step(self, dt: float, **kwargs):
         """Flow time step, stepping through the algorithm"""
         ...
 
+    @abstractmethod
     def _finalise_flow_time_step(self) -> None:
         """Finalise the flow time step
 
@@ -117,6 +122,7 @@ class FlowSimulator:
         """
         ...
 
+    @abstractmethod
     def compute_stable_timestep(self) -> float:
         """Compute upper limit for stable time-stepping."""
         ...
