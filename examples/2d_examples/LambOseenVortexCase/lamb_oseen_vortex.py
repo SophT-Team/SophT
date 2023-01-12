@@ -27,17 +27,16 @@ def lamb_oseen_vortex_flow_case(
     t_end = 1.4
     # to start with max circulation = 1
     gamma = 4 * np.pi * nu * t_start
-    flow_sim = sps.UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator2D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        flow_type="navier_stokes",
+        with_forcing=False,
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
         time=t_start,
     )
-
     flow_sim.vorticity_field[...] = compute_lamb_oseen_vorticity(
         x=flow_sim.position_field[x_axis_idx],
         y=flow_sim.position_field[y_axis_idx],

@@ -32,11 +32,11 @@ def immersed_magnetic_cilia_carpet_case(
         * cilia_carpet_simulator.velocity_scale
         / reynolds
     )
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=domain_x_range,
         kinematic_viscosity=kinematic_viscosity,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         real_t=real_t,
         num_threads=num_threads,
         filter_vorticity=True,

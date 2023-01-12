@@ -23,11 +23,10 @@ def hill_sphere_vortex_case(
     z_axis_idx = spu.VectorField.z_axis_idx()
     # Consider a 1 by 1 by 1 3D domain
     x_range = 1.0
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=0.0,
-        flow_type="navier_stokes",
         real_t=real_t,
         num_threads=num_threads,
     )
