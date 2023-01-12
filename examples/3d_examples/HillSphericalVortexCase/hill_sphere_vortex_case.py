@@ -30,7 +30,6 @@ def hill_sphere_vortex_case(
         flow_type="navier_stokes",
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="advection_stretching_split",
     )
     # init vortex at domain center
     vortex_origin = (
@@ -53,7 +52,17 @@ def hill_sphere_vortex_case(
         y_grid=flow_sim.position_field[y_axis_idx],
         z_grid=flow_sim.position_field[z_axis_idx],
     )
-    flow_sim.compute_flow_velocity(free_stream_velocity=np.zeros(grid_dim))
+    # compute velocity from vorticity
+    flow_sim._unbounded_poisson_solver.vector_field_solve(
+        solution_vector_field=flow_sim.stream_func_field,
+        rhs_vector_field=flow_sim.vorticity_field,
+    )
+    flow_sim._curl(
+        curl=flow_sim.velocity_field,
+        field=flow_sim.stream_func_field,
+        prefactor=flow_sim.real_t(0.5 / flow_sim.dx),
+    )
+    # compute diagnostics
     numerical_kinetic_energy = (
         0.5 * np.sum(np.square(flow_sim.velocity_field)) * flow_sim.dx**3
     )
@@ -106,13 +115,6 @@ def hill_sphere_vortex_case(
     ax2.set_xlabel("R")
     ax2.set_ylabel("Radial velocity")
     fig2.savefig("midplane_radial_velocity.png")
-
-    # check the vorticity stretching term
-    _, _, _, _, sphere_r_grid = hill_sphere_vortex.compute_local_coordinates(
-        flow_sim.position_field[x_axis_idx],
-        flow_sim.position_field[y_axis_idx],
-        flow_sim.position_field[z_axis_idx],
-    )
 
     if save_data:
         # setup IO

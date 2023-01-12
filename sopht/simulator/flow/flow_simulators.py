@@ -86,14 +86,14 @@ class FlowSimulator:
         )
         match self.grid_dim:
             case 2:
-                log.warning(f"\nY axis from 0.0 to {self.y_range}")
+                log.warning(f"Y axis from 0.0 to {self.y_range}")
             case 3:
                 log.warning(
-                    f"\nY axis from 0.0 to {self.y_range}"
+                    f"Y axis from 0.0 to {self.y_range}"
                     f"\nZ axis from 0.0 to {self.z_range}"
                 )
         log.warning(
-            "\nPlease initialize bodies within these bounds!"
+            "Please initialize bodies within these bounds!"
             "\n==============================================="
         )
 
@@ -117,7 +117,7 @@ class FlowSimulator:
         """
         ...
 
-    def compute_stable_time_step(self) -> float:
+    def compute_stable_timestep(self) -> float:
         """Compute upper limit for stable time-stepping."""
         ...
 

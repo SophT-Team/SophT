@@ -99,7 +99,7 @@ def test_passive_transport_flow_simulator_time_step(
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("grid_size_x", [4, 8])
 @pytest.mark.parametrize("precision", ["single", "double"])
-def test_passive_transport_flow_sim_compute_stable_time_step(
+def test_passive_transport_flow_sim_compute_stable_timestep(
     grid_dim, grid_size_x, precision
 ):
     num_threads = 4
@@ -120,7 +120,7 @@ def test_passive_transport_flow_sim_compute_stable_time_step(
     )
     flow_sim.velocity_field[...] = 2.0
     dt_prefac = 0.5
-    sim_dt = flow_sim.compute_stable_time_step(dt_prefac=dt_prefac)
+    sim_dt = flow_sim.compute_stable_timestep(dt_prefac=dt_prefac)
     # next compute reference value
     tol = 10 * np.finfo(real_t).eps
     advection_limit_dt = (

@@ -113,9 +113,9 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         """Finalise the flow time step"""
         self._flow_time_step: Callable = self._advection_and_diffusion_time_step
 
-    def compute_stable_time_step(self, dt_prefac: float = 1.0) -> float:
+    def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
-        dt = compute_advection_diffusion_stable_time_step(
+        dt = compute_advection_diffusion_stable_timestep(
             velocity_field=self.velocity_field,
             velocity_magnitude_field=self.buffer_scalar_field,
             grid_dim=self.grid_dim,
@@ -127,7 +127,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         return dt * dt_prefac
 
 
-def compute_advection_diffusion_stable_time_step(
+def compute_advection_diffusion_stable_timestep(
     velocity_field: np.ndarray,
     velocity_magnitude_field: np.ndarray,
     grid_dim: int,

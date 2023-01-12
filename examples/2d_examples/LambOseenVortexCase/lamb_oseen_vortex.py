@@ -128,22 +128,6 @@ def lamb_oseen_vortex_flow_case(
     print(f"Final vortex center location: ({x_cm_final}, {y_cm_final})")
     print(f"vorticity L2 error: {l2_error}")
     print(f"vorticity Linf error: {linf_error}")
-    final_analytical_velocity_field = compute_lamb_oseen_velocity(
-        x=flow_sim.position_field[x_axis_idx],
-        y=flow_sim.position_field[y_axis_idx],
-        x_cm=x_cm_final,
-        y_cm=y_cm_final,
-        nu=nu,
-        gamma=gamma,
-        t=t_end,
-        real_t=real_t,
-    )
-    flow_sim.compute_velocity_from_vorticity()
-    error_field = np.fabs(flow_sim.velocity_field - final_analytical_velocity_field)
-    l2_error = np.linalg.norm(error_field) * flow_sim.dx
-    linf_error = np.amax(error_field)
-    print(f"velocity L2 error: {l2_error}")
-    print(f"velocity Linf error: {linf_error}")
 
 
 if __name__ == "__main__":
