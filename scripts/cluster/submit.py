@@ -29,13 +29,15 @@ export OMP_NUM_THREADS=32
 $PROJECT/.conda/envs/(env_name)/bin/python -u (program_name)
 
 """
-from typing import Optional
+from typing import Optional, Literal
+
+ALLOWED_CLUSTERS = Literal["stampede", "bridges", "expanse"]
 
 
 def create_submit_file(
     program_name: str,
     environment_name: str,
-    cluster_name: str,
+    cluster_name: ALLOWED_CLUSTERS,
     output_file_name: Optional[str] = None,
     error_file_name: Optional[str] = None,
     partition: str = "shared",
@@ -81,6 +83,8 @@ def create_submit_file(
 
     if mail_user:
         f.write(f"#SBATCH --mail-user={mail_user}\n")
+        if cluster_name == "stampede":
+            print("Set mail user as the complete email-id for stampede!")
         if not mail_type:
             mail_type = "ALL"
         f.write(f"#SBATCH --mail-type={mail_type}\n")
@@ -88,10 +92,12 @@ def create_submit_file(
     if verbose:
         f.write("#SBATCH -v\n")
 
+    f.writelines(["\n"])
+    # stampede doesn't have conda
+    if cluster_name != "stampede":
+        f.writelines(["module load anaconda3\n"])
     f.writelines(
         [
-            "\n",
-            "module load anaconda3\n",
             "date\n",
             "\n",
             "echo Job name: $SLURM_JOB_NAME\n",
@@ -99,6 +105,13 @@ def create_submit_file(
             "echo Number of processes: $SLURM_NTASKS\n",
             "\n",
             f"source activate {environment_name}\n",
+        ]
+    )
+    # fix stampede issue in pythonpath variable
+    if cluster_name == "stampede":
+        f.write("unset PYTHONPATH\n")
+    f.writelines(
+        [
             f"export OMP_NUM_THREADS={num_threads}\n",
             f"python -u {program_name} --num_threads {num_threads} {other_cli_arguments}\n",
             "\n",
@@ -130,7 +143,7 @@ if __name__ == "__main__":
     TIME = "06:00:00"
     NUM_THREADS = 32
     MAIL_USER = "atekinal"
-    CLUSTER_NAME = "expanse"
+    CLUSTER_NAME: ALLOWED_CLUSTERS = "expanse"
 
     create_submit_file(
         program_name=PROGRAM_NAME,

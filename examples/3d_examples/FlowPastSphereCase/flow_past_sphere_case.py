@@ -28,13 +28,13 @@ def flow_past_sphere_case(
     far_field_velocity = 1.0
     sphere_diameter = 0.4 * min(grid_size_z, grid_size_y) / grid_size_x * x_range
     nu = far_field_velocity * sphere_diameter / reynolds
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
         real_t=real_t,
         num_threads=num_threads,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         with_free_stream_flow=True,
         time=0.0,
         # filter_vorticity=True,
