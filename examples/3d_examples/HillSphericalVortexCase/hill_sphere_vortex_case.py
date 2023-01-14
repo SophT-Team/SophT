@@ -15,7 +15,6 @@ def hill_sphere_vortex_case(
     the velocity recovery and vortex stretching steps, for the solver,
     by comparing against analytical expressions.
     """
-    grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
@@ -116,23 +115,14 @@ def hill_sphere_vortex_case(
     fig2.savefig("midplane_radial_velocity.png")
 
     if save_data:
-        # setup IO
-        # TODO internalise this in flow simulator as dump_fields
-        io_origin = np.array(
-            [
-                flow_sim.position_field[z_axis_idx].min(),
-                flow_sim.position_field[y_axis_idx].min(),
-                flow_sim.position_field[x_axis_idx].min(),
-            ]
-        )
-        io_dx = flow_sim.dx * np.ones(grid_dim)
-        io_grid_size = np.array(grid_size)
-        io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
-        io.add_as_eulerian_fields_for_io(
-            vorticity=flow_sim.vorticity_field,
-            stream_func=flow_sim.stream_func_field,
-            velocity=flow_sim.velocity_field,
+        # setup flow IO
+        io = spu.EulerianFieldIO(
+            position_field=flow_sim.position_field,
+            eulerian_fields_dict={
+                "vorticity": flow_sim.vorticity_field,
+                "stream_func": flow_sim.stream_func_field,
+                "velocity": flow_sim.velocity_field,
+            },
         )
         io.save(h5_file_name="sopht.h5")
 
