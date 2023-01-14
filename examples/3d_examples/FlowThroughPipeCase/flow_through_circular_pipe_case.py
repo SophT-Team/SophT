@@ -29,11 +29,11 @@ def flow_through_circular_pipe_case(
     z_axis_idx = spu.VectorField.z_axis_idx()
     x_range = 1.0
     nu = 1e-2
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,

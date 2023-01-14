@@ -26,22 +26,23 @@ def point_source_advection_diffusion_case(
     # start with non-zero to avoid singularity in point source
     t_start = 5.0
     t_end = 5.4
-    # init vortex at (0.3 0.3, 0.3)
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.PassiveTransportFlowSimulator(
+        kinematic_viscosity=nu,
+        grid_dim=grid_dim,
         grid_size=grid_size,
         x_range=x_range,
-        kinematic_viscosity=nu,
-        flow_type="passive_vector",
         real_t=real_t,
         num_threads=num_threads,
         time=t_start,
+        field_type="vector",
     )
+    # init vortex at (0.3 0.3, 0.3)
     x_cm_start = 0.3
     y_cm_start = x_cm_start
     z_cm_start = x_cm_start
     # to start with point source magnitude = 1
     point_mag = 4.0 * np.pi * nu * t_start**1.5
-    vorticity_field = flow_sim.primary_vector_field.view()
+    vorticity_field = flow_sim.primary_field.view()
     for i in range(grid_dim):
         vorticity_field[i] = compute_diffused_point_source_field(
             x_grid=flow_sim.position_field[x_axis_idx],

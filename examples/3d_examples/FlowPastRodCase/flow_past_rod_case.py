@@ -99,11 +99,11 @@ def flow_past_rod_case(
 
     # ==================FLOW SETUP START=========================
     kinematic_viscosity = U_free_stream * base_diameter / reynolds
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=kinematic_viscosity,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
