@@ -1058,40 +1058,46 @@ examples = ["cma[examples] (>=3.2.2,<4.0.0)", "matplotlib[examples] (>=3.3.2,<4.
 
 [[package]]
 name = "pyfftw"
-version = "0.13.0"
+version = "0.13.1"
 description = "A pythonic wrapper around FFTW, the FFT library, presenting a unified interface for all the supported transforms."
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pyFFTW-0.13.0-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:6500d354d7d6b6bddd975f912446d7e4925015f28ed130311e998dc2e78e529f"},
-    {file = "pyFFTW-0.13.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ef4cb18150d3ece2f40ef702db79815c951ff2188e0e42417cd756ca7c59e107"},
-    {file = "pyFFTW-0.13.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:812284aa174df9d7997e645d0545e349a988e22f7d73d8852b1bcc2fc98c8355"},
-    {file = "pyFFTW-0.13.0-cp310-cp310-win_amd64.whl", hash = "sha256:7d2bb583cc7f1625a78f9ed35a9587c7689ebd364f39dba2091784eeca255dbf"},
-    {file = "pyFFTW-0.13.0-cp37-cp37m-macosx_10_13_x86_64.whl", hash = "sha256:0c02cb325d91a7805a896461bc93b1837e8f43b2d2b289b096b48118d45b5b0d"},
-    {file = "pyFFTW-0.13.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a1a5a15ca428586d602403721015477f4f49a558222637dd1842c42026ce049d"},
-    {file = "pyFFTW-0.13.0-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:faf315b76e7061c2601a7c1857f502c75a1d551309c973c7825d61d14631cfe8"},
-    {file = "pyFFTW-0.13.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:da4ff11dc57b8e7fa38ec010a14bf00f8e7d9ab29eb5dff5470e969066bd538e"},
-    {file = "pyFFTW-0.13.0-cp37-cp37m-win_amd64.whl", hash = "sha256:31f0c1038cf4f7609a4e02c07d719efcfd9ed895022c3495c509d66cda9e1f12"},
-    {file = "pyFFTW-0.13.0-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:8a1527524e99a5246c1055a4b6e37f93413ccc28a767fc9552dcbed8046b25ab"},
-    {file = "pyFFTW-0.13.0-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:d6d34fcfefdcb523f2dc7298c7d7203b2d59dd32f150068ee5d6c306ce04fa38"},
-    {file = "pyFFTW-0.13.0-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:91da522996b863a0769a643f039378c4e6611fa1095ecbf98b83b00a09fe8a54"},
-    {file = "pyFFTW-0.13.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:fffd908f98dd5dca27736205465291f854e5fcc3a1de68c0f463464a563fa548"},
-    {file = "pyFFTW-0.13.0-cp38-cp38-win_amd64.whl", hash = "sha256:830716cf70e09dcf5bf929685b0c3b2828704cc093f164e41fabf8f3783b5652"},
-    {file = "pyFFTW-0.13.0-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:c5eda166ffc4c799a4965a935da5ccc15c64b7850512cf88c4e0916410367295"},
-    {file = "pyFFTW-0.13.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bdd544995589708640483fe17f42ee2724a9221240ad7ea7dac8287799683e7f"},
-    {file = "pyFFTW-0.13.0-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b57d510e3935b5d23e47b861acfd1f38bc296a39782127dd51d0cf92e23bd552"},
-    {file = "pyFFTW-0.13.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4f4ee76b3a0a5fed63630a5d94c74dbf0aef1a02c44adeebfdf21ef1bce5a06b"},
-    {file = "pyFFTW-0.13.0-cp39-cp39-win_amd64.whl", hash = "sha256:f1eef10bc76d079215a9df6f72e9a772d8d9efa1f16aee2bc35a72e55fe9010b"},
-    {file = "pyFFTW-0.13.0.tar.gz", hash = "sha256:da85102405c0bd95d57eb19e99b01a0729d8406cb204c3900894b873784253da"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:bed25dbb4b10454b564db951bfad976a382bc8d6af38d7f0995b239f17f58a0c"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:48a571116ab78c44cbd86fb46c5df021b1199e4ea9c0c607d14a7c7c5b6bab3a"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8f46337a3fb8270ef1237db25097c21905f5d2b045f49afea217b603a320c329"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-win32.whl", hash = "sha256:c2208655e0b24b2afe4bafd05eeca5fee8e8a56fa045e296f782b1f61e088dfb"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-win_amd64.whl", hash = "sha256:60a09f9e80544b82d18682f7301942613fcb34f0daf316f2833bcea13d76fc0c"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:dee09034f5d0464b828a8fd37da46776fc740e31870dd9e5d36d15c34f72102c"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5b5ee9b582befebcdb29a8d73e03e70c96ecd53625c9c72eb753a967cf2979b4"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8bfce5e4190b07af8dfca4bfeef7481ea61148744bd92d4df944357ee3939a83"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-win32.whl", hash = "sha256:51675f9bc7536a3ac9893d8277a3af000ce4207ad978db219bdc715662ce1bcb"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-win_amd64.whl", hash = "sha256:11c280b8062a201cc6aab6641b7a4f4d45d8e5f5f2d9ba2c1514c9510e0c5f32"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:04bbc06da1e46cfec05ace62591aa00cadfe550d920137022cd210b1806e03e4"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:1a8f0e4207e24ec38a50bb6442614d4bbf135af2ba23db6546759f54a36c11e0"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:2998f3633a430567986bf47ec3774ed50356faded66264f766d76efd117df1b3"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6c948799bfee686cb17417c06c8d3bb7fb1b867196bc4939963b18a1108c62ab"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-win32.whl", hash = "sha256:4a03adbcfbd52038dd6e5ad2a9697cba881c80d40a625d942e5a6066a1f83884"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-win_amd64.whl", hash = "sha256:8ddcdebc29c58a65eb43802462e7c21a8db7d70d2e4b8a79e43630c9149448f8"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:c05b7ddec15070c72704d0ad5e632222b0775327ab6890af288a2a36eb15043e"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d872744959a4df7307b32fbeb288137ed242cf24034a791abb3ee901c8c1bf3e"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:9a67d3109fb2c549ee95c8dbbcf07020400672cbfb48f79c3f88b615a1c95598"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d799b442815f56b821b615ee3e8960ab9f3bc1e7a4bcbcf5813b847005875b47"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-win32.whl", hash = "sha256:18ac39489848a10785ddd998df242f58d5f75017c414297fee470bfdec202168"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-win_amd64.whl", hash = "sha256:af58834b496b473419c4dcd47e01657d1d066e9c23198e1cb82eba82356c9097"},
+    {file = "pyFFTW-0.13.1-pp38-pypy38_pp73-macosx_10_13_x86_64.whl", hash = "sha256:415040bcadcad887bf112d2db0ff4b13e808d1aad7fddcd60acef20e0e11c84a"},
+    {file = "pyFFTW-0.13.1-pp38-pypy38_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:e68503033864f9650f480624a0830b10367ad446cb7b5bef33d0d1c596519446"},
+    {file = "pyFFTW-0.13.1-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:7ccfa55d50a5464890a9486b835965e29f9df4e9d3e856cc51c9d2a34964e4a8"},
+    {file = "pyFFTW-0.13.1.tar.gz", hash = "sha256:09155e90a0c6d0c1f2d1f3668180a7de95fb9f83fef5137a112fb05978e87320"},
 ]
 
 [package.dependencies]
-numpy = ">=1.16,<2.0"
+numpy = ">=1.20,<2.0"
 
 [package.extras]
-dask = ["dask[array] (>=1.0)", "numpy (>=1.16,<2.0)"]
-scipy = ["scipy (>=1.2.0)"]
+dask = ["dask[array] (>=1.0)", "numpy (>=1.20,<2.0)"]
+scipy = ["scipy (>=1.8.0)"]
 
 [[package]]
 name = "pyflakes"
