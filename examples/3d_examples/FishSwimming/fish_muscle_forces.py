@@ -1,6 +1,6 @@
 import numpy as np
 from numba import njit
-from scipy.interpolate import interp1d
+from scipy.interpolate import CubicSpline
 import elastica as ea
 from elastica.typing import SystemType, RodType
 from elastica._linalg import _batch_product_i_k_to_ik, _batch_matvec
@@ -9,11 +9,10 @@ from elastica.external_forces import inplace_addition, inplace_substraction
 
 class MuscleTorques(ea.NoForces):
     """
-    This class applies muscle torques along the body. The applied muscle torques are treated
-    as applied external forces. This class can apply
-    muscle torques as a traveling wave with a beta spline or only
-    as a traveling wave. For implementation details refer to Gazzola et. al.
-    RSoS. (2018).
+    This class applies muscle torques along the body. The applied muscle torques are
+    treated as applied external forces. This class can apply muscle torques as a
+    traveling wave with a beta spline or only as a traveling wave. For implementation
+    details refer to Gazzola et. al. RSoS. (2018).
 
         Attributes
         ----------
@@ -42,7 +41,7 @@ class MuscleTorques(ea.NoForces):
         direction,
         rest_lengths,
         ramp_up_time,
-        # with_spline=False,
+        with_spline=False,
     ):
         """
 
@@ -86,36 +85,38 @@ class MuscleTorques(ea.NoForces):
         self.s = np.cumsum(rest_lengths)
         self.s /= self.s[-1]
 
-        x_points = np.array([0, 1.0 / 3, 2.0 / 3, 1])
-        my_spline = interp1d(x_points, coefficients, kind="cubic")
+        x_points = np.linspace(0, 1, coefficients.shape[0])
+        my_spline = CubicSpline(x_points, coefficients, bc_type="natural")
 
         self.my_spline = my_spline(self.s)
 
         # if with_spline:
-        #     assert b_coeff.size != 0, "Beta spline coefficient array (t_coeff) is empty"
-        #     my_spline, ctr_pts, ctr_coeffs = _bspline(b_coeff)
+        #     assert (
+        #         coefficients.size != 0
+        #     ), "Beta spline coefficient array (t_coeff) is empty"
+        #     my_spline, ctr_pts, ctr_coeffs = _bspline(coefficients)
         #     self.my_spline = my_spline(self.s)
-        #
+
         # else:
-        #
+
         #     def constant_function(input):
         #         """
         #         Return array of ones same as the size of the input array. This
         #         function is called when Beta spline function is not used.
-        #
+
         #         Parameters
         #         ----------
         #         input
-        #
+
         #         Returns
         #         -------
-        #
+
         #         """
         #         return np.ones(input.shape)
-        #
+
         #     self.my_spline = constant_function(self.s)
 
-    def apply_torques(self, rod: RodType, time: np.float64 = 0.0):
+    def apply_torques(self, rod: RodType, time: float = 0.0):
         self.compute_muscle_torques(
             time,
             self.my_spline,
@@ -154,9 +155,8 @@ class MuscleTorques(ea.NoForces):
             * my_spline
             * np.sin(angular_frequency * time - wave_number * s + phase_shift)
         )
-        # Head and tail of the snake is opposite compared to elastica cpp. We need to iterate torque_mag
-        # from last to first element.
-        torque = _batch_product_i_k_to_ik(direction, torque_mag[::-1])
+        # Head is the first element
+        torque = _batch_product_i_k_to_ik(direction, torque_mag)
         inplace_addition(
             external_torques[..., 1:],
             _batch_matvec(director_collection, torque)[..., 1:],

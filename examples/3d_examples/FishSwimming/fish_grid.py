@@ -31,6 +31,8 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             )
         self.cosserat_rod = cosserat_rod
 
+        self.width, self.height = create_fish_geometry(cosserat_rod.rest_lengths)
+
         # Surface grid density at the arm maximum radius
         self.surface_grid_density_for_largest_element = (
             surface_grid_density_for_largest_element
@@ -80,8 +82,6 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         self.local_frame_surface_points = np.zeros_like(self.position_field)
 
-        width, height = create_fish_geometry(cosserat_rod)
-
         # Compute surface(grid) point positions on local frame for each element. If there is one grid point then
         # that point is on the element center so just pass 0.0
         for i, surface_point_rotation_angle in enumerate(
@@ -95,10 +95,10 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             else:
                 self.local_frame_surface_points[
                     0, self.start_idx[i] : self.end_idx[i]
-                ] = width[i] * np.cos(surface_point_rotation_angle)
+                ] = self.height[i] * np.cos(surface_point_rotation_angle)
                 self.local_frame_surface_points[
                     1, self.start_idx[i] : self.end_idx[i]
-                ] = height[i] * np.sin(surface_point_rotation_angle)
+                ] = self.width[i] * np.sin(surface_point_rotation_angle)
 
         # some caching stuff
         self.rod_director_collection_transpose = np.zeros_like(
@@ -138,7 +138,7 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             ] = self.rod_director_collection_transpose[:, :, i : i + 1]
             self.grid_point_dilitation[
                 self.start_idx[i] : self.end_idx[i]
-            ] = self.cosserat_rod.radius[i]
+            ] = self.cosserat_rod.dilatation[i]
             self.position_field[
                 :, self.start_idx[i] : self.end_idx[i]
             ] = self.rod_element_position[:, i : i + 1]
@@ -212,6 +212,7 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
+        # TODO: use width and height instead of radius ?
         grid_angular_spacing = 2 * np.pi / self.surface_grid_density_for_largest_element
         return np.amax(
             [self.cosserat_rod.lengths, self.cosserat_rod.radius * grid_angular_spacing]
