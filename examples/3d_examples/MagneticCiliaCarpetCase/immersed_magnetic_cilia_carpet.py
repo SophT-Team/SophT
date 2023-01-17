@@ -245,7 +245,7 @@ def run_immersed_magnetic_cilia_carpet(
     num_cycles: float,
     rod_base_length: float = 1.5,
     grid_size_x: int = 128,
-    rod_elem_prefactor: float = 0.125,
+    rod_elem_prefactor: float = 1.0,
     num_threads: int = 4,
     coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e1,
@@ -265,7 +265,7 @@ def run_immersed_magnetic_cilia_carpet(
     carpet_base_centroid = np.array(
         [0.5 * domain_x_range, 0.5 * domain_y_range, 0.1 * domain_z_range]
     )
-    n_elem_per_rod = int(grid_size_x * rod_elem_prefactor)
+    n_elem_per_rod = int(grid_size_x * rod_elem_prefactor / num_rods_along_x)
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
         magnetic_elastic_ratio=magnetic_elastic_ratio,
         rod_base_length=rod_base_length,
