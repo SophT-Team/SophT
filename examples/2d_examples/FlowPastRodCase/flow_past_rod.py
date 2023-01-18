@@ -101,11 +101,11 @@ def flow_past_rod_case(
     # Flow parameters
     # Re = velocity_free_stream * base_length / nu
     nu = base_length * velocity_free_stream / reynolds
-    flow_sim = sps.UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator2D(
         grid_size=(grid_size_y, grid_size_x),
         x_range=x_range,
         kinematic_viscosity=nu,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         with_free_stream_flow=True,
         real_t=real_t,
         num_threads=num_threads,
@@ -131,20 +131,13 @@ def flow_past_rod_case(
     )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     if save_flow_data:
-        # setup IO
-        # TODO internalise this in flow simulator as dump_fields
-        io_origin = np.array(
-            [
-                flow_sim.position_field[y_axis_idx].min(),
-                flow_sim.position_field[x_axis_idx].min(),
-            ]
-        )
-        io_dx = flow_sim.dx * np.ones(grid_dim)
-        io_grid_size = np.array(grid_size)
-        io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
-        io.add_as_eulerian_fields_for_io(
-            vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
+        # setup flow IO
+        io = spu.EulerianFieldIO(
+            position_field=flow_sim.position_field,
+            eulerian_fields_dict={
+                "vorticity": flow_sim.vorticity_field,
+                "velocity": flow_sim.velocity_field,
+            },
         )
         # Initialize rod IO
         rod_io = spu.CosseratRodIO(
