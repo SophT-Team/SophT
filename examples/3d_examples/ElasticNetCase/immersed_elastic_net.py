@@ -279,10 +279,10 @@ if __name__ == "__main__":
     domain_y_range = 1.3 * elastic_net_length_y
     domain_z_range = 1.3 * elastic_net_length_x
     offset_between_net_origin_and_flow_grid_center_x = (
-        0.5 * elastic_net_length_x - base_radius
+        0.49 * elastic_net_length_x - base_radius
     )
     offset_between_net_origin_and_flow_grid_center_y = (
-        0.5 * elastic_net_length_y - base_radius
+        0.49 * elastic_net_length_y - base_radius
     )
     elastic_net_origin = np.array(
         [
