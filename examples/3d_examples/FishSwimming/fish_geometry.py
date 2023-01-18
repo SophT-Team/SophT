@@ -1,11 +1,11 @@
+import logging
 import numpy as np
-from scipy.interpolate import interp1d
 from elastica._linalg import _batch_norm, _batch_cross
 from elastica._rotations import _inv_rotate
 from elastica.utils import MaxDimension, Tolerance
 
 
-def create_fish_geometry(rod):
+def create_fish_geometry(rest_lengths):
     """
     TODO docs
     Parameters
@@ -16,14 +16,11 @@ def create_fish_geometry(rod):
     -------
 
     """
-
-    n_elements = rod.n_elems
-    rest_lengths = rod.rest_lengths.copy()
-
-    element_positions = 0.5 * (
-        rod.position_collection[:, 1:] + rod.position_collection[:, :-1]
-    )
-    s = _batch_norm(element_positions)
+    n_elements = rest_lengths.shape[0]
+    s_node = np.zeros(n_elements + 1)
+    s_node[1:] = np.cumsum(rest_lengths)
+    s_node /= s_node[-1]
+    s = 0.5 * (s_node[1:] + s_node[:-1])
 
     # Compute the width of the fish along its length
     base_length = rest_lengths.sum()
@@ -65,7 +62,7 @@ def update_rod_for_fish_geometry(density, youngs_modulus, rod):
 
     """
 
-    width, height = create_fish_geometry(rod)
+    width, height = create_fish_geometry(rod.rest_lengths)
 
     n_elements = rod.n_elems
     rest_lengths = rod.rest_lengths.copy()
@@ -95,8 +92,11 @@ def update_rod_for_fish_geometry(density, youngs_modulus, rod):
         )
     # sanity check of mass second moment of inertia
     if (mass_second_moment_of_inertia < Tolerance.atol()).all():
-        message = "Mass moment of inertia matrix smaller than tolerance, please check provided radius, density and length."
-        log.warning(message)
+        log = logging.getLogger()
+        log.warning(
+            "Mass moment of inertia matrix smaller than tolerance."
+            "Please check provided radius, density and length."
+        )
 
     # Inverse of second moment of inertia
     inv_mass_second_moment_of_inertia = np.zeros(
