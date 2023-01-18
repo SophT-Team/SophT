@@ -15,7 +15,6 @@ def point_source_advection_diffusion_case(
     constant velocity in 3D, while it diffuses in time.
     """
     grid_dim = 3
-    grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
@@ -62,20 +61,13 @@ def point_source_advection_diffusion_case(
     flow_sim.velocity_field[...] = velocity_free_stream
 
     if save_data:
-        # setup IO
-        # TODO internalise this in flow simulator as dump_fields
-        io_origin = np.array(
-            [
-                flow_sim.position_field[z_axis_idx].min(),
-                flow_sim.position_field[y_axis_idx].min(),
-                flow_sim.position_field[x_axis_idx].min(),
-            ]
+        # setup flow IO
+        io = spu.EulerianFieldIO(
+            position_field=flow_sim.position_field,
+            eulerian_fields_dict={
+                "vorticity": vorticity_field,
+            },
         )
-        io_dx = flow_sim.dx * np.ones(grid_dim)
-        io_grid_size = np.array([grid_size_z, grid_size_y, grid_size_x])
-        io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
-        io.add_as_eulerian_fields_for_io(vorticity=vorticity_field)
 
     foto_timer = 0.0
     foto_timer_limit = (t_end - t_start) / 20

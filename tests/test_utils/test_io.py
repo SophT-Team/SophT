@@ -441,3 +441,72 @@ def test_cosserat_rod_io(dim, precision):
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
     os.system("rm -f *h5 *xmf")
+
+
+@pytest.mark.parametrize("precision", ["single", "double"])
+@pytest.mark.parametrize("grid_dim", [2, 3])
+@pytest.mark.parametrize("grid_size_x", [8, 16])
+def test_eulerian_field_io(grid_dim, precision, grid_size_x):
+    real_t = spu.get_real_t(precision)
+    grid_size = (grid_size_x,) * grid_dim
+    scalar_field = np.random.rand(*grid_size).astype(real_t)
+    vector_field = np.random.rand(grid_dim, *grid_size).astype(real_t)
+
+    x_range = 2.0
+    dx = real_t(x_range / grid_size_x)
+    eul_grid_shift = dx / 2.0
+    x = np.linspace(eul_grid_shift, x_range - eul_grid_shift, grid_size_x).astype(
+        real_t
+    )
+    position_field = np.flipud(np.array(np.meshgrid(*((x,) * grid_dim), indexing="ij")))
+    h5_file_name = "eulerian_field.h5"
+    time = 2.0
+    eulerian_field_dict = {"scalar_field": scalar_field, "vector_field": vector_field}
+    test_io = spu.EulerianFieldIO(
+        position_field=position_field, eulerian_fields_dict=eulerian_field_dict
+    )
+    test_io.save(h5_file_name=h5_file_name, time=time)
+    del test_io
+
+    # Load saved HDF5 file for checking
+    scalar_field_loaded = np.zeros_like(scalar_field)
+    vector_field_loaded = np.zeros_like(vector_field)
+    io = spu.IO(dim=grid_dim, real_dtype=real_t)
+    match grid_dim:
+        case 2:
+            io_origin = np.array(
+                [
+                    position_field[spu.VectorField.y_axis_idx()].min(),
+                    position_field[spu.VectorField.x_axis_idx()].min(),
+                ]
+            )
+        case 3:
+            io_origin = np.array(
+                [
+                    position_field[spu.VectorField.z_axis_idx()].min(),
+                    position_field[spu.VectorField.y_axis_idx()].min(),
+                    position_field[spu.VectorField.x_axis_idx()].min(),
+                ]
+            )
+        case _:
+            raise ValueError("Position field of invalid shape.")
+    io_dx = dx * np.ones(grid_dim)
+    io_grid_size = np.array(grid_size)
+    io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
+    io.add_as_eulerian_fields_for_io(scalar_field=scalar_field_loaded)
+    io.add_as_eulerian_fields_for_io(vector_field=vector_field_loaded)
+    time_loaded = io.load(h5_file_name=h5_file_name)
+
+    # Check values
+    np.testing.assert_allclose(
+        scalar_field,
+        scalar_field_loaded,
+        atol=spu.get_test_tol(precision),
+    )
+    np.testing.assert_allclose(
+        vector_field,
+        vector_field_loaded,
+        atol=spu.get_test_tol(precision),
+    )
+    np.testing.assert_allclose(time, time_loaded, atol=spu.get_test_tol(precision))
+    os.system("rm -f *h5 *xmf")
