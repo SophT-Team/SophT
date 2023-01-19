@@ -151,7 +151,7 @@ class ElasticFishSimulator:
             self.simulator,
             self.final_time,
             self.total_steps,
-            progress_bar=False,
+            # progress_bar=False,
         )
 
 
@@ -168,13 +168,15 @@ if __name__ == "__main__":
     # else:
     #     muscle_torque_coefficients = np.array([1.51, 0.48, 5.74, 2.73, 1.44])
 
-    muscle_torque_coefficients = np.zeros((2, 6))
-    muscle_torque_coefficients[0, :] = np.array([0, 0.05, 0.33, 0.67, 0.95, 1])
-    muscle_torque_coefficients[1, :] = np.array([0, 1.51, 0.48, 5.74, 2.73, 0.0])
+    # optimal params for 3D fastest swimmer from Kern et al. 2006
+    num_control_points = 4
+    muscle_torque_coefficients = np.zeros((2, num_control_points))
+    muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
+    muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
     tau_coeff = 1.44
 
     period = 1.0
-    final_time = 12 * period
+    final_time = 4 * period
     elastic_fish_sim = ElasticFishSimulator(
         muscle_torque_coefficients=muscle_torque_coefficients,
         tau_coeff=tau_coeff,
@@ -261,7 +263,7 @@ if __name__ == "__main__":
 
     axs = []
     axs.append(plt.subplot2grid((1, 1), (0, 0)))
-    skip_frames = 30
+    skip_frames = 15
     axs[0].plot(
         curvatures[start::skip_frames, 1, :].T, "-", color="red", label="simulation"
     )
@@ -291,14 +293,10 @@ if __name__ == "__main__":
     plt.rcParams.update({"font.size": 22})
     fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
 
-    axs = []
-    axs.append(plt.subplot2grid((1, 1), (0, 0)))
-    skip_frames = 20
-    axs[0].plot(
+    fig, ax = spu.create_figure_and_axes(fig_aspect_ratio=1.0)
+    ax.plot(
         positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 2, :].T
     )
     plt.tight_layout()
-    fig.align_ylabels()
-    # fig.legend(prop={"size": 20})
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
