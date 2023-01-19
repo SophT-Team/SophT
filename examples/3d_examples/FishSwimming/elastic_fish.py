@@ -2,7 +2,9 @@ import numpy as np
 import elastica as ea
 import sopht.utils as spu
 from fish_geometry import update_rod_for_fish_geometry, create_fish_geometry
-from fish_muscle_forces import MuscleTorques
+
+# from fish_muscle_forces import MuscleTorques
+from fish_curvature_actuation import FishCurvature
 import os
 from scipy.interpolate import CubicSpline
 
@@ -10,13 +12,14 @@ from scipy.interpolate import CubicSpline
 class ElasticFishSimulator:
     def __init__(
         self,
-        n_elements: int = 50,
+        n_elements: int = 100,
         final_time: float = 20,
-        rod_density: float = 1e3,
-        youngs_modulus: float = 4e5,
+        rod_density: float = 1e3 / 15,
+        youngs_modulus: float = 15e5,  # 6e5,#4e5,
         base_length: float = 1.0,
         start: np.ndarray = np.array([0.0, 0.0, 0.0]),
-        muscle_torque_coefficients=[0] * 8,
+        muscle_torque_coefficients=np.array([]),
+        tau_coeff: float = 1.44,
         plot_result: bool = True,
         period: float = 1.0,
     ) -> None:
@@ -57,29 +60,26 @@ class ElasticFishSimulator:
 
         # Muscle torques
         ramp_up_time = period
-        wave_length = muscle_torque_coefficients[-2]
+        wave_length = base_length / tau_coeff
         wave_number = 2 * np.pi / wave_length
         self.simulator.add_forcing_to(self.shearable_rod).using(
-            MuscleTorques,
-            base_length=self.base_length,
-            coefficients=muscle_torque_coefficients[:-2],
+            FishCurvature,
+            coefficients=muscle_torque_coefficients,
             period=period,
             wave_number=wave_number,
-            phase_shift=muscle_torque_coefficients[-1],
-            direction=normal,
+            phase_shift=0.0,
             rest_lengths=self.shearable_rod.rest_lengths,
             ramp_up_time=ramp_up_time,
-            with_spline=True,
         )
 
-        self.dt = 0.01 * self.shearable_rod.rest_lengths[0]
+        self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0]
         # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
-        damping_constant = 2.0
-        self.simulator.dampen(self.shearable_rod).using(
-            ea.AnalyticalLinearDamper,
-            damping_constant=damping_constant,
-            time_step=self.dt,
-        )
+        # damping_constant = 2.0/10/100
+        # self.simulator.dampen(self.shearable_rod).using(
+        #     ea.AnalyticalLinearDamper,
+        #     damping_constant=damping_constant,
+        #     time_step=self.dt,
+        # )
 
         self.final_time = final_time
         self.total_steps = int(self.final_time / self.dt)
@@ -157,21 +157,27 @@ class ElasticFishSimulator:
 
 if __name__ == "__main__":
 
-    if os.path.exists("optimized_coefficients.txt"):
-        muscle_torque_coefficients = np.genfromtxt(
-            "optimized_coefficients.txt", delimiter=","
-        )
-    elif os.path.exists("outcmaes/xrecentbest.dat"):
-        muscle_torque_coefficients = np.loadtxt("outcmaes/xrecentbest.dat", skiprows=1)[
-            -1, 5:
-        ]
-    else:
-        muscle_torque_coefficients = np.array([1.51, 0.48, 5.74, 2.73, 1.44])
+    # if os.path.exists("optimized_coefficients.txt"):
+    #     muscle_torque_coefficients = np.genfromtxt(
+    #         "optimized_coefficients.txt", delimiter=","
+    #     )
+    # elif os.path.exists("outcmaes/xrecentbest.dat"):
+    #     muscle_torque_coefficients = np.loadtxt("outcmaes/xrecentbest.dat", skiprows=1)[
+    #         -1, 5:
+    #     ]
+    # else:
+    #     muscle_torque_coefficients = np.array([1.51, 0.48, 5.74, 2.73, 1.44])
+
+    muscle_torque_coefficients = np.zeros((2, 6))
+    muscle_torque_coefficients[0, :] = np.array([0, 0.05, 0.33, 0.67, 0.95, 1])
+    muscle_torque_coefficients[1, :] = np.array([0, 1.51, 0.48, 5.74, 2.73, 0.0])
+    tau_coeff = 1.44
 
     period = 1.0
     final_time = 12 * period
     elastic_fish_sim = ElasticFishSimulator(
         muscle_torque_coefficients=muscle_torque_coefficients,
+        tau_coeff=tau_coeff,
         final_time=final_time,
         period=period,
     )
@@ -204,43 +210,95 @@ if __name__ == "__main__":
     # Retrieve simulation results
     time_sim = np.array(elastic_fish_sim.rod_post_processing_list[0]["time"])
     nondim_time = time_sim / period
-    node_position_sim = np.array(
-        elastic_fish_sim.rod_post_processing_list[0]["position"][:]
-    )
-    node_position_sim = node_position_sim - node_position_sim[:, :, 0][:, :, np.newaxis]
+    # node_position_sim = np.array(
+    #     elastic_fish_sim.rod_post_processing_list[0]["position"][:]
+    # )
+    # node_position_sim = node_position_sim - node_position_sim[:, :, 0][:, :, np.newaxis]
 
     # Get non-dimensional position along rod from simulation
     rest_lengths = np.array(
         elastic_fish_sim.rod_post_processing_list[0]["rest_lengths"][:]
     )
-    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1] + 1))
-    s_node[:, 1:] = np.cumsum(rest_lengths, axis=1)
+    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1]))
+    s_node[:, :] = np.cumsum(rest_lengths, axis=1)
     s_node /= s_node[:, -1:]
-    s_node_inner = s_node[:, 1:-1]
+    s_node_inner = s_node[:, :-1]
+
     # Get curvatures from simulation
     curvatures = np.array(elastic_fish_sim.rod_post_processing_list[0]["curvature"][:])
+
+    positions = np.array(elastic_fish_sim.rod_post_processing_list[0]["position"][:])
 
     # Compute error
     # compare only after ramp up, towards end of sim
     start = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
     # Compute curvature solution
-    control_points = np.array([0, 1.0 / 3, 2.0 / 3, 1])
-    curv_coeffs = np.array([1.51, 0.48, 5.74, 2.73])
-    tau_coeff = 1.44
     # curv_spline = interp1d(control_points, curv_coeffs, kind="cubic")
-    curv_spline = CubicSpline(control_points, curv_coeffs, bc_type="natural")
+    curv_spline = CubicSpline(
+        muscle_torque_coefficients[0, :],
+        muscle_torque_coefficients[1, :],
+        bc_type="natural",
+    )
     curvatures_amplitude = curv_spline(s_node_inner)
     curvatures_solution = curvatures_amplitude * np.sin(
         2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
     )
     # curvature error
-    error = np.linalg.norm(curvatures[start:, 0, :] - curvatures_solution[start:, :])
+    error = np.linalg.norm(
+        curvatures[start:, 1, :] - curvatures_solution[start:, :], axis=1
+    )
 
     # plot curvature along rod for a few frames to see
-    import matplotlib.pyplot as plt
+    import matplotlib
 
-    skip_frames = 10
-    plt.plot(curvatures[start::skip_frames, 0, :].T, "-", color="red")
-    plt.plot(curvatures_solution[start::skip_frames, :].T, "--", color="skyblue")
-    plt.show()
+    matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
+    from matplotlib import pyplot as plt
+
+    # In Material Frame
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    skip_frames = 30
+    axs[0].plot(
+        curvatures[start::skip_frames, 1, :].T, "-", color="red", label="simulation"
+    )
+    axs[0].plot(
+        curvatures_solution[start::skip_frames, :].T,
+        "--",
+        color="skyblue",
+        label="solution",
+    )
+    plt.tight_layout()
+    fig.align_ylabels()
+    # fig.legend(prop={"size": 20})
+    fig.savefig("curvature_envelope_comparison.png")
+    plt.close(plt.gcf())
+
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(nondim_time[start:], error, "-", color="red")
+    plt.tight_layout()
+    fig.align_ylabels()
+    fig.savefig("curvature_error.png")
+    plt.close(plt.gcf())
+
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    skip_frames = 20
+    axs[0].plot(
+        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 2, :].T
+    )
+    plt.tight_layout()
+    fig.align_ylabels()
+    # fig.legend(prop={"size": 20})
+    fig.savefig("position_envelope.png")
+    plt.close(plt.gcf())
