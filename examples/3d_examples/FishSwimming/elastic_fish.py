@@ -2,10 +2,7 @@ import numpy as np
 import elastica as ea
 import sopht.utils as spu
 from fish_geometry import update_rod_for_fish_geometry, create_fish_geometry
-
-# from fish_muscle_forces import MuscleTorques
 from fish_curvature_actuation import FishCurvature
-import os
 from scipy.interpolate import CubicSpline
 
 
@@ -157,17 +154,6 @@ class ElasticFishSimulator:
 
 if __name__ == "__main__":
 
-    # if os.path.exists("optimized_coefficients.txt"):
-    #     muscle_torque_coefficients = np.genfromtxt(
-    #         "optimized_coefficients.txt", delimiter=","
-    #     )
-    # elif os.path.exists("outcmaes/xrecentbest.dat"):
-    #     muscle_torque_coefficients = np.loadtxt("outcmaes/xrecentbest.dat", skiprows=1)[
-    #         -1, 5:
-    #     ]
-    # else:
-    #     muscle_torque_coefficients = np.array([1.51, 0.48, 5.74, 2.73, 1.44])
-
     # optimal params for 3D fastest swimmer from Kern et al. 2006
     num_control_points = 4
     muscle_torque_coefficients = np.zeros((2, num_control_points))
@@ -176,7 +162,7 @@ if __name__ == "__main__":
     tau_coeff = 1.44
 
     period = 1.0
-    final_time = 4 * period
+    final_time = 12 * period
     elastic_fish_sim = ElasticFishSimulator(
         muscle_torque_coefficients=muscle_torque_coefficients,
         tau_coeff=tau_coeff,
@@ -212,10 +198,6 @@ if __name__ == "__main__":
     # Retrieve simulation results
     time_sim = np.array(elastic_fish_sim.rod_post_processing_list[0]["time"])
     nondim_time = time_sim / period
-    # node_position_sim = np.array(
-    #     elastic_fish_sim.rod_post_processing_list[0]["position"][:]
-    # )
-    # node_position_sim = node_position_sim - node_position_sim[:, :, 0][:, :, np.newaxis]
 
     # Get non-dimensional position along rod from simulation
     rest_lengths = np.array(
@@ -226,9 +208,8 @@ if __name__ == "__main__":
     s_node /= s_node[:, -1:]
     s_node_inner = s_node[:, :-1]
 
-    # Get curvatures from simulation
+    # Get curvatures and positions from simulation
     curvatures = np.array(elastic_fish_sim.rod_post_processing_list[0]["curvature"][:])
-
     positions = np.array(elastic_fish_sim.rod_post_processing_list[0]["position"][:])
 
     # Compute error
@@ -236,7 +217,6 @@ if __name__ == "__main__":
     start = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
     # Compute curvature solution
-    # curv_spline = interp1d(control_points, curv_coeffs, kind="cubic")
     curv_spline = CubicSpline(
         muscle_torque_coefficients[0, :],
         muscle_torque_coefficients[1, :],
