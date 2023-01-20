@@ -140,6 +140,7 @@ def elastic_fish_swimming_case(
     timescale = period
     time_history = []
     force_history = []
+    com_velocity_history = []
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
@@ -177,6 +178,7 @@ def elastic_fish_swimming_case(
             time_history.append(flow_sim.time)
             forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
             force_history.append(forces.copy())
+            com_velocity_history.append(fish_sim.shearable_rod.compute_velocity_center_of_mass().copy())
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
@@ -233,6 +235,16 @@ def elastic_fish_swimming_case(
         ],
         delimiter=",",
         header="time, force x, force y, force z, force norm",
+    )
+    np.savetxt(
+        "fish_velocity_vs_time.csv",
+        np.c_[
+            np.array(time_history),
+            np.array(com_velocity_history),
+            np.linalg.norm(np.array(com_velocity_history), axis=1),
+        ],
+        delimiter=",",
+        header="time, vel x, vel y, vel z, vel norm",
     )
 
     # TODO: remove below lines
@@ -337,7 +349,7 @@ if __name__ == "__main__":
         n_elem = nx // 8 * 4
 
         exp_activation_period = 1.0
-        final_time = 12.0 * exp_activation_period
+        final_time = 12.0 * exp_activation_period / 100
 
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
