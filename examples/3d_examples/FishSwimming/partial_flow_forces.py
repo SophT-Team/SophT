@@ -6,7 +6,7 @@ from elastica import CosseratRod, NoForces, RigidBodyBase
 import numpy as np
 
 
-class FishFlowForces(NoForces):
+class PartialFlowForces(NoForces):
     def __init__(
         self,
         body_flow_interactor: CosseratRodFlowInteraction | RigidBodyFlowInteraction,
@@ -25,12 +25,13 @@ class FishFlowForces(NoForces):
 
         net_force = np.sum(self.body_flow_interactor.body_flow_forces, axis=1)
         acceleration = net_force / system.mass.sum()
-        velocity = (
-            system.compute_velocity_center_of_mass() + acceleration * self.time_step
-        )
-
-        delta_position = velocity * self.time_step
-
-        system.position_collection[0] += delta_position[0]
-        system.position_collection[1] += delta_position[1]
-        system.position_collection[2] += delta_position[2]
+        system.external_forces += system.mass * acceleration.reshape(3,1)
+        # velocity = (
+        #     system.compute_velocity_center_of_mass() + acceleration * self.time_step
+        # )
+        #
+        # delta_position = velocity * self.time_step
+        #
+        # system.position_collection[0] += delta_position[0]
+        # system.position_collection[1] += delta_position[1]
+        # system.position_collection[2] += delta_position[2]
