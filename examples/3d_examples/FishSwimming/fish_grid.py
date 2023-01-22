@@ -52,7 +52,8 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         # area = 4*np.pi * self.width * self.height
         # self.surface_grid_points = np.rint(area / np.max(area) * surface_grid_density_for_largest_element).astype(int)
-
+        # Srinivasa Ramanujan approximation for ellipse circumference
+        # https://en.wikipedia.org/wiki/Ellipse
         self.circumference = np.pi * (
             3 * (self.width + self.height)
             - np.sqrt((3 * self.width + self.height) * (self.width + 3 * self.height))
