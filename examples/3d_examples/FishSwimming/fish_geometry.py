@@ -65,7 +65,7 @@ def update_rod_for_fish_geometry(density, youngs_modulus, rod):
     rest_lengths = rod.rest_lengths.copy()
 
     # Compute mass, mass moment of inertia, radius
-    A0 = 4 * np.pi * width * height
+    A0 = np.pi * width * height
     volume = A0 * rest_lengths
 
     # Second moment of inertia of an ellipse
