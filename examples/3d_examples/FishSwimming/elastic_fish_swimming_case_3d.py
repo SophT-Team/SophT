@@ -348,7 +348,7 @@ if __name__ == "__main__":
         n_elem = nx // 8 * 4
 
         exp_activation_period = 1.0
-        final_time = 12.0 * exp_activation_period / 100
+        final_time = 12.0 * exp_activation_period
 
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
