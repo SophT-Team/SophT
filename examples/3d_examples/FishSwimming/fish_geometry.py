@@ -31,7 +31,7 @@ def create_fish_geometry(rest_lengths):
         if s[i] >= 0 and s[i] <= s_b:
             width[i] = np.sqrt(2 * w_h * s[i] - s[i] ** 2)
         elif s_b <= s[i] and s[i] <= s_t:
-            width[i] = w_h - (w_h - w_t) * (s[i] - s_b) / (s_t - s_b)
+            width[i] = w_h - (w_h - w_t) * ((s[i] - s_b) / (s_t - s_b)) ** 2
 
         elif s_t <= s[i] and s[i] <= base_length:
             width[i] = w_t * (base_length - s[i]) / (base_length - s_t)
