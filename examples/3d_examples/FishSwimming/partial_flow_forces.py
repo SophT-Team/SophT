@@ -25,7 +25,7 @@ class PartialFlowForces(NoForces):
 
         net_force = np.sum(self.body_flow_interactor.body_flow_forces, axis=1)
         acceleration = net_force / system.mass.sum()
-        system.external_forces += system.mass * acceleration.reshape(3,1)
+        system.external_forces += system.mass * acceleration.reshape(3, 1)
         # velocity = (
         #     system.compute_velocity_center_of_mass() + acceleration * self.time_step
         # )

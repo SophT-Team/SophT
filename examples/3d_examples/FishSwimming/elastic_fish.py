@@ -14,7 +14,7 @@ class ElasticFishSimulator:
         rod_density: float = 1e3 / 15,
         youngs_modulus: float = 15e5,  # 6e5,#4e5,
         base_length: float = 1.0,
-        start: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
         muscle_torque_coefficients=np.array([]),
         tau_coeff: float = 1.44,
         plot_result: bool = True,
@@ -32,7 +32,7 @@ class ElasticFishSimulator:
 
         self.plot_result = plot_result
         self.simulator = BaseSimulator()
-        self.origin = start
+        self.origin = origin
         self.base_length = base_length
         poisson_ratio = 0.5
         shear_modulus = youngs_modulus / (1.0 + poisson_ratio)  # Pa

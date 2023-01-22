@@ -51,7 +51,9 @@ def elastic_fish_swimming_case(
         cauchy_number * moment_of_inertia
     )
 
-    start = np.array([0.75 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range])
+    origin = np.array(
+        [0.75 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range]
+    )
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
@@ -61,7 +63,7 @@ def elastic_fish_swimming_case(
         youngs_modulus=youngs_modulus,
         base_length=base_length,
         tau_coeff=tau_coeff,
-        start=start,
+        origin=origin,
         plot_result=True,
     )
     # =================PYELASTICA STUFF END=====================
@@ -152,7 +154,7 @@ def elastic_fish_swimming_case(
             foto_timer = 0.0
             ax.set_title(
                 f"Vorticity z, time: {flow_sim.time / timescale:.2f}, "
-                f"distance: {(fish_sim.shearable_rod.position_collection[0, 0] - start[0]):.6f}"
+                f"distance: {(fish_sim.shearable_rod.position_collection[0, 0] - origin[0]):.6f}"
             )
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, grid_size_z // 2, :, :],
@@ -178,7 +180,9 @@ def elastic_fish_swimming_case(
             time_history.append(flow_sim.time)
             forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
             force_history.append(forces.copy())
-            com_velocity_history.append(fish_sim.shearable_rod.compute_velocity_center_of_mass().copy())
+            com_velocity_history.append(
+                fish_sim.shearable_rod.compute_velocity_center_of_mass().copy()
+            )
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
@@ -267,7 +271,7 @@ def elastic_fish_swimming_case(
 
     # Compute error
     # compare only after ramp up, towards end of sim
-    start = np.where(nondim_time >= final_time - 2 * period)[0][0]
+    start: int = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
     # Compute curvature solution
     curv_spline = CubicSpline(

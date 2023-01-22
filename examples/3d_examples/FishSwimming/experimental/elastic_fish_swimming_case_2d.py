@@ -42,7 +42,7 @@ def elastic_fish_swimming_case_2d(
         rod_density=rho_s,
         youngs_modulus=youngs_modulus,
         base_length=base_length,
-        start=start,
+        origin=start,
     )
     # =================PYELASTICA STUFF END=====================
     # ==================FLOW SETUP START=========================
