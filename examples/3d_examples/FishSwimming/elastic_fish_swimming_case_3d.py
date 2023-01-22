@@ -1,4 +1,3 @@
-import elastica as ea
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
@@ -106,7 +105,6 @@ def elastic_fish_swimming_case(
     fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
         PartialFlowForces,
         body_flow_interactor=cosserat_rod_flow_interactor,
-        time_step=fish_sim.dt,
     )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     # =================TIMESTEPPING====================

@@ -1,7 +1,5 @@
 import logging
 import numpy as np
-from elastica._linalg import _batch_norm, _batch_cross
-from elastica._rotations import _inv_rotate
 from elastica.utils import MaxDimension, Tolerance
 
 
@@ -10,7 +8,6 @@ def create_fish_geometry(rest_lengths):
     TODO docs
     Parameters
     ----------
-    rod
 
     Returns
     -------
@@ -29,7 +26,7 @@ def create_fish_geometry(rest_lengths):
     w_h = 0.04 * base_length
     w_t = 0.01 * base_length
 
-    width = np.zeros((n_elements))
+    width = np.zeros(n_elements)
     for i in range(n_elements):
         if s[i] >= 0 and s[i] <= s_b:
             width[i] = np.sqrt(2 * w_h * s[i] - s[i] ** 2)
