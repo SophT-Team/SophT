@@ -16,7 +16,7 @@ def elastic_fish_swimming_case(
     slenderness_ratio: float,
     mass_ratio: float,
     cauchy_number: float,
-    reynolds_number: float,
+    actuation_reynolds_number: float,
     coupling_stiffness: float = -2e4 / 2,
     coupling_damping: float = -1e1 / 2,
     num_threads: int = 4,
@@ -32,7 +32,7 @@ def elastic_fish_swimming_case(
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
-    rho_f = 1
+    rho_f = 1.0
     base_length = 1.0
     x_range = 4 * base_length
     y_range = grid_size_y / grid_size_x * x_range
@@ -68,10 +68,7 @@ def elastic_fish_swimming_case(
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
-    # kinematic_viscosity = U_free_stream * base_diameter / reynolds
-    reynolds = reynolds_number
-    kinematic_viscosity = base_length * vel_scale * rho_s / reynolds
-    # kinematic_viscosity = 1e-4
+    kinematic_viscosity = base_length * vel_scale / actuation_reynolds_number
     flow_sim = sps.UnboundedFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
@@ -357,29 +354,27 @@ if __name__ == "__main__":
         exp_rho_s = 1e3 / 15  # kg/m3
         exp_rho_f = 1e3 / 15  # kg/m3
         exp_youngs_modulus = 15e5  # Pa
-        # exp_kinematic_viscosity = 1e-6  # m2/s
-        # exp_viscosity = 1e-4
+        exp_kinematic_viscosity = 1.4e-4
         exp_mass_ratio = exp_rho_s / exp_rho_f
         width, _ = create_fish_geometry(exp_base_length / n_elem * np.ones(n_elem))
         exp_base_radius = width[0]
         exp_base_diameter = 2 * exp_base_radius
         exp_slenderness_ratio = exp_base_length / exp_base_diameter
-        exp_U_free_stream = exp_base_length / exp_activation_period  # m/s
+        exp_velocity_scale = exp_base_length / exp_activation_period
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
         exp_cauchy_number = (
             exp_rho_f
-            * exp_U_free_stream**2
+            * exp_velocity_scale**2
             * exp_base_length**3
             * exp_base_diameter
             / exp_bending_rigidity
         )
-        exp_Re = 3800  # exp_U_free_stream * exp_base_length / exp_kinematic_viscosity
+        exp_actuation_reynolds_number = (
+            exp_base_length * exp_velocity_scale / exp_kinematic_viscosity
+        )
         exp_non_dimensional_final_time = final_time / exp_activation_period
 
-        muscle_torque_coefficients = np.zeros((2, 6))
-        # muscle_torque_coefficients[0, :] = np.array([0, 0.05, 0.33, 0.67, 0.95, 1])
-        # muscle_torque_coefficients[1, :] = np.array([0, 1.51, 0.48, 5.74, 2.73, 0.0])
         num_control_points = 4
         muscle_torque_coefficients = np.zeros((2, num_control_points))
         muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
@@ -394,7 +389,7 @@ if __name__ == "__main__":
             slenderness_ratio=exp_slenderness_ratio,
             mass_ratio=exp_mass_ratio,
             cauchy_number=exp_cauchy_number,
-            reynolds_number=exp_Re,
+            actuation_reynolds_number=exp_actuation_reynolds_number,
             muscle_torque_coefficients=muscle_torque_coefficients,
             tau_coeff=tau_coeff,
             save_data=False,
