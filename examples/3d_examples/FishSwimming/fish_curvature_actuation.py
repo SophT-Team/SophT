@@ -2,7 +2,6 @@ import numpy as np
 from numba import njit
 from scipy.interpolate import CubicSpline
 import elastica as ea
-from elastica.typing import SystemType, RodType
 
 
 class FishCurvature(ea.NoForces):
@@ -72,7 +71,7 @@ class FishCurvature(ea.NoForces):
 
         self.my_spline = my_spline(self.s)
 
-    def apply_torques(self, rod: RodType, time: float = 0.0):
+    def apply_torques(self, rod: ea.CosseratRod, time: float = 0.0):
         self.compute_curvature(
             time,
             self.my_spline,
