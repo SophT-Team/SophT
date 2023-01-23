@@ -343,7 +343,7 @@ if __name__ == "__main__":
         ny = nx // 4
         nz = nx // 4
         # in order Z, Y, X
-        grid_size = (nz, ny, nx)
+        grid_size = (nz//2*3, ny//2*3, nx//2*3)
         surface_grid_density_for_largest_element = nx // 8
         n_elem = nx // 8 * 4
 
