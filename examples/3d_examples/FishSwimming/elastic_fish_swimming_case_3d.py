@@ -34,7 +34,7 @@ def elastic_fish_swimming_case(
     z_axis_idx = spu.VectorField.z_axis_idx()
     rho_f = 1.0
     base_length = 1.0
-    x_range = 4 * base_length
+    x_range = 6 * base_length
     y_range = grid_size_y / grid_size_x * x_range
     z_range = grid_size_z / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
@@ -77,7 +77,7 @@ def elastic_fish_swimming_case(
         real_t=real_t,
         num_threads=num_threads,
         filter_vorticity=True,
-        filter_setting_dict={"order": 3, "type": "convolution"},
+        filter_setting_dict={"order": 1, "type": "multiplicative"},
     )
     # ==================FLOW SETUP END=========================
 
@@ -95,14 +95,14 @@ def elastic_fish_swimming_case(
         forcing_grid_cls=FishSurfaceForcingGrid,
         surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
     )
-    # fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
-    #     sps.FlowForces,
-    #     cosserat_rod_flow_interactor,
-    # )
     fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
-        PartialFlowForces,
-        body_flow_interactor=cosserat_rod_flow_interactor,
+        sps.FlowForces,
+        cosserat_rod_flow_interactor,
     )
+    # fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
+    #     PartialFlowForces,
+    #     body_flow_interactor=cosserat_rod_flow_interactor,
+    # )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     # =================TIMESTEPPING====================
     fish_sim.finalize()

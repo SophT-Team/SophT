@@ -166,7 +166,7 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Compute the moment arm or distance from the element center for each grid point.
         self.moment_arm[:] = _batch_matvec(
             self.grid_point_director_transpose, self.local_frame_surface_points
-        ) / np.sqrt(self.grid_point_dilitation)
+        )  # / np.sqrt(self.grid_point_dilitation)
 
         # Surface positions are moment_arm + element center position
         self.position_field += self.moment_arm
@@ -175,8 +175,12 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
         # Element velocity
-        self.rod_element_velocity[...] = node_to_element_velocity(
-            self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
+        # self.rod_element_velocity[...] = node_to_element_velocity(
+        #     self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
+        # )
+        self.rod_element_velocity[...] = 0.5 * (
+            self.cosserat_rod.velocity_collection[:, 1:]
+            + self.cosserat_rod.velocity_collection[:, :-1]
         )
         # Element angular velocity
         self.rod_element_global_frame_omega[...] = _batch_matvec(
