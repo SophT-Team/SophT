@@ -77,7 +77,7 @@ def elastic_fish_swimming_case(
         real_t=real_t,
         num_threads=num_threads,
         filter_vorticity=True,
-        filter_setting_dict={"order": 1, "type": "multiplicative"},
+        filter_setting_dict={"order": 5, "type": "convolution"},
     )
     # ==================FLOW SETUP END=========================
 
@@ -138,6 +138,7 @@ def elastic_fish_swimming_case(
     time_history = []
     force_history = []
     com_velocity_history = []
+    com_position_history = []
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
@@ -177,6 +178,9 @@ def elastic_fish_swimming_case(
             force_history.append(forces.copy())
             com_velocity_history.append(
                 fish_sim.shearable_rod.compute_velocity_center_of_mass().copy()
+            )
+            com_position_history.append(
+                fish_sim.shearable_rod.compute_position_center_of_mass().copy()
             )
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
@@ -244,6 +248,15 @@ def elastic_fish_swimming_case(
         ],
         delimiter=",",
         header="time, vel x, vel y, vel z, vel norm",
+    )
+    np.savetxt(
+        "fish_com_position_vs_time.csv",
+        np.c_[
+            np.array(time_history),
+            np.array(com_position_history),
+        ],
+        delimiter=",",
+        header="time, pos x, pos y, pos z",
     )
 
     # TODO: remove below lines
@@ -338,14 +351,16 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option("--nx", default=128, help="Number of grid points in x direction.")
+    @click.option("--nx", default=192, help="Number of grid points in x direction.")
     def simulate_fish_swimming(num_threads: int, nx: int) -> None:
-        ny = nx // 4
-        nz = nx // 4
+        ny = nx // 2
+        nz = nx // 2
         # in order Z, Y, X
-        grid_size = (nz//2*3, ny//2*3, nx//2*3)
-        surface_grid_density_for_largest_element = nx // 8
-        n_elem = nx // 8 * 4
+        grid_size = (nz, ny, nx)
+        surface_grid_density_for_largest_element = nx // 16 # 8
+        n_elem = nx // 8    # 32
+
+
 
         exp_activation_period = 1.0
         final_time = 12.0 * exp_activation_period
