@@ -19,6 +19,7 @@ class ElasticFishSimulator:
         tau_coeff: float = 1.44,
         plot_result: bool = True,
         period: float = 1.0,
+        normal=np.array([0.0, 0.0, 1.0]),
     ) -> None:
         class BaseSimulator(
             ea.BaseSystemCollection,
@@ -37,7 +38,6 @@ class ElasticFishSimulator:
         poisson_ratio = 0.5
         shear_modulus = youngs_modulus / (1.0 + poisson_ratio)  # Pa
         direction = np.array([1.0, 0.0, 0.0])
-        normal = np.array([0.0, 0.0, 1.0])
         rest_lengths = base_length / n_elements * np.ones(n_elements)
         width, _ = create_fish_geometry(rest_lengths)  # use width as radius
         self.shearable_rod = ea.CosseratRod.straight_rod(
