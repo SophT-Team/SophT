@@ -66,11 +66,11 @@ def tapered_arm_and_cylinder_flow_coupling(
     # Flow parameters
     vel_scale = base_length / period
     nu = base_length * vel_scale / reynolds
-    flow_sim = sps.UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator2D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         real_t=real_t,
         num_threads=num_threads,
     )

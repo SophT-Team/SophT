@@ -27,15 +27,14 @@ def lid_driven_cavity_case(
     ldc_side_length = 0.6
     nu = ldc_side_length * lid_velocity / reynolds
     x_range = 1.0
-    flow_sim = sps.UnboundedFlowSimulator2D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator2D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
-        flow_type="navier_stokes_with_forcing",
+        with_forcing=True,
         real_t=real_t,
         num_threads=num_threads,
     )
-
     # Initialize lid driven cavity forcing grid
     num_lag_nodes_per_side = grid_size[x_axis_idx] * 3 // 8
     ldc_com = (0.5, 0.5)
