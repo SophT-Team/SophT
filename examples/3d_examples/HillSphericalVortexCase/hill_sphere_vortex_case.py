@@ -15,7 +15,6 @@ def hill_sphere_vortex_case(
     the velocity recovery and vortex stretching steps, for the solver,
     by comparing against analytical expressions.
     """
-    grid_dim = 3
     grid_size_z, grid_size_y, grid_size_x = grid_size
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
@@ -23,14 +22,12 @@ def hill_sphere_vortex_case(
     z_axis_idx = spu.VectorField.z_axis_idx()
     # Consider a 1 by 1 by 1 3D domain
     x_range = 1.0
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=0.0,
-        flow_type="navier_stokes",
         real_t=real_t,
         num_threads=num_threads,
-        navier_stokes_inertial_term_form="advection_stretching_split",
     )
     # init vortex at domain center
     vortex_origin = (
@@ -53,7 +50,17 @@ def hill_sphere_vortex_case(
         y_grid=flow_sim.position_field[y_axis_idx],
         z_grid=flow_sim.position_field[z_axis_idx],
     )
-    flow_sim.compute_flow_velocity(free_stream_velocity=np.zeros(grid_dim))
+    # compute velocity from vorticity
+    flow_sim._unbounded_poisson_solver.vector_field_solve(
+        solution_vector_field=flow_sim.stream_func_field,
+        rhs_vector_field=flow_sim.vorticity_field,
+    )
+    flow_sim._curl(
+        curl=flow_sim.velocity_field,
+        field=flow_sim.stream_func_field,
+        prefactor=flow_sim.real_t(0.5 / flow_sim.dx),
+    )
+    # compute diagnostics
     numerical_kinetic_energy = (
         0.5 * np.sum(np.square(flow_sim.velocity_field)) * flow_sim.dx**3
     )
@@ -107,31 +114,15 @@ def hill_sphere_vortex_case(
     ax2.set_ylabel("Radial velocity")
     fig2.savefig("midplane_radial_velocity.png")
 
-    # check the vorticity stretching term
-    _, _, _, _, sphere_r_grid = hill_sphere_vortex.compute_local_coordinates(
-        flow_sim.position_field[x_axis_idx],
-        flow_sim.position_field[y_axis_idx],
-        flow_sim.position_field[z_axis_idx],
-    )
-
     if save_data:
-        # setup IO
-        # TODO internalise this in flow simulator as dump_fields
-        io_origin = np.array(
-            [
-                flow_sim.position_field[z_axis_idx].min(),
-                flow_sim.position_field[y_axis_idx].min(),
-                flow_sim.position_field[x_axis_idx].min(),
-            ]
-        )
-        io_dx = flow_sim.dx * np.ones(grid_dim)
-        io_grid_size = np.array(grid_size)
-        io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
-        io.add_as_eulerian_fields_for_io(
-            vorticity=flow_sim.vorticity_field,
-            stream_func=flow_sim.stream_func_field,
-            velocity=flow_sim.velocity_field,
+        # setup flow IO
+        io = spu.EulerianFieldIO(
+            position_field=flow_sim.position_field,
+            eulerian_fields_dict={
+                "vorticity": flow_sim.vorticity_field,
+                "stream_func": flow_sim.stream_func_field,
+                "velocity": flow_sim.velocity_field,
+            },
         )
         io.save(h5_file_name="sopht.h5")
 

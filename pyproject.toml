@@ -10,7 +10,7 @@ description = "Scalable One-stop Platform for Hydroelastic Things (SOPHT)"
 readme = "README.md"
 authors = ["Yashraj Bhosale <bhosale2@illinois.edu>", "Arman Tekinalp <armant2@illinois.edu>"]
 license = "MIT"
-repository = "https://github.com/SophT-Team/SophT-Simulator"
+repository = "https://github.com/SophT-Team/SophT"
 
 # ...
 packages = [
@@ -18,7 +18,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.10,<3.11"
 numpy = "^1.20.0"
 numba = "^0.55"
 pystencils = "^1.0"
