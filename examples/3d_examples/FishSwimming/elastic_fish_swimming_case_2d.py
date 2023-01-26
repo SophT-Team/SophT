@@ -200,7 +200,7 @@ def elastic_fish_swimming_case(
     if save_data:
         pass
     spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
+        video_name="flow", image_series_name="snap", frame_rate=30
     )
     # Save data
     np.savetxt(
