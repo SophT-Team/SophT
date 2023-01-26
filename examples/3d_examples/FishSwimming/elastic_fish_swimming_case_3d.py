@@ -4,7 +4,7 @@ import sopht.utils as spu
 import click
 from elastic_fish import ElasticFishSimulator
 from fish_grid import FishSurfaceForcingGrid
-from fish_geometry import create_fish_geometry
+from fish_geometry import create_fish_geometry_3D
 from partial_flow_forces import PartialFlowForces
 
 
@@ -357,10 +357,8 @@ if __name__ == "__main__":
         nz = nx // 2
         # in order Z, Y, X
         grid_size = (nz, ny, nx)
-        surface_grid_density_for_largest_element = nx // 16 # 8
-        n_elem = nx // 8    # 32
-
-
+        surface_grid_density_for_largest_element = nx // 16  # 8
+        n_elem = nx // 8  # 32
 
         exp_activation_period = 1.0
         final_time = 12.0 * exp_activation_period
@@ -371,7 +369,7 @@ if __name__ == "__main__":
         exp_youngs_modulus = 15e5  # Pa
         exp_kinematic_viscosity = 1.4e-4
         exp_mass_ratio = exp_rho_s / exp_rho_f
-        width, _ = create_fish_geometry(exp_base_length / n_elem * np.ones(n_elem))
+        width, _ = create_fish_geometry_3D(exp_base_length / n_elem * np.ones(n_elem))
         exp_base_radius = width[0]
         exp_base_diameter = 2 * exp_base_radius
         exp_slenderness_ratio = exp_base_length / exp_base_diameter

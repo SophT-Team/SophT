@@ -3,7 +3,7 @@ import sopht.simulator as sps
 import sopht.utils as spu
 import click
 from elastic_fish import ElasticFishSimulator
-from fish_geometry import create_fish_geometry
+from fish_geometry import create_fish_geometry_2D
 
 
 def elastic_fish_swimming_case(
@@ -12,12 +12,10 @@ def elastic_fish_swimming_case(
     grid_size: tuple[int, int],
     slenderness_ratio: float,
     mass_ratio: float,
-    cauchy_number: float,
+    non_dim_bending_stiffness: float,
     actuation_reynolds_number: float,
-    coupling_stiffness: float = -2e4 / 20/2 ,
-    coupling_damping: float = -1e1 / 20/2
-
-        ,
+    coupling_stiffness: float = -2e4 / 20 / 2,
+    coupling_damping: float = -1e1 / 20 / 2,
     num_threads: int = 4,
     precision: str = "single",
     save_data: bool = False,
@@ -31,7 +29,7 @@ def elastic_fish_swimming_case(
     y_axis_idx = spu.VectorField.y_axis_idx()
     rho_f = 1
     base_length = 1.0
-    x_range = 3 * base_length
+    x_range = 6 * base_length
     y_range = grid_size_y / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
     period = 1
@@ -39,16 +37,17 @@ def elastic_fish_swimming_case(
     vel_scale = base_length / period
     rho_s = mass_ratio * rho_f
     base_diameter = base_length / slenderness_ratio
-    base_radius = base_diameter / 2
-    moment_of_inertia = np.pi / 4 * base_radius**4
-    # Cau = (rho_f U^2 L^3 D) / EI
-    youngs_modulus = (rho_f * vel_scale**2 * base_length**3 * base_diameter) / (
-        cauchy_number * moment_of_inertia
+    z_width = 1
+    moment_of_inertia = base_diameter**3 * z_width / 12
+    youngs_modulus = (
+        non_dim_bending_stiffness
+        * rho_f
+        * vel_scale**2
+        * base_length**3
+        / moment_of_inertia
     )
 
-    origin = np.array(
-        [0.75 * x_range - 0.5 * base_length, 0.5 * y_range, 0.0]
-    )
+    origin = np.array([0.75 * x_range - 0.5 * base_length, 0.5 * y_range, 0.0])
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
@@ -60,7 +59,7 @@ def elastic_fish_swimming_case(
         tau_coeff=tau_coeff,
         origin=origin,
         plot_result=True,
-        normal=np.array([0.0, 1.0, 0.0])
+        normal=np.array([0.0, 1.0, 0.0]),
     )
     # =================PYELASTICA STUFF END=====================
     # ==================FLOW SETUP START=========================
@@ -191,10 +190,8 @@ def elastic_fish_swimming_case(
         # evaluate feedback/interaction between flow and rod
         cosserat_rod_flow_interactor()
 
-
         # timestep the flow
         flow_sim.time_step(dt=flow_dt)
-
 
         # update timer
         foto_timer += flow_dt
@@ -334,7 +331,7 @@ if __name__ == "__main__":
 
         # in order Y, X
         grid_size = (ny, nx)
-        n_elem = nx // 2
+        n_elem = nx // 4
         exp_activation_period = 1.0
         final_time = 6.0 * exp_activation_period
 
@@ -344,19 +341,23 @@ if __name__ == "__main__":
         exp_youngs_modulus = 15e5  # Pa
         exp_kinematic_viscosity = 1.4e-4
         exp_mass_ratio = exp_rho_s / exp_rho_f
-        width, _ = create_fish_geometry(exp_base_length / n_elem * np.ones(n_elem))
+        width, _ = create_fish_geometry_2D(exp_base_length / n_elem * np.ones(n_elem))
         exp_base_radius = width[0]
         exp_base_diameter = 2 * exp_base_radius
         exp_slenderness_ratio = exp_base_length / exp_base_diameter
         exp_velocity_scale = exp_base_length / exp_activation_period
-        exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
+        exp_moment_of_inertia = (2 * exp_base_radius) ** 3 / 12
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
-        exp_cauchy_number = (
-            exp_rho_f
-            * exp_velocity_scale**2
-            * exp_base_length**3
-            * exp_base_diameter
-            / exp_bending_rigidity
+        # exp_cauchy_number = (
+        #     exp_rho_f
+        #     * exp_velocity_scale**2
+        #     * exp_base_length**3
+        #     * exp_base_diameter
+        #     / exp_bending_rigidity
+        # )
+        z_width = 1
+        exp_non_dim_bending_stiffness = exp_bending_rigidity / (
+            exp_rho_f * exp_velocity_scale**2 * exp_base_length**3 * z_width
         )
         exp_actuation_reynolds_number = (
             exp_base_length * exp_velocity_scale / exp_kinematic_viscosity
@@ -375,7 +376,7 @@ if __name__ == "__main__":
             grid_size=grid_size,
             slenderness_ratio=exp_slenderness_ratio,
             mass_ratio=exp_mass_ratio,
-            cauchy_number=exp_cauchy_number,
+            non_dim_bending_stiffness=exp_non_dim_bending_stiffness,
             actuation_reynolds_number=exp_actuation_reynolds_number,
             muscle_torque_coefficients=muscle_torque_coefficients,
             tau_coeff=tau_coeff,

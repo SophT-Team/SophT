@@ -1,7 +1,12 @@
 import numpy as np
 import elastica as ea
 import sopht.utils as spu
-from fish_geometry import update_rod_for_fish_geometry, create_fish_geometry
+from fish_geometry import (
+    update_rod_for_fish_geometry_2D,
+    update_rod_for_fish_geometry_3D,
+    create_fish_geometry_2D,
+    create_fish_geometry_3D,
+)
 from fish_curvature_actuation import FishCurvature
 from scipy.interpolate import CubicSpline
 
@@ -20,6 +25,7 @@ class ElasticFishSimulator:
         plot_result: bool = True,
         period: float = 1.0,
         normal=np.array([0.0, 0.0, 1.0]),
+        flag_dim_2D: bool = False,
     ) -> None:
         class BaseSimulator(
             ea.BaseSystemCollection,
@@ -39,20 +45,40 @@ class ElasticFishSimulator:
         shear_modulus = youngs_modulus / (1.0 + poisson_ratio)  # Pa
         direction = np.array([1.0, 0.0, 0.0])
         rest_lengths = base_length / n_elements * np.ones(n_elements)
-        width, _ = create_fish_geometry(rest_lengths)  # use width as radius
-        self.shearable_rod = ea.CosseratRod.straight_rod(
-            n_elements=n_elements,
-            start=self.origin,
-            direction=direction,
-            normal=normal,
-            base_length=self.base_length,
-            base_radius=width,
-            density=rod_density,
-            nu=0.0,  # internal damping constant, deprecated in v0.3.0
-            youngs_modulus=youngs_modulus,
-            shear_modulus=shear_modulus,
-        )
-        update_rod_for_fish_geometry(rod_density, youngs_modulus, self.shearable_rod)
+        if flag_dim_2D:
+            width, _ = create_fish_geometry_2D(rest_lengths)  # use width as radius
+            self.shearable_rod = ea.CosseratRod.straight_rod(
+                n_elements=n_elements,
+                start=self.origin,
+                direction=direction,
+                normal=normal,
+                base_length=self.base_length,
+                base_radius=width,
+                density=rod_density,
+                nu=0.0,  # internal damping constant, deprecated in v0.3.0
+                youngs_modulus=youngs_modulus,
+                shear_modulus=shear_modulus,
+            )
+            update_rod_for_fish_geometry_2D(
+                rod_density, youngs_modulus, self.shearable_rod
+            )
+        else:
+            width, _ = create_fish_geometry_3D(rest_lengths)  # use width as radius
+            self.shearable_rod = ea.CosseratRod.straight_rod(
+                n_elements=n_elements,
+                start=self.origin,
+                direction=direction,
+                normal=normal,
+                base_length=self.base_length,
+                base_radius=width,
+                density=rod_density,
+                nu=0.0,  # internal damping constant, deprecated in v0.3.0
+                youngs_modulus=youngs_modulus,
+                shear_modulus=shear_modulus,
+            )
+            update_rod_for_fish_geometry_3D(
+                rod_density, youngs_modulus, self.shearable_rod
+            )
         self.simulator.append(self.shearable_rod)
 
         # Muscle torques
