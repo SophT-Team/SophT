@@ -14,12 +14,28 @@ def create_fish_geometry_2D(rest_lengths):
 
     """
     n_elements = rest_lengths.shape[0]
+    s_node = np.zeros(n_elements + 1)
+    s_node[1:] = np.cumsum(rest_lengths)
+    s_node /= s_node[-1]
+    s = 0.5 * (s_node[1:] + s_node[:-1])
+
     # Compute the width of the fish along its length
     base_length = rest_lengths.sum()
+    s_b = 0.04 * base_length
+    s_t = 0.95 * base_length
     w_h = 0.04 * base_length
     w_t = 0.01 * base_length
 
-    width = np.linspace(w_h, w_t, n_elements)
+    width = np.zeros(n_elements)
+    for i in range(n_elements):
+        if s[i] >= 0 and s[i] <= s_b:
+            width[i] = np.sqrt(2 * w_h * s[i] - s[i] ** 2)
+        elif s_b <= s[i] and s[i] <= s_t:
+            width[i] = w_h - (w_h - w_t) * ((s[i] - s_b) / (s_t - s_b))
+
+        elif s_t <= s[i] and s[i] <= base_length:
+            width[i] = w_t * (base_length - s[i]) / (base_length - s_t)
+
     height = 1
 
     return width, height
