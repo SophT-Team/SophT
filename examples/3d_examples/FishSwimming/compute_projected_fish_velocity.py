@@ -4,13 +4,13 @@ folder_path = "2D_fish_1024_E_24E6/"
 velocity_file_name = "fish_velocity_vs_time.csv"
 position_file_name = "fish_com_position_vs_time.csv"
 period = 1
-velocity_com = np.loadtxt(folder_path+velocity_file_name, delimiter=',')
-position_com = np.loadtxt(folder_path+position_file_name, delimiter=',')
+velocity_com = np.loadtxt(folder_path + velocity_file_name, delimiter=",")
+position_com = np.loadtxt(folder_path + position_file_name, delimiter=",")
 
-time = position_com[:,0]
-position = position_com[:,1:]
-velocity = velocity_com[:,1:4]
-speed = velocity_com[:,4]
+time = position_com[:, 0]
+position = position_com[:, 1:]
+velocity = velocity_com[:, 1:4]
+speed = velocity_com[:, 4]
 
 # Compute projected velocity
 time_per_period = time / period
@@ -31,8 +31,8 @@ center_of_mass_averaged_over_one_period = np.zeros((number_of_period - 2, 3))
 for i in range(2, number_of_period - 1):
     # position of center of mass averaged over one period
     center_of_mass_averaged_over_one_period[i - 1] = np.mean(
-        position[(i + 1) * period_step: (i + 2) * period_step]
-        - position[(i + 0) * period_step: (i + 1) * period_step],
+        position[(i + 1) * period_step : (i + 2) * period_step]
+        - position[(i + 0) * period_step : (i + 1) * period_step],
         axis=0,
     )
 # Average the rod directions over multiple periods and get the direction of the rod.
@@ -40,9 +40,7 @@ direction_of_rod = np.mean(center_of_mass_averaged_over_one_period, axis=0)
 direction_of_rod /= np.linalg.norm(direction_of_rod, ord=2)
 
 # Compute the projected rod velocity in the direction of the rod
-velocity_mag_in_direction_of_rod = np.einsum(
-    "ji,i->j", velocity, direction_of_rod
-)
+velocity_mag_in_direction_of_rod = np.einsum("ji,i->j", velocity, direction_of_rod)
 velocity_in_direction_of_rod = np.einsum(
     "j,i->ji", velocity_mag_in_direction_of_rod, direction_of_rod
 )
@@ -55,7 +53,8 @@ velocity_mag_in_roll_dir = np.einsum("ji->j", velocity_in_rod_roll_dir)
 
 
 import matplotlib
-matplotlib.use("Agg")   # Must be before importing matplotlib.pyplot or pylab!
+
+matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
 from matplotlib import pyplot as plt
 
 
@@ -63,19 +62,13 @@ plt.rcParams.update({"font.size": 22})
 fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
 axs = []
 axs.append(plt.subplot2grid((1, 1), (0, 0)))
-axs[0].plot(
-    time, position[:,0],  label="x pos"
-)
-axs[0].plot(
-    time, position[:,1],  label="y pos"
-)
-axs[0].plot(
-    time, position[:,2],  label="z pos"
-)
+axs[0].plot(time, position[:, 0], label="x pos")
+axs[0].plot(time, position[:, 1], label="y pos")
+axs[0].plot(time, position[:, 2], label="z pos")
 plt.tight_layout()
 fig.align_ylabels()
 fig.legend(prop={"size": 20})
-fig.savefig(folder_path+"fish_com_pos.png")
+fig.savefig(folder_path + "fish_com_pos.png")
 plt.close(plt.gcf())
 
 
@@ -83,22 +76,14 @@ plt.rcParams.update({"font.size": 22})
 fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
 axs = []
 axs.append(plt.subplot2grid((1, 1), (0, 0)))
-axs[0].plot(
-    time, velocity[:,0],  label="x vel"
-)
-axs[0].plot(
-    time, velocity[:,1],  label="y vel"
-)
-axs[0].plot(
-    time, velocity[:,2],  label="z vel"
-)
-axs[0].plot(
-    time, speed,  label="speed"
-)
+axs[0].plot(time, velocity[:, 0], label="x vel")
+axs[0].plot(time, velocity[:, 1], label="y vel")
+axs[0].plot(time, velocity[:, 2], label="z vel")
+axs[0].plot(time, speed, label="speed")
 plt.tight_layout()
 fig.align_ylabels()
 fig.legend(prop={"size": 20})
-fig.savefig(folder_path+"fish_com_vel.png")
+fig.savefig(folder_path + "fish_com_vel.png")
 plt.close(plt.gcf())
 
 
@@ -106,17 +91,13 @@ plt.rcParams.update({"font.size": 22})
 fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
 axs = []
 axs.append(plt.subplot2grid((1, 1), (0, 0)))
-axs[0].plot(
-    time, velocity_mag_in_direction_of_rod,  label="axial vel"
-)
-axs[0].plot(
-    time, velocity_mag_in_roll_dir,  label="lateral vel"
-)
+axs[0].plot(time, velocity_mag_in_direction_of_rod, label="axial vel")
+axs[0].plot(time, velocity_mag_in_roll_dir, label="lateral vel")
 plt.tight_layout()
 plt.minorticks_on()
-plt.grid(which='major', color='darkgrey', linestyle='-')
-plt.grid(which='minor', color='lightgrey', linestyle='--')
+plt.grid(which="major", color="darkgrey", linestyle="-")
+plt.grid(which="minor", color="lightgrey", linestyle="--")
 fig.align_ylabels()
 fig.legend(prop={"size": 20})
-fig.savefig(folder_path+"fish_com_vel_projected.png")
+fig.savefig(folder_path + "fish_com_vel_projected.png")
 plt.close(plt.gcf())

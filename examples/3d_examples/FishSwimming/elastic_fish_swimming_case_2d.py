@@ -338,7 +338,7 @@ if __name__ == "__main__":
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
         exp_rho_f = 1e3 / 15  # kg/m3
-        exp_youngs_modulus = 15e5  # Pa
+        exp_youngs_modulus = 16 * 15e5  # Pa
         exp_kinematic_viscosity = 1.4e-4
         exp_mass_ratio = exp_rho_s / exp_rho_f
         width, _ = create_fish_geometry_2D(exp_base_length / n_elem * np.ones(n_elem))

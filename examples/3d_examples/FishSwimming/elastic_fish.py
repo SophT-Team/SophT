@@ -95,7 +95,7 @@ class ElasticFishSimulator:
             ramp_up_time=ramp_up_time,
         )
 
-        self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0]
+        self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2
         # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
         # damping_constant = 2.0/10/100
         # self.simulator.dampen(self.shearable_rod).using(
@@ -229,10 +229,10 @@ if __name__ == "__main__":
     rest_lengths = np.array(
         elastic_fish_sim.rod_post_processing_list[0]["rest_lengths"][:]
     )
-    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1]))
-    s_node[:, :] = np.cumsum(rest_lengths, axis=1)
+    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1] + 1))
+    s_node[:, 1:] = np.cumsum(rest_lengths, axis=1)
     s_node /= s_node[:, -1:]
-    s_node_inner = s_node[:, :-1]
+    s_node_inner = s_node[:, 1:-1]
 
     # Get curvatures and positions from simulation
     curvatures = np.array(elastic_fish_sim.rod_post_processing_list[0]["curvature"][:])
@@ -255,6 +255,16 @@ if __name__ == "__main__":
     # curvature error
     error = np.linalg.norm(
         curvatures[start:, 1, :] - curvatures_solution[start:, :], axis=1
+    )
+
+    # Carling et. al.
+    base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
+    y_positions = (
+        0.125
+        * base_length
+        * (0.03125 + s_node)
+        / 1.03125
+        * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
     )
 
     # plot curvature along rod for a few frames to see
@@ -305,4 +315,26 @@ if __name__ == "__main__":
     )
     plt.tight_layout()
     fig.savefig("position_envelope.png")
+    plt.close(plt.gcf())
+
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(
+        s_node[start::skip_frames, :].T,
+        y_positions[start::skip_frames, :].T,
+        "--",
+        color="skyblue",
+        label="solution",
+    )
+    axs[0].plot(
+        s_node[start::skip_frames, :].T,
+        positions[start::skip_frames, 2, :].T,
+        "-",
+        color="red",
+        label="simulation",
+    )
+    plt.tight_layout()
+    fig.savefig("y_position_comparison.png")
     plt.close(plt.gcf())
