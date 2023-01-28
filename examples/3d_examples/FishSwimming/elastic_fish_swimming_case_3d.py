@@ -5,7 +5,6 @@ import click
 from elastic_fish import ElasticFishSimulator
 from fish_grid import FishSurfaceForcingGrid
 from fish_geometry import create_fish_geometry_3D
-from partial_flow_forces import PartialFlowForces
 
 
 def elastic_fish_swimming_case(
@@ -99,10 +98,6 @@ def elastic_fish_swimming_case(
         sps.FlowForces,
         cosserat_rod_flow_interactor,
     )
-    # fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
-    #     PartialFlowForces,
-    #     body_flow_interactor=cosserat_rod_flow_interactor,
-    # )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     # =================TIMESTEPPING====================
     fish_sim.finalize()

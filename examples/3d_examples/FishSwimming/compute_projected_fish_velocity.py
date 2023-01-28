@@ -1,5 +1,8 @@
 import numpy as np
+import matplotlib
+from matplotlib import pyplot as plt
 
+matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
 folder_path = "2D_fish_1024_E_24E6/"
 velocity_file_name = "fish_velocity_vs_time.csv"
 position_file_name = "fish_com_position_vs_time.csv"
@@ -50,12 +53,6 @@ velocity_in_direction_of_rod = np.einsum(
 velocity_in_rod_roll_dir = velocity - velocity_in_direction_of_rod
 
 velocity_mag_in_roll_dir = np.einsum("ji->j", velocity_in_rod_roll_dir)
-
-
-import matplotlib
-
-matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
-from matplotlib import pyplot as plt
 
 
 plt.rcParams.update({"font.size": 22})

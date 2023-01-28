@@ -1,9 +1,8 @@
 from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
-from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
 import elastica as ea
 import numpy as np
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
-from fish_geometry import create_fish_geometry
+from fish_geometry import create_fish_geometry_3D
 
 
 # Forcing grid implementation for tapered rod
@@ -31,7 +30,7 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             )
         self.cosserat_rod = cosserat_rod
 
-        self.width, self.height = create_fish_geometry(cosserat_rod.rest_lengths)
+        self.width, self.height = create_fish_geometry_3D(cosserat_rod.rest_lengths)
 
         # Surface grid density at the arm maximum radius
         self.surface_grid_density_for_largest_element = (
