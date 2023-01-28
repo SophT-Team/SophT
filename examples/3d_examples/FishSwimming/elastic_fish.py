@@ -84,7 +84,7 @@ class ElasticFishSimulator:
 
         # Muscle torques
         ramp_up_time = period
-        if muscle_torque_coefficients.shape[0] is not 0:
+        if muscle_torque_coefficients.shape[0] != 0:
             wave_length = base_length / tau_coeff
             wave_number = 2 * np.pi / wave_length
             self.simulator.add_forcing_to(self.shearable_rod).using(
