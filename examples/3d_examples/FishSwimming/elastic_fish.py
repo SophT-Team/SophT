@@ -9,6 +9,7 @@ from fish_geometry import (
 )
 from fish_curvature_actuation import FishCurvature
 from scipy.interpolate import CubicSpline
+from fish_actuation_carling import FishCurvatureCarling
 
 
 class ElasticFishSimulator:
@@ -83,17 +84,27 @@ class ElasticFishSimulator:
 
         # Muscle torques
         ramp_up_time = period
-        wave_length = base_length / tau_coeff
-        wave_number = 2 * np.pi / wave_length
-        self.simulator.add_forcing_to(self.shearable_rod).using(
-            FishCurvature,
-            coefficients=muscle_torque_coefficients,
-            period=period,
-            wave_number=wave_number,
-            phase_shift=0.0,
-            rest_lengths=self.shearable_rod.rest_lengths,
-            ramp_up_time=ramp_up_time,
-        )
+        if muscle_torque_coefficients.shape[0] is not 0:
+            wave_length = base_length / tau_coeff
+            wave_number = 2 * np.pi / wave_length
+            self.simulator.add_forcing_to(self.shearable_rod).using(
+                FishCurvature,
+                coefficients=muscle_torque_coefficients,
+                period=period,
+                wave_number=wave_number,
+                phase_shift=0.0,
+                rest_lengths=self.shearable_rod.rest_lengths,
+                ramp_up_time=ramp_up_time,
+            )
+        else:
+            self.simulator.add_forcing_to(self.shearable_rod).using(
+                FishCurvatureCarling,
+                period=period,
+                wave_number=2 * np.pi / base_length,
+                phase_shift=0.0,
+                rest_lengths=self.shearable_rod.rest_lengths,
+                ramp_up_time=ramp_up_time,
+            )
 
         self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2
         # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
@@ -188,7 +199,7 @@ if __name__ == "__main__":
     tau_coeff = 1.44
 
     period = 1.0
-    final_time = 12 * period
+    final_time = 3 * period
     elastic_fish_sim = ElasticFishSimulator(
         muscle_torque_coefficients=muscle_torque_coefficients,
         tau_coeff=tau_coeff,
