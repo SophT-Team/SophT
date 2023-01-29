@@ -326,7 +326,7 @@ def elastic_fish_swimming_case(
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
 
-    if muscle_torque_coefficients.shape[0] != 0:
+    if muscle_torque_coefficients.shape[0] == 0:
         # Carling et. al.
         base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
         y_positions = (
