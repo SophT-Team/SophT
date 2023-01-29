@@ -157,6 +157,9 @@ class ElasticFishSimulator:
                     self.callback_params["torque"].append(
                         system.external_torques.copy()
                     )
+                    self.callback_params["target_curvature"].append(
+                        system.rest_kappa.copy()
+                    )
 
         # Add call back for plotting time history of the rod
         self.rod_post_processing_list.append(ea.defaultdict(list))

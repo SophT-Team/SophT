@@ -242,10 +242,10 @@ def elastic_fish_swimming_case(
 
     # Get non-dimensional position along rod from simulation
     rest_lengths = np.array(fish_sim.rod_post_processing_list[0]["rest_lengths"][:])
-    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1]))
-    s_node[:, :] = np.cumsum(rest_lengths, axis=1)
+    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1] + 1))
+    s_node[:, 1:] = np.cumsum(rest_lengths, axis=1)
     s_node /= s_node[:, -1:]
-    s_node_inner = s_node[:, :-1]
+    s_node_inner = s_node[:, 1:-1]
 
     # Get curvatures and positions from simulation
     curvatures = np.array(fish_sim.rod_post_processing_list[0]["curvature"][:])
@@ -255,16 +255,22 @@ def elastic_fish_swimming_case(
     # compare only after ramp up, towards end of sim
     start: int = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
-    # Compute curvature solution
-    curv_spline = CubicSpline(
-        muscle_torque_coefficients[0, :],
-        muscle_torque_coefficients[1, :],
-        bc_type="natural",
-    )
-    curvatures_amplitude = curv_spline(s_node_inner)
-    curvatures_solution = curvatures_amplitude * np.sin(
-        2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
-    )
+    if muscle_torque_coefficients.shape[0] != 0:
+        # Compute curvature solution
+        curv_spline = CubicSpline(
+            muscle_torque_coefficients[0, :],
+            muscle_torque_coefficients[1, :],
+            bc_type="natural",
+        )
+        curvatures_amplitude = curv_spline(s_node_inner)
+        curvatures_solution = curvatures_amplitude * np.sin(
+            2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
+        )
+    else:
+        curvatures_solution = np.array(
+            fish_sim.rod_post_processing_list[0]["target_curvature"][:]
+        )[:, 1, :]
+
     # curvature error
     error = np.linalg.norm(
         curvatures[start:, 1, :] - curvatures_solution[start:, :], axis=1
@@ -319,6 +325,39 @@ def elastic_fish_swimming_case(
     plt.tight_layout()
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
+
+    if muscle_torque_coefficients.shape[0] != 0:
+        # Carling et. al.
+        base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
+        y_positions = (
+            0.125
+            * base_length
+            * (0.03125 + s_node)
+            / 1.03125
+            * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
+        )
+
+        plt.rcParams.update({"font.size": 22})
+        fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+        axs = []
+        axs.append(plt.subplot2grid((1, 1), (0, 0)))
+        axs[0].plot(
+            s_node[start::skip_frames, :].T,
+            y_positions[start::skip_frames, :].T,
+            "--",
+            color="skyblue",
+            label="solution",
+        )
+        axs[0].plot(
+            s_node[start::skip_frames, :].T,
+            positions[start::skip_frames, 2, :].T,
+            "-",
+            color="red",
+            label="simulation",
+        )
+        plt.tight_layout()
+        fig.savefig("y_position_comparison.png")
+        plt.close(plt.gcf())
 
 
 if __name__ == "__main__":
