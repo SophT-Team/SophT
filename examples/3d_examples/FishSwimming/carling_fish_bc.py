@@ -27,11 +27,14 @@ class CarlingFishBC(ea.ConstraintBase):
         self.directors = np.zeros((3, 3, n_elems))
         self.directors[0, 2, :] = 1.0
 
+        self.start_position = rod.position_collection[..., 0].reshape(3, 1).copy()
+
     def constrain_values(
         self, rod: Union[Type[ea.RodBase], Type[ea.RigidBodyBase]], time: float
     ) -> None:
 
         self.constrain_fish_positions(
+            self.start_position,
             self.ramp_up_time,
             self.n_nodes,
             time,
@@ -50,6 +53,7 @@ class CarlingFishBC(ea.ConstraintBase):
     @staticmethod
     @njit(cache=True)
     def constrain_fish_positions(
+        start_position,
         ramp_up_time,
         n_nodes,
         time,
@@ -93,6 +97,8 @@ class CarlingFishBC(ea.ConstraintBase):
         position_collection[1, :] = positions[1, :]
         position_collection[0, :] = positions[0, :]
         position_collection[2, :] = positions[2, :]
+
+        position_collection += start_position
 
         # Compute tangents
         tangents = positions[:, 1:] - positions[:, :-1]
