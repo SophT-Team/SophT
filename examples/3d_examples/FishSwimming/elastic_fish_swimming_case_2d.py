@@ -2,7 +2,7 @@ import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
 import click
-from elastic_fish import ElasticFishSimulator
+from elastic_fish_v2 import ElasticFishSimulator
 from fish_geometry import create_fish_geometry_2D
 
 
@@ -59,7 +59,8 @@ def elastic_fish_swimming_case(
         tau_coeff=tau_coeff,
         origin=origin,
         plot_result=True,
-        normal=np.array([0.0, 1.0, 0.0]),
+        normal=np.array([0.0, 0.0, 1.0]),
+        flag_dim_2D=True,
     )
     # =================PYELASTICA STUFF END=====================
     # ==================FLOW SETUP START=========================
@@ -273,7 +274,7 @@ def elastic_fish_swimming_case(
 
     # curvature error
     error = np.linalg.norm(
-        curvatures[start:, 1, :] - curvatures_solution[start:, :], axis=1
+        curvatures[start:, 0, :] - curvatures_solution[start:, :], axis=1
     )
 
     # plot curvature along rod for a few frames to see
@@ -290,7 +291,7 @@ def elastic_fish_swimming_case(
     axs.append(plt.subplot2grid((1, 1), (0, 0)))
     skip_frames = 15
     axs[0].plot(
-        curvatures[start::skip_frames, 1, :].T, "-", color="red", label="simulation"
+        curvatures[start::skip_frames, 0, :].T, "-", color="red", label="simulation"
     )
     axs[0].plot(
         curvatures_solution[start::skip_frames, :].T,
@@ -320,7 +321,7 @@ def elastic_fish_swimming_case(
 
     fig, ax = spu.create_figure_and_axes(fig_aspect_ratio=1.0)
     ax.plot(
-        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 2, :].T
+        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 1, :].T
     )
     plt.tight_layout()
     fig.savefig("position_envelope.png")
@@ -336,6 +337,9 @@ def elastic_fish_swimming_case(
             / 1.03125
             * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
         )
+        y_positions = np.array(fish_sim.rod_post_processing_list[1]["position"])[
+            :, 1, :
+        ]
 
         plt.rcParams.update({"font.size": 22})
         fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
@@ -350,7 +354,7 @@ def elastic_fish_swimming_case(
         )
         axs[0].plot(
             s_node[start::skip_frames, :].T,
-            positions[start::skip_frames, 2, :].T,
+            positions[start::skip_frames, 1, :].T,
             "-",
             color="red",
             label="simulation",
@@ -377,7 +381,7 @@ if __name__ == "__main__":
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
         exp_rho_f = 1e3 / 15  # kg/m3
-        exp_youngs_modulus = 16 * 15e5  # Pa
+        exp_youngs_modulus = 1 * 15e5  # Pa
         exp_kinematic_viscosity = 1.4e-4
         exp_mass_ratio = exp_rho_s / exp_rho_f
         width, _ = create_fish_geometry_2D(exp_base_length / n_elem * np.ones(n_elem))
@@ -417,8 +421,8 @@ if __name__ == "__main__":
             mass_ratio=exp_mass_ratio,
             non_dim_bending_stiffness=exp_non_dim_bending_stiffness,
             actuation_reynolds_number=exp_actuation_reynolds_number,
-            muscle_torque_coefficients=muscle_torque_coefficients,
-            tau_coeff=tau_coeff,
+            # muscle_torque_coefficients=muscle_torque_coefficients,
+            # tau_coeff=tau_coeff,
             save_data=False,
             num_threads=num_threads,
         )
