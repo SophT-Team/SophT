@@ -27,7 +27,7 @@ class ElasticFishSimulator:
         tau_coeff: float = 1.44,
         plot_result: bool = True,
         period: float = 1.0,
-        normal=np.array([0.0, 1.0, 0.0]),
+        normal=np.array([0.0, 0.0, 1.0]),
         flag_dim_2D: bool = False,
     ) -> None:
         class BaseSimulator(
@@ -146,6 +146,7 @@ class ElasticFishSimulator:
             period=period,
             wave_number=2 * np.pi / base_length,
             phase_shift=0,
+            ramp_up_time=ramp_up_time,
         )
         self.simulator.add_forcing_to(self.shearable_rod).using(
             FishTorques,
@@ -155,12 +156,12 @@ class ElasticFishSimulator:
 
         self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2
         # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
-        # damping_constant = 2.0/10/100
-        # self.simulator.dampen(self.shearable_rod).using(
-        #     ea.AnalyticalLinearDamper,
-        #     damping_constant=damping_constant,
-        #     time_step=self.dt,
-        # )
+        damping_constant = 2.0 / 10 / 100
+        self.simulator.dampen(self.shearable_rod).using(
+            ea.AnalyticalLinearDamper,
+            damping_constant=damping_constant,
+            time_step=self.dt,
+        )
 
         self.final_time = final_time
         self.total_steps = int(self.final_time / self.dt)

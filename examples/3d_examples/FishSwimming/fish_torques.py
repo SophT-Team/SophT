@@ -19,10 +19,10 @@ class FishTorques(ea.NoForces):
 
     def apply_torques(self, rod: ea.CosseratRod, time: float = 0.0):
 
-        if time <= self.ramp_up_time:
-            factor = (1 + np.sin(np.pi * time / self.ramp_up_time - np.pi / 2)) / 2
-        else:
-            factor = 1.0
+        # if time <= self.ramp_up_time:
+        #     factor = (1 + np.sin(np.pi * time / self.ramp_up_time - np.pi / 2)) / 2
+        # else:
+        #     factor = 1.0
 
         # rod.external_torques[:] -= factor * _batch_matvec(
         #     rod.director_collection,
@@ -41,8 +41,8 @@ class FishTorques(ea.NoForces):
         #     Q_QT, self.virtual_rod.internal_torques[:]
         # )
 
-        rod.external_torques[:] -= factor * self.virtual_rod.internal_torques[:]
-        rod.external_forces[:] -= factor * self.virtual_rod.internal_forces[:]
+        rod.external_torques[:] -= self.virtual_rod.internal_torques[:]
+        # rod.external_forces[:] -= self.virtual_rod.internal_forces[:]
 
         # rod.rest_kappa[:] = factor * self.virtual_rod.kappa[:]
         # rod.rest_sigma[:] = factor * self.virtual_rod.sigma[:]

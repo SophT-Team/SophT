@@ -8,13 +8,14 @@ from elastica._linalg import _batch_norm, _batch_cross
 class CarlingFishBC(ea.ConstraintBase):
     """ """
 
-    def __init__(self, period, wave_number, phase_shift, **kwargs):
+    def __init__(self, period, wave_number, phase_shift, ramp_up_time, **kwargs):
         """ """
         super().__init__(**kwargs)
         self.period = period
         self.angular_frequency = 2 * np.pi / period
         self.wave_number = wave_number
         self.phase_shift = phase_shift
+        self.ramp_up_time = ramp_up_time
         rod = kwargs["_system"]
 
         n_elems = rod.n_elems
@@ -24,13 +25,14 @@ class CarlingFishBC(ea.ConstraintBase):
         self.base_length = self.rest_lengths.sum()
         self.positions = np.zeros((3, self.n_nodes))
         self.directors = np.zeros((3, 3, n_elems))
-        self.directors[0, 1, :] = 1.0
+        self.directors[0, 2, :] = 1.0
 
     def constrain_values(
         self, rod: Union[Type[ea.RodBase], Type[ea.RigidBodyBase]], time: float
     ) -> None:
 
         self.constrain_fish_positions(
+            self.ramp_up_time,
             self.n_nodes,
             time,
             self.s,
@@ -48,6 +50,7 @@ class CarlingFishBC(ea.ConstraintBase):
     @staticmethod
     @njit(cache=True)
     def constrain_fish_positions(
+        ramp_up_time,
         n_nodes,
         time,
         s,
@@ -63,8 +66,14 @@ class CarlingFishBC(ea.ConstraintBase):
     ):
 
         # Carling`s formula Eqn 45 in Gazzola JCP paper
+        if time <= ramp_up_time:
+            factor = (1 + np.sin(np.pi * time / ramp_up_time - np.pi / 2)) / 2
+        else:
+            factor = 1.0
+
         positions[1, :] = (
             0.125
+            * factor
             * base_length
             * (0.03125 + s)
             / 1.03125
@@ -98,6 +107,6 @@ class CarlingFishBC(ea.ConstraintBase):
     def constrain_rates(
         self, rod: Union[Type[ea.RodBase], Type[ea.RigidBodyBase]], time: float
     ) -> None:
-
-        rod.omega_collection *= 0
-        rod.velocity_collection *= 0
+        pass
+        # rod.omega_collection *= 0
+        # rod.velocity_collection *= 0
