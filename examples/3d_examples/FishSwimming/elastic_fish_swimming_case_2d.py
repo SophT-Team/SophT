@@ -29,7 +29,7 @@ def elastic_fish_swimming_case(
     y_axis_idx = spu.VectorField.y_axis_idx()
     rho_f = 1
     base_length = 1.0
-    x_range = 6 * base_length
+    x_range = 7 * base_length
     y_range = grid_size_y / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
     period = 1
@@ -47,7 +47,7 @@ def elastic_fish_swimming_case(
         / moment_of_inertia
     )
 
-    origin = np.array([0.75 * x_range - 0.5 * base_length, 0.5 * y_range, 0.0])
+    origin = np.array([0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.0])
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
@@ -374,9 +374,9 @@ if __name__ == "__main__":
 
         # in order Y, X
         grid_size = (ny, nx)
-        n_elem = nx // 4
+        n_elem = int(nx // 4 / 1.4)
         exp_activation_period = 1.0
-        final_time = 6.0 * exp_activation_period
+        final_time = 10 * exp_activation_period
 
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3

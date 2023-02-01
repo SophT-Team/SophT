@@ -160,7 +160,7 @@ class ElasticFishSimulator:
 
         self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2 * 2  # * 5 #* 2
         # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
-        damping_constant = 2.0 / 10 / 100 * 100
+        damping_constant = 2.0 / 10 / 100 * 10  # 0
         self.simulator.dampen(self.shearable_rod).using(
             ea.AnalyticalLinearDamper,
             damping_constant=damping_constant,
