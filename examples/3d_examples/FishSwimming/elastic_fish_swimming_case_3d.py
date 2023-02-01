@@ -33,7 +33,7 @@ def elastic_fish_swimming_case(
     z_axis_idx = spu.VectorField.z_axis_idx()
     rho_f = 1.0
     base_length = 1.0
-    x_range = 7 * base_length
+    x_range = 4 * base_length
     y_range = grid_size_y / grid_size_x * x_range
     z_range = grid_size_z / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
@@ -69,7 +69,7 @@ def elastic_fish_swimming_case(
         normal=np.array([0.0, 0.0, 1.0]),
         plot_result=True,
         # flag_dim_2D=True,
-        dt_scale=1e-4,
+        # dt_scale=5e-4,
         # damping_constant=0.2,
     )
 
@@ -153,23 +153,36 @@ def elastic_fish_swimming_case(
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             ax.set_title(
-                f"Vorticity y, time: {flow_sim.time / timescale:.2f}, "
+                f"Vorticity z, time: {flow_sim.time / timescale:.2f}, "
                 f"distance: {(fish_sim.shearable_rod.position_collection[0, 0] - origin[0]):.6f}"
             )
             contourf_obj = ax.contourf(
-                flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
-                flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
-                flow_sim.vorticity_field[y_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.position_field[x_axis_idx, grid_size_z // 2, :, :],
+                flow_sim.position_field[y_axis_idx, grid_size_z // 2, :, :],
+                flow_sim.vorticity_field[z_axis_idx, grid_size_z // 2, :, :],
                 levels=np.linspace(-25, 25, 100),
                 extend="both",
                 cmap=spu.get_lab_cmap(),
             )
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
+            element_position = 0.5 * (
+                fish_sim.shearable_rod.position_collection[:, 1:]
+                + fish_sim.shearable_rod.position_collection[:, :-1]
+            )
+            # for plotting rod with correct radii for reference see
+            # https://stackoverflow.com/questions/48172928/scale-matplotlib-pyplot
+            # -axes-scatter-markersize-by-x-scale/48174228#48174228
+            scaling_factor = (
+                ax.get_window_extent().width
+                / max(flow_sim.x_range, flow_sim.y_range)
+                * 72.0
+                / fig.dpi
+            )
             ax.scatter(
-                cosserat_rod_flow_interactor.forcing_grid.position_field[x_axis_idx],
-                cosserat_rod_flow_interactor.forcing_grid.position_field[y_axis_idx],
-                s=5,
-                color="k",
+                element_position[x_axis_idx],
+                element_position[y_axis_idx],
+                s=4 * (scaling_factor * fish_sim.shearable_rod.radius) ** 2,
+                c="k",
             )
             spu.save_and_clear_fig(
                 fig,
@@ -398,15 +411,15 @@ if __name__ == "__main__":
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=192, help="Number of grid points in x direction.")
     def simulate_fish_swimming(num_threads: int, nx: int) -> None:
-        ny = nx // 3
-        nz = nx // 3
+        ny = nx // 2
+        nz = nx // 4
         # in order Z, Y, X
         grid_size = (nz, ny, nx)
         surface_grid_density_for_largest_element = nx // 16  # 8
-        n_elem = int(nx // 4 / 1.4)  # 32
+        n_elem = nx // 4  # int(nx // 4 / 1.4)  # 32
 
         exp_activation_period = 1.0
-        final_time = 6.0 * exp_activation_period
+        final_time = 4.0 * exp_activation_period
 
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
