@@ -23,6 +23,8 @@ class ElasticFishSimulator:
         rod_density: float = 1e3 / 15,
         youngs_modulus: float = 15e5,  # 6e5,#4e5,
         base_length: float = 1.0,
+        damping_constant: float = 0.02,
+        dt_scale: float = 5e-4,
         origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
         muscle_torque_coefficients=np.array([]),
         tau_coeff: float = 1.44,
@@ -158,9 +160,10 @@ class ElasticFishSimulator:
             FishConnection, k=1e6
         )
 
-        self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2 * 2  # * 5 #* 2
+        # self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2 * 2  # * 5 #* 2
+        self.dt = dt_scale * self.shearable_rod.rest_lengths[0]  #
         # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
-        damping_constant = 2.0 / 10 / 100 * 10  # 0
+        # damping_constant = 2.0 / 10 / 100 * 10  # 0
         self.simulator.dampen(self.shearable_rod).using(
             ea.AnalyticalLinearDamper,
             damping_constant=damping_constant,
@@ -273,7 +276,9 @@ if __name__ == "__main__":
         tau_coeff=tau_coeff,
         final_time=final_time,
         period=period,
-        # flag_dim_2D = True,
+        flag_dim_2D=True,
+        # dt_scale=2.5E-4,
+        # damping_constant=0.2
     )
     elastic_fish_sim.finalize()
     elastic_fish_sim.run()
