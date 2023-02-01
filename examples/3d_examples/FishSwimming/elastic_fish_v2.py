@@ -157,7 +157,7 @@ class ElasticFishSimulator:
         #     ramp_up_time=ramp_up_time * 1,
         # )
         self.simulator.connect(self.shearable_rod, self.virtual_rod).using(
-            FishConnection, k=1e6
+            FishConnection, k=self.shearable_rod.shear_matrix[2, 2, 0]
         )
 
         # self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2 * 2  # * 5 #* 2
