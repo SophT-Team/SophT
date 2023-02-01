@@ -229,8 +229,8 @@ def update_rod_for_fish_geometry_3D(density, youngs_modulus, rod):
     volume = A0 * rest_lengths
 
     # Second moment of inertia of an ellipse
-    I0_1 = np.pi / 4 * width * height**3
-    I0_2 = np.pi / 4 * width**3 * height
+    I0_1 = np.pi / 4 * width**3 * height
+    I0_2 = np.pi / 4 * width * height**3
     I0_3 = np.pi / 4 * width * height * (width**2 + height**2)
     I0 = np.array([I0_1, I0_2, I0_3]).transpose()
     # Mass second moment of inertia for disk cross-section

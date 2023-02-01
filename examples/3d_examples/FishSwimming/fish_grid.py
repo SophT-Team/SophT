@@ -114,10 +114,10 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             else:
                 self.local_frame_surface_points[
                     0, self.start_idx[i] : self.end_idx[i]
-                ] = self.width[i] * np.cos(surface_point_rotation_angle)
+                ] = self.height[i] * np.cos(surface_point_rotation_angle)
                 self.local_frame_surface_points[
                     1, self.start_idx[i] : self.end_idx[i]
-                ] = self.height[i] * np.sin(surface_point_rotation_angle)
+                ] = self.width[i] * np.sin(surface_point_rotation_angle)
 
         # some caching stuff
         self.rod_director_collection_transpose = np.zeros_like(

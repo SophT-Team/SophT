@@ -2,7 +2,7 @@ import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
 import click
-from elastic_fish import ElasticFishSimulator
+from elastic_fish_v2 import ElasticFishSimulator
 from fish_grid import FishSurfaceForcingGrid
 from fish_geometry import create_fish_geometry_3D
 
@@ -14,10 +14,10 @@ def elastic_fish_swimming_case(
     surface_grid_density_for_largest_element: int,
     slenderness_ratio: float,
     mass_ratio: float,
-    cauchy_number: float,
+    non_dim_bending_stiffness: float,
     actuation_reynolds_number: float,
-    coupling_stiffness: float = -2e4 / 2,
-    coupling_damping: float = -1e1 / 2,
+    coupling_stiffness: float = -2e4 / 20 / 2,
+    coupling_damping: float = -1e1 / 20 / 2,
     num_threads: int = 4,
     precision: str = "single",
     save_data: bool = False,
@@ -33,7 +33,7 @@ def elastic_fish_swimming_case(
     z_axis_idx = spu.VectorField.z_axis_idx()
     rho_f = 1.0
     base_length = 1.0
-    x_range = 6 * base_length
+    x_range = 7 * base_length
     y_range = grid_size_y / grid_size_x * x_range
     z_range = grid_size_z / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
@@ -44,26 +44,35 @@ def elastic_fish_swimming_case(
     base_diameter = base_length / slenderness_ratio
     base_radius = base_diameter / 2
     moment_of_inertia = np.pi / 4 * base_radius**4
-    # Cau = (rho_f U^2 L^3 D) / EI
-    youngs_modulus = (rho_f * vel_scale**2 * base_length**3 * base_diameter) / (
-        cauchy_number * moment_of_inertia
+    youngs_modulus = (
+        non_dim_bending_stiffness
+        * rho_f
+        * vel_scale**2
+        * base_length**3
+        * base_diameter
+        / moment_of_inertia
     )
 
     origin = np.array(
-        [0.75 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range]
+        [0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range]
     )
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
-        muscle_torque_coefficients=muscle_torque_coefficients,
+        # muscle_torque_coefficients=muscle_torque_coefficients,
         n_elements=n_elem,
         rod_density=rho_s,
         youngs_modulus=youngs_modulus,
         base_length=base_length,
-        tau_coeff=tau_coeff,
+        # tau_coeff=tau_coeff,
         origin=origin,
+        normal=np.array([0.0, 0.0, 1.0]),
         plot_result=True,
+        # flag_dim_2D=True,
+        dt_scale=1e-4,
+        # damping_constant=0.2,
     )
+
     # =================PYELASTICA STUFF END=====================
 
     # ==================FLOW SETUP START=========================
@@ -94,10 +103,10 @@ def elastic_fish_swimming_case(
         forcing_grid_cls=FishSurfaceForcingGrid,
         surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
     )
-    fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
-        sps.FlowForces,
-        cosserat_rod_flow_interactor,
-    )
+    # fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
+    #     sps.FlowForces,
+    #     cosserat_rod_flow_interactor,
+    # )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     # =================TIMESTEPPING====================
     fish_sim.finalize()
@@ -144,13 +153,13 @@ def elastic_fish_swimming_case(
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             ax.set_title(
-                f"Vorticity z, time: {flow_sim.time / timescale:.2f}, "
+                f"Vorticity y, time: {flow_sim.time / timescale:.2f}, "
                 f"distance: {(fish_sim.shearable_rod.position_collection[0, 0] - origin[0]):.6f}"
             )
             contourf_obj = ax.contourf(
-                flow_sim.position_field[x_axis_idx, grid_size_z // 2, :, :],
-                flow_sim.position_field[y_axis_idx, grid_size_z // 2, :, :],
-                flow_sim.vorticity_field[z_axis_idx, grid_size_z // 2, :, :],
+                flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
+                flow_sim.vorticity_field[y_axis_idx, :, grid_size_y // 2, :],
                 levels=np.linspace(-25, 25, 100),
                 extend="both",
                 cmap=spu.get_lab_cmap(),
@@ -158,7 +167,7 @@ def elastic_fish_swimming_case(
             cbar = fig.colorbar(mappable=contourf_obj, ax=ax)
             ax.scatter(
                 cosserat_rod_flow_interactor.forcing_grid.position_field[x_axis_idx],
-                cosserat_rod_flow_interactor.forcing_grid.position_field[z_axis_idx],
+                cosserat_rod_flow_interactor.forcing_grid.position_field[y_axis_idx],
                 s=5,
                 color="k",
             )
@@ -186,6 +195,7 @@ def elastic_fish_swimming_case(
                 f" fish pos: {fish_sim.shearable_rod.position_collection[0, 0]:.6f},"
                 f" total force: {forces},"
                 f" force norm: {np.linalg.norm(forces)}"
+                f"flow_dt: {flow_sim.compute_stable_timestep(dt_prefac=0.125):.6f}"
             )
             if save_data:
                 io.save(
@@ -263,10 +273,10 @@ def elastic_fish_swimming_case(
 
     # Get non-dimensional position along rod from simulation
     rest_lengths = np.array(fish_sim.rod_post_processing_list[0]["rest_lengths"][:])
-    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1]))
-    s_node[:, :] = np.cumsum(rest_lengths, axis=1)
+    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1] + 1))
+    s_node[:, 1:] = np.cumsum(rest_lengths, axis=1)
     s_node /= s_node[:, -1:]
-    s_node_inner = s_node[:, :-1]
+    s_node_inner = s_node[:, 1:-1]
 
     # Get curvatures and positions from simulation
     curvatures = np.array(fish_sim.rod_post_processing_list[0]["curvature"][:])
@@ -276,16 +286,22 @@ def elastic_fish_swimming_case(
     # compare only after ramp up, towards end of sim
     start: int = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
-    # Compute curvature solution
-    curv_spline = CubicSpline(
-        muscle_torque_coefficients[0, :],
-        muscle_torque_coefficients[1, :],
-        bc_type="natural",
-    )
-    curvatures_amplitude = curv_spline(s_node_inner)
-    curvatures_solution = curvatures_amplitude * np.sin(
-        2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
-    )
+    if muscle_torque_coefficients.shape[0] != 0:
+        # Compute curvature solution
+        curv_spline = CubicSpline(
+            muscle_torque_coefficients[0, :],
+            muscle_torque_coefficients[1, :],
+            bc_type="natural",
+        )
+        curvatures_amplitude = curv_spline(s_node_inner)
+        curvatures_solution = curvatures_amplitude * np.sin(
+            2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
+        )
+    else:
+        curvatures_solution = np.array(
+            fish_sim.rod_post_processing_list[0]["target_curvature"][:]
+        )[:, 1, :]
+
     # curvature error
     error = np.linalg.norm(
         curvatures[start:, 1, :] - curvatures_solution[start:, :], axis=1
@@ -305,7 +321,7 @@ def elastic_fish_swimming_case(
     axs.append(plt.subplot2grid((1, 1), (0, 0)))
     skip_frames = 15
     axs[0].plot(
-        curvatures[start::skip_frames, 1, :].T, "-", color="red", label="simulation"
+        curvatures[start::skip_frames, 0, :].T, "-", color="red", label="simulation"
     )
     axs[0].plot(
         curvatures_solution[start::skip_frames, :].T,
@@ -331,15 +347,49 @@ def elastic_fish_swimming_case(
     plt.close(plt.gcf())
 
     plt.rcParams.update({"font.size": 22})
-    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-
     fig, ax = spu.create_figure_and_axes(fig_aspect_ratio=1.0)
     ax.plot(
-        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 2, :].T
+        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 1, :].T
     )
     plt.tight_layout()
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
+
+    if muscle_torque_coefficients.shape[0] == 0:
+        # Carling et. al.
+        base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
+        y_positions = (
+            0.125
+            * base_length
+            * (0.03125 + s_node)
+            / 1.03125
+            * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
+        )
+        y_positions = np.array(fish_sim.rod_post_processing_list[1]["position"])[
+            :, 1, :
+        ]
+
+        plt.rcParams.update({"font.size": 22})
+        fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+        axs = []
+        axs.append(plt.subplot2grid((1, 1), (0, 0)))
+        axs[0].plot(
+            s_node[start::skip_frames, :].T,
+            y_positions[start::skip_frames, :].T,
+            "--",
+            color="skyblue",
+            label="solution",
+        )
+        axs[0].plot(
+            s_node[start::skip_frames, :].T,
+            positions[start::skip_frames, 1, :].T,
+            "-",
+            color="red",
+            label="simulation",
+        )
+        plt.tight_layout()
+        fig.savefig("y_position_comparison.png")
+        plt.close(plt.gcf())
 
 
 if __name__ == "__main__":
@@ -348,15 +398,15 @@ if __name__ == "__main__":
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=192, help="Number of grid points in x direction.")
     def simulate_fish_swimming(num_threads: int, nx: int) -> None:
-        ny = nx // 2
-        nz = nx // 2
+        ny = nx // 3
+        nz = nx // 3
         # in order Z, Y, X
         grid_size = (nz, ny, nx)
         surface_grid_density_for_largest_element = nx // 16  # 8
-        n_elem = nx // 8  # 32
+        n_elem = int(nx // 4 / 1.4)  # 32
 
         exp_activation_period = 1.0
-        final_time = 12.0 * exp_activation_period
+        final_time = 6.0 * exp_activation_period
 
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
@@ -371,23 +421,29 @@ if __name__ == "__main__":
         exp_velocity_scale = exp_base_length / exp_activation_period
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
-        exp_cauchy_number = (
+        # exp_cauchy_number = (
+        #     exp_rho_f
+        #     * exp_velocity_scale**2
+        #     * exp_base_length**3
+        #     * exp_base_diameter
+        #     / exp_bending_rigidity
+        # )
+        exp_non_dim_bending_stiffness = exp_bending_rigidity / (
             exp_rho_f
             * exp_velocity_scale**2
             * exp_base_length**3
             * exp_base_diameter
-            / exp_bending_rigidity
         )
         exp_actuation_reynolds_number = (
             exp_base_length * exp_velocity_scale / exp_kinematic_viscosity
         )
         exp_non_dimensional_final_time = final_time / exp_activation_period
 
-        num_control_points = 4
-        muscle_torque_coefficients = np.zeros((2, num_control_points))
-        muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
-        muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
-        tau_coeff = 1.44
+        # num_control_points = 4
+        # muscle_torque_coefficients = np.zeros((2, num_control_points))
+        # muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
+        # muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
+        # tau_coeff = 1.44
 
         elastic_fish_swimming_case(
             non_dim_final_time=exp_non_dimensional_final_time,
@@ -396,10 +452,10 @@ if __name__ == "__main__":
             surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
             slenderness_ratio=exp_slenderness_ratio,
             mass_ratio=exp_mass_ratio,
-            cauchy_number=exp_cauchy_number,
+            non_dim_bending_stiffness=exp_non_dim_bending_stiffness,
             actuation_reynolds_number=exp_actuation_reynolds_number,
-            muscle_torque_coefficients=muscle_torque_coefficients,
-            tau_coeff=tau_coeff,
+            # muscle_torque_coefficients=muscle_torque_coefficients,
+            # tau_coeff=tau_coeff,
             save_data=False,
             num_threads=num_threads,
         )
