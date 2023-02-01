@@ -103,10 +103,10 @@ def elastic_fish_swimming_case(
         forcing_grid_cls=FishSurfaceForcingGrid,
         surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
     )
-    # fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
-    #     sps.FlowForces,
-    #     cosserat_rod_flow_interactor,
-    # )
+    fish_sim.simulator.add_forcing_to(fish_sim.shearable_rod).using(
+        sps.FlowForces,
+        cosserat_rod_flow_interactor,
+    )
     # ==================FLOW-ROD COMMUNICATOR SETUP END======
     # =================TIMESTEPPING====================
     fish_sim.finalize()
