@@ -16,8 +16,8 @@ def elastic_fish_swimming_case(
     mass_ratio: float,
     non_dim_bending_stiffness: float,
     actuation_reynolds_number: float,
-    coupling_stiffness: float = -2e4 / 20 / 2,
-    coupling_damping: float = -1e1 / 20 / 2,
+    coupling_stiffness: float = -2e4 / 20 / 2 / 2,
+    coupling_damping: float = -1e1 / 20 / 2 / 2,
     num_threads: int = 4,
     precision: str = "single",
     save_data: bool = False,
@@ -223,7 +223,7 @@ def elastic_fish_swimming_case(
                 )
 
         # compute timestep
-        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.125)
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.125*2)
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, fish_sim.dt))
@@ -412,14 +412,14 @@ if __name__ == "__main__":
     @click.option("--nx", default=192, help="Number of grid points in x direction.")
     def simulate_fish_swimming(num_threads: int, nx: int) -> None:
         ny = nx // 2
-        nz = nx // 4
+        nz = nx // 8
         # in order Z, Y, X
         grid_size = (nz, ny, nx)
         surface_grid_density_for_largest_element = nx // 16  # 8
         n_elem = nx // 4  # int(nx // 4 / 1.4)  # 32
 
         exp_activation_period = 1.0
-        final_time = 4.0 * exp_activation_period
+        final_time = 6.0 * exp_activation_period
 
         exp_base_length = 1.0
         exp_rho_s = 1e3 / 15  # kg/m3
