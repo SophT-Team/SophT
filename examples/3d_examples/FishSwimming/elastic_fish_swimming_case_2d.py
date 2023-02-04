@@ -14,7 +14,7 @@ def elastic_fish_swimming_case(
     mass_ratio: float,
     non_dim_bending_stiffness: float,
     actuation_reynolds_number: float,
-    coupling_stiffness: float = -2e4 / 20 / 2,
+    coupling_stiffness: float = -2e4 / 20 / 2 * 10 * 4 * 4,
     coupling_damping: float = -1e1 / 20 / 2,
     num_threads: int = 4,
     precision: str = "single",
