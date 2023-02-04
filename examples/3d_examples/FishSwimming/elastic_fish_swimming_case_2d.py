@@ -179,7 +179,7 @@ def elastic_fish_swimming_case(
             )
 
         # compute timestep
-        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.125)
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.125/2)
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, fish_sim.dt))
         local_rod_dt = flow_dt / rod_time_steps
