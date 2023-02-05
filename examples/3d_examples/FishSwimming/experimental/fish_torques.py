@@ -32,16 +32,16 @@ class FishTorques(ea.NoForces):
         #     ),
         # )
 
-        # Q_QT = _batch_matmul(
-        #     rod.director_collection,
-        #     _batch_matrix_transpose(self.virtual_rod.director_collection),
-        # )
-        #
-        # rod.external_torques[:] -= factor * _batch_matvec(
-        #     Q_QT, self.virtual_rod.internal_torques[:]
-        # )
+        Q_QT = _batch_matmul(
+            rod.director_collection,
+            _batch_matrix_transpose(self.virtual_rod.director_collection),
+        )
 
-        rod.external_torques[:] -= self.virtual_rod.internal_torques[:]
+        rod.external_torques[:] -= _batch_matvec(
+            Q_QT, self.virtual_rod.internal_torques[:]
+        )
+
+        # rod.external_torques[:] -= self.virtual_rod.internal_torques[:]
         # rod.external_forces[:] -= self.virtual_rod.internal_forces[:]
 
         # rod.rest_kappa[:] = factor * self.virtual_rod.kappa[:]
