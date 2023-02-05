@@ -31,7 +31,7 @@ number_of_period = int(time_per_period[-1])
 
 # Center of mass position averaged in one period
 center_of_mass_averaged_over_one_period = np.zeros((number_of_period - 2, 3))
-for i in range(2, number_of_period - 1):
+for i in range(1, number_of_period - 1):
     # position of center of mass averaged over one period
     center_of_mass_averaged_over_one_period[i - 1] = np.mean(
         position[(i + 1) * period_step : (i + 2) * period_step]
@@ -98,3 +98,14 @@ fig.align_ylabels()
 fig.legend(prop={"size": 20})
 fig.savefig(folder_path + "fish_com_vel_projected.png")
 plt.close(plt.gcf())
+
+np.savetxt(
+    folder_path + "velocity_mag_parallel.csv",
+    np.vstack((time, velocity_mag_in_direction_of_rod)).T,
+    delimiter=",",
+)
+np.savetxt(
+    folder_path + "velocity_mag_perpendicular.csv",
+    np.vstack((time, velocity_mag_in_roll_dir)).T,
+    delimiter=",",
+)
