@@ -79,11 +79,12 @@ def immersed_magnetic_cilia_carpet_case(
         )
 
         # Setup average Eulerian field IO
-        avg_io = spu.IO(dim=grid_dim, real_dtype=real_t)
-        avg_io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)
-        avg_io.add_as_eulerian_fields_for_io(
-            avg_vorticity=avg_vorticity,
-            avg_velocity=avg_velocity,
+        avg_io = spu.EulerianFieldIO(
+            position_field=flow_sim.position_field,
+            eulerian_fields_dict={
+                "avg_vorticity": avg_vorticity,
+                "avg_velocity": avg_velocity,
+            },
         )
 
         # Initialize carpet IO
