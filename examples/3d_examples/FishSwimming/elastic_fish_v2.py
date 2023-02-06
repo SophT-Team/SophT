@@ -7,11 +7,11 @@ from fish_geometry import (
     create_fish_geometry_2D,
     create_fish_geometry_3D,
 )
-from fish_curvature_actuation import FishCurvature
+# from fish_curvature_actuation import FishCurvature
 from scipy.interpolate import CubicSpline
-from fish_actuation_carling import FishCurvatureCarling
+# from fish_actuation_carling import FishCurvatureCarling
 from carling_fish_bc import CarlingFishBC
-from fish_torques import FishTorques
+# from fish_torques import FishTorques
 from fish_connection import FishConnection
 
 
