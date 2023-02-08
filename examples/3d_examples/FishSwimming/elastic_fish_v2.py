@@ -7,10 +7,13 @@ from fish_geometry import (
     create_fish_geometry_2D,
     create_fish_geometry_3D,
 )
+
 # from fish_curvature_actuation import FishCurvature
 from scipy.interpolate import CubicSpline
+
 # from fish_actuation_carling import FishCurvatureCarling
 from carling_fish_bc import CarlingFishBC
+
 # from fish_torques import FishTorques
 from fish_connection import FishConnection
 
@@ -150,6 +153,7 @@ class ElasticFishSimulator:
             wave_number=2 * np.pi / base_length,
             phase_shift=0,
             ramp_up_time=ramp_up_time,
+            fish_rod=self.shearable_rod,
         )
         # self.simulator.add_forcing_to(self.shearable_rod).using(
         #     FishTorques,
@@ -221,6 +225,9 @@ class ElasticFishSimulator:
                     self.callback_params["external_torques"].append(
                         system.external_torques.copy()
                     )
+                    self.callback_params["com_velocity"].append(
+                        system.compute_velocity_center_of_mass().copy()
+                    )
 
         # Add call back for plotting time history of the rod
         self.rod_post_processing_list.append(ea.defaultdict(list))
@@ -276,7 +283,7 @@ if __name__ == "__main__":
         tau_coeff=tau_coeff,
         final_time=final_time,
         period=period,
-        flag_dim_2D=True,
+        # flag_dim_2D=True,
         # dt_scale=2.5E-4,
         # damping_constant=0.2
     )
@@ -398,6 +405,10 @@ if __name__ == "__main__":
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
 
+    com_pos_fish = np.array(elastic_fish_sim.rod_post_processing_list[0]["com"][:])
+    com_pos_virtual_fish = np.array(
+        elastic_fish_sim.rod_post_processing_list[1]["com"][:]
+    )
     if muscle_torque_coefficients.shape[0] == 0:
         # Carling et. al.
         # base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
@@ -418,14 +429,16 @@ if __name__ == "__main__":
         axs.append(plt.subplot2grid((1, 1), (0, 0)))
         axs[0].plot(
             s_node[start::skip_frames, :].T,
-            y_positions[start::skip_frames, :].T,
+            y_positions[start::skip_frames, :].T
+            - com_pos_virtual_fish[start::skip_frames, 1][np.newaxis, :],
             "--",
             color="skyblue",
             label="solution",
         )
         axs[0].plot(
             s_node[start::skip_frames, :].T,
-            positions[start::skip_frames, 1, :].T,
+            positions[start::skip_frames, 1, :].T
+            - com_pos_fish[start::skip_frames, 1][np.newaxis, :],
             "-",
             color="red",
             label="simulation",
@@ -433,3 +446,64 @@ if __name__ == "__main__":
         plt.tight_layout()
         fig.savefig("y_position_comparison.png")
         plt.close(plt.gcf())
+
+    # Comm velocity
+    com_velocity_fish = np.array(
+        elastic_fish_sim.rod_post_processing_list[0]["com_velocity"][:]
+    )
+
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(nondim_time[start:], error, "-", color="red")
+    plt.tight_layout()
+    fig.align_ylabels()
+    fig.savefig("curvature_error.png")
+    plt.close(plt.gcf())
+
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(nondim_time, com_velocity_fish[:, 0], label="x-vel")
+    axs[0].plot(nondim_time, com_velocity_fish[:, 1], label="y-vel")
+    axs[0].plot(nondim_time, com_velocity_fish[:, 2], label="z-vel")
+    axs[0].legend(
+        loc="upper left",
+        prop={
+            "size": 10,
+        },
+    )
+    plt.tight_layout()
+    fig.savefig("com_velocity.png")
+    plt.close(plt.gcf())
+    np.savetxt(
+        "fish_velocity_vs_time.csv",
+        np.c_[
+            np.array(nondim_time),
+            np.array(com_velocity_fish),
+            np.linalg.norm(np.array(com_velocity_fish), axis=1),
+        ],
+        delimiter=",",
+        header="time, vel x, vel y, vel z, vel norm",
+    )
+
+    # Comm pos
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(nondim_time, com_pos_fish[:, 0], label="x-pos")
+    axs[0].plot(nondim_time, com_pos_fish[:, 1], label="y-pos")
+    axs[0].plot(nondim_time, com_pos_fish[:, 2], label="z-pos")
+    axs[0].legend(
+        loc="upper left",
+        prop={
+            "size": 10,
+        },
+    )
+    plt.tight_layout()
+    fig.savefig("com_pos.png")
+    plt.close(plt.gcf())

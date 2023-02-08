@@ -8,7 +8,9 @@ from elastica._linalg import _batch_norm, _batch_cross
 class CarlingFishBC(ea.ConstraintBase):
     """ """
 
-    def __init__(self, period, wave_number, phase_shift, ramp_up_time, **kwargs):
+    def __init__(
+        self, period, wave_number, phase_shift, ramp_up_time, fish_rod, **kwargs
+    ):
         """ """
         super().__init__(**kwargs)
         self.period = period
@@ -29,9 +31,14 @@ class CarlingFishBC(ea.ConstraintBase):
 
         self.start_position = rod.position_collection[..., 0].reshape(3, 1).copy()
 
+        self.fish_rod = fish_rod
+
     def constrain_values(
         self, rod: Union[Type[ea.RodBase], Type[ea.RigidBodyBase]], time: float
     ) -> None:
+
+        # fish_head_y_position = self.fish_rod.position_collection[1,0]
+        fish_head_y_position = self.fish_rod.compute_position_center_of_mass()[1]
 
         self.constrain_fish_positions(
             self.start_position,
@@ -48,6 +55,8 @@ class CarlingFishBC(ea.ConstraintBase):
             rod.position_collection,
             self.directors,
             rod.director_collection,
+            fish_head_y_position,
+            rod.mass,
         )
 
     @staticmethod
@@ -67,6 +76,8 @@ class CarlingFishBC(ea.ConstraintBase):
         position_collection,
         directors,
         director_collection,
+        fish_head_y_position,
+        mass,
     ):
 
         # Carling`s formula Eqn 45 in Gazzola JCP paper
@@ -99,6 +110,9 @@ class CarlingFishBC(ea.ConstraintBase):
         position_collection[2, :] = positions[2, :]
 
         position_collection += start_position
+        y_com = (position_collection[1, :] * mass).sum() / mass.sum()
+        offset = fish_head_y_position - y_com
+        position_collection[1, :] += offset
 
         # Compute tangents
         tangents = positions[:, 1:] - positions[:, :-1]
