@@ -7,14 +7,7 @@ from fish_geometry import (
     create_fish_geometry_2D,
     create_fish_geometry_3D,
 )
-
-# from fish_curvature_actuation import FishCurvature
-from scipy.interpolate import CubicSpline
-
-# from fish_actuation_carling import FishCurvatureCarling
 from carling_fish_bc import CarlingFishBC
-
-# from fish_torques import FishTorques
 from fish_connection import FishConnection
 
 
@@ -29,8 +22,6 @@ class ElasticFishSimulator:
         damping_constant: float = 0.02,
         dt_scale: float = 5e-4,
         origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
-        muscle_torque_coefficients=np.array([]),
-        tau_coeff: float = 1.44,
         plot_result: bool = True,
         period: float = 1.0,
         normal=np.array([0.0, 0.0, 1.0]),
@@ -125,28 +116,6 @@ class ElasticFishSimulator:
 
         # Muscle torques
         ramp_up_time = period
-        # if muscle_torque_coefficients.shape[0] != 0:
-        #     wave_length = base_length / tau_coeff
-        #     wave_number = 2 * np.pi / wave_length
-        #     self.simulator.add_forcing_to(self.virtual_rod).using(
-        #         FishCurvature,
-        #         coefficients=muscle_torque_coefficients,
-        #         period=period,
-        #         wave_number=wave_number,
-        #         phase_shift=0.0,
-        #         rest_lengths=self.virtual_rod.rest_lengths,
-        #         ramp_up_time=ramp_up_time,
-        #     )
-        # else:
-        #     self.simulator.add_forcing_to(self.virtual_rod).using(
-        #         FishCurvatureCarling,
-        #         period=period,
-        #         wave_number=2 * np.pi / base_length,
-        #         phase_shift=0.0,
-        #         rest_lengths=self.virtual_rod.rest_lengths,
-        #         ramp_up_time=ramp_up_time,
-        #     )
-
         self.simulator.constrain(self.virtual_rod).using(
             CarlingFishBC,
             period=period,
@@ -155,19 +124,12 @@ class ElasticFishSimulator:
             ramp_up_time=ramp_up_time,
             fish_rod=self.shearable_rod,
         )
-        # self.simulator.add_forcing_to(self.shearable_rod).using(
-        #     FishTorques,
-        #     virtual_rod=self.virtual_rod,
-        #     ramp_up_time=ramp_up_time * 1,
-        # )
+
         self.simulator.connect(self.shearable_rod, self.virtual_rod).using(
             FishConnection, k=self.shearable_rod.shear_matrix[2, 2, 0]
         )
 
-        # self.dt = 0.001 / 2 * self.shearable_rod.rest_lengths[0] / 2 * 2  # * 5 #* 2
         self.dt = dt_scale * self.shearable_rod.rest_lengths[0]  #
-        # TODO: Dampen only when in space, otherwise let flow forces dampen the rod
-        # damping_constant = 2.0 / 10 / 100 * 10  # 0
         self.simulator.dampen(self.shearable_rod).using(
             ea.AnalyticalLinearDamper,
             damping_constant=damping_constant,
@@ -268,19 +230,9 @@ class ElasticFishSimulator:
 
 if __name__ == "__main__":
 
-    # optimal params for 3D fastest swimmer from Kern et al. 2006
-    # num_control_points = 4
-    # muscle_torque_coefficients = np.zeros((2, num_control_points))
-    # muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
-    # muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
-    muscle_torque_coefficients = np.array([])
-    tau_coeff = 1.44
-
     period = 1.0
     final_time = 4.0 * period
     elastic_fish_sim = ElasticFishSimulator(
-        # muscle_torque_coefficients=muscle_torque_coefficients,
-        tau_coeff=tau_coeff,
         final_time=final_time,
         period=period,
         # flag_dim_2D=True,
@@ -334,21 +286,9 @@ if __name__ == "__main__":
     # compare only after ramp up, towards end of sim
     start = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
-    if muscle_torque_coefficients.shape[0] != 0:
-        # Compute curvature solution
-        curv_spline = CubicSpline(
-            muscle_torque_coefficients[0, :],
-            muscle_torque_coefficients[1, :],
-            bc_type="natural",
-        )
-        curvatures_amplitude = curv_spline(s_node_inner)
-        curvatures_solution = curvatures_amplitude * np.sin(
-            2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
-        )
-    else:
-        curvatures_solution = np.array(
-            elastic_fish_sim.rod_post_processing_list[0]["target_curvature"][:]
-        )[:, 1, :]
+    curvatures_solution = np.array(
+        elastic_fish_sim.rod_post_processing_list[0]["target_curvature"][:]
+    )[:, 1, :]
 
     # curvature error
     error = np.linalg.norm(
@@ -409,43 +349,33 @@ if __name__ == "__main__":
     com_pos_virtual_fish = np.array(
         elastic_fish_sim.rod_post_processing_list[1]["com"][:]
     )
-    if muscle_torque_coefficients.shape[0] == 0:
-        # Carling et. al.
-        # base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
-        # y_positions = (
-        #     0.125
-        #     * base_length
-        #     * (0.03125 + s_node)
-        #     / 1.03125
-        #     * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
-        # )
-        y_positions = np.array(
-            elastic_fish_sim.rod_post_processing_list[1]["position"]
-        )[:, 1, :]
+    y_positions = np.array(elastic_fish_sim.rod_post_processing_list[1]["position"])[
+        :, 1, :
+    ]
 
-        plt.rcParams.update({"font.size": 22})
-        fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-        axs = []
-        axs.append(plt.subplot2grid((1, 1), (0, 0)))
-        axs[0].plot(
-            s_node[start::skip_frames, :].T,
-            y_positions[start::skip_frames, :].T
-            - com_pos_virtual_fish[start::skip_frames, 1][np.newaxis, :],
-            "--",
-            color="skyblue",
-            label="solution",
-        )
-        axs[0].plot(
-            s_node[start::skip_frames, :].T,
-            positions[start::skip_frames, 1, :].T
-            - com_pos_fish[start::skip_frames, 1][np.newaxis, :],
-            "-",
-            color="red",
-            label="simulation",
-        )
-        plt.tight_layout()
-        fig.savefig("y_position_comparison.png")
-        plt.close(plt.gcf())
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(
+        s_node[start::skip_frames, :].T,
+        y_positions[start::skip_frames, :].T
+        - com_pos_virtual_fish[start::skip_frames, 1][np.newaxis, :],
+        "--",
+        color="skyblue",
+        label="solution",
+    )
+    axs[0].plot(
+        s_node[start::skip_frames, :].T,
+        positions[start::skip_frames, 1, :].T
+        - com_pos_fish[start::skip_frames, 1][np.newaxis, :],
+        "-",
+        color="red",
+        label="simulation",
+    )
+    plt.tight_layout()
+    fig.savefig("y_position_comparison.png")
+    plt.close(plt.gcf())
 
     # Comm velocity
     com_velocity_fish = np.array(
