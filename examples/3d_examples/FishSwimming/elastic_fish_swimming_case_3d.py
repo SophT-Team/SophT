@@ -16,13 +16,11 @@ def elastic_fish_swimming_case(
     mass_ratio: float,
     non_dim_bending_stiffness: float,
     actuation_reynolds_number: float,
-    coupling_stiffness: float = -2e4 / 20 / 2 / 2 * 256,
+    coupling_stiffness: float = -2e4 / 20 / 2 / 2 * 128,
     coupling_damping: float = -1e1 / 20 / 2 / 2 * 256,
     num_threads: int = 4,
     precision: str = "single",
     save_data: bool = False,
-    muscle_torque_coefficients=np.array([]),
-    tau_coeff: float = 1.44,
 ) -> None:
     # =================COMMON SIMULATOR STUFF=======================
     grid_dim = 3
@@ -59,18 +57,16 @@ def elastic_fish_swimming_case(
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
-        # muscle_torque_coefficients=muscle_torque_coefficients,
         n_elements=n_elem,
         rod_density=rho_s,
         youngs_modulus=youngs_modulus,
         base_length=base_length,
-        # tau_coeff=tau_coeff,
         origin=origin,
         normal=np.array([0.0, 0.0, 1.0]),
         plot_result=True,
         # flag_dim_2D=True,
         # dt_scale=5e-4,
-        # damping_constant=0.2,
+        damping_constant=0.16,
     )
 
     # =================PYELASTICA STUFF END=====================
@@ -336,21 +332,9 @@ def elastic_fish_swimming_case(
     # compare only after ramp up, towards end of sim
     start: int = np.where(nondim_time >= final_time - 2 * period)[0][0]
 
-    if muscle_torque_coefficients.shape[0] != 0:
-        # Compute curvature solution
-        curv_spline = CubicSpline(
-            muscle_torque_coefficients[0, :],
-            muscle_torque_coefficients[1, :],
-            bc_type="natural",
-        )
-        curvatures_amplitude = curv_spline(s_node_inner)
-        curvatures_solution = curvatures_amplitude * np.sin(
-            2.0 * np.pi * (nondim_time[:, np.newaxis] - tau_coeff * s_node_inner)
-        )
-    else:
-        curvatures_solution = np.array(
-            fish_sim.rod_post_processing_list[0]["target_curvature"][:]
-        )[:, 1, :]
+    curvatures_solution = np.array(
+        fish_sim.rod_post_processing_list[0]["target_curvature"][:]
+    )[:, 1, :]
 
     # curvature error
     error = np.linalg.norm(
@@ -405,41 +389,38 @@ def elastic_fish_swimming_case(
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
 
-    if muscle_torque_coefficients.shape[0] == 0:
-        # Carling et. al.
-        base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
-        y_positions = (
-            0.125
-            * base_length
-            * (0.03125 + s_node)
-            / 1.03125
-            * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
-        )
-        y_positions = np.array(fish_sim.rod_post_processing_list[1]["position"])[
-            :, 1, :
-        ]
+    # Carling et. al.
+    base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
+    y_positions = (
+        0.125
+        * base_length
+        * (0.03125 + s_node)
+        / 1.03125
+        * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
+    )
+    y_positions = np.array(fish_sim.rod_post_processing_list[1]["position"])[:, 1, :]
 
-        plt.rcParams.update({"font.size": 22})
-        fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-        axs = []
-        axs.append(plt.subplot2grid((1, 1), (0, 0)))
-        axs[0].plot(
-            s_node[start::skip_frames, :].T,
-            y_positions[start::skip_frames, :].T,
-            "--",
-            color="skyblue",
-            label="solution",
-        )
-        axs[0].plot(
-            s_node[start::skip_frames, :].T,
-            positions[start::skip_frames, 1, :].T,
-            "-",
-            color="red",
-            label="simulation",
-        )
-        plt.tight_layout()
-        fig.savefig("y_position_comparison.png")
-        plt.close(plt.gcf())
+    plt.rcParams.update({"font.size": 22})
+    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
+    axs = []
+    axs.append(plt.subplot2grid((1, 1), (0, 0)))
+    axs[0].plot(
+        s_node[start::skip_frames, :].T,
+        y_positions[start::skip_frames, :].T,
+        "--",
+        color="skyblue",
+        label="solution",
+    )
+    axs[0].plot(
+        s_node[start::skip_frames, :].T,
+        positions[start::skip_frames, 1, :].T,
+        "-",
+        color="red",
+        label="simulation",
+    )
+    plt.tight_layout()
+    fig.savefig("y_position_comparison.png")
+    plt.close(plt.gcf())
 
 
 if __name__ == "__main__":
@@ -471,13 +452,6 @@ if __name__ == "__main__":
         exp_velocity_scale = exp_base_length / exp_activation_period
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
-        # exp_cauchy_number = (
-        #     exp_rho_f
-        #     * exp_velocity_scale**2
-        #     * exp_base_length**3
-        #     * exp_base_diameter
-        #     / exp_bending_rigidity
-        # )
         exp_non_dim_bending_stiffness = exp_bending_rigidity / (
             exp_rho_f
             * exp_velocity_scale**2
@@ -489,12 +463,6 @@ if __name__ == "__main__":
         )
         exp_non_dimensional_final_time = final_time / exp_activation_period
 
-        # num_control_points = 4
-        # muscle_torque_coefficients = np.zeros((2, num_control_points))
-        # muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
-        # muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
-        # tau_coeff = 1.44
-
         elastic_fish_swimming_case(
             non_dim_final_time=exp_non_dimensional_final_time,
             n_elem=n_elem,
@@ -504,8 +472,6 @@ if __name__ == "__main__":
             mass_ratio=exp_mass_ratio,
             non_dim_bending_stiffness=exp_non_dim_bending_stiffness,
             actuation_reynolds_number=exp_actuation_reynolds_number,
-            # muscle_torque_coefficients=muscle_torque_coefficients,
-            # tau_coeff=tau_coeff,
             save_data=False,
             num_threads=num_threads,
         )
