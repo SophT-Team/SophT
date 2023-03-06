@@ -4,6 +4,10 @@
 [![CI][badge-CI]][link-CI] [![DOI][badge-doi]][link-doi]
  </div>
 
+ <!-- ![](giphy.gif)  -->
+ <img src="giphy.gif"  style="width:200px;" class="center"/>
+
+
 Scalable One-stop Platform for Hydroelastic Things (SOPHT).
 
 This repository corresponds to the development of flow-structure
