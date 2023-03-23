@@ -39,7 +39,7 @@ def immersed_magnetic_cilia_carpet_case(
         real_t=real_t,
         num_threads=num_threads,
         filter_vorticity=True,
-        filter_setting_dict={"order": 1, "type": "multiplicative"},
+        filter_setting_dict={"order": 5, "type": "convolution"},
     )
 
     # Averaged fields
@@ -82,6 +82,7 @@ def immersed_magnetic_cilia_carpet_case(
         avg_io = spu.EulerianFieldIO(
             position_field=flow_sim.position_field,
             eulerian_fields_dict={
+                "position": flow_sim.position_field,
                 "avg_vorticity": avg_vorticity,
                 "avg_velocity": avg_velocity,
             },
@@ -244,7 +245,9 @@ def run_immersed_magnetic_cilia_carpet(
     num_rods_along_x: int,
     num_rods_along_y: int,
     num_cycles: float,
+    frequency_ratio: float = 0.2,
     rod_base_length: float = 1.5,
+    carpet_spacing_factor: float = 1.0,
     grid_size_x: int = 128,
     rod_elem_prefactor: float = 1.0,
     wavelength_x_factor: float = 1.0,
@@ -271,12 +274,14 @@ def run_immersed_magnetic_cilia_carpet(
     n_elem_per_rod = int(grid_size_x * rod_elem_prefactor / num_rods_along_x)
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
         magnetic_elastic_ratio=magnetic_elastic_ratio,
+        frequency_ratio=frequency_ratio,
         rod_base_length=rod_base_length,
         n_elem_per_rod=n_elem_per_rod,
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
         wavelength_x_factor=wavelength_x_factor,
         wavelength_y_factor=wavelength_y_factor,
+        carpet_spacing_factor=carpet_spacing_factor,
         num_cycles=num_cycles,
         carpet_base_centroid=carpet_base_centroid,
         plot_result=False,
@@ -296,9 +301,10 @@ def run_immersed_magnetic_cilia_carpet(
 
 if __name__ == "__main__":
     run_immersed_magnetic_cilia_carpet(
-        womersley=3.0,
-        magnetic_elastic_ratio=3.3,
+        womersley=1.0,
+        magnetic_elastic_ratio=3.0,
         num_rods_along_x=8,
         num_rods_along_y=4,
+        carpet_spacing_factor=0.5,
         num_cycles=2,
     )
