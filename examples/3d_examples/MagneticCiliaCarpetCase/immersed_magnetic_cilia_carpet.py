@@ -241,7 +241,7 @@ def immersed_magnetic_cilia_carpet_case(
 
 def run_immersed_magnetic_cilia_carpet(
     womersley: float,
-    magnetic_elastic_ratio: float,
+    magnetic_bond_number: float,
     num_rods_along_x: int,
     num_rods_along_y: int,
     num_cycles: float,
@@ -273,7 +273,7 @@ def run_immersed_magnetic_cilia_carpet(
     )
     n_elem_per_rod = int(grid_size_x * rod_elem_prefactor / num_rods_along_x)
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
-        magnetic_elastic_ratio=magnetic_elastic_ratio,
+        magnetic_bond_number=magnetic_bond_number,
         frequency_ratio=frequency_ratio,
         rod_base_length=rod_base_length,
         n_elem_per_rod=n_elem_per_rod,
@@ -302,7 +302,7 @@ def run_immersed_magnetic_cilia_carpet(
 if __name__ == "__main__":
     run_immersed_magnetic_cilia_carpet(
         womersley=1.0,
-        magnetic_elastic_ratio=3.0,
+        magnetic_bond_number=3.0,
         num_rods_along_x=8,
         num_rods_along_y=4,
         carpet_spacing_factor=0.5,

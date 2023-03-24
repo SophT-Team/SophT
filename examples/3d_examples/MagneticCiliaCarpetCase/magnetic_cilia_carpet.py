@@ -7,7 +7,7 @@ import sopht.utils as spu
 class MagneticCiliaCarpetSimulator:
     def __init__(
         self,
-        magnetic_elastic_ratio: float,  # MBAL2_EI, (Wang 2019)
+        magnetic_bond_number: float,  # MBAL2_EI, (Wang 2019)
         frequency_ratio: float = 1.0,
         rod_base_length: float = 1.5,
         n_elem_per_rod: int = 25,
@@ -94,7 +94,7 @@ class MagneticCiliaCarpetSimulator:
         spatial_magnetisation_wavelength_x = self.carpet_length_x * wavelength_x_factor
         spatial_magnetisation_wavelength_y = self.carpet_length_y * wavelength_y_factor
         magnetization_density = (
-            magnetic_elastic_ratio
+            magnetic_bond_number
             * youngs_modulus
             * moment_of_inertia
             / (volume * magnetic_field_strength * self.rod_base_length)
@@ -296,7 +296,7 @@ class MagneticCiliaCarpetSimulator:
 
 if __name__ == "__main__":
     cilia_carpet_sim = MagneticCiliaCarpetSimulator(
-        magnetic_elastic_ratio=3.0,
+        magnetic_bond_number=3.0,
         frequency_ratio=0.2,
     )
     cilia_carpet_sim.finalize()
