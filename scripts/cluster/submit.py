@@ -35,6 +35,7 @@ ALLOWED_CLUSTERS = Literal["stampede", "bridges", "expanse"]
 
 
 def create_submit_file(
+    job_name: str,
     program_name: str,
     environment_name: str,
     cluster_name: ALLOWED_CLUSTERS,
@@ -59,7 +60,7 @@ def create_submit_file(
             "#!/bin/bash\n",
             "\n",
             f"#SBATCH -p {cluster_info_dict.get(partition)}\n",
-            f"#SBATCH -J {program_name.replace('.py', '')}\n",
+            f"#SBATCH -J {job_name}\n",
             f"#SBATCH -N {num_nodes}\n",
             f"#SBATCH -t {time}\n",
             f"#SBATCH --ntasks-per-node={num_threads}\n",
@@ -138,6 +139,7 @@ if __name__ == "__main__":
         "stampede": STAMPEDE_INFO_DICT,
     }
     PROGRAM_NAME = "run_tapered_arm_and_sphere_with_flow.py"
+    JOB_NAME = PROGRAM_NAME.replace(".py", "")
     ENVIRONMENT_NAME = "sopht-examples-env"
     PARTITION = "compute"
     TIME = "06:00:00"
@@ -146,6 +148,7 @@ if __name__ == "__main__":
     CLUSTER_NAME: ALLOWED_CLUSTERS = "expanse"
 
     create_submit_file(
+        job_name=JOB_NAME,
         program_name=PROGRAM_NAME,
         environment_name=ENVIRONMENT_NAME,
         cluster_name=CLUSTER_NAME,
