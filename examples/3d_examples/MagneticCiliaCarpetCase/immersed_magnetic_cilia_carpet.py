@@ -1,6 +1,7 @@
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
+import sopht.numeric.eulerian_grid_ops as spne
 from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
@@ -40,6 +41,14 @@ def immersed_magnetic_cilia_carpet_case(
         num_threads=num_threads,
         filter_vorticity=True,
         filter_setting_dict={"order": 5, "type": "convolution"},
+    )
+
+    # Element-wise time-integration operator
+    elemenwise_saxpby = spne.gen_elementwise_saxpby_pyst_kernel_3d(
+        real_t=real_t,
+        num_threads=num_threads,
+        fixed_grid_size=grid_size,
+        field_type="vector",
     )
 
     # Averaged fields
@@ -206,9 +215,21 @@ def immersed_magnetic_cilia_carpet_case(
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
 
-        # Average vorticity field
-        avg_vorticity += flow_sim.vorticity_field * flow_dt / period_timer_limit
-        avg_velocity += flow_sim.velocity_field * flow_dt / period_timer_limit
+        # Average velocity / vorticity field
+        elemenwise_saxpby(
+            sum_field=avg_velocity,
+            field_1=avg_velocity,
+            field_2=flow_sim.velocity_field,
+            field_1_prefac=1.0,
+            field_2_prefac=flow_dt / period_timer_limit,
+        )
+        elemenwise_saxpby(
+            sum_field=avg_vorticity,
+            field_1=avg_vorticity,
+            field_2=flow_sim.vorticity_field,
+            field_1_prefac=1.0,
+            field_2_prefac=flow_dt / period_timer_limit,
+        )
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))
