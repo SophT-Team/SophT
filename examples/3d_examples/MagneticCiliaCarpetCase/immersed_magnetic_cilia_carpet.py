@@ -262,10 +262,10 @@ def immersed_magnetic_cilia_carpet_case(
 
 def run_immersed_magnetic_cilia_carpet(
     womersley: float,
-    magnetic_bond_number: float,
     num_rods_along_x: int,
     num_rods_along_y: int,
     num_cycles: float,
+    magnetic_bond_number: float = 3.0,
     frequency_ratio: float = 0.2,
     rod_base_length: float = 1.5,
     carpet_spacing_factor: float = 1.0,
@@ -323,7 +323,6 @@ def run_immersed_magnetic_cilia_carpet(
 if __name__ == "__main__":
     run_immersed_magnetic_cilia_carpet(
         womersley=1.0,
-        magnetic_bond_number=3.0,
         num_rods_along_x=8,
         num_rods_along_y=4,
         carpet_spacing_factor=0.5,

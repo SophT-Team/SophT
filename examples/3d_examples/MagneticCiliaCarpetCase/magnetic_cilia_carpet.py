@@ -7,8 +7,8 @@ import sopht.utils as spu
 class MagneticCiliaCarpetSimulator:
     def __init__(
         self,
-        magnetic_bond_number: float,  # MBAL2_EI, (Wang 2019)
-        frequency_ratio: float = 1.0,
+        magnetic_bond_number: float = 3.0,  # MBAL2_EI, (Wang 2019)
+        frequency_ratio: float = 0.2,
         rod_base_length: float = 1.5,
         n_elem_per_rod: int = 25,
         num_cycles: float = 2.0,
@@ -295,9 +295,6 @@ class MagneticCiliaCarpetSimulator:
 
 
 if __name__ == "__main__":
-    cilia_carpet_sim = MagneticCiliaCarpetSimulator(
-        magnetic_bond_number=3.0,
-        frequency_ratio=0.2,
-    )
+    cilia_carpet_sim = MagneticCiliaCarpetSimulator()
     cilia_carpet_sim.finalize()
     cilia_carpet_sim.run()
