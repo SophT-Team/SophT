@@ -5,9 +5,56 @@ import sopht.utils as spu
 
 
 class MagneticCiliaCarpetSimulator:
+    """This class initializes a PyElastica simulator with a cilia carpet
+    of uniform spacings on a rectangular grid. The rods are initialized
+    in the [0, 0, 1] direction, and magnetized in spatially varying
+    directions dependent pn on input wavelength. The carpet is subject to
+    a rotating magnetic field using magneto-pyelastica, which forms a
+    metachronal wave. For details on the setup, see Gu et al. (2020):
+    https://www.nature.com/articles/s41467-020-16458-4#Bib1
+
+    :param magnetic_bond_number: Non-dimensional parameter that describes
+    the ratio between magnetic forces to elastic forces, defined as
+    (m * B * A * L^2) / (E * I), defaults to 3.0
+    :type magnetic_bond_number: float
+    :param frequency_ratio: Ratio between magnetic field angular frequency
+    and the first bending mode of the rod as a cantilever, defaults to 0.2
+    :type frequency_ratio: float
+    :param rod_base_length: Length of the rod, defaults to 1.5
+    :type rod_base_length: float
+    :param n_elem_per_rod: Number of element in each rod, defaults to 25
+    :type n_elem_per_rod: int
+    :param num_cycles: Total number of cycles the magnetic field rotates
+    about the carpet for, defaults to 2.0
+    :type num_cycles: float
+    :param num_rods_along_x: Number of rods in the x direction
+    :type: int
+    :param num_rods_along_y: Number of rods in the y direction
+    :type: int
+    :param wavelength_x_factor: Ratio between magnetization wavelength
+    and carpet length in the x direction, defaults to 1.0
+    :type wavelength_x_factor: float
+    :param wavelength_y_factor: Ratio between magnetization wavelength
+    and carpet length in the y direction, defaults to 1.0
+    :type wavelength_y_factor: float
+    :param carpet_spacing_factor: Ratio between spacing between rods and
+    rod_base_length, defaults to 1.0
+    :type carpet_spacing_factor: float
+    :param carpet_base_centroid: Centroid coordinates of carpet, defaults
+    to np.array([0.0, 0.0, 0.0])
+    :type carpet_base_centroid: np.ndarray
+    :param magnetization_2d: `True` if the carpet is magnetized in both x
+    and y direction, `False` if magnetized only in x direction. Defaults to
+    `False`
+    :type magnetization_2d: bool
+    :param plot_result: `True` if video output is required, `False` if not.
+    Defaults to `True`
+    :type plot_result: bool
+    """
+
     def __init__(
         self,
-        magnetic_bond_number: float = 3.0,  # MBAL2_EI, (Wang 2019)
+        magnetic_bond_number: float = 3.0,
         frequency_ratio: float = 0.2,
         rod_base_length: float = 1.5,
         n_elem_per_rod: int = 25,
@@ -21,6 +68,8 @@ class MagneticCiliaCarpetSimulator:
         magnetization_2d: bool = False,
         plot_result: bool = True,
     ) -> None:
+        """Constructor method"""
+
         class MagneticBeamSimulator(
             ea.BaseSystemCollection,
             ea.Constraints,
@@ -57,9 +106,7 @@ class MagneticCiliaCarpetSimulator:
         )
 
         self.angular_frequency = frequency_ratio * first_mode_frequency
-        self.spacing_between_rods = (
-            self.rod_base_length * carpet_spacing_factor
-        )  # following Gu2020
+        self.spacing_between_rods = self.rod_base_length * carpet_spacing_factor
         self.period = 2.0 * np.pi / np.abs(self.angular_frequency)
         self.carpet_length_x = self.spacing_between_rods * (num_rods_along_x - 1)
         self.carpet_length_y = self.spacing_between_rods * (num_rods_along_y - 1)
@@ -216,10 +263,12 @@ class MagneticCiliaCarpetSimulator:
         )
 
     def finalize(self) -> None:
+        """Finalize the PyElastica simulator"""
         self.magnetic_beam_sim.finalize()
 
     def add_callback(self) -> None:
-        # Add callbacks
+        """Add callbacks"""
+
         class MagneticBeamCallBack(ea.CallBackBaseClass):
             def __init__(self, step_skip: int, callback_params: dict):
                 ea.CallBackBaseClass.__init__(self)
@@ -265,6 +314,7 @@ class MagneticCiliaCarpetSimulator:
     def run(
         self,
     ) -> None:
+        """Run simulation"""
         ea.integrate(
             self.timestepper, self.magnetic_beam_sim, self.final_time, self.total_steps
         )
