@@ -395,11 +395,11 @@ if __name__ == "__main__":
         )
         exp_non_dimensional_final_time = final_time / exp_activation_period
 
-        num_control_points = 4
-        muscle_torque_coefficients = np.zeros((2, num_control_points))
-        muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
-        muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
-        tau_coeff = 1.44
+        # num_control_points = 4
+        # muscle_torque_coefficients = np.zeros((2, num_control_points))
+        # muscle_torque_coefficients[0, :] = np.array([0, 1.0 / 3.0, 2.0 / 3.0, 1.0])
+        # muscle_torque_coefficients[1, :] = np.array([1.51, 0.48, 5.74, 2.73])
+        # tau_coeff = 1.44
 
         elastic_fish_swimming_case(
             non_dim_final_time=exp_non_dimensional_final_time,
