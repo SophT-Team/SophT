@@ -29,14 +29,11 @@ def immersed_elastic_net_case(
     grid_size = (grid_size_z, grid_size_y, grid_size_x)
     print(f"Flow grid size: {grid_size}")
     velocity_free_stream = [0.0, 0.0, vel_free_stream]
-    kinematic_viscosity = (
-        max(
-            elastic_net_sim.elastic_net_length_x,
-            elastic_net_sim.elastic_net_length_y,
-        )
-        * vel_free_stream
-        / reynolds
+    length_scale = max(
+        elastic_net_sim.elastic_net_length_x,
+        elastic_net_sim.elastic_net_length_y,
     )
+    kinematic_viscosity = length_scale * vel_free_stream / reynolds
     flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=domain_x_range,
@@ -118,6 +115,13 @@ def immersed_elastic_net_case(
     frames_per_second = 32
     foto_timer_limit = 1.0 / frames_per_second
     time_history = []
+    max_displacement_history = []
+    drag_history = []
+    time_scale = length_scale / vel_free_stream
+    net_projected_area = (
+        elastic_net_sim.elastic_net_length_x * elastic_net_sim.elastic_net_length_y
+    )
+    drag_scale = rho_f * vel_free_stream**2 * net_projected_area
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
@@ -170,25 +174,37 @@ def immersed_elastic_net_case(
                 cbar,
                 file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
             )
-            time_history.append(flow_sim.time)
             grid_dev_error = 0.0
             for flow_body_interactor in rod_flow_interactor_list:
                 grid_dev_error += (
                     flow_body_interactor.get_grid_deviation_error_l2_norm()
                 )
-            net_com_z = np.array(
-                [
-                    rod.position_collection[z_axis_idx].mean()
-                    for rod in elastic_net_sim.rod_list
-                ]
-            ).mean()
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time / elastic_net_sim.final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}, "
-                f"net flow direction com: {net_com_z:.6f}"
             )
+            # compute max displacement along flow and drag
+            time_history.append(flow_sim.time / time_scale)
+            max_displacement = np.amax(
+                np.array(
+                    [
+                        rod.position_collection[z_axis_idx].max()
+                        for rod in elastic_net_sim.rod_list
+                    ]
+                )
+            )
+            max_displacement_history.append(max_displacement / length_scale)
+            drag = np.sum(
+                np.array(
+                    [
+                        rod_flow_interactor.body_flow_forces[z_axis_idx, 0]
+                        for rod_flow_interactor in rod_flow_interactor_list
+                    ]
+                )
+            )
+            drag_history.append(drag / drag_scale)
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
@@ -224,6 +240,24 @@ def immersed_elastic_net_case(
     if save_flow_data:
         spu.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
 
+    # plot and save relevant diagnostics
+    initial_max_displacement = max_displacement_history[0]
+    fig, ax = spu.create_figure_and_axes(fig_aspect_ratio="default")
+    ax.plot(time_history, max_displacement_history)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Max displacement along flow")
+    fig.savefig("max_displacement_vs_time.png")
+    np.savetxt(
+        "net_diagnostics.csv",
+        np.c_[
+            np.array(time_history),
+            np.array(max_displacement_history) - initial_max_displacement,
+            np.array(drag_history),
+        ],
+        delimiter=",",
+        header="time, max_displacement, drag",
+    )
+
 
 if __name__ == "__main__":
 
@@ -245,10 +279,10 @@ if __name__ == "__main__":
     domain_y_range = 1.3 * elastic_net_length_y
     domain_z_range = 1.3 * elastic_net_length_x
     offset_between_net_origin_and_flow_grid_center_x = (
-        0.5 * elastic_net_length_x - base_radius
+        0.49 * elastic_net_length_x - base_radius
     )
     offset_between_net_origin_and_flow_grid_center_y = (
-        0.5 * elastic_net_length_y - base_radius
+        0.49 * elastic_net_length_y - base_radius
     )
     elastic_net_origin = np.array(
         [
