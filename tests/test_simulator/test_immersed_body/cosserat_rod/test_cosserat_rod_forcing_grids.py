@@ -479,7 +479,7 @@ def test_rod_edge_grid_spacing(n_elems):
 
 # Surface Forcing Grid tests
 class MockSurfaceForcingGrid:
-    def __init__(self, n_elems, grid_density, base_radius, base_length, with_cap):
+    def __init__(self, n_elems, grid_density, base_radius, with_cap):
 
         self.surface_grid_density_for_largest_element = grid_density
         self.surface_grid_points = np.zeros((n_elems), dtype=int)
@@ -512,11 +512,11 @@ class MockSurfaceForcingGrid:
                 # compute grid points for rod end caps if needed
                 if with_cap and i in [0, n_elems - 1]:
                     grid_angular_spacing = 2.0 * np.pi / n_point_per_elem
-                    reference_spacing = max(
-                        base_radius[i] * grid_angular_spacing, base_length / n_elems
+                    end_elem_surface_grid_radial_spacing = (
+                        base_radius[i] * grid_angular_spacing
                     )
                     end_elem_radial_grid_density = max(
-                        int(base_radius[i] // reference_spacing), 1
+                        int(base_radius[i] // end_elem_surface_grid_radial_spacing), 1
                     )
 
                     end_elem_radius_ratio = np.array(
@@ -613,7 +613,6 @@ def test_rod_surface_grid_setup(
 ):
     base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
     straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
-    base_length = straight_rod.lengths.sum()
 
     rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
         grid_dim=3,
@@ -626,7 +625,6 @@ def test_rod_surface_grid_setup(
         n_elems,
         largest_element_grid_density,
         base_radius,
-        base_length,
         with_cap=with_cap,
     )
 
@@ -673,7 +671,6 @@ def test_rod_surface_grid_grid_kinematics(
 ):
     base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
     straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
-    base_length = straight_rod.lengths.sum()
 
     rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
         grid_dim=3,
@@ -685,7 +682,6 @@ def test_rod_surface_grid_grid_kinematics(
         n_elems,
         largest_element_grid_density,
         base_radius,
-        base_length,
         with_cap=with_cap,
     )
 
@@ -752,7 +748,6 @@ def test_rod_surface_grid_force_transfer(
     grid_dim = 3
     base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
     straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
-    base_length = straight_rod.lengths.sum()
 
     rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
         grid_dim=grid_dim,
@@ -761,7 +756,7 @@ def test_rod_surface_grid_force_transfer(
         with_cap=with_cap,
     )
     correct_forcing_grid = MockSurfaceForcingGrid(
-        n_elems, largest_element_grid_density, base_radius, base_length, with_cap
+        n_elems, largest_element_grid_density, base_radius, with_cap
     )
 
     body_flow_forces = np.zeros((grid_dim, n_elems + 1))
