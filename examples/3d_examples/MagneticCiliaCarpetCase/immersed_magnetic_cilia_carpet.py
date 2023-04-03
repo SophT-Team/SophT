@@ -282,7 +282,7 @@ def run_immersed_magnetic_cilia_carpet(
     assert (
         num_rods_along_x >= 2 and num_rods_along_y >= 2
     ), "num_rod along x and y must be no less than 2"
-    carpet_spacing = rod_base_length
+    carpet_spacing = rod_base_length * carpet_spacing_factor
     carpet_length_x = (num_rods_along_x - 1) * carpet_spacing
     carpet_length_y = (num_rods_along_y - 1) * carpet_spacing
     # get the flow domain range based on the carpet
