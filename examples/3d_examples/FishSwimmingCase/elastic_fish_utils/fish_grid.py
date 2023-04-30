@@ -2,10 +2,9 @@ from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpos
 import elastica as ea
 import numpy as np
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
-from fish_geometry import create_fish_geometry_3D
+from .fish_geometry import create_fish_geometry
 
 
-# Forcing grid implementation for tapered rod
 class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
     """
         Class for forcing grid at Cosserat rod element surface points.
@@ -13,7 +12,8 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
     Notes
     -----
         For the 3D simulations of Cosserat rods this grid can be used.
-        Depending on the maximum radius, grid points between different element can vary.
+        Depending on the maximum radius, grid points between different
+        element can vary.
 
     """
 
@@ -30,24 +30,12 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             )
         self.cosserat_rod = cosserat_rod
 
-        self.width, self.height = create_fish_geometry_3D(cosserat_rod.rest_lengths)
+        self.width, self.height = create_fish_geometry(cosserat_rod.rest_lengths)
 
         # Surface grid density at the arm maximum radius
         self.surface_grid_density_for_largest_element = (
             surface_grid_density_for_largest_element
         )
-
-        # Surface grid points scaled between different element based on the largest width or height.
-        # self.surface_grid_points = np.maximum(np.rint(
-        #     self.height[:]
-        #     / np.max(self.height[:])
-        #     * self.surface_grid_density_for_largest_element
-        # ).astype(int),
-        #                             np.rint(
-        #     self.width[:]
-        #     / np.max(self.width[:])
-        #     * self.surface_grid_density_for_largest_element
-        # ).astype(int))
 
         # area = 4*np.pi * self.width * self.height
         # self.surface_grid_points = np.rint(area / np.max(area) * surface_grid_density_for_largest_element).astype(int)
@@ -63,7 +51,8 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             * surface_grid_density_for_largest_element
         ).astype(int)
 
-        # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
+        # If there are less than 1 point then set it equal to 1 since we will place
+        # it on the element center.
         self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
         num_lag_nodes = self.surface_grid_points.sum()
         super().__init__(grid_dim, num_lag_nodes)
@@ -72,22 +61,23 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.surface_point_rotation_angle_list = []
         for i in range(self.n_elems):
             if self.surface_grid_points[i] > 1:
-                # If there are more than one point on the surface then compute the angle of these points.
-                # Surface points are on the local frame
+                # If there are more than one point on the surface then compute
+                # the angle of these points. Surface points are on the local frame
                 self.surface_point_rotation_angle_list.append(
                     np.linspace(
                         0, 2 * np.pi, self.surface_grid_points[i], endpoint=False
                     )
                 )
             else:
-                # If there is only one point, then that point is on the element center so pass empty array.
+                # If there is only one point, then that point is on the element
+                # center so pass empty array.
                 self.surface_point_rotation_angle_list.append(np.array([]))
 
         # Since lag grid points are on the surface, for each node we need to compute moment arm.
         self.moment_arm = np.zeros_like(self.position_field)
 
-        # Depending on the rod taper number of surface points can vary between elements, so we need start_idx and
-        # end_idx to slice grid points according to element they belong.
+        # Depending on the rod taper number of surface points can vary between elements,
+        # so we need start_idx and end_idx to slice grid points according to element they belong.
         self.start_idx = np.zeros((self.n_elems), dtype=int)
         self.end_idx = np.zeros((self.n_elems), dtype=int)
 
@@ -101,8 +91,9 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         self.local_frame_surface_points = np.zeros_like(self.position_field)
 
-        # Compute surface(grid) point positions on local frame for each element. If there is one grid point then
-        # that point is on the element center so just pass 0.0
+        # Compute surface(grid) point positions on local frame for each element.
+        # If there is one grid point then that point is on the element center
+        # so just pass 0.0
         for i, surface_point_rotation_angle in enumerate(
             self.surface_point_rotation_angle_list
         ):
@@ -145,7 +136,8 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
             + self.cosserat_rod.position_collection[..., :-1]
         )
 
-        # Cache rod director collection transpose since it will be used to compute velocity field.
+        # Cache rod director collection transpose since it will be used to
+        # compute velocity field.
         self.rod_director_collection_transpose[...] = _batch_matrix_transpose(
             self.cosserat_rod.director_collection
         )
@@ -162,10 +154,11 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 :, self.start_idx[i] : self.end_idx[i]
             ] = self.rod_element_position[:, i : i + 1]
 
-        # Compute the moment arm or distance from the element center for each grid point.
+        # Compute the moment arm or distance from the element center
+        # for each grid point.
         self.moment_arm[:] = _batch_matvec(
             self.grid_point_director_transpose, self.local_frame_surface_points
-        )  # / np.sqrt(self.grid_point_dilitation)
+        )
 
         # Surface positions are moment_arm + element center position
         self.position_field += self.moment_arm
@@ -174,9 +167,6 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
         # Element velocity
-        # self.rod_element_velocity[...] = node_to_element_velocity(
-        #     self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
-        # )
         self.rod_element_velocity[...] = 0.5 * (
             self.cosserat_rod.velocity_collection[:, 1:]
             + self.cosserat_rod.velocity_collection[:, :-1]
@@ -236,7 +226,6 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # TODO: use width and height instead of radius ?
-        # grid_angular_spacing = 2 * np.pi / self.surface_grid_density_for_largest_element
         return np.amax(
             [
                 self.cosserat_rod.lengths,

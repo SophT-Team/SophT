@@ -1,17 +1,24 @@
 import elastica as ea
 import numpy as np
-from typing import Optional, Type, Union
 from numba import njit
 from elastica._linalg import _batch_norm, _batch_cross
 
 
 class CarlingFishBC(ea.ConstraintBase):
-    """ """
+    """
+    This class implements the imposed boundary conditions corresponding to the swimming
+    motion of a fish presented first by Carling et al., 1998.
+    """
 
     def __init__(
-        self, period, wave_number, phase_shift, ramp_up_time, fish_rod, **kwargs
-    ):
-        """ """
+        self,
+        period: float,
+        wave_number: float,
+        phase_shift: float,
+        ramp_up_time: float,
+        fish_rod: ea.CosseratRod,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.period = period
         self.angular_frequency = 2 * np.pi / period
@@ -25,19 +32,16 @@ class CarlingFishBC(ea.ConstraintBase):
         self.rest_lengths = rod.rest_lengths
         self.s = np.hstack((0, np.cumsum(self.rest_lengths)))
         self.base_length = self.rest_lengths.sum()
-        self.positions = np.zeros((3, self.n_nodes))
-        self.directors = np.zeros((3, 3, n_elems))
-        self.directors[0, 2, :] = 1.0
+        rod_dim = 3
+        self.positions = np.zeros((rod_dim, self.n_nodes))
+        self.directors = np.zeros((rod_dim, rod_dim, n_elems))
+        self.directors[0, 2, :] = 1.0  # fixing normal of each rod element
 
         self.start_position = rod.position_collection[..., 0].reshape(3, 1).copy()
-
         self.fish_rod = fish_rod
 
-    def constrain_values(
-        self, rod: Union[Type[ea.RodBase], Type[ea.RigidBodyBase]], time: float
-    ) -> None:
+    def constrain_values(self, rod: ea.CosseratRod, time: float) -> None:
 
-        # fish_head_y_position = self.fish_rod.position_collection[1,0]
         fish_head_y_position = self.fish_rod.compute_position_center_of_mass()[1]
 
         self.constrain_fish_positions(
@@ -62,23 +66,23 @@ class CarlingFishBC(ea.ConstraintBase):
     @staticmethod
     @njit(cache=True)
     def constrain_fish_positions(
-        start_position,
-        ramp_up_time,
-        n_nodes,
-        time,
-        s,
-        base_length,
-        rest_lengths,
-        angular_frequency,
-        wave_number,
-        phase_shift,
-        positions,
-        position_collection,
-        directors,
-        director_collection,
-        fish_head_y_position,
-        mass,
-    ):
+        start_position: np.ndarray,
+        ramp_up_time: float,
+        n_nodes: int,
+        time: float,
+        s: np.ndarray,
+        base_length: float,
+        rest_lengths: np.ndarray,
+        angular_frequency: float,
+        wave_number: float,
+        phase_shift: float,
+        positions: np.ndarray,
+        position_collection: np.ndarray,
+        directors: np.ndarray,
+        director_collection: np.ndarray,
+        fish_head_y_position: float,
+        mass: np.ndarray,
+    ) -> None:
 
         # Carling`s formula Eqn 45 in Gazzola JCP paper
         if time <= ramp_up_time:
@@ -86,7 +90,9 @@ class CarlingFishBC(ea.ConstraintBase):
         else:
             factor = 1.0
 
-        positions[1, :] = (
+        x_axis_idx = 0
+        y_axis_idx = 1
+        positions[y_axis_idx, :] = (
             0.125
             * factor
             * base_length
@@ -96,23 +102,20 @@ class CarlingFishBC(ea.ConstraintBase):
         )
 
         # Compute delta y between nodes
-        delta_y = positions[1, 1:] - positions[1, :-1]
+        delta_y = positions[y_axis_idx, 1:] - positions[y_axis_idx, :-1]
 
         # Compute delta x between nodes using the base length
         delta_x = np.sqrt(rest_lengths**2 - delta_y**2)
 
         # Compute x positions
         for i in range(1, n_nodes):
-            positions[0, i] = positions[0, i - 1] + delta_x[i - 1]
+            positions[x_axis_idx, i] = positions[x_axis_idx, i - 1] + delta_x[i - 1]
 
-        position_collection[1, :] = positions[1, :]
-        position_collection[0, :] = positions[0, :]
-        position_collection[2, :] = positions[2, :]
-
+        position_collection[:] = positions[:]
         position_collection += start_position
-        y_com = (position_collection[1, :] * mass).sum() / mass.sum()
+        y_com = (position_collection[y_axis_idx, :] * mass).sum() / mass.sum()
         offset = fish_head_y_position - y_com
-        position_collection[1, :] += offset
+        position_collection[y_axis_idx, :] += offset
 
         # Compute tangents
         tangents = positions[:, 1:] - positions[:, :-1]
@@ -124,9 +127,5 @@ class CarlingFishBC(ea.ConstraintBase):
 
         director_collection[:] = directors[:]
 
-    def constrain_rates(
-        self, rod: Union[Type[ea.RodBase], Type[ea.RigidBodyBase]], time: float
-    ) -> None:
+    def constrain_rates(self, rod: ea.CosseratRod, time: float) -> None:
         pass
-        # rod.omega_collection *= 0
-        # rod.velocity_collection *= 0

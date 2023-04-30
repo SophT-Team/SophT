@@ -2,9 +2,9 @@ import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
 import click
-from elastic_fish_v2 import ElasticFishSimulator
-from fish_grid import FishSurfaceForcingGrid
-from fish_geometry import create_fish_geometry_3D
+from elastic_fish_case import ElasticFishSimulator
+from elastic_fish_utils.fish_grid import FishSurfaceForcingGrid
+from elastic_fish_utils.fish_geometry import create_fish_geometry
 
 
 def elastic_fish_swimming_case(
@@ -64,8 +64,6 @@ def elastic_fish_swimming_case(
         origin=origin,
         normal=np.array([0.0, 0.0, 1.0]),
         plot_result=True,
-        # flag_dim_2D=True,
-        # dt_scale=5e-4,
         damping_constant=0.16,
     )
 
@@ -310,118 +308,6 @@ def elastic_fish_swimming_case(
         header="time, pos x, pos y, pos z",
     )
 
-    # TODO: remove below lines
-    from scipy.interpolate import CubicSpline
-
-    # Retrieve simulation results
-    time_sim = np.array(fish_sim.rod_post_processing_list[0]["time"])
-    nondim_time = time_sim / period
-
-    # Get non-dimensional position along rod from simulation
-    rest_lengths = np.array(fish_sim.rod_post_processing_list[0]["rest_lengths"][:])
-    s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1] + 1))
-    s_node[:, 1:] = np.cumsum(rest_lengths, axis=1)
-    s_node /= s_node[:, -1:]
-    s_node_inner = s_node[:, 1:-1]
-
-    # Get curvatures and positions from simulation
-    curvatures = np.array(fish_sim.rod_post_processing_list[0]["curvature"][:])
-    positions = np.array(fish_sim.rod_post_processing_list[0]["position"][:])
-
-    # Compute error
-    # compare only after ramp up, towards end of sim
-    start: int = np.where(nondim_time >= final_time - 2 * period)[0][0]
-
-    curvatures_solution = np.array(
-        fish_sim.rod_post_processing_list[0]["target_curvature"][:]
-    )[:, 1, :]
-
-    # curvature error
-    error = np.linalg.norm(
-        curvatures[start:, 1, :] - curvatures_solution[start:, :], axis=1
-    )
-
-    # plot curvature along rod for a few frames to see
-    import matplotlib
-
-    matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
-    from matplotlib import pyplot as plt
-
-    # In Material Frame
-    plt.rcParams.update({"font.size": 22})
-    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-
-    axs = []
-    axs.append(plt.subplot2grid((1, 1), (0, 0)))
-    skip_frames = 15
-    axs[0].plot(
-        curvatures[start::skip_frames, 0, :].T, "-", color="red", label="simulation"
-    )
-    axs[0].plot(
-        curvatures_solution[start::skip_frames, :].T,
-        "--",
-        color="skyblue",
-        label="solution",
-    )
-    plt.tight_layout()
-    fig.align_ylabels()
-    # fig.legend(prop={"size": 20})
-    fig.savefig("curvature_envelope_comparison.png")
-    plt.close(plt.gcf())
-
-    plt.rcParams.update({"font.size": 22})
-    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-
-    axs = []
-    axs.append(plt.subplot2grid((1, 1), (0, 0)))
-    axs[0].plot(nondim_time[start:], error, "-", color="red")
-    plt.tight_layout()
-    fig.align_ylabels()
-    fig.savefig("curvature_error.png")
-    plt.close(plt.gcf())
-
-    plt.rcParams.update({"font.size": 22})
-    fig, ax = spu.create_figure_and_axes(fig_aspect_ratio=1.0)
-    ax.plot(
-        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 1, :].T
-    )
-    plt.tight_layout()
-    fig.savefig("position_envelope.png")
-    plt.close(plt.gcf())
-
-    # Carling et. al.
-    base_length = np.sum(rest_lengths, axis=1)[:, np.newaxis]
-    y_positions = (
-        0.125
-        * base_length
-        * (0.03125 + s_node)
-        / 1.03125
-        * np.sin(2 * np.pi * (s_node - nondim_time[:, np.newaxis]))
-    )
-    y_positions = np.array(fish_sim.rod_post_processing_list[1]["position"])[:, 1, :]
-
-    plt.rcParams.update({"font.size": 22})
-    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-    axs = []
-    axs.append(plt.subplot2grid((1, 1), (0, 0)))
-    axs[0].plot(
-        s_node[start::skip_frames, :].T,
-        y_positions[start::skip_frames, :].T,
-        "--",
-        color="skyblue",
-        label="solution",
-    )
-    axs[0].plot(
-        s_node[start::skip_frames, :].T,
-        positions[start::skip_frames, 1, :].T,
-        "-",
-        color="red",
-        label="simulation",
-    )
-    plt.tight_layout()
-    fig.savefig("y_position_comparison.png")
-    plt.close(plt.gcf())
-
 
 if __name__ == "__main__":
 
@@ -445,7 +331,7 @@ if __name__ == "__main__":
         exp_youngs_modulus = 15e5  # Pa
         exp_kinematic_viscosity = 1.4e-4
         exp_mass_ratio = exp_rho_s / exp_rho_f
-        width, _ = create_fish_geometry_3D(exp_base_length / n_elem * np.ones(n_elem))
+        width, _ = create_fish_geometry(exp_base_length / n_elem * np.ones(n_elem))
         exp_base_radius = width[0]
         exp_base_diameter = 2 * exp_base_radius
         exp_slenderness_ratio = exp_base_length / exp_base_diameter

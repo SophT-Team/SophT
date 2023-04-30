@@ -1,14 +1,12 @@
 import numpy as np
 import elastica as ea
 import sopht.utils as spu
-from fish_geometry import (
-    update_rod_for_fish_geometry_2D,
-    update_rod_for_fish_geometry_3D,
-    create_fish_geometry_2D,
-    create_fish_geometry_3D,
+from elastic_fish_utils.fish_geometry import (
+    update_rod_for_fish_geometry,
+    create_fish_geometry,
 )
-from carling_fish_bc import CarlingFishBC
-from fish_connection import FishConnection
+from elastic_fish_utils.carling_fish_bc import CarlingFishBC
+from elastic_fish_utils.fish_connection import FishConnection
 
 
 class ElasticFishSimulator:
@@ -17,7 +15,7 @@ class ElasticFishSimulator:
         n_elements: int = 100,
         final_time: float = 20,
         rod_density: float = 1e3 / 15,
-        youngs_modulus: float = 15e5,  # 6e5,#4e5,
+        youngs_modulus: float = 15e5,
         base_length: float = 1.0,
         damping_constant: float = 0.02,
         dt_scale: float = 5e-4,
@@ -25,7 +23,6 @@ class ElasticFishSimulator:
         plot_result: bool = True,
         period: float = 1.0,
         normal=np.array([0.0, 0.0, 1.0]),
-        flag_dim_2D: bool = False,
     ) -> None:
         class BaseSimulator(
             ea.BaseSystemCollection,
@@ -45,70 +42,33 @@ class ElasticFishSimulator:
         shear_modulus = youngs_modulus / (1.0 + poisson_ratio)  # Pa
         direction = np.array([1.0, 0.0, 0.0])
         rest_lengths = base_length / n_elements * np.ones(n_elements)
-        if flag_dim_2D:
-            width, _ = create_fish_geometry_2D(rest_lengths)  # use width as radius
-            self.shearable_rod = ea.CosseratRod.straight_rod(
-                n_elements=n_elements,
-                start=self.origin,
-                direction=direction,
-                normal=normal,
-                base_length=self.base_length,
-                base_radius=width,
-                density=rod_density,
-                nu=0.0,  # internal damping constant, deprecated in v0.3.0
-                youngs_modulus=youngs_modulus,
-                shear_modulus=shear_modulus,
-            )
-            update_rod_for_fish_geometry_2D(
-                rod_density, youngs_modulus, self.shearable_rod
-            )
-            self.virtual_rod = ea.CosseratRod.straight_rod(
-                n_elements=n_elements,
-                start=self.origin,
-                direction=direction,
-                normal=normal,
-                base_length=self.base_length,
-                base_radius=width,
-                density=rod_density,
-                nu=0.0,  # internal damping constant, deprecated in v0.3.0
-                youngs_modulus=youngs_modulus,
-                shear_modulus=shear_modulus,
-            )
-            update_rod_for_fish_geometry_2D(
-                rod_density, youngs_modulus, self.virtual_rod
-            )
-        else:
-            width, _ = create_fish_geometry_3D(rest_lengths)  # use width as radius
-            self.shearable_rod = ea.CosseratRod.straight_rod(
-                n_elements=n_elements,
-                start=self.origin,
-                direction=direction,
-                normal=normal,
-                base_length=self.base_length,
-                base_radius=width,
-                density=rod_density,
-                nu=0.0,  # internal damping constant, deprecated in v0.3.0
-                youngs_modulus=youngs_modulus,
-                shear_modulus=shear_modulus,
-            )
-            update_rod_for_fish_geometry_3D(
-                rod_density, youngs_modulus, self.shearable_rod
-            )
-            self.virtual_rod = ea.CosseratRod.straight_rod(
-                n_elements=n_elements,
-                start=self.origin,
-                direction=direction,
-                normal=normal,
-                base_length=self.base_length,
-                base_radius=width,
-                density=rod_density,
-                nu=0.0,  # internal damping constant, deprecated in v0.3.0
-                youngs_modulus=youngs_modulus,
-                shear_modulus=shear_modulus,
-            )
-            update_rod_for_fish_geometry_3D(
-                rod_density, youngs_modulus, self.virtual_rod
-            )
+        width, _ = create_fish_geometry(rest_lengths)  # use width as radius
+        self.shearable_rod = ea.CosseratRod.straight_rod(
+            n_elements=n_elements,
+            start=self.origin,
+            direction=direction,
+            normal=normal,
+            base_length=self.base_length,
+            base_radius=width,
+            density=rod_density,
+            nu=0.0,  # internal damping constant, deprecated in v0.3.0
+            youngs_modulus=youngs_modulus,
+            shear_modulus=shear_modulus,
+        )
+        update_rod_for_fish_geometry(rod_density, youngs_modulus, self.shearable_rod)
+        self.virtual_rod = ea.CosseratRod.straight_rod(
+            n_elements=n_elements,
+            start=self.origin,
+            direction=direction,
+            normal=normal,
+            base_length=self.base_length,
+            base_radius=width,
+            density=rod_density,
+            nu=0.0,  # internal damping constant, deprecated in v0.3.0
+            youngs_modulus=youngs_modulus,
+            shear_modulus=shear_modulus,
+        )
+        update_rod_for_fish_geometry(rod_density, youngs_modulus, self.virtual_rod)
 
         # self.shearable_rod.shear_matrix[2,2,:] *= 10
         self.simulator.append(self.virtual_rod)
@@ -155,12 +115,14 @@ class ElasticFishSimulator:
     def add_callback(self) -> None:
         # Add callbacks
         class FishCallBack(ea.CallBackBaseClass):
-            def __init__(self, step_skip: int, callback_params: dict):
+            def __init__(self, step_skip: int, callback_params: dict) -> None:
                 ea.CallBackBaseClass.__init__(self)
                 self.every = step_skip
                 self.callback_params = callback_params
 
-            def make_callback(self, system: ea.CosseratRod, time, current_step: int):
+            def make_callback(
+                self, system: ea.CosseratRod, time: float, current_step: int
+            ) -> None:
                 if current_step % self.every == 0:
                     self.callback_params["time"].append(time)
                     self.callback_params["step"].append(current_step)
@@ -224,7 +186,6 @@ class ElasticFishSimulator:
             self.simulator,
             self.final_time,
             self.total_steps,
-            # progress_bar=False,
         )
 
 
@@ -235,9 +196,6 @@ if __name__ == "__main__":
     elastic_fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
-        # flag_dim_2D=True,
-        # dt_scale=2.5E-4,
-        # damping_constant=0.2
     )
     elastic_fish_sim.finalize()
     elastic_fish_sim.run()
@@ -296,9 +254,6 @@ if __name__ == "__main__":
     )
 
     # plot curvature along rod for a few frames to see
-    import matplotlib
-
-    matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
     from matplotlib import pyplot as plt
 
     # In Material Frame
@@ -335,8 +290,6 @@ if __name__ == "__main__":
     plt.close(plt.gcf())
 
     plt.rcParams.update({"font.size": 22})
-    fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-
     fig, ax = spu.create_figure_and_axes(fig_aspect_ratio=1.0)
     ax.plot(
         positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 1, :].T
