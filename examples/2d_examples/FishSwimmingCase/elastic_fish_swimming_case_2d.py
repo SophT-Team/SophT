@@ -251,7 +251,7 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option("--nx", default=128, help="Number of grid points in x direction.")
+    @click.option("--nx", default=512, help="Number of grid points in x direction.")
     def simulate_fish_swimming(num_threads: int, nx: int) -> None:
         ny = nx // 5
 
