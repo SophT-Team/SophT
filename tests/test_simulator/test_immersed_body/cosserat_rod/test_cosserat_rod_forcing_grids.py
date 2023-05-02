@@ -479,11 +479,12 @@ def test_rod_edge_grid_spacing(n_elems):
 
 # Surface Forcing Grid tests
 class MockSurfaceForcingGrid:
-    def __init__(self, n_elems, grid_density, base_radius):
+    def __init__(self, n_elems, grid_density, base_radius, with_cap):
 
         self.surface_grid_density_for_largest_element = grid_density
         self.surface_grid_points = np.zeros((n_elems), dtype=int)
         self.surface_point_rotation_angle_list = []
+        self.grid_point_radius_ratio = []
         self.start_idx = np.zeros((n_elems), dtype=int)
         self.end_idx = np.zeros((n_elems), dtype=int)
 
@@ -495,6 +496,7 @@ class MockSurfaceForcingGrid:
             if n_point_per_elem < 3:
                 n_point_per_elem = 1
                 self.surface_point_rotation_angle_list.append(np.array([]))
+                self.grid_point_radius_ratio.append(np.ones(n_point_per_elem))
 
             else:
                 self.surface_point_rotation_angle_list.append(
@@ -505,6 +507,58 @@ class MockSurfaceForcingGrid:
                         ]
                     )
                 )
+                self.grid_point_radius_ratio.append(np.ones(n_point_per_elem))
+
+                # compute grid points for rod end caps if needed
+                if with_cap and i in [0, n_elems - 1]:
+                    grid_angular_spacing = 2.0 * np.pi / n_point_per_elem
+                    end_elem_surface_grid_radial_spacing = (
+                        base_radius[i] * grid_angular_spacing
+                    )
+                    end_elem_radial_grid_density = max(
+                        int(base_radius[i] // end_elem_surface_grid_radial_spacing), 1
+                    )
+
+                    end_elem_radius_ratio = np.array(
+                        [
+                            base_radius[i] / end_elem_radial_grid_density * j
+                            for j in range(end_elem_radial_grid_density)
+                        ]
+                    )
+                    end_elem_surface_grid_points = np.array(
+                        [
+                            (n_point_per_elem // end_elem_radial_grid_density - 1) * j
+                            + 1
+                            for j in range(end_elem_radial_grid_density)
+                        ]
+                    ).astype(int)
+
+                    n_point_per_elem += end_elem_surface_grid_points.sum()
+                    self.surface_point_rotation_angle_list[i] = np.append(
+                        self.surface_point_rotation_angle_list[i],
+                        (
+                            [
+                                np.linspace(0, 2 * np.pi, num_points, endpoint=False)
+                                for num_points in end_elem_surface_grid_points
+                            ]
+                        ),
+                    )
+                    self.surface_point_rotation_angle_list[i] = np.hstack(
+                        self.surface_point_rotation_angle_list[i]
+                    )
+
+                    # add the radius ratio for inner grid points
+                    self.grid_point_radius_ratio[i] = np.append(
+                        self.grid_point_radius_ratio[i],
+                        np.hstack(
+                            [
+                                np.ones((num_grid_points)) * end_elem_radius_ratio[j]
+                                for j, num_grid_points in enumerate(
+                                    end_elem_surface_grid_points
+                                )
+                            ]
+                        ),
+                    )
 
             self.surface_grid_points[i] = n_point_per_elem
             self.start_idx[i] = idx_temp
@@ -553,7 +607,10 @@ def test_rod_surface_grid_dimension(grid_dim, n_elems):
 @pytest.mark.parametrize("n_elems", [8, 16])
 @pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
 @pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
-def test_rod_surface_grid_setup(n_elems, largest_element_grid_density, taper_ratio):
+@pytest.mark.parametrize("with_cap", [True, False])
+def test_rod_surface_grid_setup(
+    n_elems, largest_element_grid_density, taper_ratio, with_cap
+):
     base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
     straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
 
@@ -561,10 +618,14 @@ def test_rod_surface_grid_setup(n_elems, largest_element_grid_density, taper_rat
         grid_dim=3,
         cosserat_rod=straight_rod,
         surface_grid_density_for_largest_element=largest_element_grid_density,
+        with_cap=with_cap,
     )
 
     correct_forcing_grid = MockSurfaceForcingGrid(
-        n_elems, largest_element_grid_density, base_radius
+        n_elems,
+        largest_element_grid_density,
+        base_radius,
+        with_cap=with_cap,
     )
 
     # check if setup is correct
@@ -604,8 +665,9 @@ def test_rod_surface_grid_setup(n_elems, largest_element_grid_density, taper_rat
 @pytest.mark.parametrize("n_elems", [8, 16])
 @pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
 @pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
+@pytest.mark.parametrize("with_cap", [True, False])
 def test_rod_surface_grid_grid_kinematics(
-    n_elems, largest_element_grid_density, taper_ratio
+    n_elems, largest_element_grid_density, taper_ratio, with_cap
 ):
     base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
     straight_rod = mock_straight_rod(n_elems, base_radius=base_radius)
@@ -614,9 +676,13 @@ def test_rod_surface_grid_grid_kinematics(
         grid_dim=3,
         cosserat_rod=straight_rod,
         surface_grid_density_for_largest_element=largest_element_grid_density,
+        with_cap=with_cap,
     )
     correct_forcing_grid = MockSurfaceForcingGrid(
-        n_elems, largest_element_grid_density, base_radius
+        n_elems,
+        largest_element_grid_density,
+        base_radius,
+        with_cap=with_cap,
     )
 
     # Compute the correct grid position
@@ -627,11 +693,13 @@ def test_rod_surface_grid_grid_kinematics(
         )
         director_transpose = straight_rod.director_collection[:, :, i].T
         rod_radius = straight_rod.radius[i]
+        rod_radius_ratio = correct_forcing_grid.grid_point_radius_ratio[i]
 
         for j in range(correct_forcing_grid.surface_grid_points[i]):
             grid_idx = correct_forcing_grid.start_idx[i] + j
             correct_forcing_grid.moment_arm[:, grid_idx] = (
                 rod_radius
+                * rod_radius_ratio[j]
                 * director_transpose
                 @ correct_forcing_grid.local_frame_surface_points[:, grid_idx]
             )
@@ -673,8 +741,9 @@ def test_rod_surface_grid_grid_kinematics(
 @pytest.mark.parametrize("n_elems", [8, 16])
 @pytest.mark.parametrize("largest_element_grid_density", [16, 12, 8, 4])
 @pytest.mark.parametrize("taper_ratio", [1, 2, 5, 10])
+@pytest.mark.parametrize("with_cap", [True, False])
 def test_rod_surface_grid_force_transfer(
-    n_elems, largest_element_grid_density, taper_ratio
+    n_elems, largest_element_grid_density, taper_ratio, with_cap
 ):
     grid_dim = 3
     base_radius = np.linspace(1, 1 / taper_ratio, n_elems)
@@ -684,9 +753,10 @@ def test_rod_surface_grid_force_transfer(
         grid_dim=grid_dim,
         cosserat_rod=straight_rod,
         surface_grid_density_for_largest_element=largest_element_grid_density,
+        with_cap=with_cap,
     )
     correct_forcing_grid = MockSurfaceForcingGrid(
-        n_elems, largest_element_grid_density, base_radius
+        n_elems, largest_element_grid_density, base_radius, with_cap
     )
 
     body_flow_forces = np.zeros((grid_dim, n_elems + 1))

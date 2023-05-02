@@ -1,4 +1,9 @@
-# SophT
+<div align='center'>
+<h1> SophT </h1>
+
+[![CI][badge-CI]][link-CI] [![DOI][badge-doi]][link-doi]
+ </div>
+
 Scalable One-stop Platform for Hydroelastic Things (SOPHT).
 
 This repository corresponds to the development of flow-structure
@@ -31,3 +36,32 @@ make poetry-download
 make install
 make pre-commit-install
 ```
+
+## Citation
+
+We ask that any publications which use SophT cite as following:
+
+```
+@software{yashraj_bhosale_2023_7658908,
+  author       = {Yashraj Bhosale and
+                  Arman Tekinalp and
+                  Songyuan Cui and
+                  Fan Kiat Chan and
+                  Mattia Gazzola},
+  title        = {{Scalable One-stop Platform for Hydroelastic Things 
+                   (SOPHT)}},
+  month        = feb,
+  year         = 2023,
+  publisher    = {Zenodo},
+  version      = {v.0.0.1},
+  doi          = {10.5281/zenodo.7658908},
+  url          = {https://doi.org/10.5281/zenodo.7658908}
+}
+```
+
+[badge-doi]: https://zenodo.org/badge/498451510.svg
+[badge-CI]: https://github.com/SophT-Team/SophT/workflows/CI/badge.svg
+
+[link-doi]: https://zenodo.org/badge/latestdoi/498451510
+[link-CI]: https://github.com/SophT-Team/SophT/actions
+
