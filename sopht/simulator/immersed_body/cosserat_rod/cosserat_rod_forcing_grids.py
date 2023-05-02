@@ -300,6 +300,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         grid_dim: int,
         cosserat_rod: ea.CosseratRod,
         surface_grid_density_for_largest_element: int,
+        with_cap: bool = False,
     ) -> None:
         if grid_dim != 3:
             raise ValueError(
@@ -307,11 +308,15 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 "defined for grid_dim=3"
             )
         self.cosserat_rod = cosserat_rod
+        self.n_elems = cosserat_rod.n_elems
 
         # Surface grid density at the arm maximum radius
         self.surface_grid_density_for_largest_element = (
             surface_grid_density_for_largest_element
         )
+
+        # Enable capping of rod ends
+        self.with_cap = with_cap
 
         # Surface grid points scaled between different element based on the largest radius.
         self.surface_grid_points = np.rint(
@@ -321,15 +326,13 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         ).astype(int)
         # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
         self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
-        num_lag_nodes = self.surface_grid_points.sum()
-        super().__init__(grid_dim, num_lag_nodes)
-        self.n_elems = cosserat_rod.n_elems
 
+        # store grid point radius ratio for each forcing point
+        self.grid_point_radius_ratio = np.ones((self.surface_grid_points.sum()))
+        # Generate rotation angle of each grid point
         self.surface_point_rotation_angle_list = []
         for i in range(self.n_elems):
             if self.surface_grid_points[i] > 1:
-                # If there are more than one point on the surface then compute the angle of these points.
-                # Surface points are on the local frame
                 self.surface_point_rotation_angle_list.append(
                     np.linspace(
                         0, 2 * np.pi, self.surface_grid_points[i], endpoint=False
@@ -338,6 +341,14 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             else:
                 # If there is only one point, then that point is on the element center so pass empty array.
                 self.surface_point_rotation_angle_list.append(np.array([]))
+
+        # Modify surface grid quantities to account for caps
+        if self.with_cap:
+            self._update_surface_grid_point_for_caps()
+
+        # finalize number of lag nodes
+        num_lag_nodes = self.surface_grid_points.sum()
+        super().__init__(grid_dim, num_lag_nodes)
 
         # Since lag grid points are on the surface, for each node we need to compute moment arm.
         self.moment_arm = np.zeros_like(self.position_field)
@@ -410,9 +421,10 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             self.grid_point_director_transpose[
                 :, :, self.start_idx[i] : self.end_idx[i]
             ] = self.rod_director_collection_transpose[:, :, i : i + 1]
-            self.grid_point_radius[
-                self.start_idx[i] : self.end_idx[i]
-            ] = self.cosserat_rod.radius[i]
+            self.grid_point_radius[self.start_idx[i] : self.end_idx[i]] = (
+                self.cosserat_rod.radius[i]
+                * self.grid_point_radius_ratio[self.start_idx[i] : self.end_idx[i]]
+            )
             self.position_field[
                 :, self.start_idx[i] : self.end_idx[i]
             ] = self.rod_element_position[:, i : i + 1]
@@ -490,3 +502,101 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         return np.amax(
             [self.cosserat_rod.lengths, self.cosserat_rod.radius * grid_angular_spacing]
         )
+
+    def _update_surface_grid_point_for_caps(self):
+        """
+        Update surface grid point count, grid point radius ratio and grid point angle
+        on rod ends to account for caps.
+        """
+        for rod_end_idx in [0, -1]:
+            rod_end_radius = self.cosserat_rod.radius[rod_end_idx]
+            # (1) First update surface grid point count for end elements
+            if self.surface_grid_points[rod_end_idx] > 1:
+                # we can still fit points within the surface grid circle
+                # use max(arc-length of angular discretization, rod element length)
+                # as reference length for radial discretization
+                grid_angular_spacing = (
+                    2.0 * np.pi / self.surface_grid_points[rod_end_idx]
+                )
+                end_elem_surface_grid_radial_spacing = (
+                    rod_end_radius * grid_angular_spacing
+                )
+                # note: we include at least one point on the element for the cap
+                end_elem_grid_radial_density = max(
+                    int(rod_end_radius // end_elem_surface_grid_radial_spacing), 1
+                )
+            else:
+                # the rod surface grid is already the minimum anyway (single point)
+                # no point adding more grid points for end surface
+                end_elem_grid_radial_density = 0
+
+            # linearly scale the number of grid points towards outer most surface
+            end_elem_surface_grid_points = np.linspace(
+                1,
+                self.surface_grid_points[rod_end_idx],
+                end_elem_grid_radial_density,
+                endpoint=False,
+            ).astype(int)
+
+            # update surface grid point count at the end elements
+            self.surface_grid_points[rod_end_idx] += end_elem_surface_grid_points.sum()
+
+            # After updating the surface grid point count to account for cap surface,
+            # we make modifications to grid point radius ratio and grid point angles.
+            # (2) Update radius ratio to account for end element cap surface grid points
+            idx = 0 if rod_end_idx == 0 else self.grid_point_radius_ratio.shape[0]
+            # modify grid point radius ratio array to account for additional grid point
+            # for cap surface
+            self.grid_point_radius_ratio = np.insert(
+                self.grid_point_radius_ratio,
+                idx,
+                np.ones(end_elem_surface_grid_points.sum()),
+            )
+            end_elem_grid_points_radius_ratio = (
+                np.linspace(
+                    0, rod_end_radius, end_elem_grid_radial_density, endpoint=False
+                )
+                / rod_end_radius
+            )
+            # start index for grid points within the surface grid point of end element
+            # we store the inner grid points at the end portion of the array window
+            # corresponding to the element
+            start_idx = (
+                self.surface_grid_points.cumsum()[rod_end_idx]
+                - end_elem_surface_grid_points.sum()
+            )
+            # loop over each concentric circle and update the radius ratio
+            for idx, num_grid_points in enumerate(end_elem_surface_grid_points):
+                end_idx = start_idx + num_grid_points
+                self.grid_point_radius_ratio[
+                    start_idx:end_idx
+                ] = end_elem_grid_points_radius_ratio[idx]
+                start_idx = end_idx
+
+            # (3) Update grid point rotation angle on rod ends
+            if self.surface_grid_points[rod_end_idx] > 1:
+                # If there are more than one point on the surface then compute the angle of these points.
+                # Surface points are on the local frame
+                surface_point_angles_list = []
+                # first, include outer most surface point angles
+                surface_point_angles_list.extend(
+                    np.linspace(
+                        0,
+                        2 * np.pi,
+                        self.surface_grid_points[rod_end_idx]
+                        - end_elem_surface_grid_points.sum(),
+                        endpoint=False,
+                    ).tolist()
+                )
+                # then append those corresponding to the inner points
+                for num_grid_points in end_elem_surface_grid_points:
+                    # compute point angles for each concentric circles
+                    surface_point_angles_list.extend(
+                        np.linspace(
+                            0, 2 * np.pi, num_grid_points, endpoint=False
+                        ).tolist()
+                    )
+                surface_point_angles = np.array(surface_point_angles_list)
+                self.surface_point_rotation_angle_list[
+                    rod_end_idx
+                ] = surface_point_angles

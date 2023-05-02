@@ -1,14 +1,15 @@
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
+import sopht.numeric.eulerian_grid_ops as spne
 from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
 def immersed_magnetic_cilia_carpet_case(
     cilia_carpet_simulator: MagneticCiliaCarpetSimulator,
+    womersley: float,
     domain_range: tuple[float, float, float],
     grid_size_x: int,
-    reynolds: float = 100.0,
     coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e1,
     num_threads: int = 4,
@@ -27,20 +28,33 @@ def immersed_magnetic_cilia_carpet_case(
     grid_size = (grid_size_z, grid_size_y, grid_size_x)
     print(f"Flow grid size:{grid_size}")
     kinematic_viscosity = (
-        cilia_carpet_simulator.rod_base_length
-        * cilia_carpet_simulator.velocity_scale
-        / reynolds
+        cilia_carpet_simulator.angular_frequency
+        * cilia_carpet_simulator.rod_base_length**2
+        / womersley**2
     )
     flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
-        x_range=domain_x_range,
+        x_range=x_range,
         kinematic_viscosity=kinematic_viscosity,
         with_forcing=True,
         real_t=real_t,
         num_threads=num_threads,
         filter_vorticity=True,
-        filter_setting_dict={"order": 1, "type": "multiplicative"},
+        filter_setting_dict={"order": 5, "type": "convolution"},
     )
+
+    # Element-wise time-integration operator
+    elemenwise_saxpby = spne.gen_elementwise_saxpby_pyst_kernel_3d(
+        real_t=real_t,
+        num_threads=num_threads,
+        fixed_grid_size=grid_size,
+        field_type="vector",
+    )
+
+    # Averaged fields
+    avg_vorticity = np.zeros_like(flow_sim.vorticity_field)
+    avg_velocity = np.zeros_like(flow_sim.velocity_field)
+
     # ==================FLOW SETUP END=========================
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     rod_flow_interactor_list = []
@@ -72,6 +86,17 @@ def immersed_magnetic_cilia_carpet_case(
                 "velocity": flow_sim.velocity_field,
             },
         )
+
+        # Setup average Eulerian field IO
+        avg_io = spu.EulerianFieldIO(
+            position_field=flow_sim.position_field,
+            eulerian_fields_dict={
+                "position": flow_sim.position_field,
+                "avg_vorticity": avg_vorticity,
+                "avg_velocity": avg_velocity,
+            },
+        )
+
         # Initialize carpet IO
         carpet_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
@@ -104,8 +129,11 @@ def immersed_magnetic_cilia_carpet_case(
     cilia_carpet_simulator.finalize()
     # =================TIMESTEPPING====================
     foto_timer = 0.0
-    foto_timer_limit = cilia_carpet_simulator.final_time / 100
+    period_timer = 0.0
+    period_timer_limit = cilia_carpet_simulator.period
+    foto_timer_limit = cilia_carpet_simulator.period / 20
     time_history = []
+    no_period = 0
 
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes()
@@ -171,8 +199,37 @@ def immersed_magnetic_cilia_carpet_case(
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
+        # Save averaged vorticity field
+        if period_timer >= period_timer_limit:
+            period_timer = 0.0
+            if save_data:
+                avg_io.save(
+                    h5_file_name=f"avg_flow_{no_period}.h5",
+                    time=flow_sim.time,
+                )
+
+            avg_vorticity *= 0.0
+            avg_velocity *= 0.0
+            no_period += 1
+
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
+
+        # Average velocity / vorticity field
+        elemenwise_saxpby(
+            sum_field=avg_velocity,
+            field_1=avg_velocity,
+            field_2=flow_sim.velocity_field,
+            field_1_prefac=1.0,
+            field_2_prefac=flow_dt / period_timer_limit,
+        )
+        elemenwise_saxpby(
+            sum_field=avg_vorticity,
+            field_1=avg_vorticity,
+            field_2=flow_sim.vorticity_field,
+            field_1_prefac=1.0,
+            field_2_prefac=flow_dt / period_timer_limit,
+        )
 
         # timestep the rod, through the flow timestep
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))
@@ -195,6 +252,7 @@ def immersed_magnetic_cilia_carpet_case(
 
         # update timer
         foto_timer += flow_dt
+        period_timer += flow_dt
 
     # compile video
     spu.make_video_from_image_series(
@@ -202,14 +260,29 @@ def immersed_magnetic_cilia_carpet_case(
     )
 
 
-if __name__ == "__main__":
-
-    # setup the structure of the carpet
-    num_rods_along_x = 9  # set >= 2
-    num_rods_along_y = 4  # set >= 2
-    n_elem_per_rod = 20
-    rod_base_length = 1.5
-    carpet_spacing = rod_base_length
+def run_immersed_magnetic_cilia_carpet(
+    womersley: float,
+    num_rods_along_x: int,
+    num_rods_along_y: int,
+    num_cycles: float,
+    magnetic_bond_number: float = 3.0,
+    frequency_ratio: float = 0.2,
+    rod_base_length: float = 1.5,
+    carpet_spacing_factor: float = 1.0,
+    grid_size_x: int = 128,
+    rod_elem_prefactor: float = 1.0,
+    wavelength_x_factor: float = 1.0,
+    wavelength_y_factor: float = 1.0,
+    num_threads: int = 4,
+    coupling_stiffness: float = -2e4,
+    coupling_damping: float = -1e1,
+    precision: str = "single",
+    save_data: bool = False,
+):
+    assert (
+        num_rods_along_x >= 2 and num_rods_along_y >= 2
+    ), "num_rod along x and y must be no less than 2"
+    carpet_spacing = rod_base_length * carpet_spacing_factor
     carpet_length_x = (num_rods_along_x - 1) * carpet_spacing
     carpet_length_y = (num_rods_along_y - 1) * carpet_spacing
     # get the flow domain range based on the carpet
@@ -219,18 +292,39 @@ if __name__ == "__main__":
     carpet_base_centroid = np.array(
         [0.5 * domain_x_range, 0.5 * domain_y_range, 0.1 * domain_z_range]
     )
+    n_elem_per_rod = int(grid_size_x * rod_elem_prefactor / num_rods_along_x)
     cilia_carpet_simulator = MagneticCiliaCarpetSimulator(
+        magnetic_bond_number=magnetic_bond_number,
+        frequency_ratio=frequency_ratio,
+        rod_base_length=rod_base_length,
         n_elem_per_rod=n_elem_per_rod,
         num_rods_along_x=num_rods_along_x,
         num_rods_along_y=num_rods_along_y,
-        rod_base_length=rod_base_length,
-        num_cycles=2.0,
+        wavelength_x_factor=wavelength_x_factor,
+        wavelength_y_factor=wavelength_y_factor,
+        carpet_spacing_factor=carpet_spacing_factor,
+        num_cycles=num_cycles,
         carpet_base_centroid=carpet_base_centroid,
         plot_result=False,
     )
     immersed_magnetic_cilia_carpet_case(
         cilia_carpet_simulator=cilia_carpet_simulator,
-        reynolds=10.0,
-        grid_size_x=128,
+        womersley=womersley,
         domain_range=(domain_z_range, domain_y_range, domain_x_range),
+        grid_size_x=grid_size_x,
+        num_threads=num_threads,
+        coupling_stiffness=coupling_stiffness,
+        coupling_damping=coupling_damping,
+        precision=precision,
+        save_data=save_data,
+    )
+
+
+if __name__ == "__main__":
+    run_immersed_magnetic_cilia_carpet(
+        womersley=1.0,
+        num_rods_along_x=8,
+        num_rods_along_y=4,
+        carpet_spacing_factor=0.5,
+        num_cycles=2,
     )
