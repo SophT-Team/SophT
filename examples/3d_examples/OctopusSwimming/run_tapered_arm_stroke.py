@@ -50,7 +50,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     rho_s = mass_ratio * rho_f
     base_diameter = base_length / slenderness_ratio
     base_radius = base_diameter / 2
-    base_area = np.pi * base_radius**2
+    # base_area = np.pi * base_radius**2
     moment_of_inertia = np.pi / 4 * base_radius**4
     # Cau = (rho_f U^2 L^3 D) / EI
     youngs_modulus = (rho_f * vel_scale**2 * base_length**3 * base_diameter) / (
@@ -516,7 +516,7 @@ if __name__ == "__main__":
         exp_mass_ratio = exp_rho_s / exp_rho_f
         exp_slenderness_ratio = exp_base_length / exp_base_diameter
         exp_base_radius = exp_base_diameter / 2
-        exp_base_area = np.pi * exp_base_radius**2
+        # exp_base_area = np.pi * exp_base_radius**2
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
 
