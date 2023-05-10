@@ -38,7 +38,6 @@ class OscillationActivation:
 
     def apply_activation(self, system, activation, time: np.float64 = 0.0):
         n_elems = self.end_idx - self.start_idx
-        index = np.arange(0, n_elems, dtype=np.int64)
         fiber_activation = np.zeros((n_elems))
         activation *= 0
 

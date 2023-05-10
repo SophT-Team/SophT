@@ -284,7 +284,7 @@ class ArmEnvironment:
         for rod in self.rod_list:
             invalid_values_condition = _isnan_check(rod.position_collection)
 
-            if invalid_values_condition == True:
+            if invalid_values_condition:
                 print("NaN detected in the simulation !!!!!!!!")
                 done = True
                 break
