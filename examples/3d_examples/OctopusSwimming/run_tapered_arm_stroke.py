@@ -1,19 +1,21 @@
 import numpy as np
 from sopht.utils.precision import get_real_t
 from set_environment_tapered_arm import Environment
-from oscillation_activation_functions import OscillationActivation
 import sopht.simulator as sps
 import elastica as ea
 import sopht.utils as spu
 import click
-from elastica._rotations import _get_rotation_matrix
+from octopus_initializer_functions import (
+    assemble_octopus,
+    initialize_activation_functions,
+)
 
 
 def tapered_arm_and_cylinder_flow_coupling(
     non_dimensional_final_time,
     n_elems,
     slenderness_ratio,
-    cauchy_number,
+    non_dim_bending_stiffness,
     mass_ratio,
     reynolds_number,
     taper_ratio,
@@ -52,10 +54,14 @@ def tapered_arm_and_cylinder_flow_coupling(
     base_radius = base_diameter / 2
     # base_area = np.pi * base_radius**2
     moment_of_inertia = np.pi / 4 * base_radius**4
-    # Cau = (rho_f U^2 L^3 D) / EI
-    youngs_modulus = (rho_f * vel_scale**2 * base_length**3 * base_diameter) / (
-        cauchy_number * moment_of_inertia
-    )
+    # Kb = EI / (rho_f U^2 L^3 D)
+    youngs_modulus = (
+        non_dim_bending_stiffness
+        * rho_f
+        * vel_scale**2
+        * base_length**3
+        * base_diameter
+    ) / (moment_of_inertia)
     # bending_rigidity = youngs_modulus * moment_of_inertia
     # natural_frequency = 3.5160 / (base_length ** 2) * np.sqrt(bending_rigidity / (rho_s * base_area))
 
@@ -67,138 +73,40 @@ def tapered_arm_and_cylinder_flow_coupling(
     normal = np.array([0.0, 1.0, 0.0])
     binormal = np.cross(direction, normal)
 
-    rod_list = []
-    arm_rod_list = []
-    number_of_straight_rods = 8
-    # First straight rod is at the center, remaining ring rods are around the first ring rod.
-    angle_btw_straight_rods = (
-        0 if number_of_straight_rods == 1 else 2 * np.pi / (number_of_straight_rods)
+    # Initialize octopus arms, head and body
+    arm_rod_list, rod_list, rigid_body_list = assemble_octopus(
+        n_elems,
+        start,
+        direction,
+        binormal,
+        normal,
+        rho_s,
+        base_length,
+        base_radius,
+        taper_ratio,
+        youngs_modulus,
+        shear_modulus,
     )
-    bank_angle = np.deg2rad(30)
-    angle_wrt_center_rod = []
-    for i in range(number_of_straight_rods):
-        rotation_matrix = _get_rotation_matrix(
-            angle_btw_straight_rods * i, direction.reshape(3, 1)
-        ).reshape(3, 3)
-        direction_from_center_to_rod = rotation_matrix @ binormal
+    body_rod = rod_list[-1]
+    sphere = rigid_body_list[0]
 
-        angle_wrt_center_rod.append(angle_btw_straight_rods * i)
-
-        # Compute the rotation matrix, for getting the correct banked angle.
-        normal_banked_rod = rotation_matrix @ normal
-        # Rotate direction vector around new normal to get the new direction vector.
-        # Note that we are doing ccw rotation and direction should be towards the center.
-        rotation_matrix_banked_rod = _get_rotation_matrix(
-            (np.pi / 2 - bank_angle), normal_banked_rod.reshape(3, 1)
-        ).reshape(3, 3)
-        direction_banked_rod = rotation_matrix_banked_rod @ direction
-
-        start_rod = (
-            start
-            + (direction_from_center_to_rod)
-            * (
-                # center rod            # this rod
-                +2 * base_radius
-                + base_radius
-            )
-            * 0
-        )
-
-        radius = np.linspace(base_radius, base_radius / taper_ratio, n_elems + 1)
-        radius_mean = (radius[:-1] + radius[1:]) / 2
-
-        rod = ea.CosseratRod.straight_rod(
-            n_elements=n_elems,
-            start=start_rod,
-            direction=direction_banked_rod,
-            normal=normal_banked_rod,
-            base_length=base_length,
-            base_radius=radius_mean.copy(),
-            density=rho_s,
-            nu=0.0,  # internal damping constant, deprecated in v0.3.0
-            youngs_modulus=youngs_modulus,
-            shear_modulus=shear_modulus,
-        )
-
-        rod_list.append(rod)
-        arm_rod_list.append(rod)
-
-    # Octopus head initialization
-    slenderness_ratio_head = 5.787
-
-    octopus_head_length = 2 * base_radius * slenderness_ratio_head / 2
-    octopus_head_n_elems = int(n_elems * octopus_head_length / base_length)
-
-    octopus_head_radius = (
-        2 * base_radius * np.linspace(0.9, 1.0, octopus_head_n_elems) ** 3
-    )
-
-    head_rod = ea.CosseratRod.straight_rod(
-        n_elements=octopus_head_n_elems,
-        start=start,
-        direction=-direction,
-        normal=normal,
-        base_length=octopus_head_length,
-        base_radius=octopus_head_radius,  # .copy(),
-        density=rho_s,
-        nu=0.0,  # internal damping constant, deprecated in v0.3.0
-        youngs_modulus=youngs_modulus,
-        shear_modulus=shear_modulus,
-    )
-    rod_list.append(head_rod)
-
-    rigid_body_list = []
-    sphere_com = head_rod.position_collection[..., -1]
-    sphere_diameter = np.max(octopus_head_radius)
-    sphere = ea.Sphere(center=sphere_com, base_radius=sphere_diameter, density=rho_s)
-    rigid_body_list.append(sphere)
     env.reset(youngs_modulus, rho_s, rod_list, arm_rod_list, rigid_body_list)
-
-    # env.simulator.append(sphere)
 
     # Connect rods
     for i, rod in enumerate(env.arm_rod_list):
         env.simulator.connect(
-            rod, head_rod, first_connect_idx=0, second_connect_idx=0
+            rod, body_rod, first_connect_idx=0, second_connect_idx=0
         ).using(ea.FreeJoint, k=youngs_modulus / 100, nu=0)
 
     # head tip
     env.simulator.connect(
-        sphere, head_rod, first_connect_idx=0, second_connect_idx=-1
+        sphere, body_rod, first_connect_idx=0, second_connect_idx=-1
     ).using(ea.FreeJoint, k=youngs_modulus / 100, nu=0)
 
     # Setup activation functions to control muscles
-    wave_number = 0.05
-    start_non_dim_length = 0
-    end_non_dim_length = 1.0
-
-    activations = []
-    activation_functions = []
-    for rod_id, rod in enumerate(env.arm_rod_list):
-        activations.append([])
-        activation_functions.append([])
-        for m in range(len(env.rod_muscle_groups[rod_id])):
-            activations[rod_id].append(
-                np.zeros(env.rod_muscle_groups[rod_id][m].activation.shape)
-            )
-            if m == 4:
-                activation_functions[rod_id].append(
-                    OscillationActivation(
-                        wave_number=wave_number,
-                        frequency=1 / activation_period,  # f_p,
-                        phase_shift=0,  # X_p,
-                        start_time=0.0,
-                        end_time=10000,
-                        start_non_dim_length=start_non_dim_length,
-                        end_non_dim_length=end_non_dim_length,
-                        n_elems=rod.n_elems,
-                        activation_level_max=activation_level_max,
-                        a=10,
-                        b=0.5,
-                    )
-                )
-            else:
-                activation_functions[rod_id].append(None)
+    activations, activation_functions = initialize_activation_functions(
+        env, activation_period, activation_level_max
+    )
 
     # =================PYELASTICA STUFF END=====================
     # ==================FLOW SETUP START=========================
@@ -242,6 +150,7 @@ def tapered_arm_and_cylinder_flow_coupling(
             cosserat_rod_flow_interactor,
         )
 
+    sphere_diameter = 2 * sphere.radius
     num_forcing_points_along_equator = int(
         2 * 1.875 * sphere_diameter / y_range * grid_size_y
     )
@@ -523,23 +432,22 @@ if __name__ == "__main__":
         # natural_frequency = 3.5160 / (exp_base_length**2) * np.sqrt(exp_bending_rigidity/(exp_rho_s*exp_base_area))
         # non_dimensional_period = natural_frequency * period
 
-        exp_cauchy_number = (
+        exp_non_dim_bending_stiffness = exp_bending_rigidity / (
             exp_rho_f
             * exp_U_free_stream**2
             * exp_base_length**3
             * exp_base_diameter
-            / exp_bending_rigidity
         )
         exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
         exp_Re *= re_scale
 
         exp_taper_ratio = taper_ratio  # 7
-        print(f"Re: {exp_Re}, Ca: {exp_cauchy_number}")
+        print(f"Re: {exp_Re}, Kb: {exp_non_dim_bending_stiffness}")
         tapered_arm_and_cylinder_flow_coupling(
             non_dimensional_final_time=exp_non_dimensional_final_time,
             n_elems=exp_n_elem,
             slenderness_ratio=exp_slenderness_ratio,
-            cauchy_number=exp_cauchy_number,
+            non_dim_bending_stiffness=exp_non_dim_bending_stiffness,
             mass_ratio=exp_mass_ratio,
             reynolds_number=exp_Re,
             taper_ratio=exp_taper_ratio,
