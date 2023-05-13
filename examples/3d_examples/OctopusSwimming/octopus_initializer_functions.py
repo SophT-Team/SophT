@@ -114,7 +114,6 @@ def initialize_activation_functions(
     activation_level_max,
     wave_number=0.05,
     start_non_dim_length=0.0,
-        
     end_non_dim_length=1.0,
 ):
     activations = []
