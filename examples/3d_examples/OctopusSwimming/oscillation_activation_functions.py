@@ -36,7 +36,8 @@ class OscillationActivation:
 
         self.non_dimensional_length = np.linspace(0, 1, n_elems)
 
-    def apply_activation(self, system, activation, time: np.float64 = 0.0):
+    def apply_activation(self, system, activation, time: float = 0.0):
+
         n_elems = self.end_idx - self.start_idx
         fiber_activation = np.zeros((n_elems))
         activation *= 0
