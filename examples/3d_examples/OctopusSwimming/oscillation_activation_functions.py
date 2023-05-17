@@ -50,7 +50,7 @@ class OscillationActivation:
 
             fiber_activation = (
                 self.activation_level_max
-                * self.non_dimensional_length[::-1]
+                * ((np.cos(np.pi * self.non_dimensional_length) + 1) / 2) ** 4
                 * np.sin(
                     2 * np.pi * self.wave_number * self.non_dimensional_length
                     - 2 * np.pi * self.frequency * time / 2
