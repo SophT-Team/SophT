@@ -1,21 +1,23 @@
 import numpy as np
+import numpy.typing as npt
 import elastica as ea
 from elastica._rotations import _get_rotation_matrix
 from oscillation_activation_functions import OscillationActivation
+from set_environment_tapered_arm import OctopusEnvironment
 
 
 def assemble_octopus(
-    n_elems,
-    start,
-    direction,
-    binormal,
-    normal,
-    rho_s,
-    base_length,
-    base_radius,
-    taper_ratio,
-    youngs_modulus,
-    shear_modulus,
+    n_elems: int,
+    start: npt.NDArray[np.float64],
+    direction: npt.NDArray[np.float64],
+    binormal: npt.NDArray[np.float64],
+    normal: npt.NDArray[np.float64],
+    rho_s: float,
+    base_length: float,
+    base_radius: float,
+    taper_ratio: float,
+    youngs_modulus: float,
+    shear_modulus: float,
 ):
 
     rod_list = []
@@ -108,12 +110,12 @@ def assemble_octopus(
 
 
 def initialize_activation_functions(
-    env,
-    activation_period,
-    activation_level_max,
-    wave_number=0.05,
-    start_non_dim_length=0.0,
-    end_non_dim_length=1.0,
+    env: OctopusEnvironment,
+    activation_period: float,
+    activation_level_max: float,
+    wave_number: float = 0.05,
+    start_non_dim_length: float = 0.0,
+    end_non_dim_length: float = 1.0,
 ):
     activations = []
     activation_functions = []

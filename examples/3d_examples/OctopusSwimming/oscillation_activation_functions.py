@@ -1,22 +1,22 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 class OscillationActivation:
     def __init__(
         self,
-        wave_number,
-        frequency,
-        phase_shift,
-        start_time,
-        end_time,
-        start_non_dim_length,
-        end_non_dim_length,
-        n_elems,
-        a,
-        b,
-        activation_level_max=1.0,
-        activation_level_end=0.0,
-        activation_lower_threshold=2e-14,
+        wave_number: float,
+        frequency: float,
+        phase_shift: float,
+        start_time: float,
+        end_time: float,
+        start_non_dim_length: float,
+        end_non_dim_length: float,
+        n_elems: int,
+        a: float,
+        b: float,
+        activation_level_max: float = 1.0,
+        activation_lower_threshold: float = 2e-14,
     ):
 
         self.start_time = start_time
@@ -75,7 +75,6 @@ if __name__ == "__main__":
     T_p = -3 / (5 * beta) * (beta**2 + 60) * t1
     # For sculling
     T = T_r + T_p
-    # T = 1
 
     f_r = 1 / T
     f_p = 1 / T
@@ -90,19 +89,6 @@ if __name__ == "__main__":
     activation = np.zeros((time.shape[0], n_elem))
     start_non_dim_length = 0
     end_non_dim_length = 1
-
-    # oscillation_activation = OscillationActivation(
-    #     wave_number=wave_number,
-    #     frequency=f_r,
-    #     phase_shift=X_p + T / 2,
-    #     start_time=0.0,
-    #     end_time=10000,
-    #     start_non_dim_length=start_non_dim_length,
-    #     end_non_dim_length=end_non_dim_length,
-    #     n_elems=n_elem,
-    #     a=40,
-    #     b=0.5,
-    # )
 
     oscillation_activation = OscillationActivation(
         wave_number=wave_number,
@@ -125,29 +111,6 @@ if __name__ == "__main__":
 
     non_dimensional_length = oscillation_activation.non_dimensional_length.copy()
 
-    import matplotlib
-
-    matplotlib.use("Agg")  # Must be before importing matplotlib.pyplot or pylab!
-    from matplotlib import pyplot as plt
-
-    # plt.rcParams.update({"font.size": 22})
-    # fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
-    #
-    # axs = []
-    # axs.append(plt.subplot2grid((1, 1), (0, 0)))
-    # for i in range(time.shape[0]):
-    #     axs[0].plot(
-    #         non_dimensional_length, activation[i, :], label=f"T={time[i]/T:.2f}"
-    #     )
-    # axs[0].set_xlabel("non dim length", fontsize=20)
-    # axs[0].set_ylabel("activation", fontsize=20)
-    #
-    # plt.tight_layout()
-    # fig.align_ylabels()
-    # fig.legend(prop={"size": 20})
-    # fig.savefig("oscillation_activation_vs_non_dim_pos.png")
-    # plt.close(plt.gcf())
-
     plt.rcParams.update({"font.size": 22})
     fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
     axs = []
@@ -158,6 +121,5 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     fig.align_ylabels()
-    # fig.legend(prop={"size": 20})
     fig.savefig("oscillation_activation_vs_time.png")
     plt.close(plt.gcf())
