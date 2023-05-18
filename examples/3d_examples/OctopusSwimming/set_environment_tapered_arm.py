@@ -47,7 +47,7 @@ class OctopusArmCallBack(ea.CallBackBaseClass):
             return
 
 
-class ArmEnvironment:
+class OctopusEnvironment:
     def __init__(
         self,
         final_time,
@@ -355,11 +355,3 @@ class ArmEnvironment:
             head_velocity_history=head_velocity_history,
             head_radius_history=head_radius_history,
         )
-
-
-class Environment(ArmEnvironment):
-    def get_systems(self):
-        return self.rod_list  # [self.shearable_rod]
-
-    def setup(self, E, density, rod, rod_id):
-        self.set_arm(E, density, rod, rod_id)

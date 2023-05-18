@@ -1,6 +1,6 @@
 import numpy as np
 from sopht.utils.precision import get_real_t
-from set_environment_tapered_arm import Environment
+from set_environment_tapered_arm import OctopusEnvironment
 import sopht.simulator as sps
 import elastica as ea
 import sopht.utils as spu
@@ -11,7 +11,7 @@ from octopus_initializer_functions import (
 )
 
 
-def tapered_arm_and_cylinder_flow_coupling(
+def octopus_swimming(
     non_dimensional_final_time,
     n_elems,
     slenderness_ratio,
@@ -48,7 +48,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     # =================PYELASTICA STUFF BEGIN=====================
     rod_dt = 3.0e-4 / 10 / 2
 
-    env = Environment(final_time, time_step=rod_dt, rendering_fps=30)
+    env = OctopusEnvironment(final_time, time_step=rod_dt, rendering_fps=30)
     rho_s = mass_ratio * rho_f
     base_diameter = base_length / slenderness_ratio
     base_radius = base_diameter / 2
@@ -393,7 +393,7 @@ if __name__ == "__main__":
     @click.option(
         "--adult", default=True, help="True for Adult octopus, False for Juvenile"
     )
-    def simulate_parallelised_octopus_arm(
+    def simulate_swimming_octopus(
         num_threads, nz, taper_ratio, activation_mag, period, re_scale, adult
     ):
 
@@ -443,7 +443,7 @@ if __name__ == "__main__":
 
         exp_taper_ratio = taper_ratio  # 7
         print(f"Re: {exp_Re}, Kb: {exp_non_dim_bending_stiffness}")
-        tapered_arm_and_cylinder_flow_coupling(
+        octopus_swimming(
             non_dimensional_final_time=exp_non_dimensional_final_time,
             n_elems=exp_n_elem,
             slenderness_ratio=exp_slenderness_ratio,
@@ -459,4 +459,4 @@ if __name__ == "__main__":
             save_data=False,
         )
 
-    simulate_parallelised_octopus_arm()
+    simulate_swimming_octopus()
