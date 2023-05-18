@@ -1,4 +1,3 @@
-__all__ = ["OscillationActivation"]
 import numpy as np
 
 
