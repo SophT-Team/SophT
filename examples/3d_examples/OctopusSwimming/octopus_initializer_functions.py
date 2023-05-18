@@ -117,8 +117,8 @@ def initialize_activation_functions(
     start_non_dim_length: float = 0.0,
     end_non_dim_length: float = 1.0,
 ):
-    activations = []
-    activation_functions = []
+    activations: list[list[npt.NDArray[np.float64]]] = []
+    activation_functions: list[list[object]] = []
     for rod_id, rod in enumerate(env.arm_rod_list):
         activations.append([])
         activation_functions.append([])
