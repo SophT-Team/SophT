@@ -1,4 +1,3 @@
-__all__ = ["assemble_octopus"]
 import numpy as np
 import elastica as ea
 from elastica._rotations import _get_rotation_matrix
