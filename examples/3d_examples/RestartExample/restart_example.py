@@ -269,7 +269,7 @@ def flow_past_rod_case(
                     time=flow_sim.time,
                 )
                 forcing_io.save(
-                    h5_file_name=f"forcing_grid_"
+                    h5_file_name="forcing_grid_"
                     + str("%0.4d" % (flow_sim.time * 100))
                     + ".h5",
                     time=flow_sim.time,
@@ -404,12 +404,6 @@ if __name__ == "__main__":
             exp_youngs_modulus * exp_moment_of_inertia
         )
 
-        # Drag coefficient from Silvaleon 2018 Eq 10
-        Cd = (1.13 + 11.4 / exp_Re**0.808) ** 0.952
-        # Silvaleon 2018
-        Ca_B = (
-            (2 / np.pi) * Cd * (exp_rho_f / (exp_rho_s - exp_rho_f)) / exp_froude_number
-        )
         # Final deflection angle Silvaleon 2018 Eq 15
         rod_start_incline_angle = np.deg2rad(0)
 
