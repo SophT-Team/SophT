@@ -81,8 +81,7 @@ def flow_past_rod_case(
         base_length,
         base_radius,
         density,
-        0.0,  # internal damping constant, deprecated in v0.3.0
-        youngs_modulus,
+        youngs_modulus=youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
     tip_start_position = flow_past_rod.position_collection[(x_axis_idx, y_axis_idx), -1]
@@ -130,8 +129,7 @@ def flow_past_rod_case(
         wall_length,
         base_radius,
         density,
-        0.0,  # internal damping constant, deprecated in v0.3.0
-        youngs_modulus,
+        youngs_modulus=youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
     bottom_wall_start = np.array(
@@ -149,8 +147,7 @@ def flow_past_rod_case(
         wall_length,
         base_radius,
         density,
-        0.0,  # internal damping constant, deprecated in v0.3.0
-        youngs_modulus,
+        youngs_modulus=youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
     # Since the walls are fixed, we don't add it to pyelastica simulator,
