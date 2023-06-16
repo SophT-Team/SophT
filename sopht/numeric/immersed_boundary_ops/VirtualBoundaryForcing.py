@@ -110,7 +110,7 @@ class VirtualBoundaryForcing:
         )
 
         if grid_dim == 2:
-            self.eul_lag_grid_communicator = EulerianLagrangianGridCommunicator2D(
+            self.eul_lag_grid_communicator: EulerianLagrangianGridCommunicator2D | EulerianLagrangianGridCommunicator3D = EulerianLagrangianGridCommunicator2D(
                 dx=dx,
                 eul_grid_coord_shift=eul_grid_coord_shift,
                 num_lag_nodes=num_lag_nodes,

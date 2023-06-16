@@ -252,7 +252,9 @@ def test_compute_lag_grid_velocity_mismatch_field(
         field_type=field_type,
     )
     if field_type == "scalar":
-        lag_grid_velocity_field = np.ones((mock_soln.num_lag_nodes), dtype=real_t)
+        lag_grid_velocity_field: np.ndarray = np.ones(
+            (mock_soln.num_lag_nodes), dtype=real_t
+        )
     else:
         lag_grid_velocity_field = np.ones(
             (grid_dim, mock_soln.num_lag_nodes), dtype=real_t
@@ -424,7 +426,7 @@ def test_compute_interaction_without_eul_grid_forcing_reset(
         eul_grid_velocity_shape = (n_values,) * grid_dim
     else:
         eul_grid_velocity_shape = (grid_dim,) + (n_values,) * grid_dim
-    eul_grid_forcing_field = np.zeros(eul_grid_velocity_shape, dtype=real_t)
+    eul_grid_forcing_field: np.ndarray = np.zeros(eul_grid_velocity_shape, dtype=real_t)
     virtual_boundary_forcing.compute_interaction_forcing(
         eul_grid_forcing_field=eul_grid_forcing_field,
         eul_grid_velocity_field=mock_soln.eul_grid_velocity_field,
@@ -469,7 +471,9 @@ def test_compute_interaction_with_eul_grid_forcing_reset(
         eul_grid_velocity_shape = (n_values,) * grid_dim
     else:
         eul_grid_velocity_shape = (grid_dim,) + (n_values,) * grid_dim
-    eul_grid_forcing_field = np.random.rand(*eul_grid_velocity_shape).astype(real_t)
+    eul_grid_forcing_field: np.ndarray = np.random.rand(
+        *eul_grid_velocity_shape
+    ).astype(real_t)
     virtual_boundary_forcing.compute_interaction_forcing(
         eul_grid_forcing_field=eul_grid_forcing_field,
         eul_grid_velocity_field=mock_soln.eul_grid_velocity_field,
