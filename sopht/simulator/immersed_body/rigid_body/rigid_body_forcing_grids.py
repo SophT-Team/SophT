@@ -114,6 +114,45 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         return self.cylinder.radius * (2.0 * np.pi / self.num_lag_nodes)
 
 
+class CircularCylinderConstantTemperatureForcingGrid(CircularCylinderForcingGrid):
+    """Class for temperature forcing grid of a 2D circular cylinder with cross-section
+    in XY plane. Here cylinder is always at constant temperature.
+
+    """
+
+    def __init__(
+        self,
+        grid_dim: int,
+        rigid_body: ea.Cylinder,
+        num_forcing_points: int,
+        cylinder_temperature: float,
+    ) -> None:
+        super().__init__(
+            grid_dim=grid_dim,
+            num_forcing_points=num_forcing_points,
+            rigid_body=rigid_body,
+        )
+        # Here velocity field represents the cylinder temperature.
+        self.velocity_field = cylinder_temperature * np.ones(num_forcing_points)
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        # Cylinder is not heating up or cooling down. Temperature is constant.
+        # Thus, velocity field is always constant, and we don't need to compute.
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        # Cylinder is not heating up or cooling down. Temperature is constant, so no feedback to the cylinder.
+        pass
+
+
 SupportedRigidBody3D = Union[ea.Cylinder, ea.Sphere, RectangularPlane]
 
 

@@ -157,6 +157,69 @@ def test_circular_cylinder_grid_spacing(num_forcing_points):
     assert correct_max_grid_spacing == max_grid_spacing
 
 
+@pytest.mark.parametrize("num_forcing_points", [8, 16])
+@pytest.mark.parametrize("cylinder_temperature", [10.0, 20.0, 30.0])
+def test_circular_cylinder_constant_temperature_forcing_grid_initialization(
+    num_forcing_points, cylinder_temperature
+):
+    cylinder = mock_2d_cylinder()
+    grid_dim = 2
+    # Here we are assuming that CircularCylinderForcingGrid is tested in previous tests, and we use it to compare
+    # the surface grid positions.
+    correct_circ_cyl_forcing_grid = sps.CircularCylinderForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points=num_forcing_points,
+    )
+    test_circ_cyl_forcing_grid = sps.CircularCylinderConstantTemperatureForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points=num_forcing_points,
+        cylinder_temperature=cylinder_temperature,
+    )
+
+    np.testing.assert_allclose(
+        correct_circ_cyl_forcing_grid.position_field,
+        test_circ_cyl_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Compute correct velocity field. This is a scalar size of number of forcing points and values are same as cylinder
+    # temperature.
+    correct_cylinder_velocity = cylinder_temperature * np.ones(num_forcing_points)
+
+    np.testing.assert_allclose(
+        correct_cylinder_velocity,
+        test_circ_cyl_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("num_forcing_points", [8, 16])
+@pytest.mark.parametrize("cylinder_temperature", [10.0, 20.0, 30.0])
+def test_circular_cylinder_constant_temperature_forcing_grid_validity_of_override_methods(
+    num_forcing_points, cylinder_temperature
+):
+    cylinder = mock_2d_cylinder()
+    grid_dim = 2
+
+    test_circ_cyl_forcing_grid = sps.CircularCylinderConstantTemperatureForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points=num_forcing_points,
+        cylinder_temperature=cylinder_temperature,
+    )
+    correct_cylinder_velocity = cylinder_temperature * np.ones(num_forcing_points)
+
+    # Call the method and check if values are changed or not.
+    test_circ_cyl_forcing_grid.compute_lag_grid_velocity_field()
+    np.testing.assert_allclose(
+        correct_cylinder_velocity,
+        test_circ_cyl_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
 def mock_3d_sphere():
     """Returns a mock 3D sphere (from elastica) for testing"""
     sphere_radius = 0.1
