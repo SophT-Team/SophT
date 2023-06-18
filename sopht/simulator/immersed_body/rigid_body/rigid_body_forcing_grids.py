@@ -420,3 +420,37 @@ class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         return self.grid_spacing
+
+
+class SphereConstantTemperatureForcingGrid(SphereForcingGrid):
+    """Class for temperature forcing grid of a 3D sphere"""
+
+    def __init__(
+        self,
+        grid_dim: int,
+        rigid_body: ea.Sphere,
+        num_forcing_points_along_equator: int,
+        sphere_temperature: float,
+    ) -> None:
+        super().__init__(
+            grid_dim=grid_dim,
+            num_forcing_points_along_equator=num_forcing_points_along_equator,
+            rigid_body=rigid_body,
+        )
+
+        # Here velocity field represents the cylinder temperature.
+        self.velocity_field = sphere_temperature * np.ones(self.num_lag_nodes)
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        pass

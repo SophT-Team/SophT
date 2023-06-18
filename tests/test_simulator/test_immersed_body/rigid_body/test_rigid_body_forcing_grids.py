@@ -619,3 +619,76 @@ def test_open_end_3d_circular_cylinder_grid_spacing(num_forcing_points_along_len
         cylinder.length / num_forcing_points_along_length,
     )
     assert correct_max_grid_spacing == max_grid_spacing
+
+
+@pytest.mark.parametrize("num_forcing_points_along_equator", [8, 16])
+@pytest.mark.parametrize("sphere_temperature", [10.0, 20.0, 30.0])
+def test_sphere_constant_temperature_forcing_grid_initialization(
+    num_forcing_points_along_equator, sphere_temperature
+):
+    sphere = mock_3d_sphere()
+    grid_dim = 3
+    # Here we are assuming that SphereForcingGrid is tested in previous tests, and we use it to compare
+    # the surface grid positions.
+    correct_sphere_forcing_grid = sps.SphereForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=sphere,
+        num_forcing_points_along_equator=num_forcing_points_along_equator,
+    )
+    test_sphere_forcing_grid = sps.SphereConstantTemperatureForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=sphere,
+        num_forcing_points_along_equator=num_forcing_points_along_equator,
+        sphere_temperature=sphere_temperature,
+    )
+
+    np.testing.assert_allclose(
+        correct_sphere_forcing_grid.position_field,
+        test_sphere_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Compute correct velocity field. This is a scalar size of number of forcing points and values are same as sphere
+    # temperature.
+    correct_cylinder_velocity = sphere_temperature * np.ones(
+        correct_sphere_forcing_grid.velocity_field.shape[-1]
+    )
+
+    np.testing.assert_allclose(
+        correct_cylinder_velocity,
+        test_sphere_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("num_forcing_points_along_equator", [8, 16])
+@pytest.mark.parametrize("sphere_temperature", [10.0, 20.0, 30.0])
+def test_sphere_constant_temperature_forcing_grid_validity_of_override_methods(
+    num_forcing_points_along_equator, sphere_temperature
+):
+    sphere = mock_3d_sphere()
+    grid_dim = 3
+
+    correct_sphere_forcing_grid = sps.SphereForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=sphere,
+        num_forcing_points_along_equator=num_forcing_points_along_equator,
+    )
+
+    test_sphere_forcing_grid = sps.SphereConstantTemperatureForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=sphere,
+        num_forcing_points_along_equator=num_forcing_points_along_equator,
+        sphere_temperature=sphere_temperature,
+    )
+    correct_cylinder_velocity = sphere_temperature * np.ones(
+        correct_sphere_forcing_grid.velocity_field.shape[-1]
+    )
+
+    # Call the method and check if values are changed or not.
+    test_sphere_forcing_grid.compute_lag_grid_velocity_field()
+    np.testing.assert_allclose(
+        correct_cylinder_velocity,
+        test_sphere_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
