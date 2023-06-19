@@ -29,7 +29,7 @@ class CosseratRodCPPFlowInteraction(ImmersedBodyFlowInteraction):
     ) -> None:
         """Class initialiser."""
         rod, _ = cosserat_rod_simulator.communicate()
-        n_elems = int(rod.n_elems)
+        n_elems = int(rod.n_elems[0])
         body_flow_forces = np.zeros(
             (3, n_elems + 1),
         )

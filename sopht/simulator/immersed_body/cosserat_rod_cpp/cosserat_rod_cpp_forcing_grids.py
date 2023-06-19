@@ -8,7 +8,8 @@ class CosseratRodCPPElementCentricForcingGrid(ImmersedBodyForcingGrid):
 
     def __init__(self, grid_dim: int, cosserat_rod_simulator) -> None:
         self.cs = cosserat_rod_simulator
-        num_lag_nodes = int(self.cs.n_elems)
+        rod, _ = self.cs.communicate()
+        num_lag_nodes = int(rod.n_elems[0])
         super().__init__(grid_dim, num_lag_nodes)
 
         # to ensure position/velocity are consistent during initialisation
