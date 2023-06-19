@@ -1,6 +1,8 @@
 from typing import Type
 import os
 import elastica as ea
+from sopht.simulator import FlowSimulator
+from sopht.utils import IO
 
 
 def restart_simulation(
