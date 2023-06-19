@@ -5,7 +5,6 @@ import sopht.utils as spu
 import click
 import os
 from matplotlib import pyplot as plt
-from post_processing import restart_simulation
 
 
 def flow_past_rod_case(
