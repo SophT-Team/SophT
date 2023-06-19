@@ -6,3 +6,4 @@ from .io import IO, CosseratRodIO, EulerianFieldIO
 from .rod_viz import plot_video_of_rod_surface
 from .precision import get_real_t, get_test_tol
 from .pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
+from .restart import restart_simulation
