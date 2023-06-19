@@ -197,8 +197,7 @@ class MagneticCiliaCarpetSimulator:
                 self.rod_base_length,
                 base_radius,
                 density,
-                0.0,
-                youngs_modulus,
+                youngs_modulus=youngs_modulus,
                 shear_modulus=shear_modulus,
             )
             self.magnetic_beam_sim.append(magnetic_rod)

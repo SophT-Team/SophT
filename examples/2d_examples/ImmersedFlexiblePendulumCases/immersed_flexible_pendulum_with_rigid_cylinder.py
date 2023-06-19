@@ -48,8 +48,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         rod_length,
         base_radius,
         density,
-        0.0,  # internal damping constant, deprecated in v0.3.0
-        youngs_modulus,
+        youngs_modulus=youngs_modulus,
         shear_modulus=youngs_modulus / (poisson_ratio + 1.0),
     )
     pendulum_sim.append(pendulum_rod)

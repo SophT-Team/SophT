@@ -85,7 +85,6 @@ class ArmEnvironment:
             base_length=base_length,
             base_radius=radius_mean.copy(),
             density=density,
-            nu=0.0,  # internal damping constant, deprecated in v0.3.0
             youngs_modulus=10_000,
             shear_modulus=10_000 / (2 * (1 + 0.5)),
             # poisson_ratio=0.5, Default is 0.5

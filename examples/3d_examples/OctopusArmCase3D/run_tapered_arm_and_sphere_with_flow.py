@@ -74,7 +74,6 @@ def tapered_arm_and_cylinder_flow_coupling(
         base_length=base_length,
         base_radius=radius_mean.copy(),
         density=rho_s,
-        nu=0.0,  # internal damping constant, deprecated in v0.3.0
         youngs_modulus=youngs_modulus,
         shear_modulus=shear_modulus,
     )
