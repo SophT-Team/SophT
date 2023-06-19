@@ -28,5 +28,7 @@ def restart_simulation(
     _ = forcing_io.load(h5_file_name=f"forcing_grid_{latest:04d}.h5")
     rod_time = ea.load_state(restart_example_simulator, restart_dir, True)
 
-    assert flow_sim.time == rod_time, 'Simulation time of the flow is not matched with the Elastica, check your inputs!'
+    assert (
+        flow_sim.time == rod_time
+    ), "Simulation time of the flow is not matched with the Elastica, check your inputs!"
     print(f"sopht_{latest:04d}.h5 has been loaded")
