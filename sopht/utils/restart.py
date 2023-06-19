@@ -1,14 +1,14 @@
-from typing import Type
+from typing import Type, Any
 import os
 import elastica as ea
 
 
 def restart_simulation(
-    flow_sim: Type,
-    restart_example_simulator: Type,
-    io: Type,
-    rod_io: Type,
-    forcing_io: Type,
+    flow_sim: Type[Any],
+    restart_example_simulator: Type[Any],
+    io: Type[Any],
+    rod_io: Type[Any],
+    forcing_io: Type[Any],
     restart_dir: str,
 ) -> None:
     # find latest saved data
