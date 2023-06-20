@@ -51,7 +51,6 @@ class ElasticFishSimulator:
             base_length=self.base_length,
             base_radius=width,
             density=rod_density,
-            nu=0.0,  # internal damping constant, deprecated in v0.3.0
             youngs_modulus=youngs_modulus,
             shear_modulus=shear_modulus,
         )
@@ -64,7 +63,6 @@ class ElasticFishSimulator:
             base_length=self.base_length,
             base_radius=width,
             density=rod_density,
-            nu=0.0,  # internal damping constant, deprecated in v0.3.0
             youngs_modulus=youngs_modulus,
             shear_modulus=shear_modulus,
         )

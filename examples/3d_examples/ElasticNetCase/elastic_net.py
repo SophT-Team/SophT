@@ -152,8 +152,7 @@ class ElasticNetSimulator:
                 self.base_length_rod_along_y,
                 base_radius,
                 rod_density,
-                0.0,
-                youngs_modulus,
+                youngs_modulus=youngs_modulus,
                 shear_modulus=shear_modulus,
                 position=positions,
             )
@@ -188,8 +187,7 @@ class ElasticNetSimulator:
                 self.base_length_rod_along_x,
                 base_radius,
                 rod_density,
-                0.0,
-                youngs_modulus,
+                youngs_modulus=youngs_modulus,
                 shear_modulus=shear_modulus,
                 position=positions,
             )
