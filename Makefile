@@ -50,6 +50,10 @@ flake8:
 mypy:
 	poetry run mypy ./
 
+.PHONY: docs
+docs:
+	sphinx-build -b html docs/source/ docs/build/html
+
 .PHONY: format-codestyle
 format-codestyle: black flake8 mypy
 

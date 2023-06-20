@@ -32,6 +32,9 @@ matplotlib = "^3.3.2"
 click = {version = "^8.1", optional = true, extras = ["examples"]}
 coomm = {version = ">=0.0.1.post2", optional = true, extras = ["examples"]}
 magneto_pyelastica = {version = ">=0.0.1", optional = true, extras = ["examples"]}
+numpydoc = {version = ">=1.5.0", optional = true}
+sphinx = {version = ">=7.0.0", optional = true}
+furo = {optional = true}
 
 
 [tool.poetry.dev-dependencies]
@@ -45,6 +48,7 @@ mypy = "^0.982"
 
 [tool.poetry.extras]
 examples = ["click", "coomm", "magneto_pyelastica"]
+docs = ["sphinx", "furo", "numpydoc"]
 
 [tool.black]
 # https://github.com/psf/black
