@@ -16,7 +16,7 @@ def flow_past_rod_case(
     stretch_bending_ratio: float,
     poisson_ratio: float = 0.5,
     reynolds: float = 100.0,
-    coupling_stiffness: float = -2e5,
+    coupling_stiffness: float = -2e4,
     coupling_damping: float = -1e2,
     rod_start_incline_angle: float = 0.0,
     num_threads: int = 4,
@@ -87,7 +87,7 @@ def flow_past_rod_case(
     # add damping
     dl = base_length / n_elem
     rod_dt = 0.01 * dl
-    damping_constant = 1e-3
+    damping_constant = 16e-3
     flow_past_sim.dampen(flow_past_rod).using(
         ea.AnalyticalLinearDamper,
         damping_constant=damping_constant,
@@ -106,7 +106,7 @@ def flow_past_rod_case(
         real_t=real_t,
         num_threads=num_threads,
         filter_vorticity=True,
-        filter_setting_dict={"order": 1, "type": "multiplicative"},
+        filter_setting_dict={"order": 5, "type": "convolution"},
     )
     # ==================FLOW SETUP END=========================
 
@@ -239,7 +239,7 @@ def flow_past_rod_case(
                 )
 
         # compute timestep
-        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
+        flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
         # flow_dt = rod_dt
 
         # timestep the rod, through the flow timestep
