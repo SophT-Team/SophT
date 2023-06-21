@@ -535,7 +535,7 @@ class MockSurfaceForcingGrid:
                     n_point_per_elem += end_elem_surface_grid_points.sum()
                     self.surface_point_rotation_angle_list[i] = np.append(
                         self.surface_point_rotation_angle_list[i],
-                        (
+                        np.concatenate(
                             [
                                 np.linspace(0, 2 * np.pi, num_points, endpoint=False)
                                 for num_points in end_elem_surface_grid_points
