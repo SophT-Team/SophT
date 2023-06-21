@@ -21,7 +21,6 @@ def mock_straight_rod(n_elems, **kwargs):
         rod_length,
         base_radius,
         density=1e3,
-        nu=0.0,  # internal damping constant, deprecated in v0.3.0
         youngs_modulus=1e6,
         shear_modulus=1e6 / (0.5 + 1.0),
     )
@@ -536,7 +535,7 @@ class MockSurfaceForcingGrid:
                     n_point_per_elem += end_elem_surface_grid_points.sum()
                     self.surface_point_rotation_angle_list[i] = np.append(
                         self.surface_point_rotation_angle_list[i],
-                        (
+                        np.concatenate(
                             [
                                 np.linspace(0, 2 * np.pi, num_points, endpoint=False)
                                 for num_points in end_elem_surface_grid_points

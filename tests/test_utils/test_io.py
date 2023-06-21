@@ -396,7 +396,6 @@ def test_cosserat_rod_io(dim, precision):
     rod_length = 1.0
     rod_element_radius = np.linspace(0.01, 0.5, n_element)
     density = 1.0
-    nu = 1.0
     youngs_modulus = 1.0
     rod = ea.CosseratRod.straight_rod(
         n_element,
@@ -406,8 +405,7 @@ def test_cosserat_rod_io(dim, precision):
         rod_length,
         rod_element_radius,
         density,
-        nu,
-        youngs_modulus,
+        youngs_modulus=youngs_modulus,
     )
     time = np.random.rand()
 
