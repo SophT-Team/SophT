@@ -21,7 +21,6 @@ def mock_straight_rod(n_elems, **kwargs):
         rod_length,
         base_radius,
         density=1e3,
-        nu=0.0,  # internal damping constant, deprecated in v0.3.0
         youngs_modulus=1e6,
         shear_modulus=1e6 / (0.5 + 1.0),
     )
