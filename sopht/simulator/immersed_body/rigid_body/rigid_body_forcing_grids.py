@@ -139,8 +139,15 @@ class CircularCylinderConstantTemperatureForcingGrid(CircularCylinderForcingGrid
         self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_velocity_field(self) -> None:
-        # Cylinder is not heating up or cooling down. Temperature is constant.
-        # Thus, velocity field is always constant, and we don't need to compute.
+        """
+        Cylinder is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
+
         pass
 
     def transfer_forcing_from_grid_to_body(
@@ -149,7 +156,21 @@ class CircularCylinderConstantTemperatureForcingGrid(CircularCylinderForcingGrid
         body_flow_torques: np.ndarray,
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
-        # Cylinder is not heating up or cooling down. Temperature is constant, so no feedback to the cylinder.
+        """
+        Cylinder is not heating up or cooling down.
+        Temperature is constant, so no feedback to the cylinder.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+
         pass
 
 
@@ -445,6 +466,14 @@ class SphereConstantTemperatureForcingGrid(SphereForcingGrid):
         self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_velocity_field(self) -> None:
+        """
+        Sphere is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
         pass
 
     def transfer_forcing_from_grid_to_body(
@@ -453,4 +482,18 @@ class SphereConstantTemperatureForcingGrid(SphereForcingGrid):
         body_flow_torques: np.ndarray,
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
+        """
+        Sphere is not heating up or cooling down.
+        Temperature is constant, so no feedback to the rigid body.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
         pass
