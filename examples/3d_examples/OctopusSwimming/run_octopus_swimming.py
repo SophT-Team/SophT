@@ -1,6 +1,6 @@
 import numpy as np
 from sopht.utils.precision import get_real_t
-from set_environment_tapered_arm import OctopusEnvironment
+from set_environment_octopus import OctopusEnvironment
 import sopht.simulator as sps
 import elastica as ea
 import sopht.utils as spu

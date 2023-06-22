@@ -3,7 +3,7 @@ import numpy.typing as npt
 import elastica as ea
 from elastica._rotations import _get_rotation_matrix
 from oscillation_activation_functions import OscillationActivation
-from set_environment_tapered_arm import OctopusEnvironment
+from set_environment_octopus import OctopusEnvironment
 
 
 def assemble_octopus(
