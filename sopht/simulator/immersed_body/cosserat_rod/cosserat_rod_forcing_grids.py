@@ -600,3 +600,98 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 self.surface_point_rotation_angle_list[
                     rod_end_idx
                 ] = surface_point_angles
+
+
+class CosseratRodConstantTemperatureNodalForcingGrid(CosseratRodNodalForcingGrid):
+    def __init__(
+        self, grid_dim: int, cosserat_rod: ea.CosseratRod, rod_temperature
+    ) -> None:
+        super().__init__(grid_dim, cosserat_rod)
+
+        self.rod_temperature = rod_temperature
+
+        self.velocity_field = np.ones((self.num_lag_nodes)) * self.rod_temperature
+
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """
+        Cosserat rod is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """
+        Cosserat is not heating up or cooling down.
+        Temperature is constant, so no feedback to the rod.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+
+        pass
+
+
+class CosseratRodConstantTemperatureEdgeForcingGrid(CosseratRodEdgeForcingGrid):
+    def __init__(
+        self, grid_dim: int, cosserat_rod: ea.CosseratRod, rod_temperature
+    ) -> None:
+        super().__init__(grid_dim, cosserat_rod)
+
+        self.rod_temperature = rod_temperature
+        self.velocity_field = np.ones((self.num_lag_nodes)) * self.rod_temperature
+
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """
+        Cosserat rod is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """
+        Cosserat is not heating up or cooling down.
+        Temperature is constant, so no feedback to the rod.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+
+        pass
