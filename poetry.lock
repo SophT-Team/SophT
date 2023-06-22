@@ -141,17 +141,20 @@ test-no-images = ["pytest", "pytest-cov", "wurlitzer"]
 
 [[package]]
 name = "coomm"
-version = "0.0.1.post2"
-description = "Control Oriented Muscle Model of an octopus arm"
+version = "0.1.1"
+description = "Control Oriented Muscle Model for an octopus arm."
 optional = true
-python-versions = ">=3.7.0"
+python-versions = ">=3.10,<3.11"
 files = [
-    {file = "COOMM-0.0.1.post2-py2.py3-none-any.whl", hash = "sha256:0085d946efaa81b539e8316009098f655f507abc07de51bc21a1320399b49b74"},
-    {file = "COOMM-0.0.1.post2.tar.gz", hash = "sha256:f4080a48d3144c251c34c68fd324f752f94089bfdca13af9ea353f4955d50b78"},
+    {file = "coomm-0.1.1-py3-none-any.whl", hash = "sha256:2494e724359b96ed7b404a53cbd51d18ed1b956115fc42f9990ce0b3e5803d5d"},
+    {file = "coomm-0.1.1.tar.gz", hash = "sha256:2f648579412e59448bf1e68240eaaf2ac796e2cc87053b65bd76eac19797cefc"},
 ]
 
 [package.dependencies]
-matplotlib = ">=0.2.2.post2"
+matplotlib = ">=3.7.1,<4.0.0"
+numba = ">=0.55.0,<0.56.0"
+numpy = ">=1.19.2,<2.0.0"
+pyelastica = ">=0.3.1.post1,<0.4.0"
 
 [[package]]
 name = "coverage"
@@ -1321,4 +1324,4 @@ examples = ["click", "coomm", "magneto_pyelastica"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "81c4ebb0d9ebd7e49a7a36f7216b4fa18319205d45d335e2390a27a40688e56f"
+content-hash = "fdec2e95ced45153b284873aeb1efff60167658d993379e08754be5b80ea4d18"

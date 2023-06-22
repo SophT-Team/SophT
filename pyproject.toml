@@ -30,7 +30,7 @@ h5py = "^3.6"
 pyelastica = "^0.3"
 matplotlib = "^3.3.2"
 click = {version = "^8.1", optional = true, extras = ["examples"]}
-coomm = {version = ">=0.0.1.post2", optional = true, extras = ["examples"]}
+coomm = {version = ">=0.1.1", optional = true, extras = ["examples"]}
 magneto_pyelastica = {version = ">=0.0.1", optional = true, extras = ["examples"]}
 
 
