@@ -5,5 +5,6 @@ from .cosserat_rod_forcing_grids import (
     CosseratRodEdgeForcingGrid,
     CosseratRodConstantTemperatureNodalForcingGrid,
     CosseratRodConstantTemperatureEdgeForcingGrid,
+    CosseratRodConstantTemperatureSurfaceForcingGrid,
 )
 from .cosserat_rod_flow_interaction import CosseratRodFlowInteraction
