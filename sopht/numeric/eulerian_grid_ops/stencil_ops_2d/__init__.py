@@ -28,3 +28,6 @@ from .update_vorticity_from_velocity_forcing_2d import (
     gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d,
     gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d,
 )
+from .update_passive_field_from_forcing_2d import (
+    gen_update_passive_field_from_forcing_pyst_kernel_2d,
+)

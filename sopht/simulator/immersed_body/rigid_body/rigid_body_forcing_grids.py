@@ -5,7 +5,7 @@ from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 from sopht.simulator.immersed_body.rigid_body.derived_rigid_bodies import (
     RectangularPlane,
 )
-from typing import Union
+from typing import Union, Type
 
 
 class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
@@ -172,6 +172,147 @@ class CircularCylinderConstantTemperatureForcingGrid(CircularCylinderForcingGrid
         """
 
         pass
+
+
+class CircularCylinderVirtualLayerTemperatureForcingGrid(CircularCylinderForcingGrid):
+    """Class for temperature forcing grid of a 2D circular cylinder with cross-section
+    in XY plane. Here cylinder is always at constant temperature.
+
+    """
+
+    def __init__(
+        self,
+        grid_dim: int,
+        rigid_body: ea.Cylinder,
+        num_forcing_points: int,
+        eul_dx: float = 0.0,
+    ) -> None:
+        super().__init__(
+            grid_dim=grid_dim,
+            num_forcing_points=num_forcing_points,
+            rigid_body=rigid_body,
+        )
+        # Here velocity field represents the cylinder temperature.
+        self.velocity_field = np.zeros(num_forcing_points)
+        self.lag_grid_forcing_field = np.zeros(num_forcing_points)
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+        center = np.zeros((2, num_forcing_points))
+        # center[:] = rigid_body.position_collection[:grid_dim]
+
+        self.surface_normals = self.local_frame_relative_position_field - center
+        for i in range(num_forcing_points):
+            self.surface_normals[:, i] /= np.linalg.norm(self.surface_normals[:, i])
+
+        self.eul_dx = eul_dx
+
+        self.local_frame_relative_position_field += self.eul_dx * self.surface_normals
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """
+        Cylinder is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
+
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """
+        Cylinder is not heating up or cooling down.
+        Temperature is constant, so no feedback to the cylinder.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+        pass
+
+
+class CircularCylinderIndirectNeummanConditionForcingGrid(CircularCylinderForcingGrid):
+    """Class for temperature forcing grid of a 2D circular cylinder with cross-section
+    in XY plane. Here cylinder is always at constant temperature.
+
+    """
+
+    def __init__(
+        self,
+        grid_dim: int,
+        rigid_body: ea.Cylinder,
+        num_forcing_points: int,
+        heat_flux: float = 0,
+        eul_dx: float = 0,
+        virtual_layer_interactor: Type = CircularCylinderVirtualLayerTemperatureForcingGrid,
+    ) -> None:
+        super().__init__(
+            grid_dim=grid_dim,
+            num_forcing_points=num_forcing_points,
+            rigid_body=rigid_body,
+        )
+        # Here velocity field represents the cylinder temperature.
+        self.velocity_field = np.zeros(num_forcing_points)
+        self.lag_grid_forcing_field = np.zeros(num_forcing_points)
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+        self.heat_flux_dx = heat_flux * eul_dx
+
+        self.virtual_layer_interactor = virtual_layer_interactor
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """
+        Cylinder is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
+
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """
+        Cylinder is not heating up or cooling down.
+        Temperature is constant, so no feedback to the cylinder.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+
+        self.velocity_field = (
+            -self.heat_flux_dx
+            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
+        )
 
 
 SupportedRigidBody3D = Union[ea.Cylinder, ea.Sphere, RectangularPlane]
