@@ -1,12 +1,22 @@
-from typing import Type
+from typing import Type, Union
 import os
 import elastica as ea
-from sopht.simulator.flow.flow_simulators import FlowSimulator
+from sopht.simulator.flow.navier_stokes_flow_simulators import (
+    UnboundedNavierStokesFlowSimulator3D,
+    UnboundedNavierStokesFlowSimulator2D,
+)
+from sopht.simulator.flow.passive_transport_flow_simulators import (
+    PassiveTransportFlowSimulator,
+)
 from sopht.utils.io import IO
 
 
 def restart_simulation(
-    flow_sim: Type[FlowSimulator],
+    flow_sim: Union[
+        UnboundedNavierStokesFlowSimulator2D,
+        UnboundedNavierStokesFlowSimulator3D,
+        PassiveTransportFlowSimulator,
+    ],
     restart_simulator: Type[ea.BaseSystemCollection],
     io: IO,
     rod_io: IO,
