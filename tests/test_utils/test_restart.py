@@ -210,7 +210,7 @@ def run_sim(
                 time=flow_sim.time,
             )
             forcing_io.save(
-                h5_file_name=f"forcing_grid_"
+                h5_file_name="forcing_grid_"
                 + str("%0.4d" % (flow_sim.time * 100))
                 + ".h5",
                 time=flow_sim.time,
