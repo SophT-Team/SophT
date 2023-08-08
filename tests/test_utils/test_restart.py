@@ -1,160 +1,150 @@
-from typing import Type
 import pytest
 import sopht.utils as spu
 import sopht.simulator as sps
 import elastica as ea
 import numpy as np
 import os
-from sopht.simulator.flow.flow_simulators import FlowSimulator
-from sopht.simulator.immersed_body.immersed_body_flow_interaction import (
-    ImmersedBodyFlowInteraction,
-)
 from numpy.testing import assert_allclose
 
 
-@pytest.mark.parametrize("grid_size_x", [32])
+@pytest.mark.parametrize("grid_size_x", [64])
 @pytest.mark.parametrize("precision", ["single"])
 @pytest.mark.parametrize("with_free_stream", [True])
 @pytest.mark.parametrize("filter_vorticity", [True])
 def test_restart_simulation(precision, grid_size_x, with_free_stream, filter_vorticity):
+
+    final_time = 0.25
+
+    # run first half of the simulation
+    _ = run_sim(
+        final_time / 2,
+        save_data=True,
+        load_data=False,
+        precision=precision,
+        grid_size_x=grid_size_x,
+        with_free_stream=with_free_stream,
+        filter_vorticity=filter_vorticity,
+    )
+
+    # run second half of the simulation
+    recorded_data_restarted = run_sim(
+        final_time,
+        save_data=False,
+        load_data=True,
+        precision=precision,
+        grid_size_x=grid_size_x,
+        with_free_stream=with_free_stream,
+        filter_vorticity=filter_vorticity,
+    )
+
+    # run full simulation
+    recorded_data_full = run_sim(
+        final_time,
+        save_data=False,
+        load_data=False,
+        precision=precision,
+        grid_size_x=grid_size_x,
+        with_free_stream=with_free_stream,
+        filter_vorticity=filter_vorticity,
+    )
+
+    os.system("rm -f *h5 *xmf")
+
+    for i in range(len(recorded_data_restarted)):
+        assert_allclose(recorded_data_restarted[i], recorded_data_full[i])
+
+
+def run_sim(
+    final_time: float,
+    save_data: bool,
+    load_data: bool,
+    precision: str,
+    grid_size_x: int,
+    with_free_stream: bool,
+    filter_vorticity: bool,
+):
     class RestartTestSimulator(
         ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
     ):
         ...
 
-    for i in range(3):
-        restart_test_simulator = RestartTestSimulator()
+    restart_test_simulator = RestartTestSimulator()
 
-        final_time = 0.25
-        num_threads = 4
-        grid_dim = 3
-        x_range = 1.8
-        nu = 3e-3
-        real_t = spu.get_real_t(precision)
-        grid_size = (grid_size_x, int(0.25 * grid_size_x), grid_size_x)
-        filter_type = "multiplicative"
-        filter_order = 1
-        flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
-            grid_size=grid_size,
-            x_range=x_range,
-            kinematic_viscosity=nu,
-            with_forcing=True,
-            with_free_stream_flow=with_free_stream,
-            real_t=real_t,
-            num_threads=num_threads,
-            filter_vorticity=filter_vorticity,
-            filter_setting_dict={"type": filter_type, "order": filter_order},
-        )
+    num_threads = 4
+    grid_dim = 3
+    x_range = 1.8
+    nu = 3e-3
+    real_t = spu.get_real_t(precision)
+    grid_size = (grid_size_x, int(0.25 * grid_size_x), grid_size_x)
+    filter_type = "multiplicative"
+    filter_order = 1
 
-        n_elems = 40
-        cosserat_rod = ea.CosseratRod.straight_rod(
-            n_elems,
-            start=np.array([0.2 * x_range, 0.5 * x_range * 0.25, 0.75 * x_range]),
-            direction=np.array([0.0, 0.0, -1.0]),
-            normal=np.array([0.0, 1.0, 0.0]),
-            base_length=1,
-            base_radius=0.045,
-            density=830,
-            youngs_modulus=865,
-            shear_modulus=865 / 1.01,
-        )
+    flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
+        grid_size=grid_size,
+        x_range=x_range,
+        kinematic_viscosity=nu,
+        with_forcing=True,
+        with_free_stream_flow=with_free_stream,
+        real_t=real_t,
+        num_threads=num_threads,
+        filter_vorticity=filter_vorticity,
+        filter_setting_dict={"type": filter_type, "order": filter_order},
+    )
 
-        restart_test_simulator.append(cosserat_rod)
+    n_elems = 40
+    cosserat_rod = ea.CosseratRod.straight_rod(
+        n_elems,
+        start=np.array([0.2 * x_range, 0.5 * x_range * 0.25, 0.75 * x_range]),
+        direction=np.array([0.0, 0.0, -1.0]),
+        normal=np.array([0.0, 1.0, 0.0]),
+        base_length=1,
+        base_radius=0.045,
+        density=830,
+        youngs_modulus=865,
+        shear_modulus=865 / 1.01,
+    )
 
-        restart_test_simulator.constrain(cosserat_rod).using(
-            ea.OneEndFixedBC,
-            constrained_position_idx=(0,),
-            constrained_director_idx=(0,),
-        )
-        # Add gravitational forces
-        restart_test_simulator.add_forcing_to(cosserat_rod).using(
-            ea.GravityForces, acc_gravity=np.array([0.0, 0.0, -0.036])
-        )
-        # add damping
-        dl = 1 / n_elems
-        rod_dt = 0.01 * dl
-        damping_constant = 1e-3
-        restart_test_simulator.dampen(cosserat_rod).using(
-            ea.AnalyticalLinearDamper,
-            damping_constant=damping_constant,
-            time_step=rod_dt,
-        )
+    restart_test_simulator.append(cosserat_rod)
 
-        forcing_grid_cls = sps.CosseratRodSurfaceForcingGrid
-        rod_flow_interactor = sps.CosseratRodFlowInteraction(
-            cosserat_rod=cosserat_rod,
-            eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
-            eul_grid_velocity_field=flow_sim.velocity_field,
-            virtual_boundary_stiffness_coeff=-200000.0,
-            virtual_boundary_damping_coeff=-100.0,
-            dx=flow_sim.dx,
-            grid_dim=grid_dim,
-            real_t=real_t,
-            forcing_grid_cls=forcing_grid_cls,
-            surface_grid_density_for_largest_element=16,
-        )
+    restart_test_simulator.constrain(cosserat_rod).using(
+        ea.OneEndFixedBC,
+        constrained_position_idx=(0,),
+        constrained_director_idx=(0,),
+    )
+    # Add gravitational forces
+    restart_test_simulator.add_forcing_to(cosserat_rod).using(
+        ea.GravityForces, acc_gravity=np.array([0.0, 0.0, -0.036])
+    )
+    # add damping
+    dl = 1 / n_elems
+    rod_dt = 0.01 * dl
+    damping_constant = 1e-3
+    restart_test_simulator.dampen(cosserat_rod).using(
+        ea.AnalyticalLinearDamper,
+        damping_constant=damping_constant,
+        time_step=rod_dt,
+    )
 
-        restart_test_simulator.add_forcing_to(cosserat_rod).using(
-            sps.FlowForces,
-            rod_flow_interactor,
-        )
+    forcing_grid_cls = sps.CosseratRodSurfaceForcingGrid
+    rod_flow_interactor = sps.CosseratRodFlowInteraction(
+        cosserat_rod=cosserat_rod,
+        eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=flow_sim.velocity_field,
+        virtual_boundary_stiffness_coeff=-200000.0,
+        virtual_boundary_damping_coeff=-100.0,
+        dx=flow_sim.dx,
+        grid_dim=grid_dim,
+        real_t=real_t,
+        forcing_grid_cls=forcing_grid_cls,
+        surface_grid_density_for_largest_element=16,
+    )
 
-        restart_test_simulator.finalize()
+    restart_test_simulator.add_forcing_to(cosserat_rod).using(
+        sps.FlowForces,
+        rod_flow_interactor,
+    )
 
-        if i == 0:
-            recorded_data = run_sim(
-                final_time / 2,
-                flow_sim,
-                restart_test_simulator,
-                rod_flow_interactor,
-                cosserat_rod,
-                save_data=True,
-                load_data=False,
-                grid_dim=grid_dim,
-                precision=precision,
-            )
-        elif i == 1:
-            recorded_data = run_sim(
-                final_time,
-                flow_sim,
-                restart_test_simulator,
-                rod_flow_interactor,
-                cosserat_rod,
-                save_data=False,
-                load_data=True,
-                grid_dim=grid_dim,
-                precision=precision,
-            )
-        else:
-            recorded_data_full = run_sim(
-                final_time,
-                flow_sim,
-                restart_test_simulator,
-                rod_flow_interactor,
-                cosserat_rod,
-                save_data=False,
-                load_data=False,
-                grid_dim=grid_dim,
-                precision=precision,
-            )
-
-    os.system("rm -f *h5 *xmf")
-
-    for i in range(len(recorded_data)):
-        assert_allclose(recorded_data[i], recorded_data_full[i])
-
-
-def run_sim(
-    final_time: float,
-    flow_sim: Type[FlowSimulator],
-    restart_test_simulator: Type[ea.BaseSystemCollection],
-    rod_flow_interactor: Type[ImmersedBodyFlowInteraction],
-    cosserat_rod: Type[ea.CosseratRod],
-    save_data: bool,
-    load_data: bool,
-    grid_dim: int,
-    precision: str,
-):
+    restart_test_simulator.finalize()
 
     restart_dir = "restart_data"
     free_stream_velocity = np.array([1.0, 0.0, 0.0])
@@ -246,7 +236,7 @@ def run_sim(
     recorded_data.append(flow_sim.velocity_field)
     recorded_data.append(flow_sim.vorticity_field)
     recorded_data.append(flow_sim.position_field)
-    recorded_data.append(flow_sim.time)
+    recorded_data.append(np.array([flow_sim.time]))
     recorded_data.append(rod_flow_interactor.lag_grid_forcing_field)
     recorded_data.append(rod_flow_interactor.forcing_grid.position_field)
     recorded_data.append(cosserat_rod.position_collection)
