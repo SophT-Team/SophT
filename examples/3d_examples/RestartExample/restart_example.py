@@ -157,8 +157,8 @@ def flow_past_rod_case(
         forcing_io.add_as_lagrangian_fields_for_io(
             lagrangian_grid=cosserat_rod_flow_interactor.forcing_grid.position_field,
             lagrangian_grid_name="cosseratrod",
-            vector_3d=cosserat_rod_flow_interactor.lag_grid_forcing_field,
-            position_mismatch=cosserat_rod_flow_interactor.lag_grid_position_mismatch_field,
+            lagrangian_grid_forcing_field=cosserat_rod_flow_interactor.lag_grid_forcing_field,
+            lagrangiang_grid_position_mismatch_field=cosserat_rod_flow_interactor.lag_grid_position_mismatch_field,
         )
 
     restart_dir = "restart_data"
