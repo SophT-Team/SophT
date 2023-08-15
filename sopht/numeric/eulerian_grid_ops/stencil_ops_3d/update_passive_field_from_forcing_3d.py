@@ -9,7 +9,7 @@ from typing import Callable
 def gen_update_passive_field_from_forcing_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int] | bool = False,
+    fixed_grid_size: tuple[int, int, int] | bool = False,
 ) -> Callable:
     # TODO expand docs
     """Update passive field based on feedback forcing in 3D kernel generator."""

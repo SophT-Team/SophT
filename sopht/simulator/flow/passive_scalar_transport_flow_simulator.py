@@ -27,7 +27,7 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
         time: float = 0.0,
         field_type: Literal["scalar"] = "scalar",
         with_forcing: bool = False,
-        velocity_field: Type = np.ndarray,
+        velocity_field: np.ndarray = np.array([None]),
         **kwargs,
     ) -> None:
         """Class initialiser
@@ -204,9 +204,7 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
         self._flow_time_step: Callable = self._advection_and_diffusion_time_step
 
         if self.with_forcing:
-            self._flow_time_step: Callable = (
-                self._advection_and_diffusion_with_forcing_time_step
-            )
+            self._flow_time_step = self._advection_and_diffusion_with_forcing_time_step
 
     def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
