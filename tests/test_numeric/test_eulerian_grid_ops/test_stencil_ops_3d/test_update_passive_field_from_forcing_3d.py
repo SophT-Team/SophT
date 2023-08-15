@@ -1,17 +1,7 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
-from sopht.numeric.eulerian_grid_ops import (
-    gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d,
-    gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d,
-)
 from sopht.utils.precision import get_real_t, get_test_tol
-import sys
-
-sys.path.append("/")
 import sopht.numeric.eulerian_grid_ops as spne
 
 

@@ -1,12 +1,7 @@
 import numpy as np
-
 import psutil
-
 import pytest
 from sopht.utils.precision import get_real_t, get_test_tol
-import sys
-
-sys.path.append("/")
 import sopht.numeric.eulerian_grid_ops as spne
 
 
