@@ -807,3 +807,100 @@ def test_rod_surface_grid_spacing(n_elems, largest_element_grid_density, taper_r
     )
 
     np.testing.assert_allclose(correct_max_grid_spacing, max_grid_spacing)
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("rod_temperature", [-13.0, 20.0, 50.0])
+def test_rod_constant_temperature_nodal_forcing_grid(n_elems, rod_temperature):
+
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodNodalForcingGrid(
+        grid_dim=3, cosserat_rod=straight_rod
+    )
+    test_rod_forcing_grid = sps.CosseratRodConstantTemperatureNodalForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        rod_temperature=rod_temperature,
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the nodal temperatures
+    correct_grid_temperatures = rod_temperature * np.ones(n_elems + 1)
+    np.testing.assert_allclose(
+        correct_grid_temperatures,
+        test_rod_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("rod_temperature", [-13.0, 20.0, 50.0])
+def test_rod_constant_temperature_edge_forcing_grid(n_elems, rod_temperature):
+
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodEdgeForcingGrid(
+        grid_dim=2, cosserat_rod=straight_rod
+    )
+    test_rod_forcing_grid = sps.CosseratRodConstantTemperatureEdgeForcingGrid(
+        grid_dim=2,
+        cosserat_rod=straight_rod,
+        rod_temperature=rod_temperature,
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the nodal temperatures
+    correct_grid_temperatures = rod_temperature * np.ones(3 * n_elems)
+    np.testing.assert_allclose(
+        correct_grid_temperatures,
+        test_rod_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("rod_temperature", [-13.0, 20.0, 50.0])
+@pytest.mark.parametrize("surface_grid_density_for_largest_element", [10.0, 20.0, 50.0])
+def test_rod_constant_temperature_surface_forcing_grid(
+    n_elems, rod_temperature, surface_grid_density_for_largest_element
+):
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+    )
+    test_rod_forcing_grid = sps.CosseratRodConstantTemperatureSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        rod_temperature=rod_temperature,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the nodal temperatures
+    correct_grid_temperatures = rod_temperature * np.ones(
+        correct_rod_forcing_grid.num_lag_nodes
+    )
+    np.testing.assert_allclose(
+        correct_grid_temperatures,
+        test_rod_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
