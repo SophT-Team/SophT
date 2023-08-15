@@ -220,6 +220,156 @@ def test_circular_cylinder_constant_temperature_forcing_grid_validity_of_overrid
     )
 
 
+@pytest.mark.parametrize("num_forcing_points", [8, 16])
+def test_circular_cylinder_virtual_layer_temperature_forcing_grid_initialization(
+    num_forcing_points,
+):
+    cylinder = mock_2d_cylinder()
+    grid_dim = 2
+    # Here we are assuming that CircularCylinderForcingGrid is tested in previous tests, and we use it to compare
+    # the surface grid positions.
+    correct_circ_cyl_forcing_grid = sps.CircularCylinderForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points=num_forcing_points,
+    )
+    eul_dx = correct_circ_cyl_forcing_grid.get_maximum_lagrangian_grid_spacing()
+    test_circ_cyl_forcing_grid = sps.CircularCylinderVirtualLayerTemperatureForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points=num_forcing_points,
+        eul_dx=eul_dx,
+    )
+
+    np.testing.assert_allclose(
+        correct_circ_cyl_forcing_grid.position_field,
+        test_circ_cyl_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    np.testing.assert_allclose(
+        eul_dx,
+        test_circ_cyl_forcing_grid.eul_dx,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Compute correct surface normals.
+    surface_normals = (
+        correct_circ_cyl_forcing_grid.local_frame_relative_position_field.copy()
+    )
+    surface_normals /= np.linalg.norm(surface_normals, axis=0)
+    # Virtual layer is one dx away from the cylinder.
+    correct_frame_relative_position = (
+        correct_circ_cyl_forcing_grid.local_frame_relative_position_field
+        + eul_dx * surface_normals
+    )
+
+    np.testing.assert_allclose(
+        correct_frame_relative_position,
+        test_circ_cyl_forcing_grid.local_frame_relative_position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("num_forcing_points", [8, 16])
+def test_circular_cylinder_indirect_neumman_condition_forcing_grid(num_forcing_points):
+
+    cylinder = mock_2d_cylinder()
+    grid_dim = 2
+    real_t = spu.get_real_t("double")
+    grid_size = (100, 100)
+    x_range = 1.0
+
+    cylinder.position_collection[0, 0] = x_range / 2
+    cylinder.position_collection[1, 0] = x_range / 2
+    # Here we are assuming that CircularCylinderForcingGrid is tested in previous tests, and we use it to compare
+    # the surface grid positions.
+    correct_circ_cyl_forcing_grid = sps.CircularCylinderForcingGrid(
+        grid_dim=grid_dim,
+        rigid_body=cylinder,
+        num_forcing_points=num_forcing_points,
+    )
+
+    thermal_sim = sps.PassiveTransportScalarFieldFlowSimulator(
+        diffusivity_constant=0.1,
+        grid_dim=grid_dim,
+        grid_size=grid_size,
+        x_range=x_range,
+        real_t=real_t,
+        num_threads=1,
+        time=0.0,
+        field_type="scalar",
+        velocity_field=np.zeros((3, grid_size[0], grid_size[1])),
+        with_forcing=True,
+    )
+
+    virtual_thermal_layer_interactor = sps.RigidBodyFlowInteraction(
+        rigid_body=cylinder,
+        eul_grid_forcing_field=thermal_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=thermal_sim.primary_field,
+        virtual_boundary_stiffness_coeff=0.0,
+        virtual_boundary_damping_coeff=0.0,
+        dx=thermal_sim.dx,
+        grid_dim=grid_dim,
+        real_t=real_t,
+        field_type="scalar",
+        forcing_grid_cls=sps.CircularCylinderVirtualLayerTemperatureForcingGrid,
+        num_forcing_points=num_forcing_points,
+        eul_dx=thermal_sim.dx,
+    )
+
+    # Neumann forcing grid
+    heat_flux = np.random.randn()
+    test_circ_cyl_forcing_grid = (
+        sps.CircularCylinderIndirectNeummanConditionForcingGrid(
+            grid_dim=grid_dim,
+            rigid_body=cylinder,
+            num_forcing_points=num_forcing_points,
+            eul_dx=thermal_sim.dx,
+            heat_flux=heat_flux,
+            virtual_layer_interactor=virtual_thermal_layer_interactor,
+        )
+    )
+
+    # test lagrangian grid positions.
+    np.testing.assert_allclose(
+        correct_circ_cyl_forcing_grid.position_field,
+        test_circ_cyl_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # heat_flux * dx
+    np.testing.assert_allclose(
+        heat_flux * thermal_sim.dx,
+        test_circ_cyl_forcing_grid.heat_flux_dx,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the validity of temperature field on the surface of Neumman forcing grid.
+
+    virtual_thermal_layer_interactor()
+    virtual_thermal_layer_interactor.time_step(dt=2.0)
+
+    correct_temperature_field = np.random.random((num_forcing_points))
+
+    virtual_thermal_layer_interactor.lag_grid_flow_velocity_field[
+        :
+    ] = correct_temperature_field.copy()
+
+    correct_temperature_field += -heat_flux * thermal_sim.dx
+
+    # Call the method to compute temperature on Neumman forcing grid.
+    test_circ_cyl_forcing_grid.transfer_forcing_from_grid_to_body(
+        np.zeros((1)), np.zeros((1)), np.zeros((1))
+    )
+
+    np.testing.assert_allclose(
+        correct_temperature_field,
+        test_circ_cyl_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
 def mock_3d_sphere():
     """Returns a mock 3D sphere (from elastica) for testing"""
     sphere_radius = 0.1
