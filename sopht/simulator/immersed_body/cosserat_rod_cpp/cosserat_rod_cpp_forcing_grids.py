@@ -19,8 +19,7 @@ class CosseratRodCPPElementCentricForcingGrid(ImmersedBodyForcingGrid):
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
         rod, _ = self.cs.communicate()
-        rod_position_field = np.asarray(rod.position_collection)
-
+        rod_position_field = np.asarray(rod.get_position())
         self.position_field[...] = (
             rod_position_field[: self.grid_dim, 1:]
             + rod_position_field[: self.grid_dim, :-1]
@@ -29,7 +28,7 @@ class CosseratRodCPPElementCentricForcingGrid(ImmersedBodyForcingGrid):
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
         rod, _ = self.cs.communicate()
-        rod_velocity_field = np.asarray(rod.velocity_collection)
+        rod_velocity_field = np.asarray(rod.get_velocity())
         rod_masses = np.asarray(rod.mass)
 
         self.velocity_field[...] = node_to_element_velocity(
@@ -50,6 +49,7 @@ class CosseratRodCPPElementCentricForcingGrid(ImmersedBodyForcingGrid):
         body_flow_forces[: self.grid_dim, 1:] -= 0.5 * lag_grid_forcing_field
         body_flow_forces[: self.grid_dim, :-1] -= 0.5 * lag_grid_forcing_field
 
+        body_forces_cpp *= 0.0
         body_forces_cpp[: self.grid_dim, 1:] -= 0.5 * lag_grid_forcing_field
         body_forces_cpp[: self.grid_dim, :-1] -= 0.5 * lag_grid_forcing_field
 
