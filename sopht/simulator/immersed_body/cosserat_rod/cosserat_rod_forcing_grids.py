@@ -3,6 +3,7 @@ from elastica.interaction import node_to_element_velocity, elements_to_nodes_inp
 import elastica as ea
 import numpy as np
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
+from typing import Union, Type
 
 
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
@@ -749,3 +750,138 @@ class CosseratRodConstantTemperatureSurfaceForcingGrid(CosseratRodSurfaceForcing
         """
 
         pass
+
+
+# Cosserat rod edge interactor classes for Neumann forcing grids.
+class CosseratRodEdgeVirtualLayerTemperatureForcingGrid(ImmersedBodyForcingGrid):
+    """
+        Class for forcing grid at Cosserat rod element centers and edges.
+
+    Notes
+    -----
+        For tapered rods (varying cross-sectional area) and for thicker rods
+        (high cross-section area to length ratio) this class has to be used.
+
+    """
+
+    def __init__(
+        self, grid_dim: int, cosserat_rod: ea.CosseratRod, eul_dx: float = 0
+    ) -> None:
+        if grid_dim != 2:
+            raise ValueError(
+                "Invalid grid dimensions. Cosserat rod edge forcing grid is only "
+                "defined for grid_dim=2"
+            )
+        self.cosserat_rod = cosserat_rod
+        # 1 for element center 2 for edges
+        num_lag_nodes = 2 * cosserat_rod.n_elems
+        super().__init__(grid_dim, num_lag_nodes)
+
+        self.z_vector = np.repeat(
+            np.array([0, 0, 1.0]).reshape(3, 1), self.cosserat_rod.n_elems, axis=-1
+        )
+
+        self.moment_arm = np.zeros((3, cosserat_rod.n_elems))
+
+        self.start_idx_left_edge_nodes = 0
+        self.end_idx_left_edge_nodes = (
+            self.start_idx_left_edge_nodes + cosserat_rod.n_elems
+        )
+        self.start_idx_right_edge_nodes = self.end_idx_left_edge_nodes
+        self.end_idx_right_edge_nodes = (
+            self.start_idx_right_edge_nodes + cosserat_rod.n_elems
+        )
+
+        self.element_forces_left_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
+        self.element_forces_right_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
+
+        self.velocity_field = np.zeros(num_lag_nodes)
+        self.lag_grid_forcing_field = np.zeros(num_lag_nodes)
+
+        self.eul_dx = eul_dx
+
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_position_field(self) -> None:
+        """Computes location of forcing grid for the Cosserat rod"""
+
+        rod_element_position = 0.5 * (
+            self.cosserat_rod.position_collection[..., 1:]
+            + self.cosserat_rod.position_collection[..., :-1]
+        )
+
+        # Rod normal is used to compute the edge points. Rod normal is not necessarily be same as the d1.
+        # Here we also assume rod will always be in XY plane.
+        rod_normal_direction = _batch_cross(self.z_vector, self.cosserat_rod.tangents)
+
+        # rd1
+        self.moment_arm[:] = rod_normal_direction * (
+            self.cosserat_rod.radius + self.eul_dx
+        )
+
+        # x_elem + rd1
+        self.position_field[
+            :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
+        ] = (rod_element_position + self.moment_arm)[: self.grid_dim]
+
+        # x_elem - rd1
+        # self.moment_arm_edge_right[:] = -self.moment_arm_edge_left
+        self.position_field[
+            :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
+        ] = (rod_element_position - self.moment_arm)[: self.grid_dim]
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """Computes velocity of forcing grid points for the Cosserat rod"""
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        pass
+
+    def get_maximum_lagrangian_grid_spacing(self) -> float:
+        """Get the maximum Lagrangian grid spacing"""
+        return np.amax(self.cosserat_rod.lengths)
+
+
+class CosseratRodEdgeIndirectNeumannConditionForcingGrid(
+    CosseratRodEdgeVirtualLayerTemperatureForcingGrid
+):
+    """
+        Class for forcing grid at Cosserat rod element centers and edges.
+
+    Notes
+    -----
+        For tapered rods (varying cross-sectional area) and for thicker rods
+        (high cross-section area to length ratio) this class has to be used.
+
+    """
+
+    def __init__(
+        self,
+        grid_dim: int,
+        cosserat_rod: ea.CosseratRod,
+        heat_flux: float = 0,
+        eul_dx: float = 0,
+        virtual_layer_interactor: Type = CosseratRodEdgeVirtualLayerTemperatureForcingGrid,
+    ) -> None:
+        super().__init__(grid_dim, cosserat_rod, eul_dx)
+
+        self.heat_flux_dx = heat_flux * self.eul_dx
+        self.virtual_layer_interactor = virtual_layer_interactor
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        self.velocity_field = (
+            -self.heat_flux_dx
+            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
+        )
