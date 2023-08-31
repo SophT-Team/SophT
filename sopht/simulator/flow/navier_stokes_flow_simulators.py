@@ -23,6 +23,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         time: float = 0.0,
         with_forcing: bool = False,
         with_free_stream_flow: bool = False,
+        flow_density: float = 1.0,
         **kwargs,
     ) -> None:
         """Class initialiser
@@ -36,6 +37,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         :param time: simulator time at initialisation
         :param with_forcing: flag indicating presence of body forcing
         :param with_free_stream_flow: flag indicating presence of free stream flow
+        :param flow_density: density of the flow.
 
         Notes
         -----
@@ -45,6 +47,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         self.cfl = cfl
         self.with_forcing = with_forcing
         self.with_free_stream_flow = with_free_stream_flow
+        self.flow_density = flow_density
         self.penalty_zone_width = kwargs.get("penalty_zone_width", 2)
         super().__init__(
             grid_dim=2,
@@ -191,7 +194,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         self._update_vorticity_from_velocity_forcing(
             vorticity_field=self.vorticity_field,
             velocity_forcing_field=self.eul_grid_forcing_field,
-            prefactor=self.real_t(dt / (2 * self.dx)),
+            prefactor=self.real_t(dt / (2 * self.dx * self.flow_density)),
         )
         self._navier_stokes_time_step(dt=dt, free_stream_velocity=free_stream_velocity)
         self._set_field(
@@ -227,6 +230,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         with_forcing: bool = False,
         with_free_stream_flow: bool = False,
         filter_vorticity: bool = False,
+        flow_density: float = 1.0,
         poisson_solver_type: Literal[
             "greens_function_convolution", "fast_diagonalisation"
         ] = "greens_function_convolution",
@@ -245,6 +249,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         :param with_free_stream_flow: flag indicating presence of free stream flow
         :param filter_vorticity: flag to determine if vorticity should be filtered or not,
         needed for stability sometimes
+        :param flow_density: density of the flow.
         :param poisson_solver_type: Type of the poisson solver algorithm, can be
         "greens_function_convolution" or "fast_diagonalisation"
 
@@ -278,6 +283,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
                 "\nwith keys 'order' and 'type'."
             )
             log.warning("===============================================")
+        self.flow_density = flow_density
         # check validity of poisson solver types
         supported_poisson_solver_types = [
             "greens_function_convolution",
@@ -484,7 +490,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         self._update_vorticity_from_velocity_forcing(
             vorticity_field=self.vorticity_field,
             velocity_forcing_field=self.eul_grid_forcing_field,
-            prefactor=self.real_t(dt / (2 * self.dx)),
+            prefactor=self.real_t(dt / (2 * self.dx * self.flow_density)),
         )
         self._navier_stokes_time_step(dt=dt, free_stream_velocity=free_stream_velocity)
         self._set_field(
