@@ -8,8 +8,9 @@ import sopht.utils as spu
 @pytest.mark.parametrize("grid_size_x", [8, 16])
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("with_free_stream", [True, False])
+@pytest.mark.parametrize("flow_density", [1.0, 0.1])
 def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
-    grid_size_x, precision, with_free_stream
+    grid_size_x, precision, with_free_stream, flow_density
 ):
     num_threads = 4
     grid_dim = 2
@@ -30,6 +31,7 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
         time=init_time,
         with_forcing=True,
         with_free_stream_flow=with_free_stream,
+        flow_density=flow_density,
     )
     ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
@@ -95,7 +97,7 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
     update_vorticity_from_velocity_forcing(
         vorticity_field=ref_vorticity_field,
         velocity_forcing_field=ref_eul_grid_forcing_field,
-        prefactor=real_t(dt / (2 * dx)),
+        prefactor=real_t(dt / (2 * dx * flow_density)),
     )
     flux_buffer = np.zeros(grid_size, dtype=real_t)
     advection_timestep(
@@ -165,11 +167,13 @@ def test_navier_stokes_flow_sim_2d_compute_stable_timestep(grid_size_x, precisio
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("with_free_stream", [True, False])
 @pytest.mark.parametrize("filter_vorticity", [True, False])
+@pytest.mark.parametrize("flow_density", [1.0, 0.1])
 def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     grid_size_x,
     precision,
     with_free_stream,
     filter_vorticity,
+    flow_density,
 ):
     num_threads = 4
     grid_dim = 3
@@ -194,6 +198,7 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
         with_free_stream_flow=with_free_stream,
         filter_vorticity=filter_vorticity,
         filter_setting_dict={"type": filter_type, "order": filter_order},
+        flow_density=flow_density,
     )
     ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
@@ -275,7 +280,7 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     update_vorticity_from_velocity_forcing(
         vorticity_field=ref_vorticity_field,
         velocity_forcing_field=ref_eul_grid_forcing_field,
-        prefactor=real_t(dt / (2 * dx)),
+        prefactor=real_t(dt / (2 * dx * flow_density)),
     )
     velocity_cross_vorticity = np.zeros_like(ref_vorticity_field)
     elementwise_cross_product(
