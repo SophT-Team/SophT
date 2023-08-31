@@ -1,9 +1,8 @@
 import elastica as ea
 import numpy as np
-import sopht.simulator as sps
 import sopht.utils as spu
+import sopht.simulator as sps
 import click
-import os
 from matplotlib import pyplot as plt
 
 
