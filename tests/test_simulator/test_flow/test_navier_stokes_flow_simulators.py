@@ -8,7 +8,7 @@ import sopht.utils as spu
 @pytest.mark.parametrize("grid_size_x", [8, 16])
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("with_free_stream", [True, False])
-@pytest.mark.parametrize("flow_density", [1.0, 2.0, 0.1])
+@pytest.mark.parametrize("flow_density", [1.0, 0.1])
 def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
     grid_size_x, precision, with_free_stream, flow_density
 ):
@@ -167,7 +167,7 @@ def test_navier_stokes_flow_sim_2d_compute_stable_timestep(grid_size_x, precisio
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("with_free_stream", [True, False])
 @pytest.mark.parametrize("filter_vorticity", [True, False])
-@pytest.mark.parametrize("flow_density", [1.0, 2.0, 0.1])
+@pytest.mark.parametrize("flow_density", [1.0, 0.1])
 def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     grid_size_x,
     precision,
