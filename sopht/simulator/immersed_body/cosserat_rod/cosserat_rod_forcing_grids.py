@@ -752,15 +752,25 @@ class CosseratRodConstantTemperatureSurfaceForcingGrid(CosseratRodSurfaceForcing
         pass
 
 
-# Cosserat rod edge interactor classes for Neumann forcing grids.
-class CosseratRodEdgeVirtualLayerTemperatureForcingGrid(ImmersedBodyForcingGrid):
+# Cosserat rod edge interactor classes for Neumann temperature forcing grids.
+class CosseratRodVirtualLayerTemperatureEdgeForcingGrid(ImmersedBodyForcingGrid):
     """
-        Class for forcing grid at Cosserat rod element centers and edges.
+    Class for virtual layer temperature forcing grid at Cosserat rod element edges. This forcing should be used
+    together with CosseratRodIndirectNeumannConditionEdgeForcingGrid to enforce Neumann boundary condition
+    (constant flux) on to the rod.
 
     Notes
     -----
-        For tapered rods (varying cross-sectional area) and for thicker rods
-        (high cross-section area to length ratio) this class has to be used.
+    For tapered rods (varying cross-sectional area) and for thicker rods
+    (high cross-section area to length ratio) this class has to be used.
+
+    Set the virtual_boundary_stiffness_coeff and virtual_boundary_damping_coeff to zero for this interactor, since
+    this interactor is only used to probe the temperature one flow grid cell outside of the rod boundary.
+
+    References
+    ----------
+    Zhang et. al., 2008, Study of heat-transfer on the surface of a circular cylinder
+    in flow using an immersed-boundary method. Section 2.2 Eqn 20.
 
     """
 
@@ -849,16 +859,23 @@ class CosseratRodEdgeVirtualLayerTemperatureForcingGrid(ImmersedBodyForcingGrid)
         return np.amax(self.cosserat_rod.lengths)
 
 
-class CosseratRodEdgeIndirectNeumannConditionForcingGrid(
-    CosseratRodEdgeVirtualLayerTemperatureForcingGrid
+class CosseratRodIndirectNeumannConditionEdgeForcingGrid(
+    CosseratRodVirtualLayerTemperatureEdgeForcingGrid
 ):
     """
-        Class for forcing grid at Cosserat rod element centers and edges.
+    Class for indirect neumann forcing grid at Cosserat rod element edges. This forcing should be used
+    together with CosseratRodVirtualLayerTemperatureEdgeForcingGrid to enforce Neumann boundary condition
+    (constant flux) on to the rod.
 
     Notes
     -----
-        For tapered rods (varying cross-sectional area) and for thicker rods
-        (high cross-section area to length ratio) this class has to be used.
+    For tapered rods (varying cross-sectional area) and for thicker rods
+    (high cross-section area to length ratio) this class has to be used.
+
+    References
+    ----------
+    Zhang et. al., 2008, Study of heat-transfer on the surface of a circular cylinder
+    in flow using an immersed-boundary method. Section 2.2 Eqn 20.
 
     """
 
@@ -868,7 +885,7 @@ class CosseratRodEdgeIndirectNeumannConditionForcingGrid(
         cosserat_rod: ea.CosseratRod,
         heat_flux: float = 0,
         eul_dx: float = 0,
-        virtual_layer_interactor: Type = CosseratRodEdgeVirtualLayerTemperatureForcingGrid,
+        virtual_layer_interactor: Type = CosseratRodVirtualLayerTemperatureEdgeForcingGrid,
     ) -> None:
         super().__init__(grid_dim, cosserat_rod, eul_dx)
 

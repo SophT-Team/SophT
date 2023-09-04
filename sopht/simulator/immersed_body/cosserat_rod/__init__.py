@@ -6,7 +6,7 @@ from .cosserat_rod_forcing_grids import (
     CosseratRodConstantTemperatureNodalForcingGrid,
     CosseratRodConstantTemperatureEdgeForcingGrid,
     CosseratRodConstantTemperatureSurfaceForcingGrid,
-    CosseratRodEdgeVirtualLayerTemperatureForcingGrid,
-    CosseratRodEdgeIndirectNeumannConditionForcingGrid,
+    CosseratRodVirtualLayerTemperatureEdgeForcingGrid,
+    CosseratRodIndirectNeumannConditionEdgeForcingGrid,
 )
 from .cosserat_rod_flow_interaction import CosseratRodFlowInteraction
