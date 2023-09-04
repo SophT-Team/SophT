@@ -175,8 +175,22 @@ class CircularCylinderConstantTemperatureForcingGrid(CircularCylinderForcingGrid
 
 
 class CircularCylinderVirtualLayerTemperatureForcingGrid(CircularCylinderForcingGrid):
-    """Class for temperature forcing grid of a 2D circular cylinder with cross-section
-    in XY plane. Here cylinder is always at constant temperature.
+    """
+    Class for virtual layer temperature forcing grid of a 2D circular cylinder with cross-section
+    in XY plane. This forcing grid should be used together with CircularCylinderIndirectNeummanConditionForcingGrid
+    to enforce Neumann boundary condition (constant flux) on to the cylinder.
+
+    Notes
+    -----
+    Set the virtual_boundary_stiffness_coeff and virtual_boundary_damping_coeff to zero for this interactor, since
+    this interactor is only used to probe the temperature one flow grid cell outside of the cylinder boundary.
+
+    See how to use this class in examples/2d_examples/FlowPastConstantHeatFluxCylinderCase/
+
+    References
+    ----------
+    Zhang et. al., 2008, Study of heat-transfer on the surface of a circular cylinder
+    in flow using an immersed-boundary method. Section 2.2 Eqn 20.
 
     """
 
@@ -246,8 +260,19 @@ class CircularCylinderVirtualLayerTemperatureForcingGrid(CircularCylinderForcing
 
 
 class CircularCylinderIndirectNeummanConditionForcingGrid(CircularCylinderForcingGrid):
-    """Class for temperature forcing grid of a 2D circular cylinder with cross-section
-    in XY plane. Here cylinder is always at constant temperature.
+    """
+    Class for virtual layer temperature forcing grid of a 2D circular cylinder with cross-section
+    in XY plane. This forcing grid should be used together with CircularCylinderVirtualLayerTemperatureForcingGrid
+    to enforce Neumann boundary condition (constant flux) on to the cylinder.
+
+    Notes
+    -----
+    See how to use this class in examples/2d_examples/FlowPastConstantHeatFluxCylinderCase/
+
+    References
+    ----------
+    Zhang et. al., 2008, Study of heat-transfer on the surface of a circular cylinder
+    in flow using an immersed-boundary method. Section 2.2 Eqn 20.
 
     """
 
@@ -585,7 +610,7 @@ class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
 
 
 class SphereConstantTemperatureForcingGrid(SphereForcingGrid):
-    """Class for temperature forcing grid of a 3D sphere"""
+    """Class for constant temperature forcing grid for a 3D sphere"""
 
     def __init__(
         self,
