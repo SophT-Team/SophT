@@ -345,7 +345,7 @@ def test_circular_cylinder_indirect_neumann_condition_forcing_grid(num_forcing_p
         atol=get_test_tol(precision="double"),
     )
 
-    # Check the validity of temperature field on the surface of Neumman forcing grid.
+    # Check the validity of temperature field on the surface of Neumann forcing grid.
 
     virtual_thermal_layer_interactor()
     virtual_thermal_layer_interactor.time_step(dt=2.0)
@@ -358,7 +358,7 @@ def test_circular_cylinder_indirect_neumann_condition_forcing_grid(num_forcing_p
 
     correct_temperature_field += -heat_flux * thermal_sim.dx
 
-    # Call the method to compute temperature on Neumman forcing grid.
+    # Call the method to compute temperature on Neumann forcing grid.
     test_circ_cyl_forcing_grid.transfer_forcing_from_grid_to_body(
         np.zeros((1)), np.zeros((1)), np.zeros((1))
     )
