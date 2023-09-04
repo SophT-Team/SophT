@@ -115,7 +115,7 @@ def flow_past_constant_heat_flux_cylinder_case(
         grid_dim=grid_dim,
         real_t=real_t,
         field_type="scalar",
-        forcing_grid_cls=sps.CircularCylinderIndirectNeummanConditionForcingGrid,
+        forcing_grid_cls=sps.CircularCylinderIndirectNeumannConditionForcingGrid,
         num_forcing_points=num_lag_nodes,
         virtual_layer_interactor=virtual_thermal_layer_interactor,
         heat_flux=heat_flux,

@@ -8,7 +8,7 @@ from .rigid_body_forcing_grids import (
     CircularCylinderConstantTemperatureForcingGrid,
     SphereConstantTemperatureForcingGrid,
     CircularCylinderVirtualLayerTemperatureForcingGrid,
-    CircularCylinderIndirectNeummanConditionForcingGrid,
+    CircularCylinderIndirectNeumannConditionForcingGrid,
 )
 from .rigid_body_flow_interaction import RigidBodyFlowInteraction
 from .derived_rigid_bodies import RectangularPlane

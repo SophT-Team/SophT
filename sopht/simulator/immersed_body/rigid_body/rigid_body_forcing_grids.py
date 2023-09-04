@@ -259,9 +259,9 @@ class CircularCylinderVirtualLayerTemperatureForcingGrid(CircularCylinderForcing
         pass
 
 
-class CircularCylinderIndirectNeummanConditionForcingGrid(CircularCylinderForcingGrid):
+class CircularCylinderIndirectNeumannConditionForcingGrid(CircularCylinderForcingGrid):
     """
-    Class for virtual layer temperature forcing grid of a 2D circular cylinder with cross-section
+    Class for neumann  forcing grid of a 2D circular cylinder with cross-section
     in XY plane. This forcing grid should be used together with CircularCylinderVirtualLayerTemperatureForcingGrid
     to enforce Neumann boundary condition (constant flux) on to the cylinder.
 
