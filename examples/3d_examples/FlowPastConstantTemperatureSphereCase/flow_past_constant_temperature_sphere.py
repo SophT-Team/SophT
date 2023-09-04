@@ -364,7 +364,7 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option("--nx", default=128, help="Number of grid points in x direction.")
+    @click.option("--nx", default=256, help="Number of grid points in x direction.")
     @click.option("--reynolds", default=100.0, help="Reynolds number of flow.")
     @click.option("--prandtl", default=1.0, help="Prandtl number.")
     @click.option("--temperature_sphere", default=10, help="Sphere temperature.")
