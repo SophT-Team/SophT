@@ -936,3 +936,199 @@ class CosseratRodIndirectNeumannConditionEdgeForcingGrid(
             -self.heat_flux_dx
             + self.virtual_layer_interactor.lag_grid_flow_velocity_field
         )
+
+
+class CosseratRodVirtualLayerTemperatureSurfaceForcingGrid(
+    CosseratRodSurfaceForcingGrid
+):
+    """
+    Class for virtual layer temperature forcing grid at Cosserat rod surface. This forcing should be used
+    together with CosseratRodIndirectNeumannConditionSurfaceForcingGrid to enforce Neumann boundary condition
+    (constant flux) on to the rod.
+
+    Notes
+    -----
+    Set the virtual_boundary_stiffness_coeff and virtual_boundary_damping_coeff to zero for this interactor, since
+    this interactor is only used to probe the temperature one flow grid cell outside of the rod boundary.
+
+    References
+    ----------
+    Zhang et. al., 2008, Study of heat-transfer on the surface of a circular cylinder
+    in flow using an immersed-boundary method. Section 2.2 Eqn 20.
+
+    """
+
+    def __init__(
+        self,
+        grid_dim: int,
+        cosserat_rod: ea.CosseratRod,
+        surface_grid_density_for_largest_element: int,
+        with_cap: bool = False,
+        eul_dx: float = 0,
+    ) -> None:
+        """
+
+        Parameters
+        ----------
+        grid_dim
+        cosserat_rod
+        surface_grid_density_for_largest_element
+        with_cap
+        eul_dx
+        """
+        self.eul_dx = eul_dx
+        super().__init__(
+            grid_dim, cosserat_rod, surface_grid_density_for_largest_element, with_cap
+        )
+
+        self.velocity_field = np.zeros((self.num_lag_nodes))
+        self.lag_grid_forcing_field = np.zeros((self.num_lag_nodes))
+
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_position_field(self) -> None:
+        """Computes location of forcing grid for the Cosserat rod"""
+
+        self.rod_element_position[...] = 0.5 * (
+            self.cosserat_rod.position_collection[..., 1:]
+            + self.cosserat_rod.position_collection[..., :-1]
+        )
+
+        # Cache rod director collection transpose since it will be used to compute velocity field.
+        self.rod_director_collection_transpose[...] = _batch_matrix_transpose(
+            self.cosserat_rod.director_collection
+        )
+
+        # Broadcast rod properties to the grid points.
+        for i in range(self.n_elems):
+            self.grid_point_director_transpose[
+                :, :, self.start_idx[i] : self.end_idx[i]
+            ] = self.rod_director_collection_transpose[:, :, i : i + 1]
+            self.grid_point_radius[self.start_idx[i] : self.end_idx[i]] = (
+                self.cosserat_rod.radius[i]
+                * self.grid_point_radius_ratio[self.start_idx[i] : self.end_idx[i]]
+                + self.eul_dx
+            )
+            self.position_field[
+                :, self.start_idx[i] : self.end_idx[i]
+            ] = self.rod_element_position[:, i : i + 1]
+
+        # Compute the moment arm or distance from the element center for each grid point.
+        self.moment_arm[:] = self.grid_point_radius * _batch_matvec(
+            self.grid_point_director_transpose, self.local_frame_surface_points
+        )
+
+        # Surface positions are moment_arm + element center position
+        self.position_field += self.moment_arm
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """
+        Cosserat rod is not heating up or cooling down. Temperature is constant.
+        Thus, velocity field is always constant, and we don't need to compute.
+
+        Returns
+        -------
+
+        """
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """
+        Cosserat is not heating up or cooling down.
+        Temperature is constant, so no feedback to the rod.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+
+        pass
+
+
+class CosseratRodIndirectNeumannConditionSurfaceForcingGrid(
+    CosseratRodSurfaceForcingGrid
+):
+    """
+    Class for indirect neumann forcing grid at Cosserat rod surface. This forcing should be used
+    together with CosseratRodIndirectNeumannConditionSurfaceForcingGrid to enforce Neumann boundary condition
+    (constant flux) on to the rod.
+
+    Notes
+    -----
+    Set the virtual_boundary_stiffness_coeff and virtual_boundary_damping_coeff to zero for this interactor, since
+    this interactor is only used to probe the temperature one flow grid cell outside of the rod boundary.
+
+    References
+    ----------
+    Zhang et. al., 2008, Study of heat-transfer on the surface of a circular cylinder
+    in flow using an immersed-boundary method. Section 2.2 Eqn 20.
+
+    """
+
+    def __init__(
+        self,
+        grid_dim: int,
+        cosserat_rod: ea.CosseratRod,
+        surface_grid_density_for_largest_element: int,
+        with_cap: bool = False,
+        heat_flux: float = 0,
+        eul_dx: float = 0,
+        virtual_layer_interactor: Type = CosseratRodVirtualLayerTemperatureSurfaceForcingGrid,
+    ) -> None:
+        super().__init__(
+            grid_dim, cosserat_rod, surface_grid_density_for_largest_element, with_cap
+        )
+
+        self.velocity_field = np.zeros((self.num_lag_nodes))
+        self.eul_dx = eul_dx
+        self.heat_flux_dx = heat_flux * self.eul_dx
+        self.virtual_layer_interactor = virtual_layer_interactor
+
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """
+
+        Returns
+        -------
+
+        """
+
+        pass
+
+    def transfer_forcing_from_grid_to_body(
+        self,
+        body_flow_forces: np.ndarray,
+        body_flow_torques: np.ndarray,
+        lag_grid_forcing_field: np.ndarray,
+    ) -> None:
+        """
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+
+        self.velocity_field = (
+            -self.heat_flux_dx
+            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
+        )
