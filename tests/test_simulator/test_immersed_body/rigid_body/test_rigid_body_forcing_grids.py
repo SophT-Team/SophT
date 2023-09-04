@@ -272,7 +272,7 @@ def test_circular_cylinder_virtual_layer_temperature_forcing_grid_initialization
 
 
 @pytest.mark.parametrize("num_forcing_points", [8, 16])
-def test_circular_cylinder_indirect_neumman_condition_forcing_grid(num_forcing_points):
+def test_circular_cylinder_indirect_neumann_condition_forcing_grid(num_forcing_points):
 
     cylinder = mock_2d_cylinder()
     grid_dim = 2
@@ -321,7 +321,7 @@ def test_circular_cylinder_indirect_neumman_condition_forcing_grid(num_forcing_p
     # Neumann forcing grid
     heat_flux = np.random.randn()
     test_circ_cyl_forcing_grid = (
-        sps.CircularCylinderIndirectNeummanConditionForcingGrid(
+        sps.CircularCylinderIndirectNeumannConditionForcingGrid(
             grid_dim=grid_dim,
             rigid_body=cylinder,
             num_forcing_points=num_forcing_points,
