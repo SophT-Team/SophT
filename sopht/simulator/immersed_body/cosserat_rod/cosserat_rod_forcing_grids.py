@@ -892,6 +892,40 @@ class CosseratRodIndirectNeumannConditionEdgeForcingGrid(
         self.heat_flux_dx = heat_flux * self.eul_dx
         self.virtual_layer_interactor = virtual_layer_interactor
 
+        # to ensure position/velocity are consistent during initialisation
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
+
+    def compute_lag_grid_position_field(self) -> None:
+        """Computes location of forcing grid for the Cosserat rod"""
+
+        rod_element_position = 0.5 * (
+            self.cosserat_rod.position_collection[..., 1:]
+            + self.cosserat_rod.position_collection[..., :-1]
+        )
+
+        # Rod normal is used to compute the edge points. Rod normal is not necessarily be same as the d1.
+        # Here we also assume rod will always be in XY plane.
+        rod_normal_direction = _batch_cross(self.z_vector, self.cosserat_rod.tangents)
+
+        # rd1
+        self.moment_arm[:] = rod_normal_direction * (self.cosserat_rod.radius)
+
+        # x_elem + rd1
+        self.position_field[
+            :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
+        ] = (rod_element_position + self.moment_arm)[: self.grid_dim]
+
+        # x_elem - rd1
+        # self.moment_arm_edge_right[:] = -self.moment_arm_edge_left
+        self.position_field[
+            :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
+        ] = (rod_element_position - self.moment_arm)[: self.grid_dim]
+
+    def compute_lag_grid_velocity_field(self) -> None:
+        """Computes velocity of forcing grid points for the Cosserat rod"""
+        pass
+
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
