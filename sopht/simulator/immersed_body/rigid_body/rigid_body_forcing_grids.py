@@ -223,11 +223,12 @@ class CircularCylinderVirtualLayerTemperatureForcingGrid(CircularCylinderForcing
         self.eul_dx = eul_dx
 
         self.local_frame_relative_position_field += self.eul_dx * self.surface_normals
+        self.compute_lag_grid_position_field()
+        self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_velocity_field(self) -> None:
         """
-        Cylinder is not heating up or cooling down. Temperature is constant.
-        Thus, velocity field is always constant, and we don't need to compute.
+        Virtual layer does not interact, and it is only used to probe flow data. So here just pass.
 
         Returns
         -------
@@ -243,8 +244,7 @@ class CircularCylinderVirtualLayerTemperatureForcingGrid(CircularCylinderForcing
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
         """
-        Cylinder is not heating up or cooling down.
-        Temperature is constant, so no feedback to the cylinder.
+        Virtual layer does not interact, and it is only used to probe flow data. So here just pass.
 
         Parameters
         ----------
@@ -285,6 +285,8 @@ class CircularCylinderIndirectNeumannConditionForcingGrid(CircularCylinderForcin
         eul_dx: float = 0,
         virtual_layer_interactor: Type = CircularCylinderVirtualLayerTemperatureForcingGrid,
     ) -> None:
+        self.heat_flux_dx = heat_flux * eul_dx
+        self.virtual_layer_interactor = virtual_layer_interactor
         super().__init__(
             grid_dim=grid_dim,
             num_forcing_points=num_forcing_points,
@@ -297,21 +299,19 @@ class CircularCylinderIndirectNeumannConditionForcingGrid(CircularCylinderForcin
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
-        self.heat_flux_dx = heat_flux * eul_dx
-
-        self.virtual_layer_interactor = virtual_layer_interactor
-
     def compute_lag_grid_velocity_field(self) -> None:
         """
-        Cylinder is not heating up or cooling down. Temperature is constant.
-        Thus, velocity field is always constant, and we don't need to compute.
+        Computes temperature on the cylinder surface based on the heat flux and flow temperature.
 
         Returns
         -------
 
         """
 
-        pass
+        self.velocity_field = (
+            -self.heat_flux_dx
+            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
+        )
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -320,8 +320,7 @@ class CircularCylinderIndirectNeumannConditionForcingGrid(CircularCylinderForcin
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
         """
-        Cylinder is not heating up or cooling down.
-        Temperature is constant, so no feedback to the cylinder.
+        Virtual layer does not interact, and it is only used to probe flow data. So here just pass.
 
         Parameters
         ----------
@@ -334,10 +333,7 @@ class CircularCylinderIndirectNeumannConditionForcingGrid(CircularCylinderForcin
 
         """
 
-        self.velocity_field = (
-            -self.heat_flux_dx
-            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
-        )
+        pass
 
 
 SupportedRigidBody3D = Union[ea.Cylinder, ea.Sphere, RectangularPlane]

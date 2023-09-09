@@ -224,23 +224,24 @@ def test_circular_cylinder_constant_temperature_forcing_grid_validity_of_overrid
 def test_circular_cylinder_virtual_layer_temperature_forcing_grid_initialization(
     num_forcing_points,
 ):
-    cylinder = mock_2d_cylinder()
+    cylinder_correct = mock_2d_cylinder()
+    cylinder_test = mock_2d_cylinder()
     grid_dim = 2
+    eul_dx = 0.04
+    cylinder_correct.radius += eul_dx
     # Here we are assuming that CircularCylinderForcingGrid is tested in previous tests, and we use it to compare
     # the surface grid positions.
     correct_circ_cyl_forcing_grid = sps.CircularCylinderForcingGrid(
         grid_dim=grid_dim,
-        rigid_body=cylinder,
+        rigid_body=cylinder_correct,
         num_forcing_points=num_forcing_points,
     )
-    eul_dx = correct_circ_cyl_forcing_grid.get_maximum_lagrangian_grid_spacing()
     test_circ_cyl_forcing_grid = sps.CircularCylinderVirtualLayerTemperatureForcingGrid(
         grid_dim=grid_dim,
-        rigid_body=cylinder,
+        rigid_body=cylinder_test,
         num_forcing_points=num_forcing_points,
         eul_dx=eul_dx,
     )
-
     np.testing.assert_allclose(
         correct_circ_cyl_forcing_grid.position_field,
         test_circ_cyl_forcing_grid.position_field,
@@ -253,19 +254,8 @@ def test_circular_cylinder_virtual_layer_temperature_forcing_grid_initialization
         atol=get_test_tol(precision="double"),
     )
 
-    # Compute correct surface normals.
-    surface_normals = (
-        correct_circ_cyl_forcing_grid.local_frame_relative_position_field.copy()
-    )
-    surface_normals /= np.linalg.norm(surface_normals, axis=0)
-    # Virtual layer is one dx away from the cylinder.
-    correct_frame_relative_position = (
-        correct_circ_cyl_forcing_grid.local_frame_relative_position_field
-        + eul_dx * surface_normals
-    )
-
     np.testing.assert_allclose(
-        correct_frame_relative_position,
+        correct_circ_cyl_forcing_grid.local_frame_relative_position_field,
         test_circ_cyl_forcing_grid.local_frame_relative_position_field,
         atol=get_test_tol(precision="double"),
     )
@@ -359,9 +349,7 @@ def test_circular_cylinder_indirect_neumann_condition_forcing_grid(num_forcing_p
     correct_temperature_field += -heat_flux * thermal_sim.dx
 
     # Call the method to compute temperature on Neumann forcing grid.
-    test_circ_cyl_forcing_grid.transfer_forcing_from_grid_to_body(
-        np.zeros((1)), np.zeros((1)), np.zeros((1))
-    )
+    test_circ_cyl_forcing_grid.compute_lag_grid_velocity_field()
 
     np.testing.assert_allclose(
         correct_temperature_field,
