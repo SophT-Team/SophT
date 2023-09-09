@@ -79,6 +79,8 @@ def flow_past_insulated_cylinder_case(
     # and directly use it for setting up the flow interactor.
 
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
+    flow_interactors_list = []
+    thermal_interactors_list = []
     num_lag_nodes = grid_size_x // 5
 
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
@@ -93,6 +95,7 @@ def flow_past_insulated_cylinder_case(
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
         num_forcing_points=num_lag_nodes,
     )
+    flow_interactors_list.append(cylinder_flow_interactor)
 
     cylinder_thermal_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=cylinder,
@@ -108,6 +111,7 @@ def flow_past_insulated_cylinder_case(
         num_forcing_points=num_lag_nodes,
         cylinder_temperature=temperature_cylinder,
     )
+    thermal_interactors_list.append(cylinder_thermal_interactor)
 
     insulated_cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=insulated_cylinder,
@@ -121,6 +125,7 @@ def flow_past_insulated_cylinder_case(
         forcing_grid_cls=sps.CircularCylinderForcingGrid,
         num_forcing_points=num_lag_nodes,
     )
+    flow_interactors_list.append(insulated_cylinder_flow_interactor)
 
     virtual_thermal_layer_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=insulated_cylinder,
@@ -134,8 +139,9 @@ def flow_past_insulated_cylinder_case(
         field_type="scalar",
         forcing_grid_cls=sps.CircularCylinderVirtualLayerTemperatureForcingGrid,
         num_forcing_points=num_lag_nodes,
-        eul_dx=thermal_sim.dx,
+        eul_dx=3 * thermal_sim.dx,
     )
+    thermal_interactors_list.append(virtual_thermal_layer_interactor)
 
     insulated_cylinder_thermal_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=insulated_cylinder,
@@ -150,7 +156,9 @@ def flow_past_insulated_cylinder_case(
         forcing_grid_cls=sps.CircularCylinderIndirectNeumannConditionForcingGrid,
         num_forcing_points=num_lag_nodes,
         virtual_layer_interactor=virtual_thermal_layer_interactor,
+        eul_dx=3 * thermal_sim.dx,
     )
+    thermal_interactors_list.append(insulated_cylinder_thermal_interactor)
 
     # ==================FLOW-BODY COMMUNICATOR SETUP END======
 
@@ -189,22 +197,13 @@ def flow_past_insulated_cylinder_case(
                 cmap="Blues",
             )
             cbar = fig_thermal.colorbar(mappable=contourf_obj, ax=ax_thermal)
-            ax_thermal.scatter(
-                cylinder_thermal_interactor.forcing_grid.position_field[x_axis_idx],
-                cylinder_thermal_interactor.forcing_grid.position_field[y_axis_idx],
-                s=4,
-                color="k",
-            )
-            ax_thermal.scatter(
-                insulated_cylinder_thermal_interactor.forcing_grid.position_field[
-                    x_axis_idx
-                ],
-                insulated_cylinder_thermal_interactor.forcing_grid.position_field[
-                    y_axis_idx
-                ],
-                s=4,
-                color="k",
-            )
+            for thermal_interactor in thermal_interactors_list:
+                ax_thermal.scatter(
+                    thermal_interactor.forcing_grid.position_field[x_axis_idx],
+                    thermal_interactor.forcing_grid.position_field[y_axis_idx],
+                    s=4,
+                    color="k",
+                )
             spu.save_and_clear_fig(
                 fig_thermal,
                 ax_thermal,
@@ -223,22 +222,13 @@ def flow_past_insulated_cylinder_case(
                 cmap=spu.get_lab_cmap(),
             )
             cbar = fig_thermal.colorbar(mappable=contourf_obj, ax=ax_flow)
-            ax_flow.scatter(
-                cylinder_flow_interactor.forcing_grid.position_field[x_axis_idx],
-                cylinder_flow_interactor.forcing_grid.position_field[y_axis_idx],
-                s=4,
-                color="k",
-            )
-            ax_flow.scatter(
-                insulated_cylinder_flow_interactor.forcing_grid.position_field[
-                    x_axis_idx
-                ],
-                insulated_cylinder_flow_interactor.forcing_grid.position_field[
-                    y_axis_idx
-                ],
-                s=4,
-                color="k",
-            )
+            for flow_interactor in flow_interactors_list:
+                ax_flow.scatter(
+                    flow_interactor.forcing_grid.position_field[x_axis_idx],
+                    flow_interactor.forcing_grid.position_field[y_axis_idx],
+                    s=4,
+                    color="k",
+                )
             spu.save_and_clear_fig(
                 fig_flow,
                 ax_flow,
@@ -269,7 +259,7 @@ def flow_past_insulated_cylinder_case(
             drag_coeff = np.fabs(F) / velocity_scale / velocity_scale / cyl_radius
             drag_coeffs.append(drag_coeff)
 
-            with open("../PassiveDiffusionCase/drag_vs_time.csv", "ab") as f:
+            with open("drag_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
                     np.c_[np.array(drag_coeffs_time), np.array(drag_coeffs)],
@@ -284,14 +274,14 @@ def flow_past_insulated_cylinder_case(
             q_constant_temperature.append(Q)
 
             with open(
-                "../FlowPastInsulatedCylinderCase/constant_temperature_cylinder_heat_flux_vs_time.csv",
+                "constant_temperature_cylinder_heat_flux_vs_time.csv",
                 "ab",
             ) as f:
                 np.savetxt(
                     f,
                     np.c_[
-                        np.array(q_constant_temperature_time),
-                        np.array(q_constant_temperature),
+                        np.array(q_constant_temperature_time[-1:]),
+                        np.array(q_constant_temperature[-1:]),
                     ],
                     delimiter=",",
                 )
@@ -305,12 +295,12 @@ def flow_past_insulated_cylinder_case(
             q_insulated.append(Q)
 
             with open(
-                "../FlowPastInsulatedCylinderCase/insulated_cylinder_heat_flux_vs_time.csv",
+                "insulated_cylinder_heat_flux_vs_time.csv",
                 "ab",
             ) as f:
                 np.savetxt(
                     f,
-                    np.c_[np.array(q_insulated_time), np.array(q_insulated)],
+                    np.c_[np.array(q_insulated_time[-1:]), np.array(q_insulated[-1:])],
                     delimiter=",",
                 )
 
@@ -321,27 +311,16 @@ def flow_past_insulated_cylinder_case(
         dt = min((dt_thermal, dt_flow))
 
         # compute thermal forcing and timestep thermal forcing
-        cylinder_thermal_interactor.time_step(dt=dt)
-        cylinder_thermal_interactor()
+        for flow_interactor in flow_interactors_list:
+            flow_interactor.time_step(dt=dt)
+            flow_interactor()
 
-        virtual_thermal_layer_interactor.time_step(dt=dt)
-        virtual_thermal_layer_interactor()
-
-        insulated_cylinder_thermal_interactor.compute_flow_forces_and_torques()
-        insulated_cylinder_thermal_interactor.time_step(dt=dt)
-        insulated_cylinder_thermal_interactor()
-
-        # timestep the thermal field.
-        thermal_sim.time_step(dt=dt)
-
-        # compute flow forcing and timestep forcing
-        cylinder_flow_interactor.time_step(dt=dt)
-        cylinder_flow_interactor()
-
-        insulated_cylinder_flow_interactor.time_step(dt=dt)
-        insulated_cylinder_flow_interactor()
+        for thermal_interactor in thermal_interactors_list:
+            thermal_interactor.time_step(dt=dt)
+            thermal_interactor()
 
         # timestep the flow
+        thermal_sim.time_step(dt=dt)
         flow_sim.time_step(dt=dt, free_stream_velocity=velocity_free_stream)
 
         # update timers

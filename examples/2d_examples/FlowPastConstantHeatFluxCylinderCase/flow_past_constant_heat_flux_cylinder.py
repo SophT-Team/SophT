@@ -33,7 +33,7 @@ def flow_past_constant_heat_flux_cylinder_case(
     velocity_scale = 1.0
     velocity_free_stream = np.zeros(grid_dim)
     velocity_free_stream[x_axis_idx] = velocity_scale
-    cyl_radius = 0.03
+    cyl_radius = 0.18
     nu = 2 * cyl_radius * velocity_scale / reynolds
     thermal_diffusivity = nu / prandtl
     x_range = 1.0 * 2
@@ -75,7 +75,7 @@ def flow_past_constant_heat_flux_cylinder_case(
     # and directly use it for setting up the flow interactor.
 
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
-    num_lag_nodes = grid_size_x // 20
+    num_lag_nodes = int(grid_size_x // 5 * 1.5)
 
     cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=cylinder,
@@ -102,7 +102,7 @@ def flow_past_constant_heat_flux_cylinder_case(
         field_type="scalar",
         forcing_grid_cls=sps.CircularCylinderVirtualLayerTemperatureForcingGrid,
         num_forcing_points=num_lag_nodes,
-        eul_dx=thermal_sim.dx,
+        eul_dx=3 * thermal_sim.dx,
     )
 
     isoflux_cylinder_thermal_interactor = sps.RigidBodyFlowInteraction(
@@ -119,7 +119,7 @@ def flow_past_constant_heat_flux_cylinder_case(
         num_forcing_points=num_lag_nodes,
         virtual_layer_interactor=virtual_thermal_layer_interactor,
         heat_flux=heat_flux,
-        eul_dx=thermal_sim.dx,
+        eul_dx=3 * thermal_sim.dx,
     )
 
     # ==================FLOW-BODY COMMUNICATOR SETUP END======
@@ -221,9 +221,7 @@ def flow_past_constant_heat_flux_cylinder_case(
             drag_coeff = np.fabs(F) / velocity_scale / velocity_scale / cyl_radius
             drag_coeffs.append(drag_coeff)
 
-            with open(
-                "../FlowPastConstantHeatFluxCylinderCase/drag_vs_time.csv", "ab"
-            ) as f:
+            with open("drag_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
                     np.c_[np.array(drag_coeffs_time), np.array(drag_coeffs)],
@@ -253,18 +251,18 @@ def flow_past_constant_heat_flux_cylinder_case(
 
             nusslet_number.append(nusslet)
 
-            with open(
-                "../FlowPastConstantHeatFluxCylinderCase/nusslet_vs_time.csv", "ab"
-            ) as f:
+            with open("nusslet_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
                     np.c_[np.array(nusslet_number_time), np.array(nusslet_number)],
                     delimiter=",",
                 )
 
-        dt_prefac = 0.1
+        dt_prefac = 1.0
         dt_flow = flow_sim.compute_stable_timestep(dt_prefac=dt_prefac)
-        dt_thermal = thermal_sim.compute_stable_timestep(dt_prefac=dt_prefac)
+        dt_thermal = thermal_sim.compute_stable_timestep(
+            dt_prefac=1 / (prandtl * reynolds)
+        )
 
         dt = min((dt_thermal, dt_flow))
 
@@ -273,7 +271,7 @@ def flow_past_constant_heat_flux_cylinder_case(
         virtual_thermal_layer_interactor.time_step(dt=dt)
         virtual_thermal_layer_interactor()
 
-        isoflux_cylinder_thermal_interactor.compute_flow_forces_and_torques()
+        # isoflux_cylinder_thermal_interactor.compute_flow_forces_and_torques()
         isoflux_cylinder_thermal_interactor.time_step(dt=dt)
         isoflux_cylinder_thermal_interactor()
 
