@@ -1031,9 +1031,7 @@ def test_rod_indirect_neumann_condition_edge_forcing_grid(n_elems):
     correct_temperature_field += -heat_flux * thermal_sim.dx
 
     # Call the method to compute temperature on Neumann forcing grid.
-    test_neumann_forcing_grid.transfer_forcing_from_grid_to_body(
-        np.zeros((1)), np.zeros((1)), np.zeros((1))
-    )
+    test_neumann_forcing_grid.compute_lag_grid_velocity_field()
 
     np.testing.assert_allclose(
         correct_temperature_field,
@@ -1167,9 +1165,7 @@ def test_rod_indirect_neumann_condition_surface_forcing_grid(n_elems):
     correct_temperature_field += -heat_flux * thermal_sim.dx
 
     # Call the method to compute temperature on Neumann forcing grid.
-    test_neumann_forcing_grid.transfer_forcing_from_grid_to_body(
-        np.zeros((1)), np.zeros((1)), np.zeros((1))
-    )
+    test_neumann_forcing_grid.compute_lag_grid_velocity_field()
 
     np.testing.assert_allclose(
         correct_temperature_field,

@@ -765,7 +765,7 @@ class CosseratRodVirtualLayerTemperatureEdgeForcingGrid(ImmersedBodyForcingGrid)
     (high cross-section area to length ratio) this class has to be used.
 
     Set the virtual_boundary_stiffness_coeff and virtual_boundary_damping_coeff to zero for this interactor, since
-    this interactor is only used to probe the temperature one flow grid cell outside of the rod boundary.
+    this interactor is only used to probe the temperature outside of the rod boundary.
 
     References
     ----------
@@ -843,7 +843,7 @@ class CosseratRodVirtualLayerTemperatureEdgeForcingGrid(ImmersedBodyForcingGrid)
         ] = (rod_element_position - self.moment_arm)[: self.grid_dim]
 
     def compute_lag_grid_velocity_field(self) -> None:
-        """Computes velocity of forcing grid points for the Cosserat rod"""
+        """Virtual layer does not interact, and it is only used to probe flow data. So here just pass."""
         pass
 
     def transfer_forcing_from_grid_to_body(
@@ -852,6 +852,7 @@ class CosseratRodVirtualLayerTemperatureEdgeForcingGrid(ImmersedBodyForcingGrid)
         body_flow_torques: np.ndarray,
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
+        """Virtual layer does not interact, and it is only used to probe flow data. So here just pass."""
         pass
 
     def get_maximum_lagrangian_grid_spacing(self) -> float:
@@ -887,10 +888,9 @@ class CosseratRodIndirectNeumannConditionEdgeForcingGrid(
         eul_dx: float = 0,
         virtual_layer_interactor: Type = CosseratRodVirtualLayerTemperatureEdgeForcingGrid,
     ) -> None:
-        super().__init__(grid_dim, cosserat_rod, eul_dx)
-
-        self.heat_flux_dx = heat_flux * self.eul_dx
+        self.heat_flux_dx = heat_flux * eul_dx
         self.virtual_layer_interactor = virtual_layer_interactor
+        super().__init__(grid_dim, cosserat_rod, eul_dx)
 
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
@@ -923,8 +923,11 @@ class CosseratRodIndirectNeumannConditionEdgeForcingGrid(
         ] = (rod_element_position - self.moment_arm)[: self.grid_dim]
 
     def compute_lag_grid_velocity_field(self) -> None:
-        """Computes velocity of forcing grid points for the Cosserat rod"""
-        pass
+        """Computes temperature on the rod surface based on the heat flux and flow temperature."""
+        self.velocity_field = (
+            -self.heat_flux_dx
+            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
+        )
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -932,10 +935,20 @@ class CosseratRodIndirectNeumannConditionEdgeForcingGrid(
         body_flow_torques: np.ndarray,
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
-        self.velocity_field = (
-            -self.heat_flux_dx
-            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
-        )
+        """
+        Since flow is not effecting the Cosserat rod temperature, just pass.
+
+        Parameters
+        ----------
+        body_flow_forces
+        body_flow_torques
+        lag_grid_forcing_field
+
+        Returns
+        -------
+
+        """
+        pass
 
 
 class CosseratRodVirtualLayerTemperatureSurfaceForcingGrid(
@@ -949,7 +962,7 @@ class CosseratRodVirtualLayerTemperatureSurfaceForcingGrid(
     Notes
     -----
     Set the virtual_boundary_stiffness_coeff and virtual_boundary_damping_coeff to zero for this interactor, since
-    this interactor is only used to probe the temperature one flow grid cell outside of the rod boundary.
+    this interactor is only used to probe the temperature  outside of the rod boundary.
 
     References
     ----------
@@ -1024,8 +1037,7 @@ class CosseratRodVirtualLayerTemperatureSurfaceForcingGrid(
 
     def compute_lag_grid_velocity_field(self) -> None:
         """
-        Cosserat rod is not heating up or cooling down. Temperature is constant.
-        Thus, velocity field is always constant, and we don't need to compute.
+        Virtual layer does not interact, and it is only used to probe flow data. So here just pass.
 
         Returns
         -------
@@ -1040,8 +1052,7 @@ class CosseratRodVirtualLayerTemperatureSurfaceForcingGrid(
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
         """
-        Cosserat is not heating up or cooling down.
-        Temperature is constant, so no feedback to the rod.
+        Virtual layer does not interact, and it is only used to probe flow data. So here just pass.
 
         Parameters
         ----------
@@ -1087,27 +1098,31 @@ class CosseratRodIndirectNeumannConditionSurfaceForcingGrid(
         eul_dx: float = 0,
         virtual_layer_interactor: Type = CosseratRodVirtualLayerTemperatureSurfaceForcingGrid,
     ) -> None:
+        self.eul_dx = eul_dx
+        self.heat_flux_dx = heat_flux * self.eul_dx
+        self.virtual_layer_interactor = virtual_layer_interactor
         super().__init__(
             grid_dim, cosserat_rod, surface_grid_density_for_largest_element, with_cap
         )
 
         self.velocity_field = np.zeros((self.num_lag_nodes))
-        self.eul_dx = eul_dx
-        self.heat_flux_dx = heat_flux * self.eul_dx
-        self.virtual_layer_interactor = virtual_layer_interactor
 
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
     def compute_lag_grid_velocity_field(self) -> None:
         """
+        Computes temperature on the rod surface based on the heat flux and flow temperature.
 
         Returns
         -------
 
         """
 
-        pass
+        self.velocity_field = (
+            -self.heat_flux_dx
+            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
+        )
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -1116,6 +1131,7 @@ class CosseratRodIndirectNeumannConditionSurfaceForcingGrid(
         lag_grid_forcing_field: np.ndarray,
     ) -> None:
         """
+        Since flow is not effecting the Cosserat rod temperature, just pass.
 
         Parameters
         ----------
@@ -1128,7 +1144,4 @@ class CosseratRodIndirectNeumannConditionSurfaceForcingGrid(
 
         """
 
-        self.velocity_field = (
-            -self.heat_flux_dx
-            + self.virtual_layer_interactor.lag_grid_flow_velocity_field
-        )
+        pass
