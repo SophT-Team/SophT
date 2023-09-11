@@ -168,12 +168,10 @@ def flow_past_constant_temperature_sphere_case(
             drag_coeff = drag_force / drag_force_scale
             time.append(flow_sim.time)
             drag_coeffs.append(drag_coeff)
-            with open(
-                "../FlowPastConstantTemperatureSphereCase/drag_vs_time.csv", "ab"
-            ) as f:
+            with open("drag_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
-                    np.c_[np.array(time), np.array(drag_coeffs)],
+                    np.c_[np.array(time[-1:]), np.array(drag_coeffs[-1:])],
                     delimiter=",",
                 )
             flow_vel_along_sphere_center.append(
@@ -205,12 +203,13 @@ def flow_past_constant_temperature_sphere_case(
                 )
             )
             nusslet_number.append(nusslet)
-            with open(
-                "../FlowPastConstantTemperatureSphereCase/nusslet_vs_time.csv", "ab"
-            ) as f:
+            with open("nusslet_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
-                    np.c_[np.array(nusslet_number_time), np.array(nusslet_number)],
+                    np.c_[
+                        np.array(nusslet_number_time[-1:]),
+                        np.array(nusslet_number[-1:]),
+                    ],
                     delimiter=",",
                 )
             if save_flow_data:

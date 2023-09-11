@@ -197,12 +197,10 @@ def flow_past_constant_temperature_cylinder_case(
             drag_coeff = np.fabs(F) / velocity_scale / velocity_scale / cyl_radius
             drag_coeffs.append(drag_coeff)
 
-            with open(
-                "../FlowPastConstantTemperatureCylinderCase/drag_vs_time.csv", "ab"
-            ) as f:
+            with open("drag_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
-                    np.c_[np.array(drag_coeffs_time), np.array(drag_coeffs)],
+                    np.c_[np.array(drag_coeffs_time[-1:]), np.array(drag_coeffs[-1:])],
                     delimiter=",",
                 )
 
@@ -224,12 +222,13 @@ def flow_past_constant_temperature_cylinder_case(
             )
             nusslet_number.append(nusslet)
 
-            with open(
-                "../FlowPastConstantTemperatureCylinderCase/nusslet_vs_time.csv", "ab"
-            ) as f:
+            with open("nusslet_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
-                    np.c_[np.array(nusslet_number_time), np.array(nusslet_number)],
+                    np.c_[
+                        np.array(nusslet_number_time[-1:]),
+                        np.array(nusslet_number[-1:]),
+                    ],
                     delimiter=",",
                 )
 

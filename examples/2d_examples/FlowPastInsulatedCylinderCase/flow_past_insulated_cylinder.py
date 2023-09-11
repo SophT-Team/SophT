@@ -262,7 +262,7 @@ def flow_past_insulated_cylinder_case(
             with open("drag_vs_time.csv", "ab") as f:
                 np.savetxt(
                     f,
-                    np.c_[np.array(drag_coeffs_time), np.array(drag_coeffs)],
+                    np.c_[np.array(drag_coeffs_time[-1:]), np.array(drag_coeffs[-1:])],
                     delimiter=",",
                 )
 
