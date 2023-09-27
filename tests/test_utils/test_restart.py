@@ -179,14 +179,14 @@ def run_sim(
     )
 
     if load_data:
-        spu.restart_simulation(
-            flow_sim=flow_sim,
+        curr_time = spu.restart_simulation(
             restart_simulator=restart_test_simulator,
             io=io,
             rod_io=rod_io,
             forcing_io=forcing_io,
             restart_dir=restart_dir,
         )
+        flow_sim.time = curr_time
 
     while flow_sim.time < final_time:
 
