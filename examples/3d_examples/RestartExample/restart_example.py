@@ -162,14 +162,13 @@ def flow_past_rod_case(
 
     restart_dir = "restart_data"
 
-    curr_time = spu.restart_simulation(
+    flow_sim.time = spu.restart_simulation(
         restart_simulator=restart_example_simulator,
         io=io,
         rod_io=rod_io,
         forcing_io=forcing_io,
         restart_dir=restart_dir,
     )
-    flow_sim.time = curr_time
 
     foto_timer = 0.0
     timescale = base_length / U_free_stream
