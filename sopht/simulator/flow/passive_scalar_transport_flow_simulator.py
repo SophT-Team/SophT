@@ -6,7 +6,11 @@ from typing import Callable, Literal, Type
 from sopht.simulator.flow.passive_transport_flow_simulators import (
     compute_advection_diffusion_stable_timestep,
 )
+import logging
 
+
+def filter_scalar_field(scalar_field: np.ndarray) -> None:
+    ...
 
 class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
     """Class for passive transport flow simulator.
@@ -27,6 +31,7 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
         time: float = 0.0,
         field_type: Literal["scalar"] = "scalar",
         with_forcing: bool = False,
+        filter_primary_field: bool=False,
         velocity_field: np.ndarray = np.array([None]),
         **kwargs,
     ) -> None:
@@ -55,6 +60,31 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
         self.penalty_zone_width = kwargs.get("penalty_zone_width", 2)
         # Create reference to the velocity field. Velocity field will be computed by the Navier-Stokes Flow simulator.
         self.velocity_field = np.ndarray.view(velocity_field)
+
+        self.filter_primary_field = filter_primary_field
+        if self.filter_primary_field:
+            if grid_dim==2:
+                raise  NotImplemented("Filtering is not implemented for scalar 2D fields.")
+
+            log = logging.getLogger()
+            log.warning(
+                "==============================================="
+                "\nPrimary scalar field filtering is turned on."
+            )
+            # default values for the filter setting dictionary
+            default_filter_setting_dict: dict[
+                str, int | Literal["multiplicative", "convolution"]
+            ] = {"order": 2, "type": "multiplicative"}
+            self.filter_setting_dict = kwargs.get(
+                "filter_setting_dict", default_filter_setting_dict
+            )
+            log.warning(
+                f"Setting default filter order = {self.filter_setting_dict['order']}"
+                f"\nand type = {self.filter_setting_dict['type']}. For custom filtering,"
+                "\nprovide a dictionary called 'filter_setting_dict'"
+                "\nwith keys 'order' and 'type'."
+            )
+            log.warning("===============================================")
 
         super().__init__(
             grid_dim=grid_dim,
@@ -110,6 +140,7 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
                         fixed_grid_size=self.grid_size,
                     )
                 )
+                self._filter_scalar_field = filter_scalar_field
 
                 if self.with_forcing:
                     self._update_passive_field_from_forcing = (
@@ -158,6 +189,19 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
                 )
 
                 # self._gradient_of_field = NotImplemented
+                self._filter_scalar_field = filter_scalar_field
+                if self.filter_primary_field and self.filter_setting_dict is not None:
+                    self.buffer_scalar_field_flux = np.zeros_like(self.buffer_scalar_field)
+                    self._filter_scalar_field = spne.gen_laplacian_filter_kernel_3d(
+                        filter_order=self.filter_setting_dict["order"],
+                        filter_flux_buffer=self.buffer_scalar_field_flux,
+                        field_buffer=self.buffer_scalar_field,
+                        real_t=self.real_t,
+                        num_threads=self.num_threads,
+                        fixed_grid_size=self.grid_size,
+                        field_type="scalar",
+                        filter_type=self.filter_setting_dict["type"],
+                    )
 
                 if self.with_forcing:
                     self._update_passive_field_from_forcing = (
@@ -188,6 +232,7 @@ class PassiveTransportScalarFieldFlowSimulator(FlowSimulator):
                 self.diffusivity_constant * dt / self.dx / self.dx
             ),
         )
+        self._filter_scalar_field(scalar_field=self.primary_field)
         self._penalise_field_towards_boundary(field=self.primary_field)
 
     def _advection_and_diffusion_with_forcing_time_step(self, dt: float) -> None:
