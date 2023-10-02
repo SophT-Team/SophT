@@ -1,0 +1,7 @@
+name: sopht-env
+channels:
+  - defaults
+dependencies:
+  - python=3.10.*
+  - pip
+  - conda-forge::poetry>=1.0.0,<1.6.0
