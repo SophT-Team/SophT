@@ -1034,6 +1034,48 @@ docs = ["Sphinx (>=6.1,<7.0)", "docutils (>=0.18,<0.19)", "myst-parser (>=1.0,<2
 examples = ["cma (>=3.2.2,<4.0.0)", "matplotlib (>=3.3.2,<4.0.0)"]
 
 [[package]]
+name = "pyfftw"
+version = "0.13.1"
+description = "A pythonic wrapper around FFTW, the FFT library, presenting a unified interface for all the supported transforms."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pyFFTW-0.13.1-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:bed25dbb4b10454b564db951bfad976a382bc8d6af38d7f0995b239f17f58a0c"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:48a571116ab78c44cbd86fb46c5df021b1199e4ea9c0c607d14a7c7c5b6bab3a"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8f46337a3fb8270ef1237db25097c21905f5d2b045f49afea217b603a320c329"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-win32.whl", hash = "sha256:c2208655e0b24b2afe4bafd05eeca5fee8e8a56fa045e296f782b1f61e088dfb"},
+    {file = "pyFFTW-0.13.1-cp310-cp310-win_amd64.whl", hash = "sha256:60a09f9e80544b82d18682f7301942613fcb34f0daf316f2833bcea13d76fc0c"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:dee09034f5d0464b828a8fd37da46776fc740e31870dd9e5d36d15c34f72102c"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5b5ee9b582befebcdb29a8d73e03e70c96ecd53625c9c72eb753a967cf2979b4"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8bfce5e4190b07af8dfca4bfeef7481ea61148744bd92d4df944357ee3939a83"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-win32.whl", hash = "sha256:51675f9bc7536a3ac9893d8277a3af000ce4207ad978db219bdc715662ce1bcb"},
+    {file = "pyFFTW-0.13.1-cp311-cp311-win_amd64.whl", hash = "sha256:11c280b8062a201cc6aab6641b7a4f4d45d8e5f5f2d9ba2c1514c9510e0c5f32"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-macosx_10_13_x86_64.whl", hash = "sha256:04bbc06da1e46cfec05ace62591aa00cadfe550d920137022cd210b1806e03e4"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:1a8f0e4207e24ec38a50bb6442614d4bbf135af2ba23db6546759f54a36c11e0"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:2998f3633a430567986bf47ec3774ed50356faded66264f766d76efd117df1b3"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6c948799bfee686cb17417c06c8d3bb7fb1b867196bc4939963b18a1108c62ab"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-win32.whl", hash = "sha256:4a03adbcfbd52038dd6e5ad2a9697cba881c80d40a625d942e5a6066a1f83884"},
+    {file = "pyFFTW-0.13.1-cp38-cp38-win_amd64.whl", hash = "sha256:8ddcdebc29c58a65eb43802462e7c21a8db7d70d2e4b8a79e43630c9149448f8"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-macosx_10_13_x86_64.whl", hash = "sha256:c05b7ddec15070c72704d0ad5e632222b0775327ab6890af288a2a36eb15043e"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d872744959a4df7307b32fbeb288137ed242cf24034a791abb3ee901c8c1bf3e"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:9a67d3109fb2c549ee95c8dbbcf07020400672cbfb48f79c3f88b615a1c95598"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d799b442815f56b821b615ee3e8960ab9f3bc1e7a4bcbcf5813b847005875b47"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-win32.whl", hash = "sha256:18ac39489848a10785ddd998df242f58d5f75017c414297fee470bfdec202168"},
+    {file = "pyFFTW-0.13.1-cp39-cp39-win_amd64.whl", hash = "sha256:af58834b496b473419c4dcd47e01657d1d066e9c23198e1cb82eba82356c9097"},
+    {file = "pyFFTW-0.13.1-pp38-pypy38_pp73-macosx_10_13_x86_64.whl", hash = "sha256:415040bcadcad887bf112d2db0ff4b13e808d1aad7fddcd60acef20e0e11c84a"},
+    {file = "pyFFTW-0.13.1-pp38-pypy38_pp73-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:e68503033864f9650f480624a0830b10367ad446cb7b5bef33d0d1c596519446"},
+    {file = "pyFFTW-0.13.1-pp38-pypy38_pp73-win_amd64.whl", hash = "sha256:7ccfa55d50a5464890a9486b835965e29f9df4e9d3e856cc51c9d2a34964e4a8"},
+    {file = "pyFFTW-0.13.1.tar.gz", hash = "sha256:09155e90a0c6d0c1f2d1f3668180a7de95fb9f83fef5137a112fb05978e87320"},
+]
+
+[package.dependencies]
+numpy = ">=1.20,<2.0"
+
+[package.extras]
+dask = ["dask[array] (>=1.0)", "numpy (>=1.20,<2.0)"]
+scipy = ["scipy (>=1.8.0)"]
+
+[[package]]
 name = "pyFFTW"
 version = "0.13.1+4.g44ad25d"
 description = "A pythonic wrapper around FFTW, the FFT library, presenting a unified interface for all the supported transforms."
@@ -1108,6 +1150,30 @@ type = "git"
 url = "https://github.com/sy-cui/pystencils.git"
 reference = "macos_fix"
 resolved_reference = "b79d384e694f39c65fcd98ea6ea0c61d968895f4"
+
+[[package]]
+name = "pystencils"
+version = "1.3.1"
+description = "Speeding up stencil computations on CPUs and GPUs"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pystencils-1.3.1.tar.gz", hash = "sha256:35383054468789c9a297bf6170cc4c03aaccee64ce68fd696d745b3dcb69fcc3"},
+]
+
+[package.dependencies]
+appdirs = "*"
+joblib = "*"
+numpy = ">=1.8.0"
+sympy = ">=1.6,<=1.11.1"
+
+[package.extras]
+alltrafos = ["islpy", "py-cpuinfo"]
+bench-db = ["blitzdb", "pandas", "pymongo"]
+doc = ["nbsphinx", "pandoc", "sphinx", "sphinx_autodoc_typehints", "sphinx_rtd_theme", "sphinxcontrib-bibtex"]
+gpu = ["cupy"]
+interactive = ["graphviz", "imageio", "ipy_table", "jupyter", "matplotlib", "pyevtk", "rich"]
+use-cython = ["Cython"]
 
 [[package]]
 name = "pytest"
@@ -1373,4 +1439,4 @@ examples = ["click", "coomm", "magneto_pyelastica"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "95904f559b5e09b0b5a57c744448a6de5157db9c3ac00016bf4ec747fba489dd"
+content-hash = "5fde9d1c44a26a629be16c51c671363b0c21ae00eeec19fd9a3869907202c90e"
