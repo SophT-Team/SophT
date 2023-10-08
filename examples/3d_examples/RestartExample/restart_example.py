@@ -162,8 +162,7 @@ def flow_past_rod_case(
 
     restart_dir = "restart_data"
 
-    spu.restart_simulation(
-        flow_sim=flow_sim,
+    flow_sim.time = spu.restart_simulation(
         restart_simulator=restart_example_simulator,
         io=io,
         rod_io=rod_io,
