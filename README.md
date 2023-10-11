@@ -19,19 +19,18 @@ the project, although most of the important commands will be provided in `Makefi
 
 First **create the fork repository and clone** to your local machine.
 
-2. Virtual python workspace: `conda`.
-
-A `environment.yml` file is provided to easily create a virtual environment
-named `sopht-env`. The user may modify the name as necessary.
+2. Set up virtual python workspace: `conda`.
 
 ```bash
-conda env create -f environment.yml
+conda create -n sopht-env
 conda activate sopht-env
+conda install python=3.10
 ```
 
 3. Set up `dependencies`!
 
 ```bash
+make poetry-install
 make install
 make pre-commit-install
 ```
