@@ -2,13 +2,13 @@
 PYTHON := python3
 PYTHONPATH := `pwd`
 #* Poetry
-.PHONY: poetry-download
-poetry-download:
-	curl -sSL https://install.python-poetry.org/ | $(PYTHON) -
+.PHONY: poetry-install
+poetry-install:
+	pip install "poetry>=1.0.0,<1.6.0"
 
 .PHONY: poetry-remove
 poetry-remove:
-	curl -sSL https://install.python-poetry.org/ | $(PYTHON) - --uninstall
+	pip uninstall poetry
 
 #* Installation
 .PHONY: install

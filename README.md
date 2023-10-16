@@ -19,20 +19,27 @@ the project, although most of the important commands will be provided in `Makefi
 
 First **create the fork repository and clone** to your local machine.
 
-2. Virtual python workspace: `conda`, `pyenv`, or `venv`.
-
-We recommend using python version above 3.10.
+2. Set up virtual python workspace: `conda`.
 
 ```bash
-conda create --name sopht-env
+conda create -n sopht-env
 conda activate sopht-env
-conda install pip
+conda install python=3.10
+```
+3. (MacOS) System-wide installed dependencies
+
+On MacOS (especially M-series with ARM64 architecture), we require a Homebrew installed
+`fftw` library and a working `clang++` compiler with `OpenMP` support. If these requirements
+are not met, we recommend
+```bash
+brew install llvm
+brew install fftw
 ```
 
-3. Setup [`poetry`](https://python-poetry.org) and `dependencies`!
+4. Set up `dependencies`!
 
 ```bash
-make poetry-download
+make poetry-install
 make install
 make pre-commit-install
 ```
@@ -48,7 +55,7 @@ We ask that any publications which use SophT cite as following:
                   Songyuan Cui and
                   Fan Kiat Chan and
                   Mattia Gazzola},
-  title        = {{Scalable One-stop Platform for Hydroelastic Things 
+  title        = {{Scalable One-stop Platform for Hydroelastic Things
                    (SOPHT)}},
   month        = feb,
   year         = 2023,
@@ -64,4 +71,3 @@ We ask that any publications which use SophT cite as following:
 
 [link-doi]: https://zenodo.org/badge/latestdoi/498451510
 [link-CI]: https://github.com/SophT-Team/SophT/actions
-
