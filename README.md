@@ -26,8 +26,17 @@ conda create -n sopht-env
 conda activate sopht-env
 conda install python=3.10
 ```
+3. (MacOS) System-wide installed dependencies
 
-3. Set up `dependencies`!
+On MacOS (especially M-series with ARM64 architecture), we require a Homebrew installed
+`fftw` library and a working `clang++` compiler with `OpenMP` support. If these requirements
+are not met, we recommend
+```bash
+brew install llvm
+brew install fftw
+```
+
+4. Set up `dependencies`!
 
 ```bash
 make poetry-install
