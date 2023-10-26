@@ -3,5 +3,12 @@ from .cosserat_rod_forcing_grids import (
     CosseratRodElementCentricForcingGrid,
     CosseratRodSurfaceForcingGrid,
     CosseratRodEdgeForcingGrid,
+    CosseratRodConstantTemperatureNodalForcingGrid,
+    CosseratRodConstantTemperatureEdgeForcingGrid,
+    CosseratRodConstantTemperatureSurfaceForcingGrid,
+    CosseratRodVirtualLayerTemperatureEdgeForcingGrid,
+    CosseratRodIndirectNeumannConditionEdgeForcingGrid,
+    CosseratRodVirtualLayerTemperatureSurfaceForcingGrid,
+    CosseratRodIndirectNeumannConditionSurfaceForcingGrid,
 )
 from .cosserat_rod_flow_interaction import CosseratRodFlowInteraction

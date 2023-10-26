@@ -4,6 +4,7 @@ import pytest
 import sopht.simulator as sps
 from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
 from sopht.utils.precision import get_test_tol
+import sopht.utils as spu
 
 
 def mock_straight_rod(n_elems, **kwargs):
@@ -807,3 +808,367 @@ def test_rod_surface_grid_spacing(n_elems, largest_element_grid_density, taper_r
     )
 
     np.testing.assert_allclose(correct_max_grid_spacing, max_grid_spacing)
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("rod_temperature", [-13.0, 20.0, 50.0])
+def test_rod_constant_temperature_nodal_forcing_grid(n_elems, rod_temperature):
+
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodNodalForcingGrid(
+        grid_dim=3, cosserat_rod=straight_rod
+    )
+    test_rod_forcing_grid = sps.CosseratRodConstantTemperatureNodalForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        rod_temperature=rod_temperature,
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the nodal temperatures
+    correct_grid_temperatures = rod_temperature * np.ones(n_elems + 1)
+    np.testing.assert_allclose(
+        correct_grid_temperatures,
+        test_rod_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("rod_temperature", [-13.0, 20.0, 50.0])
+def test_rod_constant_temperature_edge_forcing_grid(n_elems, rod_temperature):
+
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodEdgeForcingGrid(
+        grid_dim=2, cosserat_rod=straight_rod
+    )
+    test_rod_forcing_grid = sps.CosseratRodConstantTemperatureEdgeForcingGrid(
+        grid_dim=2,
+        cosserat_rod=straight_rod,
+        rod_temperature=rod_temperature,
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the nodal temperatures
+    correct_grid_temperatures = rod_temperature * np.ones(3 * n_elems)
+    np.testing.assert_allclose(
+        correct_grid_temperatures,
+        test_rod_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+@pytest.mark.parametrize("rod_temperature", [-13.0, 20.0, 50.0])
+@pytest.mark.parametrize("surface_grid_density_for_largest_element", [10.0, 20.0, 50.0])
+def test_rod_constant_temperature_surface_forcing_grid(
+    n_elems, rod_temperature, surface_grid_density_for_largest_element
+):
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+    )
+    test_rod_forcing_grid = sps.CosseratRodConstantTemperatureSurfaceForcingGrid(
+        grid_dim=3,
+        cosserat_rod=straight_rod,
+        rod_temperature=rod_temperature,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the nodal temperatures
+    correct_grid_temperatures = rod_temperature * np.ones(
+        correct_rod_forcing_grid.num_lag_nodes
+    )
+    np.testing.assert_allclose(
+        correct_grid_temperatures,
+        test_rod_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_virtual_layer_temperature_edge_forcing_grid(n_elems):
+
+    straight_rod = mock_straight_rod(n_elems)
+    correct_rod_forcing_grid = sps.CosseratRodEdgeForcingGrid(
+        grid_dim=2, cosserat_rod=straight_rod
+    )
+    eul_dx = correct_rod_forcing_grid.get_maximum_lagrangian_grid_spacing()
+    test_rod_forcing_grid = sps.CosseratRodVirtualLayerTemperatureEdgeForcingGrid(
+        grid_dim=2,
+        cosserat_rod=straight_rod,
+        eul_dx=eul_dx,
+    )
+
+    np.testing.assert_allclose(
+        eul_dx,
+        test_rod_forcing_grid.eul_dx,
+        atol=get_test_tol(precision="double"),
+    )
+
+    z_vector = np.repeat(np.array([0, 0, 1.0]).reshape(3, 1), n_elems, axis=-1)
+    rod_normal_direction = ea._linalg._batch_cross(z_vector, straight_rod.tangents)
+    left_moment_arm_eul_dx = eul_dx * rod_normal_direction
+    right_moment_arm_eul_dx = eul_dx * -rod_normal_direction
+
+    # Check position initialization
+    # First check left nodes
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field[:, n_elems : 2 * n_elems]
+        + left_moment_arm_eul_dx[:2],
+        test_rod_forcing_grid.position_field[:, :n_elems],
+        atol=get_test_tol(precision="double"),
+    )
+    # Then check right nodes
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field[:, 2 * n_elems :]
+        + right_moment_arm_eul_dx[:2],
+        test_rod_forcing_grid.position_field[:, n_elems:],
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_indirect_neumann_condition_edge_forcing_grid(n_elems):
+
+    straight_rod = mock_straight_rod(n_elems)
+    grid_dim = 2
+    real_t = spu.get_real_t("double")
+    grid_size = (100, 100)
+    x_range = 2.0
+
+    straight_rod.position_collection[0, :] += x_range / 4
+    straight_rod.position_collection[1, :] += x_range / 4
+
+    correct_rod_forcing_grid = sps.CosseratRodEdgeForcingGrid(
+        grid_dim=grid_dim, cosserat_rod=straight_rod
+    )
+
+    thermal_sim = sps.PassiveTransportScalarFieldFlowSimulator(
+        diffusivity_constant=0.1,
+        grid_dim=grid_dim,
+        grid_size=grid_size,
+        x_range=x_range,
+        real_t=real_t,
+        num_threads=1,
+        time=0.0,
+        field_type="scalar",
+        velocity_field=np.zeros((3, grid_size[0], grid_size[1])),
+        with_forcing=True,
+    )
+
+    virtual_thermal_layer_interactor = sps.CosseratRodFlowInteraction(
+        cosserat_rod=straight_rod,
+        eul_grid_forcing_field=thermal_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=thermal_sim.primary_field,
+        virtual_boundary_stiffness_coeff=0.0,
+        virtual_boundary_damping_coeff=0.0,
+        dx=thermal_sim.dx,
+        grid_dim=grid_dim,
+        real_t=real_t,
+        field_type="scalar",
+        forcing_grid_cls=sps.CosseratRodVirtualLayerTemperatureEdgeForcingGrid,
+        eul_dx=thermal_sim.dx,
+    )
+
+    # Neumann forcing grid
+    heat_flux = np.random.randn()
+    test_neumann_forcing_grid = sps.CosseratRodIndirectNeumannConditionEdgeForcingGrid(
+        grid_dim=grid_dim,
+        cosserat_rod=straight_rod,
+        heat_flux=heat_flux,
+        eul_dx=thermal_sim.dx,
+        virtual_layer_interactor=virtual_thermal_layer_interactor,
+    )
+
+    # test lagrangian grid positions.
+    # neumann forcing grid does not have lagrangian grids at the rod centerline.
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field[:, n_elems:],
+        test_neumann_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # heat_flux * dx
+    np.testing.assert_allclose(
+        heat_flux * thermal_sim.dx,
+        test_neumann_forcing_grid.heat_flux_dx,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the validity of temperature field on the surface of Neumann forcing grid.
+
+    virtual_thermal_layer_interactor()
+    virtual_thermal_layer_interactor.time_step(dt=2.0)
+
+    correct_temperature_field = np.random.random((2 * n_elems))
+
+    virtual_thermal_layer_interactor.lag_grid_flow_velocity_field[
+        :
+    ] = correct_temperature_field.copy()
+
+    correct_temperature_field += -heat_flux * thermal_sim.dx
+
+    # Call the method to compute temperature on Neumann forcing grid.
+    test_neumann_forcing_grid.compute_lag_grid_velocity_field()
+
+    np.testing.assert_allclose(
+        correct_temperature_field,
+        test_neumann_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_virtual_layer_temperature_surface_forcing_grid(n_elems):
+
+    straight_rod = mock_straight_rod(n_elems)
+    straight_rod_virtual = mock_straight_rod(n_elems)
+    surface_grid_density_for_largest_element = 6
+    grid_dim = 3
+    eul_dx = 0.01
+    # Change the radius of straight rod to match with the virtual surface grid radius
+    straight_rod.radius += eul_dx
+    correct_rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=grid_dim,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+    )
+    test_rod_forcing_grid = sps.CosseratRodVirtualLayerTemperatureSurfaceForcingGrid(
+        grid_dim=grid_dim,
+        cosserat_rod=straight_rod_virtual,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+        eul_dx=eul_dx,
+    )
+
+    np.testing.assert_allclose(
+        eul_dx,
+        test_rod_forcing_grid.eul_dx,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check position initialization
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_rod_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+
+@pytest.mark.parametrize("n_elems", [8, 16])
+def test_rod_indirect_neumann_condition_surface_forcing_grid(n_elems):
+
+    straight_rod = mock_straight_rod(n_elems)
+    grid_dim = 3
+    real_t = spu.get_real_t("double")
+    grid_size = (100, 100, 100)
+    x_range = 2.0
+    surface_grid_density_for_largest_element = 6
+
+    straight_rod.position_collection[0, :] += x_range / 4
+    straight_rod.position_collection[1, :] += x_range / 4
+    straight_rod.position_collection[2, :] += x_range / 4
+
+    correct_rod_forcing_grid = sps.CosseratRodSurfaceForcingGrid(
+        grid_dim=grid_dim,
+        cosserat_rod=straight_rod,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+    )
+
+    thermal_sim = sps.PassiveTransportScalarFieldFlowSimulator(
+        diffusivity_constant=0.1,
+        grid_dim=grid_dim,
+        grid_size=grid_size,
+        x_range=x_range,
+        real_t=real_t,
+        num_threads=1,
+        time=0.0,
+        field_type="scalar",
+        velocity_field=np.zeros((3, grid_size[0], grid_size[1], grid_size[2])),
+        with_forcing=True,
+    )
+
+    virtual_thermal_layer_interactor = sps.CosseratRodFlowInteraction(
+        cosserat_rod=straight_rod,
+        eul_grid_forcing_field=thermal_sim.eul_grid_forcing_field,
+        eul_grid_velocity_field=thermal_sim.primary_field,
+        virtual_boundary_stiffness_coeff=0.0,
+        virtual_boundary_damping_coeff=0.0,
+        dx=thermal_sim.dx,
+        grid_dim=grid_dim,
+        real_t=real_t,
+        field_type="scalar",
+        forcing_grid_cls=sps.CosseratRodVirtualLayerTemperatureSurfaceForcingGrid,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+        eul_dx=thermal_sim.dx,
+    )
+
+    # Neumann forcing grid
+    heat_flux = np.random.randn()
+    test_neumann_forcing_grid = sps.CosseratRodIndirectNeumannConditionSurfaceForcingGrid(
+        grid_dim=grid_dim,
+        cosserat_rod=straight_rod,
+        heat_flux=heat_flux,
+        eul_dx=thermal_sim.dx,
+        surface_grid_density_for_largest_element=surface_grid_density_for_largest_element,
+        virtual_layer_interactor=virtual_thermal_layer_interactor,
+    )
+
+    # test lagrangian grid positions.
+    np.testing.assert_allclose(
+        correct_rod_forcing_grid.position_field,
+        test_neumann_forcing_grid.position_field,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # heat_flux * dx
+    np.testing.assert_allclose(
+        heat_flux * thermal_sim.dx,
+        test_neumann_forcing_grid.heat_flux_dx,
+        atol=get_test_tol(precision="double"),
+    )
+
+    # Check the validity of temperature field on the surface of Neumann forcing grid.
+
+    virtual_thermal_layer_interactor()
+    virtual_thermal_layer_interactor.time_step(dt=2.0)
+
+    correct_temperature_field = np.random.random(
+        (correct_rod_forcing_grid.position_field.shape[-1])
+    )
+
+    virtual_thermal_layer_interactor.lag_grid_flow_velocity_field[
+        :
+    ] = correct_temperature_field.copy()
+
+    correct_temperature_field += -heat_flux * thermal_sim.dx
+
+    # Call the method to compute temperature on Neumann forcing grid.
+    test_neumann_forcing_grid.compute_lag_grid_velocity_field()
+
+    np.testing.assert_allclose(
+        correct_temperature_field,
+        test_neumann_forcing_grid.velocity_field,
+        atol=get_test_tol(precision="double"),
+    )

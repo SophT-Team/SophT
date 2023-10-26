@@ -83,7 +83,11 @@ def gen_set_fixed_val_pyst_kernel_3d(
     ).compile()
     match field_type:
         case "scalar":
-            return set_fixed_val_pyst_kernel_3d
+
+            def scalar_field_set_fixed_val_pyst_kernel_3d(field, fixed_val):
+                set_fixed_val_pyst_kernel_3d(field=field, fixed_val=fixed_val)
+
+            return scalar_field_set_fixed_val_pyst_kernel_3d
         case "vector":
             x_axis_idx = spu.VectorField.x_axis_idx()
             y_axis_idx = spu.VectorField.y_axis_idx()
