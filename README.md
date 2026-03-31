@@ -6,43 +6,48 @@
 
 Scalable One-stop Platform for Hydroelastic Things (SOPHT).
 
-This repository corresponds to the development of flow-structure
-interaction simulator (2D and 3D) using immersed boundary method, while capturing Cosserat rod dynamics
-using `pyelastica`.
+This repository corresponds to the development of flow-structure interaction simulator (2D and 3D) using immersed boundary method, while capturing Cosserat rod dynamics using `pyelastica`.
 
 ## Installation
 
-Below are steps of how to install `sopht`. We mainly use `poetry` to manage
-the project, although most of the important commands will be provided in `Makefile`.
+A Python version of at least `3.10` is required for installation.
 
-1. Clone!
+`sopht` can be installed in one of two ways:
+1. direct installation from GitHub, and
+2. cloning the repository and building it manually.
 
-First **create the fork repository and clone** to your local machine.
-
-2. Set up virtual python workspace: `conda`.
-
-```bash
-conda create -n sopht-env
-conda activate sopht-env
-conda install python=3.10
+### 1. Direct installation
+The first approach is straightforward with `pip`:
+```sh
+pip install "git+https://github.com/SophT-Team/SophT.git"
 ```
-3. (MacOS) System-wide installed dependencies
-
-On MacOS (especially M-series with ARM64 architecture), we require a Homebrew installed
-`fftw` library and a working `clang++` compiler with `OpenMP` support. If these requirements
-are not met, we recommend
-```bash
-brew install llvm
-brew install fftw
+or optionally with additional dependencies required by the examples:
+```sh
+pip install "sopht[examples]@git+https://github.com/SophT-Team/SophT.git"
 ```
 
-4. Set up `dependencies`!
-
-```bash
-make poetry-install
-make install
-make pre-commit-install
+### 2. Manual installation
+To install `sopht` manually, first clone the repository
+```sh
+git clone https://github.com/SophT-Team/SophT.git
 ```
+The user is free to choose any Python package manager or build-system for the following steps, although we recommand using [UV](https://docs.astral.sh/uv/) as the package manager for which we have prepared a `uv.lock` file.
+We provide several dependency groups and optional dependencies for various development purposes:
+```sh
+# Dependency groups
+# uv sync --group dev
+# uv sync --group lint
+# uv sync --group tests
+
+# Optional dependencies
+# uv sync --extra examples
+
+# Install all groups
+uv sync
+```
+
+### 3. (Optional) Install `ffmpeg`
+`sopht` examples use `ffmpeg` for data animation. To install `ffmpeg`, please visit visit their [website](https://ffmpeg.org/) for instructions.
 
 ## Citation
 
