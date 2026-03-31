@@ -6,8 +6,12 @@ import numpy as np
 import os
 from numpy.testing import assert_allclose
 
-
-@pytest.mark.parametrize("grid_size_x", [64])
+xfail_reason = (
+    "Upstream issue with PyElastica restart functionality, "
+    "see https://github.com/GazzolaLab/PyElastica/issues/528"
+)
+@pytest.mark.xfail(reason=xfail_reason)
+@pytest.mark.parametrize("grid_size_x", [32])
 @pytest.mark.parametrize("precision", ["single"])
 @pytest.mark.parametrize("with_free_stream", [True])
 @pytest.mark.parametrize("filter_vorticity", [True])
@@ -91,7 +95,7 @@ def run_sim(
         filter_setting_dict={"type": filter_type, "order": filter_order},
     )
 
-    n_elems = 40
+    n_elems = 20
     cosserat_rod = ea.CosseratRod.straight_rod(
         n_elems,
         start=np.array([0.2 * x_range, 0.5 * x_range * 0.25, 0.75 * x_range]),

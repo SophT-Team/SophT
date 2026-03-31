@@ -6,7 +6,7 @@ def create_figure_and_axes(
 ) -> tuple[plt.Figure, plt.Axes]:
     """Creates figure and axes for plotting contour fields"""
 
-    plt.style.use("seaborn")
+    plt.style.use("seaborn-v0_8")
     fig = plt.figure(frameon=True, dpi=150)
     ax = fig.add_subplot(111)
     if fig_aspect_ratio == "default":
@@ -25,6 +25,6 @@ def save_and_clear_fig(
         bbox_inches="tight",
         pad_inches=0,
     )
-    ax.cla()
     if cbar is not None:
         cbar.remove()
+    ax.cla()
