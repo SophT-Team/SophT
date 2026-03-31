@@ -1,82 +1,140 @@
-# Poetry pyproject.toml: https://python-poetry.org/docs/pyproject/
-[build-system]
-requires = ["poetry_core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[project]
 name = "sopht"
 version = "0.0.1"
 description = "Scalable One-stop Platform for Hydroelastic Things (SOPHT)"
 readme = "README.md"
-authors = ["Yashraj Bhosale <bhosale2@illinois.edu>", "Arman Tekinalp <armant2@illinois.edu>"]
+authors = [
+    {name = "Yashraj Bhosale", email = "bhosale2@illinois.edu"},
+    {name = "Arman Tekinalp", email = "armant2@illinois.edu"},
+    {name = "Songyuan Cui", email = "cui20@illinois.edu"}
+]
+maintainers = [
+    {name = "Songyuan Cui", email = "cui20@illinois.edu"}
+]
 license = "MIT"
-repository = "https://github.com/SophT-Team/SophT"
-
-# ...
-packages = [
-    { include = "sopht" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "numba",
+    "sympy",
+    "h5py",
+    "pyelastica",
+    "matplotlib",
+    "pyfftw",
+    "pystencils"
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-numpy = "^1.20.0"
-numba = ">=0.55"
-scipy = "^1.7.3"
-sympy = "^1.9"
-psutil = "^5.9.0"
-h5py = "^3.6"
-pyelastica = "^0.3"
-matplotlib = "3.7.1"
-pyfftw = [
-    { version="^0.13.0", markers="sys_platform != 'darwin'", source="pypi"},
-    { git="https://github.com/tp5uiuc/pyFFTW.git", branch="macos_fix", markers="sys_platform == 'darwin'" },
+[project.urls]
+Homepage = "https://github.com/SophT-Team/SophT"
+Repository = "https://github.com/SophT-Team/SophT.git"
+Issues = "https://github.com/SophT-Team/SophT/issues"
+
+[project.optional-dependencies]
+examples = [
+    "click",
+    # "coomm",
+    "magneto_pyelastica"
 ]
-pystencils = [
-    { version="^1.0", markers="sys_platform != 'darwin'", source="pypi"},
-    { git="https://github.com/sy-cui/pystencils.git", branch="macos_fix", markers="sys_platform == 'darwin'" },
 
+# https://hatch.pypa.io/latest/config/build/#build-system
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# https://docs.astral.sh/uv/concepts/projects/dependencies/#development-dependencies
+[dependency-groups]
+tests = [
+    "pytest",
+    "coverage",
+    "pytest-cov",
+    "mypy",
+    "psutil", 
 ]
-click = {version = "^8.1", optional = true, extras = ["examples"]}
-coomm = {version = ">=0.1.1", optional = true, extras = ["examples"]}
-magneto_pyelastica = {version = ">=0.0.1", optional = true, extras = ["examples"]}
+lint = [
+    "ruff"
+]
+dev = [
+    "pre-commit",
+]
 
+[tool.uv]
+default-groups = ["lint", "dev"]
 
-[tool.poetry.dev-dependencies]
-black = "^22.3.0"
-flake8 = "^4.0.1"
-pre-commit = "^2.19.0"
-pytest = "^7.0.1"
-coverage = "^6.3.2"
-pytest-cov = "^3.0.0"
-mypy = "^0.982"
+# https://docs.astral.sh/ruff/configuration/
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
 
-[tool.poetry.extras]
-examples = ["click", "coomm", "magneto_pyelastica"]
-
-[tool.black]
-# https://github.com/psf/black
-target-version = ["py310"]
 line-length = 88
-color = true
+indent-width = 4
 
-exclude = '''
-/(
-    \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-    | env
-    | venv
-)/
-'''
+target-version = "py310"
 
+[tool.ruff.lint]
+select = [
+    "F",        # Pyflakes rules
+    "W",        # PyCodeStyle warnings
+    "E",        # PyCodeStyle errors
+    "I",        # Sort imports properly
+    "UP",       # Warn if certain things can changed due to newer Python versions
+    "C4",       # Catch incorrect use of comprehensions, dict, list, etc
+    "FA",       # Enforce from __future__ import annotations
+    "ISC",      # Good use of string concatenation
+    "ICN",      # Use common import conventions
+    "RET",      # Good return practices
+    "SIM",      # Common simplification rules
+    "TID",      # Some good import practices
+    "TC",       # Enforce importing certain types in a TYPE_CHECKING block
+    "PTH",      # Use pathlib instead of os.path
+    "TD",       # Be diligent with TODO comments
+    "NPY",      # Some numpy-specific things
+]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+# https://mypy.readthedocs.io/en/stable/config_file.html
 [tool.mypy]
-# https://mypy.readthedocs.io/en/latest/config_file.html#using-a-pyproject-toml-file
 python_version = "3.10"
 pretty = true
 show_traceback = true
@@ -87,7 +145,9 @@ show_column_numbers = true
 show_error_codes = true
 show_error_context = true
 
+# https://docs.pytest.org/en/stable/reference/customize.html
 [tool.pytest.ini_options]
-# https://docs.pytest.org/en/6.2.x/customize.html#pyproject-toml
-# Directories that are not visited by pytest collector:
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
 norecursedirs =["hooks", "*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__"]
