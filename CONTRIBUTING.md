@@ -13,12 +13,26 @@ The following is a set of guidelines for contributing to SophT. These are mostly
   * [Project workflow](#project-workflow)
 
 [How can I contribute?](#how-can-i-contribute)
-  * [Reporting bugs](#reporting-bugs)
-  * [Suggesting enhancements](#suggesting-enhancements)
-  * [Your first code contribution](#your-first-code-contribution)
-  * [Side projects](#side-projects)
-  * [Pull requests](#pull-requests)
-  * [Have questions about the source code](#have-questions-about-the-source-code)
+- [Contributing to SophT](#contributing-to-sopht)
+    - [Table Of Contents](#table-of-contents)
+- [Three-line summary](#three-line-summary)
+- [Getting started](#getting-started)
+  - [Setup development environment](#setup-development-environment)
+    - [1. Clone the repository](#1-clone-the-repository)
+    - [2. Build dependencies](#2-build-dependencies)
+    - [3. Pre-commit](#3-pre-commit)
+    - [4. (Optional) Use just for command-line utilities](#4-optional-use-just-for-command-line-utilities)
+  - [Project workflow](#project-workflow)
+- [How can I contribute?](#how-can-i-contribute)
+  - [Reporting bugs](#reporting-bugs)
+  - [Suggesting enhancements](#suggesting-enhancements)
+  - [Your first code contribution](#your-first-code-contribution)
+  - [Side projects](#side-projects)
+  - [Pull requests](#pull-requests)
+  - [Have questions about the source code?](#have-questions-about-the-source-code)
+- [Styleguides](#styleguides)
+  - [Git commit messages](#git-commit-messages)
+  - [Formatting and styleguide](#formatting-and-styleguide)
 
 [Styleguides](#styleguides)
   * [Git commit messages](#git-commit-messages)
@@ -31,36 +45,42 @@ The following is a set of guidelines for contributing to SophT. These are mostly
 2. I'm struggling in using SophT for my project! - Please open the issue with the label `help wanted` and explain the details of the problem and issue. We would gladly reach you to assist.
 3. How can I contribute!? - If you already wrote the patch, you can open a `pull request` with the changes to the `update_<version>` branch. Ensure the code passes the [formatting and styles](#formatting-and-styleguide). The PR should clearly describe the problem and solution. Include all relevant issue numbers if applicable.
 
-## Before I get started
+## Getting started
 
 ### Setup development environment
 
-Below are steps of how to setup development environment. We mainly use `poetry` to manage
-the project, although most of the important commands will be provided in `Makefile`.
-
-1. Clone!
-
+#### 1. Clone the repository
 First **create the fork repository and clone** to your local machine.
 
-2. Virtual python workspace: `conda`, `pyenv`, or `venv`.
-
-We recommend using python version above 3.10.
-
-```bash
-conda create --name sopht-dev
-conda activate sopht-dev
-conda install pip
+#### 2. Build dependencies
+You are free to use any build tools or package manager you prefer, but we highly recommand [uv](https://docs.astral.sh/uv/) for a frictionless experience contributing to `sopht`.
+After making sure `uv` is installed, run `uv sync` to install all required dependencies and optional ones under all specified dependency groups.
+Optionally, to install the dependencies required for the provided examples, do
+```sh
+uv sync --extra examples
+```
+All dependencies are now installed into a `.venv` virtual environment, which is supported by most modern Python IDEs. To activate it manually, run from the top-level project directory
+```sh
+source .venv/bin/activate
 ```
 
-3. Setup [`poetry`](https://python-poetry.org) and `dependencies`!
-
-```bash
-make poetry-download
-make install
-make pre-commit-install
+#### 3. Pre-commit
+We use pre-commit hooks to perform basic verifications for each commit. To activate the hook, make sure the `dev` dependency group is installed (it is installed by default if `uv sync` is used), and run
+```sh
+pre-commit install
 ```
 
-4. Now your working environment is set!
+#### 4. (Optional) Use [just](https://just.systems/man/en/) for command-line utilities
+We have provided a `justfile` that includes some common command-line utilities that you may find useful.
+For example, pruning all cache files such as `__pycache__` can be done in **just** (pun intended) one command
+```sh
+just clean
+```
+To see a full list of provided **just** functionalities, do
+```
+just --list
+```
+You are welcome to add more utilities to `justfile`.
 
 ### Project workflow
 
@@ -127,21 +147,16 @@ If you are interested in hearing more, please contact one of our the maintainer.
 Please follow these steps to have your contribution considered by the maintainers:
 
 1. Follow the [styleguides](#styleguides)
-2. If you add a new dependency, add it to the `pyproject.toml` and then run the following line from the top directory:
+2. If you add a new dependency, add it to the `pyproject.toml` and create an updated `uv.lock` file using `uv lock`.
 
-    `
-   make install_with_new_dependency
-   `
-
-        This will update `poetry.lock` to ensure version control. Don't forget to commit `.lock` and `.toml` files for Poetry in this case!
-
-3. Before you submit your pull request run [pytests](https://pypi.org/project/pytest/) and make sure that all tests pass.
-
-	In order to run pytest, run the following line from the top directory:
-
-	`
-	make test
-	`
+3. Before you submit your pull request run [pytests](https://pypi.org/project/pytest/) and make sure that all tests pass. First, make sure that `pytest` is installed. The testing tool suite is encapsulated in the `tests` dependency group which can be installed as
+```sh
+uv sync --group tests
+```
+In order to run pytest, run the following line from the top directory
+```sh
+pytest tests/
+```
 
 4. After you submit your pull request, verify that all status checks are passing <details><summary>What if the status checks are failing?</summary>If a status check is failing, and you believe that the failure is unrelated to your change, please leave a comment on the pull request explaining why you believe the failure is unrelated. A maintainer will re-run the status check for you. If we conclude that the failure was a false positive, then we will open an issue to track that problem with our status check suite.</details>
 
@@ -160,13 +175,16 @@ Ask any question about **how to use SophT and detail implementation** in the **i
 * When only changing documentation, include `[ci skip]` in the commit title
 
 ### Formatting and styleguide
-
-We use [flake8](https://pypi.org/project/flake8/) and [Black](https://pypi.org/project/black/) for python style.
-
-In order to format the code:
-
-`make formatting`
-
+We use [ruff](https://docs.astral.sh/ruff/) for formatting the code base. The configurations can be found in `pyproject.toml` under the table `[tool.ruff]`.
+`ruff` is included in the `lint` dependency group. To install it into your virtual environment, do
+```sh
+uv sync --group lint
+```
+`ruff` commands can be run directly to format / lint the code
+```sh
+ruff format   # Run formatter
+ruff check    # Run linter
+```
 > **Note:** Format/refactoring patches that are not anything substantial to the context or functionality will likely be rejected.
 
 [//]: # (### Documentation styleguide)
