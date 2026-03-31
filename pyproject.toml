@@ -12,7 +12,7 @@ maintainers = [
     {name = "Songyuan Cui", email = "cui20@illinois.edu"}
 ]
 license = "MIT"
-requires-python = ">=3.10"
+requires-python = ">=3.10, <3.14"
 dependencies = [
     "numpy",
     "scipy",
@@ -59,7 +59,7 @@ dev = [
 ]
 
 [tool.uv]
-default-groups = ["lint", "dev"]
+default-groups = "all"
 
 # https://docs.astral.sh/ruff/configuration/
 [tool.ruff]
