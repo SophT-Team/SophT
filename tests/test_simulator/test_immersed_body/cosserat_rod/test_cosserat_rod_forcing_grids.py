@@ -2,7 +2,7 @@ import elastica as ea
 import numpy as np
 import pytest
 import sopht.simulator as sps
-from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
+from elastica.interaction import _node_to_element_velocity, _elements_to_nodes_inplace
 from sopht.utils.precision import get_test_tol
 
 
@@ -31,13 +31,13 @@ def mock_straight_rod(n_elems, **kwargs):
 
 
 @pytest.mark.parametrize("n_elems", [8, 16])
-def test_pyelastica_node_to_element_velocity_func_validity(n_elems):
+def test_pyelastica__node_to_element_velocity_func_validity(n_elems):
     """
     Testing validity of node to element function of pyelastica
     """
     straight_rod = mock_straight_rod(n_elems)
 
-    element_velocity = node_to_element_velocity(
+    element_velocity = _node_to_element_velocity(
         straight_rod.mass, straight_rod.velocity_collection
     )
 
@@ -58,7 +58,7 @@ def test_pyelastica_node_to_element_velocity_func_validity(n_elems):
 
 
 @pytest.mark.parametrize("n_elems", [8, 16])
-def test_pyelastica_elements_to_nodes_inplace(n_elems):
+def test_pyelastica__elements_to_nodes_inplace(n_elems):
     """
     Testing validity of elements to nodes inplace function of pyelastica
     """
@@ -69,7 +69,7 @@ def test_pyelastica_elements_to_nodes_inplace(n_elems):
     correct_vector[:, 1:] += 0.5 * mock_vector
     correct_vector[:, :-1] += 0.5 * mock_vector
 
-    elements_to_nodes_inplace(mock_vector, test_vector)
+    _elements_to_nodes_inplace(mock_vector, test_vector)
 
     np.testing.assert_allclose(test_vector, correct_vector)
 

@@ -1,5 +1,5 @@
 from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
-from elastica.interaction import node_to_element_velocity, elements_to_nodes_inplace
+from elastica.interaction import _node_to_element_velocity, _elements_to_nodes_inplace
 import elastica as ea
 import numpy as np
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
@@ -97,7 +97,7 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
 
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
-        self.velocity_field[...] = node_to_element_velocity(
+        self.velocity_field[...] = _node_to_element_velocity(
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )[: self.grid_dim]
 
@@ -203,7 +203,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
         # Element velocity
-        element_velocity = node_to_element_velocity(
+        element_velocity = _node_to_element_velocity(
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )
         # Element angular velocity
@@ -270,7 +270,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         total_element_forces = (
             self.element_forces_left_edge_nodes + self.element_forces_right_edge_nodes
         )
-        elements_to_nodes_inplace(total_element_forces, body_flow_forces)
+        _elements_to_nodes_inplace(total_element_forces, body_flow_forces)
 
         # convert global to local frame
         body_flow_torques[...] = _batch_matvec(
@@ -441,7 +441,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
         # Element velocity
-        self.rod_element_velocity[...] = node_to_element_velocity(
+        self.rod_element_velocity[...] = _node_to_element_velocity(
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )
         # Element angular velocity

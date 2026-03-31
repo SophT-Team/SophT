@@ -1,4 +1,4 @@
-from elastica.interaction import node_to_element_velocity
+from elastica.interaction import _node_to_element_velocity
 import numpy as np
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 
@@ -31,7 +31,7 @@ class CosseratRodCPPElementCentricForcingGrid(ImmersedBodyForcingGrid):
         rod_velocity_field = np.asarray(rod.get_velocity())
         rod_masses = np.asarray(rod.mass)
 
-        self.velocity_field[...] = node_to_element_velocity(
+        self.velocity_field[...] = _node_to_element_velocity(
             rod_masses, rod_velocity_field
         )[: self.grid_dim]
 
