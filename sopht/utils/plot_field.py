@@ -25,6 +25,6 @@ def save_and_clear_fig(
         bbox_inches="tight",
         pad_inches=0,
     )
-    ax.cla()
     if cbar is not None:
         cbar.remove()
+    ax.cla()
