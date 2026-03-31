@@ -23,13 +23,5 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       - name: Install dependencies
         run: uv sync
-      - name: Save uv caches
-        uses: actions/cache/save@v5
-        with:
-          path: |
-            ~/.cache/uv
-            ~/.local/share/uv
-            .venv
-          key: uv-main-${{ hashFiles('uv.lock') }}
       - name: Run tests
         run: uv run --frozen pytest --disable-warnings
