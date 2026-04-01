@@ -6,8 +6,8 @@ from .experimental.BrinkmannBoundaryForcing import BrinkmannBoundaryForcing
 from .VirtualBoundaryForcing import VirtualBoundaryForcing
 
 __all__ = [
+    "BrinkmannBoundaryForcing",
     "EulerianLagrangianGridCommunicator2D",
     "EulerianLagrangianGridCommunicator3D",
-    "BrinkmannBoundaryForcing",
     "VirtualBoundaryForcing",
 ]

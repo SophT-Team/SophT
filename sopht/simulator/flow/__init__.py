@@ -9,9 +9,9 @@ from .passive_transport_flow_simulators import PassiveTransportFlowSimulator
 
 __all__ = [
     "FlowSimulator",
+    "PassiveTransportFlowSimulator",
     "UnboundedFlowSimulator2D",
     "UnboundedFlowSimulator3D",
     "UnboundedNavierStokesFlowSimulator2D",
     "UnboundedNavierStokesFlowSimulator3D",
-    "PassiveTransportFlowSimulator",
 ]

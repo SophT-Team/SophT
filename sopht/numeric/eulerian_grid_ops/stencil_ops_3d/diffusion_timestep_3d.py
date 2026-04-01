@@ -1,7 +1,7 @@
 """Kernels for performing diffusion timestep in 3D."""
 
-from typing import Literal
 from collections.abc import Callable
+from typing import Literal
 
 import numpy as np
 
