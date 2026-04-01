@@ -190,12 +190,12 @@ def tapered_arm_and_cylinder_flow_coupling(
         # print(flow_dt, rod_dt)
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # Activate longitudinal muscle
             activation_functions[2].apply_activation(env.shearable_rod, activations[2], rod_time)
             # Do one elastica step
             env.time_step = local_rod_dt
-            rod_time, systems, done = env.step(rod_time, activations)
+            rod_time, _, _ = env.step(rod_time, activations)
 
             # timestep the body_flow_interactors
             for flow_body_interactor in flow_body_interactors:

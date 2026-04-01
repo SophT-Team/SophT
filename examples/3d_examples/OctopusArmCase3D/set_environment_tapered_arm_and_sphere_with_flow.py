@@ -211,7 +211,7 @@ class ArmEnvironment:
         self, time: float, muscle_activations: list[np.ndarray]
     ) -> tuple[float, list[ea.CosseratRod], bool]:
         """Set muscle activations"""
-        for muscle_group, activation in zip(self.muscle_groups, muscle_activations):
+        for muscle_group, activation in zip(self.muscle_groups, muscle_activations, strict=True):
             muscle_group.apply_activation(activation)
 
         """ Run the simulation for one step """

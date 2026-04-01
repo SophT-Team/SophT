@@ -189,7 +189,7 @@ def elastic_fish_swimming_case(
         rod_time_steps = int(flow_dt / min(flow_dt, fish_sim.dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             rod_time = fish_sim.time_step(rod_time, local_rod_dt)
             # timestep the cosserat_rod_flow_interactor
             cosserat_rod_flow_interactor.time_step(dt=local_rod_dt)

@@ -238,7 +238,7 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         global_frame_relative_position_y = np.array([], dtype=float)
         global_frame_relative_position_z = np.array([], dtype=float)
         for num_forcing_points_along_latitude, polar_angle in zip(
-            num_forcing_points_along_latitudes, polar_angle_grid
+            num_forcing_points_along_latitudes, polar_angle_grid, strict=False
         ):
             azimuthal_angle_grid = np.linspace(
                 0.0, 2 * np.pi, num_forcing_points_along_latitude, endpoint=False

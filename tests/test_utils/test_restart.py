@@ -212,7 +212,7 @@ def run_sim(
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             rod_time = do_step(
                 timestepper,
                 stages_and_updates,

@@ -231,7 +231,7 @@ def immersed_magnetic_cilia_carpet_case(
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # timestep the cilia simulator
             rod_time = cilia_carpet_simulator.time_step(time=rod_time, time_step=local_rod_dt)
             # timestep the rod_flow_interactors

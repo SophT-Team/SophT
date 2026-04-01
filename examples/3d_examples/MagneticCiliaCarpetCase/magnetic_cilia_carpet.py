@@ -5,6 +5,9 @@ import numpy as np
 import sopht.utils as spu
 
 
+_zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
+
+
 class MagneticCiliaCarpetSimulator:
     """This class initializes a PyElastica simulator with a cilia carpet
     of uniform spacings on a rectangular grid. The rods are initialized
@@ -65,7 +68,7 @@ class MagneticCiliaCarpetSimulator:
         wavelength_x_factor: float = 1.0,
         wavelength_y_factor: float = 1.0,
         carpet_spacing_factor: float = 1.0,
-        carpet_base_centroid: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        carpet_base_centroid: np.ndarray = _zeros_3,
         magnetization_2d: bool = False,
         plot_result: bool = True,
     ) -> None:
@@ -212,7 +215,7 @@ class MagneticCiliaCarpetSimulator:
 
         # Apply magnetic forces
         for magnetization_direction, magnetic_rod in zip(
-            magnetization_direction_list, self.magnetic_rod_list
+            magnetization_direction_list, self.magnetic_rod_list, strict=True
         ):
             self.magnetic_beam_sim.add_forcing_to(magnetic_rod).using(
                 mea.MagneticForces,

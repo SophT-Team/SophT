@@ -12,6 +12,9 @@ from .passive_transport_flow_simulators import (
     compute_advection_diffusion_stable_timestep,
 )
 
+_zeros_2: np.ndarray = np.zeros(2, dtype=np.float64)
+_zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
+
 
 class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
     """Class for 2D unbounded Navier Stokes flow simulator"""
@@ -156,7 +159,9 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         if self.with_forcing:
             self._flow_time_step = self._navier_stokes_with_forcing_time_step
 
-    def _navier_stokes_time_step(self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)):
+    def _navier_stokes_time_step(
+        self, dt: float, free_stream_velocity: np.ndarray = _zeros_2
+    ) -> None:
         # advect vorticity
         self._advection_timestep(
             field=self.vorticity_field,
@@ -184,7 +189,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         self._update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 
     def _navier_stokes_with_forcing_time_step(
-        self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)
+        self, dt: float, free_stream_velocity: np.ndarray = _zeros_2
     ) -> None:
         self._update_vorticity_from_velocity_forcing(
             vorticity_field=self.vorticity_field,
@@ -430,7 +435,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
     def _navier_stokes_time_step(
         self,
         dt: float,
-        free_stream_velocity: np.ndarray = np.zeros(3),
+        free_stream_velocity: np.ndarray = _zeros_3,
     ) -> None:
         # advection and stretching vorticity together in rotational form
         velocity_cross_vorticity = self.buffer_vector_field.view()
@@ -468,7 +473,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
     def _navier_stokes_with_forcing_time_step(
         self,
         dt: float,
-        free_stream_velocity: np.ndarray = np.zeros(3),
+        free_stream_velocity: np.ndarray = _zeros_3,
     ) -> None:
         self._update_vorticity_from_velocity_forcing(
             vorticity_field=self.vorticity_field,

@@ -90,7 +90,7 @@ def octopus_swimming(
     env.reset(youngs_modulus, rho_s, rod_list, arm_rod_list, rigid_body_list)
 
     # Connect rods
-    for i, rod in enumerate(env.arm_rod_list):
+    for _, rod in enumerate(env.arm_rod_list):
         env.simulator.connect(rod, body_rod, first_connect_idx=0, second_connect_idx=0).using(
             ea.FreeJoint, k=youngs_modulus / 100, nu=0
         )
@@ -189,7 +189,7 @@ def octopus_swimming(
             vorticity=flow_sim.vorticity_field, velocity=flow_sim.velocity_field
         )
         # Initialize rod io
-        for rod_id, rod in enumerate(env.rod_list):
+        for _, rod in enumerate(env.rod_list):
             rod_io_list.append(spu.CosseratRodIO(cosserat_rod=rod, dim=grid_dim, real_dtype=real_t))
 
         sphere_io = spu.IO(dim=grid_dim, real_dtype=real_t)
@@ -222,7 +222,7 @@ def octopus_swimming(
                     h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
-                for rod_id, rod in enumerate(env.rod_list):
+                for rod_id, _ in enumerate(env.rod_list):
                     rod_io_list[rod_id].save(
                         h5_file_name="rod_"
                         + str(rod_id)
@@ -312,7 +312,7 @@ def octopus_swimming(
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # Activate longitudinal muscle
             for rod_id, rod in enumerate(env.arm_rod_list):  # exclude head
                 activation_functions[rod_id][4].apply_activation(

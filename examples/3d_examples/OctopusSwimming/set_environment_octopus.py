@@ -222,14 +222,14 @@ class OctopusEnvironment:
         self.muscle_callback_params_list = []
         self.object_list = rod_list + rigid_body_list
 
-        for i in range(len(rod_list)):
+        for _ in range(len(rod_list)):
             self.rod_muscle_groups.append([])
             self.muscle_callback_params_list.append([])
 
         for rod_id, rod in enumerate(rod_list):
             self.setup(E, density, rod, rod_id)
 
-        for body_id, body in enumerate(rigid_body_list):
+        for _, body in enumerate(rigid_body_list):
             self.simulator.append(body)
 
         # Callback
@@ -260,7 +260,7 @@ class OctopusEnvironment:
         """Set muscle activations"""
         for rod_id in range(len(self.arm_rod_list)):
             for muscle_group, activation in zip(
-                self.rod_muscle_groups[rod_id], muscle_activations[rod_id]
+                self.rod_muscle_groups[rod_id], muscle_activations[rod_id], strict=True
             ):
                 muscle_group.apply_activation(activation)
 

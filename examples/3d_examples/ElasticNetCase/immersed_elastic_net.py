@@ -200,7 +200,7 @@ def immersed_elastic_net_case(
         rod_time_steps = int(flow_dt / min(flow_dt, elastic_net_sim.dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # timestep the cilia simulator
             rod_time = elastic_net_sim.time_step(time=rod_time, time_step=local_rod_dt)
             # timestep the rod_flow_interactors

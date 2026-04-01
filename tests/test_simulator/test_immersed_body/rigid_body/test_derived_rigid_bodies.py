@@ -5,7 +5,10 @@ import numpy as np
 import sopht.simulator as sps
 
 
-def mock_xy_plane(origin=np.array([1.0, 1.0, 1.0]), length=1.0, breadth=0.5):
+_default_origin = np.array([1.0, 1.0, 1.0])
+
+
+def mock_xy_plane(origin=_default_origin, length=1.0, breadth=0.5):
     """Returns a mock XY plane for testing"""
     normal = np.array([0.0, 0.0, 1.0])
     tangent = np.array([1.0, 0.0, 0.0])
@@ -20,7 +23,7 @@ def mock_xy_plane(origin=np.array([1.0, 1.0, 1.0]), length=1.0, breadth=0.5):
 
 def test_rectangular_plane(caplog):
     plane_dim = 3
-    origin = np.array([1.0, 1.0, 1.0])
+    origin = _default_origin
     length = 1.0
     breadth = 0.5
     with caplog.at_level(logging.WARNING):

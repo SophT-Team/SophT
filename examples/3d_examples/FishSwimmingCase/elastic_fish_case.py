@@ -10,6 +10,10 @@ from elastic_fish_utils.fish_geometry import (
 import sopht.utils as spu
 
 
+_default_origin: np.ndarray = np.array([0.0, 0.0, 0.0])
+_default_normal: np.ndarray = np.array([0.0, 0.0, 1.0])
+
+
 class ElasticFishSimulator:
     def __init__(
         self,
@@ -20,10 +24,10 @@ class ElasticFishSimulator:
         base_length: float = 1.0,
         damping_constant: float = 0.02,
         dt_scale: float = 5e-4,
-        origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        origin: np.ndarray = _default_origin,
         plot_result: bool = True,
         period: float = 1.0,
-        normal=np.array([0.0, 0.0, 1.0]),
+        normal: np.ndarray = _default_normal,
     ) -> None:
         class BaseSimulator(
             ea.BaseSystemCollection,

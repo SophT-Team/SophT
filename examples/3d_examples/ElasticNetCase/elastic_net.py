@@ -9,6 +9,9 @@ from scipy.interpolate import interp1d
 import sopht.utils as spu
 
 
+_zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
+
+
 def compute_non_dimensional_rod_positions(
     n_elem: int,
     num_rods_along_perp_axis: int,
@@ -58,7 +61,7 @@ class ElasticNetSimulator:
         gap_between_rods: float = 0.2,
         gap_radius_ratio: float = 10,
         num_rod_elements_per_gap=8,
-        elastic_net_origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        elastic_net_origin: np.ndarray = _zeros_3,
         plot_result: bool = True,
     ) -> None:
         class BaseSimulator(
@@ -197,7 +200,7 @@ class ElasticNetSimulator:
         # Add connections
         n_connection = 0
         for rod_one_idx, rod_one in enumerate(self.rod_list):
-            for rod_two_idx, rod_two in enumerate(self.rod_list[rod_one_idx + 1 :]):
+            for _, rod_two in enumerate(self.rod_list[rod_one_idx + 1 :]):
                 for rod_one_elem_idx in range(rod_one.n_elems):
                     for rod_two_elem_idx in range(rod_two.n_elems):
                         (
