@@ -234,9 +234,9 @@ class ElasticNetSimulator:
                             offset_btw_rods=offset_btw_rods[..., 0],
                         )
 
-        assert n_connection == num_rods_along_y * num_rods_along_x, (
-            "Not all rods are connected, change number of elements of rods along y or along x"
-        )
+        if n_connection != num_rods_along_y * num_rods_along_x:
+            msg = "Not all rods are connected, change number of elements of rods along y or along x"
+            raise ValueError(msg)
 
         # add damping
         damping_constant = 0.2

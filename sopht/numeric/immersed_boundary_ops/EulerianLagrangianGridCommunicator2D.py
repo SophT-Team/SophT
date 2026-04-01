@@ -176,7 +176,11 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_2d(
     n_components : number of components in Lagrangian field
 
     """
-    assert n_components == 1 or n_components == 2, "invalid number of components for interpolation!"
+
+    if n_components not in (1, 2):
+        msg = "Invalid number of components for interpolation, must be either 1 or 2"
+        raise ValueError(msg)
+
     # grid/problem dimensions
     grid_dim = 2
 
@@ -271,7 +275,9 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_2d(
     n_components : number of components in Lagrangian field
 
     """
-    assert n_components == 1 or n_components == 2, "invalid number of components for interpolation!"
+    if n_components not in (1, 2):
+        msg = "Invalid number of components for interpolation, must be either 1 or 2"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def lagrangian_to_eulerian_grid_interpolation_kernel_2d(
@@ -378,9 +384,9 @@ def generate_cosine_interpolation_weights_kernel_2d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 2
-    assert interp_kernel_width == 2, (
-        "Interpolation kernel inconsistent with interpolation kernel width!"
-    )
+    if interp_kernel_width != 2:
+        msg = "Interpolation kernel inconsistent with interpolation kernel width!"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def cosine_interpolation_weights_kernel_2d(interp_weights, local_eul_grid_support_of_lag_grid):
@@ -412,9 +418,9 @@ def generate_peskin_interpolation_weights_kernel_2d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 2
-    assert interp_kernel_width == 2, (
-        "Interpolation kernel inconsistent with interpolation kernel width!"
-    )
+    if interp_kernel_width != 2:
+        msg = "Interpolation kernel inconsistent with interpolation kernel width!"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def peskin_interpolation_weights_kernel_2d(interp_weights, local_eul_grid_support_of_lag_grid):

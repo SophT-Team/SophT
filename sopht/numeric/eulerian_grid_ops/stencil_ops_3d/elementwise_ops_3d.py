@@ -205,7 +205,9 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
 ) -> Callable:
     # TODO: expand docs
     """3D set field to fixed value at boundaries kernel generator."""
-    assert width > 0 and isinstance(width, int), "invalid zone width"
+    if not isinstance(width, int) or width <= 0:
+        msg = "Invalid width for boundary zone, must be a positive integer"
+        raise ValueError(msg)
     set_fixed_val_kernel_3d = gen_set_fixed_val_pyst_kernel_3d(
         real_t=real_t,
         num_threads=num_threads,

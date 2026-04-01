@@ -35,7 +35,9 @@ class IO:
     def __init__(self, dim: int, real_dtype: type = np.float64) -> None:
         """Class initializer."""
         self.dim = dim
-        assert self.dim == 2 or self.dim == 3, "Invalid dimension (only 2D and 3D)"
+        if self.dim not in (2, 3):
+            msg = "Invalid dimension (only 2D and 3D)"
+            raise ValueError(msg)
         self.real_dtype = real_dtype
         self.precision = 8 if real_dtype is np.float32 else 16
 
@@ -74,9 +76,14 @@ class IO:
             1D (dim,) array containing data with 'float' type.
             Array containing grid_size in each dimension following z-y-x ordering.
         """
-        assert isinstance(origin, np.ndarray)
-        assert isinstance(dx, np.ndarray)
-        assert isinstance(grid_size, np.ndarray)
+        if not (
+            isinstance(origin, np.ndarray)
+            and isinstance(dx, np.ndarray)
+            and isinstance(grid_size, np.ndarray)
+        ):
+            msg = "Invalid input types for Eulerian grid definition"
+            raise TypeError(msg)
+
         self.eulerian_origin = origin
         self.eulerian_dx = dx
         self.eulerian_grid_size = grid_size  # z,y,x
@@ -95,7 +102,9 @@ class IO:
         keyword name, similar to numpy savez function.
         https://numpy.org/doc/stable/reference/generated/numpy.savez.html#numpy.savez
         """
-        assert self.eulerian_grid_defined, "Eulerian mesh is not defined!"
+        if not self.eulerian_grid_defined:
+            msg = "Eulerian mesh is not defined!"
+            raise ValueError(msg)
 
         for field_name in fields_for_io:
             # Add each field into local dictionary
@@ -139,10 +148,12 @@ class IO:
         keyword name, similar to numpy savez function.
         https://numpy.org/doc/stable/reference/generated/numpy.savez.html#numpy.savez
         """
-        assert len(lagrangian_grid.shape) == 2, "lagrangian grid has to be a 2D (dim, N) array."
-        assert lagrangian_grid.shape[0] == self.dim, (
-            "Invalid lagrangian grid dimension (only 2D and 3D)"
-        )
+        if len(lagrangian_grid.shape) != 2:
+            msg = "lagrangian grid has to be a 2D (dim, N) array."
+            raise ValueError(msg)
+        if lagrangian_grid.shape[0] != self.dim:
+            msg = "Invalid lagrangian grid dimension (only 2D and 3D)"
+            raise ValueError(msg)
 
         if lagrangian_grid_name is None:
             lagrangian_grid_name = f"Lagrangian_grid_{self.lagrangian_grid_count}"
@@ -314,13 +325,16 @@ class IO:
 
             # Load Eulerian fields
             if self.eulerian_fields:
-                assert self.eulerian_grid_defined, "Eulerian grid is not defined!"
+                if not self.eulerian_grid_defined:
+                    msg = "Eulerian grid is not defined!"
+                    raise ValueError(msg)
+
                 for field_name in self.eulerian_fields:
                     field_type = self.eulerian_fields_type[field_name]
                     if field_type == "Scalar":
-                        assert f"Eulerian/{field_type}/{field_name}" in keys, (
-                            f"Unable to find scalar field {field_name} in loaded file!"
-                        )
+                        if f"Eulerian/{field_type}/{field_name}" not in keys:
+                            msg = f"Unable to find scalar field {field_name} in loaded file!"
+                            raise ValueError(msg)
                         # zero indexing here to account for additional dimension
                         # added during save
                         self.eulerian_fields[field_name][...] = f["Eulerian"][field_type][
@@ -328,10 +342,12 @@ class IO:
                         ][0, ...]
                     elif field_type == "Vector":
                         for idx_dim in range(self.dim):
-                            assert f"Eulerian/{field_type}/{field_name}_{idx_dim}" in keys, (
-                                f"Unable to find vector field {field_name}_{idx_dim} "
-                                f"in loaded file!"
-                            )
+                            if f"Eulerian/{field_type}/{field_name}_{idx_dim}" not in keys:
+                                msg = (
+                                    f"Unable to find vector field {field_name}_{idx_dim} "
+                                    f"in loaded file!"
+                                )
+                                raise ValueError(msg)
                             # zero indexing here to account for additional dimension
                             # added during save
                             self.eulerian_fields[field_name][idx_dim, ...] = f["Eulerian"][
@@ -342,25 +358,27 @@ class IO:
                         raise ValueError(msg)
 
                 # Load 'Parameters' and assert equals for restart consistency
-                np.testing.assert_allclose(
-                    self.eulerian_origin,
-                    f["Eulerian"]["Parameters"].attrs["origin"],
-                )
-                np.testing.assert_allclose(
-                    self.eulerian_dx, f["Eulerian"]["Parameters"].attrs["dx"]
-                )
-                np.testing.assert_allclose(
-                    self.eulerian_grid_size,
-                    f["Eulerian"]["Parameters"].attrs["grid_size"],
-                )
+                if not np.allclose(
+                    self.eulerian_origin, f["Eulerian"]["Parameters"].attrs["origin"]
+                ):
+                    msg = "Eulerian origin does not match loaded file!"
+                    raise ValueError(msg)
+                if not np.allclose(self.eulerian_dx, f["Eulerian"]["Parameters"].attrs["dx"]):
+                    msg = "Eulerian dx does not match loaded file!"
+                    raise ValueError(msg)
+                if not np.allclose(
+                    self.eulerian_grid_size, f["Eulerian"]["Parameters"].attrs["grid_size"]
+                ):
+                    msg = "Eulerian grid size does not match loaded file!"
+                    raise ValueError(msg)
 
             # Load Lagrangian fields
             if self.lagrangian_fields:
                 # First loop over and load each of the lagrangian grids
                 for lagrangian_grid_name in self.lagrangian_grids:
-                    assert f"Lagrangian/{lagrangian_grid_name}/Grid" in keys, (
-                        f"Unable to find grid '{lagrangian_grid_name}' in loaded file!"
-                    )
+                    if f"Lagrangian/{lagrangian_grid_name}/Grid" not in keys:
+                        msg = f"Unable to find grid '{lagrangian_grid_name}' in loaded file!"
+                        raise ValueError(msg)
                     self.lagrangian_grids[lagrangian_grid_name][...] = np.transpose(
                         f["Lagrangian"][lagrangian_grid_name]["Grid"][...]
                     )
@@ -374,24 +392,28 @@ class IO:
                     for field_name in self.lagrangian_fields_with_grid_name[lagrangian_grid_name]:
                         field_type = self.lagrangian_fields_type[field_name]
                         if field_type == "Scalar":
-                            assert (
+                            field_name_in_file = (
                                 f"Lagrangian/{lagrangian_grid_name}/{field_type}/{field_name}"
-                                in keys
-                            ), (
-                                f"Unable to find scalar field {field_name} on "
-                                f"grid {lagrangian_grid_name} in loaded file!"
                             )
+                            if field_name_in_file not in keys:
+                                msg = (
+                                    f"Unable to find scalar field {field_name} on "
+                                    f"grid {lagrangian_grid_name} in loaded file!"
+                                )
+                                raise ValueError(msg)
                             self.lagrangian_fields[field_name][...] = f["Lagrangian"][
                                 lagrangian_grid_name
                             ][field_type][field_name][...]
                         elif field_type == "Vector":
-                            assert (
+                            field_name_in_file = (
                                 f"Lagrangian/{lagrangian_grid_name}/{field_type}/{field_name}"
-                                in keys
-                            ), (
-                                f"Unable to find vector field {field_name} on grid "
-                                f"{lagrangian_grid_name} in loaded file!"
                             )
+                            if field_name_in_file not in keys:
+                                msg = (
+                                    f"Unable to find vector field {field_name} on "
+                                    f"grid {lagrangian_grid_name} in loaded file!"
+                                )
+                                raise ValueError(msg)
                             self.lagrangian_fields[field_name][...] = np.moveaxis(
                                 f["Lagrangian"][lagrangian_grid_name][field_type][field_name][...],
                                 -1,

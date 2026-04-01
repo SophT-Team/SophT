@@ -271,9 +271,9 @@ def run_immersed_magnetic_cilia_carpet(
     precision: str = "single",
     save_data: bool = False,
 ):
-    assert num_rods_along_x >= 2 and num_rods_along_y >= 2, (
-        "num_rod along x and y must be no less than 2"
-    )
+    if not (num_rods_along_x >= 2 and num_rods_along_y >= 2):
+        msg = "num_rod along x and y must be no less than 2"
+        raise ValueError(msg)
     carpet_spacing = rod_base_length * carpet_spacing_factor
     carpet_length_x = (num_rods_along_x - 1) * carpet_spacing
     carpet_length_y = (num_rods_along_y - 1) * carpet_spacing

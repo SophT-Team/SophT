@@ -136,7 +136,9 @@ def update_rod_for_fish_geometry(
     )
     for i in range(n_elements):
         # Check rank of mass moment of inertia matrix to see if it is invertible
-        assert np.linalg.matrix_rank(mass_second_moment_of_inertia[..., i]) == MaxDimension.value()
+        if np.linalg.matrix_rank(mass_second_moment_of_inertia[..., i]) != MaxDimension.value():
+            msg = "Mass moment of inertia matrix is not invertible."
+            raise ValueError(msg)
         inv_mass_second_moment_of_inertia[..., i] = np.linalg.inv(
             mass_second_moment_of_inertia[..., i]
         )
@@ -174,9 +176,9 @@ def update_rod_for_fish_geometry(
             ],
         )
     for i in range(0, MaxDimension.value()):
-        assert np.all(bend_matrix[i, i, :] > Tolerance.atol()), (
-            " Bend matrix has to be greater than 0."
-        )
+        if not np.all(bend_matrix[i, i, :] > Tolerance.atol()):
+            msg = "Bend matrix must be greater than 0."
+            raise ValueError(msg)
 
     # Compute bend matrix in Voronoi Domain
     bend_matrix = (

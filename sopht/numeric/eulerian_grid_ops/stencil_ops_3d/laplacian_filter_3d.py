@@ -37,10 +37,15 @@ def gen_laplacian_filter_kernel_3d(
        Université Catholique de Louvain).
     """
 
-    assert filter_order >= 0 and isinstance(filter_order, int), "Invalid filter order"
-    assert filter_flux_buffer_boundary_width > 0 and isinstance(
-        filter_flux_buffer_boundary_width, int
-    ), "Invalid value for filter flux buffer boundary zone"
+    if not isinstance(filter_order, int) or filter_order < 0:
+        msg = "Invalid filter order, must be a non-negative integer"
+        raise ValueError(msg)
+    if (
+        not isinstance(filter_flux_buffer_boundary_width, int)
+        or filter_flux_buffer_boundary_width <= 0
+    ):
+        msg = "Invalid value for filter flux buffer boundary zone, must be a positive integer"
+        raise ValueError(msg)
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later

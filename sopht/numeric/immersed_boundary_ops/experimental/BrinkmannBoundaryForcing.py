@@ -57,7 +57,9 @@ class BrinkmannBoundaryForcing:
 
         """
         self.dx = dx
-        assert grid_dim == 2 or grid_dim == 3, "Invalid grid dimensions"
+        if grid_dim not in (2, 3):
+            msg = "Invalid grid dimensions, must be either 2 or 3"
+            raise ValueError(msg)
         self.grid_dim = grid_dim
         self.brinkmann_coeff = brinkmann_coeff
 

@@ -191,9 +191,9 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
     """
     # grid/problem dimensions
     grid_dim = 3
-    assert n_components == 1 or n_components == grid_dim, (
-        "invalid number of components for interpolation!"
-    )
+    if n_components not in (1, grid_dim):
+        msg = f"Invalid number of components for interpolation, must be either 1 or {grid_dim}"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def eulerian_to_lagrangian_grid_interpolation_kernel_3d(
@@ -311,9 +311,9 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
 
     """
     grid_dim = 3
-    assert n_components == 1 or n_components == grid_dim, (
-        "invalid number of components for interpolation!"
-    )
+    if n_components not in (1, grid_dim):
+        msg = f"Invalid number of components for interpolation, must be either 1 or {grid_dim}"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def lagrangian_to_eulerian_grid_interpolation_kernel_3d(
@@ -394,9 +394,9 @@ def generate_cosine_interpolation_weights_kernel_3d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 3
-    assert interp_kernel_width == 2, (
-        "Interpolation kernel inconsistent with interpolation kernel width!"
-    )
+    if interp_kernel_width != 2:
+        msg = "Interpolation kernel inconsistent with interpolation kernel width!"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def cosine_interpolation_weights_kernel_3d(interp_weights, local_eul_grid_support_of_lag_grid):
@@ -422,9 +422,9 @@ def generate_peskin_interpolation_weights_kernel_3d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 3
-    assert interp_kernel_width == 2, (
-        "Interpolation kernel inconsistent with interpolation kernel width!"
-    )
+    if interp_kernel_width != 2:
+        msg = "Interpolation kernel inconsistent with interpolation kernel width!"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def peskin_interpolation_weights_kernel_3d(interp_weights, local_eul_grid_support_of_lag_grid):

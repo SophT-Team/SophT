@@ -20,7 +20,9 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
 ) -> Callable:
     # TODO: expand docs
     """2D penalise field boundary kernel generator."""
-    assert width >= 0 and isinstance(width, int), "invalid zone width"
+    if not isinstance(width, int) or width < 0:
+        msg = "Invalid zone width, must be a non-negative integer"
+        raise ValueError(msg)
 
     if width == 0:
         # bypass option to prevent penalisation, done this way since by
