@@ -4,7 +4,7 @@ from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from .immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
-from typing import Type, Optional
+from typing import Type, Optional, Literal
 
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
@@ -27,6 +27,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         enable_eul_grid_forcing_reset: bool = False,
         num_threads: int | bool = False,
         start_time: float = 0.0,
+        field_type: Literal["scalar", "vector"] = "vector",
         **forcing_grid_kwargs,
     ) -> None:
         """Class initialiser."""
@@ -36,6 +37,12 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         self.forcing_grid = forcing_grid_cls(
             grid_dim=grid_dim,
             **forcing_grid_kwargs,
+        )
+        assert self.forcing_grid.velocity_field.ndim == (
+            2 if field_type == "vector" else 1
+        ), (
+            f"Forcing grid {forcing_grid_cls.__name__}"
+            f" does not support field type {field_type}"
         )
         # these hold references to Eulerian fields
         self.eul_grid_forcing_field = eul_grid_forcing_field.view()
@@ -95,6 +102,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             enable_eul_grid_forcing_reset,
             num_threads,
             start_time,
+            field_type,
         )
 
     def compute_interaction_on_lag_grid(self) -> None:

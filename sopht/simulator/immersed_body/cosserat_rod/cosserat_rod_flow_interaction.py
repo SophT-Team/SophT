@@ -4,7 +4,7 @@ from sopht.simulator.immersed_body import (
     ImmersedBodyForcingGrid,
     ImmersedBodyFlowInteraction,
 )
-from typing import Type, Optional
+from typing import Type, Optional, Literal
 
 
 class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
@@ -26,6 +26,7 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
         enable_eul_grid_forcing_reset: bool = False,
         num_threads: int | bool = False,
         start_time: float = 0.0,
+        field_type: Literal["scalar", "vector"] = "vector",
         **forcing_grid_kwargs,
     ) -> None:
         """Class initialiser."""
@@ -54,5 +55,6 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
             enable_eul_grid_forcing_reset,
             num_threads,
             start_time,
+            field_type,
             **forcing_grid_kwargs,
         )

@@ -131,3 +131,65 @@ def test_immersed_body_interactor_get_grid_deviation_error_l2_norm():
     grid_dim = cylinder_flow_interactor.grid_dim
     ref_grid_dev_error_l2_norm = fixed_val * np.sqrt(grid_dim)
     np.testing.assert_allclose(grid_dev_error_l2_norm, ref_grid_dev_error_l2_norm)
+
+
+@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.parametrize(
+    "incompatible_types", [("scalar", sps.CircularCylinderForcingGrid)]
+)
+def test_immersed_body_interactor_scalar_field_type_and_forcing_grid_incompatible(
+    incompatible_types,
+):
+    num_forcing_points = 16
+    grid_dim = 2
+    cylinder = mock_2d_cylinder()
+    grid_size = (16,) * grid_dim
+    eul_grid_velocity_field = np.random.rand(grid_dim, *grid_size)
+    eul_grid_forcing_field = np.zeros_like(eul_grid_velocity_field)
+    # chosen so that cylinder lies within domain
+    dx = cylinder.length / 4.0
+    sps.RigidBodyFlowInteraction(
+        rigid_body=cylinder,
+        eul_grid_forcing_field=eul_grid_forcing_field,
+        eul_grid_velocity_field=eul_grid_velocity_field,
+        virtual_boundary_stiffness_coeff=1.0,
+        virtual_boundary_damping_coeff=1.0,
+        dx=dx,
+        grid_dim=grid_dim,
+        field_type=incompatible_types[0],
+        real_t=get_real_t(),
+        forcing_grid_cls=incompatible_types[1],
+        num_forcing_points=num_forcing_points,
+    )
+
+
+@pytest.mark.xfail(raises=AssertionError)
+@pytest.mark.parametrize(
+    "incompatible_types",
+    [("vector", sps.CircularCylinderConstantTemperatureForcingGrid)],
+)
+def test_immersed_body_interactor_vector_field_type_and_forcing_grid_incompatible(
+    incompatible_types,
+):
+    num_forcing_points = 16
+    grid_dim = 2
+    cylinder = mock_2d_cylinder()
+    grid_size = (16,) * grid_dim
+    eul_grid_velocity_field = np.random.rand(grid_dim, *grid_size)
+    eul_grid_forcing_field = np.zeros_like(eul_grid_velocity_field)
+    # chosen so that cylinder lies within domain
+    dx = cylinder.length / 4.0
+    sps.RigidBodyFlowInteraction(
+        rigid_body=cylinder,
+        eul_grid_forcing_field=eul_grid_forcing_field,
+        eul_grid_velocity_field=eul_grid_velocity_field,
+        virtual_boundary_stiffness_coeff=1.0,
+        virtual_boundary_damping_coeff=1.0,
+        dx=dx,
+        grid_dim=grid_dim,
+        field_type=incompatible_types[0],
+        real_t=get_real_t(),
+        forcing_grid_cls=incompatible_types[1],
+        num_forcing_points=num_forcing_points,
+        cylinder_temperature=1,
+    )

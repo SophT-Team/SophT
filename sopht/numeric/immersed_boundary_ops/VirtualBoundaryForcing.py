@@ -1,6 +1,6 @@
 """Virtual boundary forcing for flow-body feedback."""
 from numba import njit
-
+from typing import Literal
 import numpy as np
 
 from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
@@ -39,6 +39,7 @@ class VirtualBoundaryForcing:
         enable_eul_grid_forcing_reset=True,
         num_threads=False,
         start_time=0.0,
+        field_type: Literal["scalar", "vector"] = "vector",
     ):
         """Class initialiser.
 
@@ -59,13 +60,15 @@ class VirtualBoundaryForcing:
         with resetting of eul_grid_forcing_field
         num_threads: number of threads (only for the resetting function)
         start_time: start time of the forcing
-
+        field_type: This can be a vector like velocity as we use traditionally in p-IBM, or scalar like temperature.
         """
         assert grid_dim == 2 or grid_dim == 3, "Invalid grid dimensions"
         self.grid_dim = grid_dim
         self.virtual_boundary_stiffness_coeff = virtual_boundary_stiffness_coeff
         self.virtual_boundary_damping_coeff = virtual_boundary_damping_coeff
         self.time = start_time
+        assert field_type == "scalar" or field_type == "vector", "Invalid field type"
+        self.field_type = field_type
 
         # these are rather invariant hence pushed to fixed kwargs
         if eul_grid_coord_shift is None:
@@ -85,9 +88,13 @@ class VirtualBoundaryForcing:
         )
         interp_weights_shape = (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         self.interp_weights = np.empty(interp_weights_shape, dtype=real_t)
-        self.lag_grid_flow_velocity_field = np.zeros(
-            (grid_dim, num_lag_nodes), dtype=real_t
-        )
+
+        if self.field_type == "scalar":
+            self.lag_grid_flow_velocity_field = np.zeros((num_lag_nodes), dtype=real_t)
+        else:
+            self.lag_grid_flow_velocity_field = np.zeros(
+                (grid_dim, num_lag_nodes), dtype=real_t
+            )
         self.lag_grid_position_mismatch_field = np.zeros_like(
             self.lag_grid_flow_velocity_field
         )
@@ -98,14 +105,18 @@ class VirtualBoundaryForcing:
             self.lag_grid_velocity_mismatch_field
         )
 
+        self.fixed_vals_eul_grid_forcing = (
+            [0] * self.grid_dim if self.field_type == "vector" else 0
+        )
+
         if grid_dim == 2:
-            self.eul_lag_grid_communicator = EulerianLagrangianGridCommunicator2D(
+            self.eul_lag_grid_communicator: EulerianLagrangianGridCommunicator2D | EulerianLagrangianGridCommunicator3D = EulerianLagrangianGridCommunicator2D(
                 dx=dx,
                 eul_grid_coord_shift=eul_grid_coord_shift,
                 num_lag_nodes=num_lag_nodes,
                 interp_kernel_width=interp_kernel_width,
                 real_t=real_t,
-                n_components=grid_dim,
+                n_components=grid_dim if self.field_type == "vector" else 1,
             )
         elif grid_dim == 3:
             self.eul_lag_grid_communicator = EulerianLagrangianGridCommunicator3D(
@@ -114,22 +125,24 @@ class VirtualBoundaryForcing:
                 num_lag_nodes=num_lag_nodes,
                 interp_kernel_width=interp_kernel_width,
                 real_t=real_t,
-                n_components=grid_dim,
+                n_components=grid_dim if self.field_type == "vector" else 1,
             )
 
         if enable_eul_grid_forcing_reset:
             if grid_dim == 2:
-                self.set_eul_grid_vector_field = gen_set_fixed_val_pyst_kernel_2d(
+                self.set_eul_grid_forcing_field = gen_set_fixed_val_pyst_kernel_2d(
                     real_t=real_t,
                     num_threads=num_threads,
-                    field_type="vector",
+                    field_type=self.field_type,
+                    # field_type="vector",
                 )
 
             elif grid_dim == 3:
-                self.set_eul_grid_vector_field = gen_set_fixed_val_pyst_kernel_3d(
+                self.set_eul_grid_forcing_field = gen_set_fixed_val_pyst_kernel_3d(
                     real_t=real_t,
                     num_threads=num_threads,
-                    field_type="vector",
+                    field_type=self.field_type,
+                    # field_type="vector",
                 )
             self.compute_interaction_forcing = (
                 self.compute_interaction_force_on_eul_and_lag_grid_with_eul_grid_forcing_reset
@@ -273,8 +286,8 @@ class VirtualBoundaryForcing:
 
         Resets eul_grid_forcing_field.
         """
-        self.set_eul_grid_vector_field(
-            vector_field=eul_grid_forcing_field, fixed_vals=([0] * self.grid_dim)
+        self.set_eul_grid_forcing_field(
+            eul_grid_forcing_field, self.fixed_vals_eul_grid_forcing
         )
         self.compute_interaction_force_on_eul_and_lag_grid(
             eul_grid_forcing_field,

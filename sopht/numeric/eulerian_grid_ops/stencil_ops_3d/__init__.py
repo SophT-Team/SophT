@@ -34,3 +34,6 @@ from .laplacian_filter_3d import (
     gen_laplacian_filter_kernel_3d,
 )
 from .divergence_3d import gen_divergence_pyst_kernel_3d
+from .update_passive_field_from_forcing_3d import (
+    gen_update_passive_field_from_forcing_pyst_kernel_3d,
+)

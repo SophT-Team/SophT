@@ -30,3 +30,27 @@ def test_rigid_body_flow_interaction():
         cylinder_flow_interactor.body_flow_torques, np.zeros((rigid_body_dim, 1))
     )
     assert isinstance(cylinder_flow_interactor.forcing_grid, forcing_grid_cls)
+
+
+def test_rigid_body_flow_interaction_for_scalar_field():
+    cylinder = mock_2d_cylinder()
+    grid_size = (16, 16)
+    forcing_grid_cls = sps.CircularCylinderConstantTemperatureForcingGrid
+    cylinder_flow_interactor = sps.RigidBodyFlowInteraction(
+        rigid_body=cylinder,
+        eul_grid_forcing_field=np.zeros(grid_size),
+        eul_grid_velocity_field=np.zeros(grid_size),
+        virtual_boundary_stiffness_coeff=1.0,
+        virtual_boundary_damping_coeff=1.0,
+        dx=1.0,
+        grid_dim=2,
+        real_t=get_real_t(),
+        field_type="scalar",
+        forcing_grid_cls=forcing_grid_cls,
+        num_forcing_points=16,
+        cylinder_temperature=np.abs(np.random.randn()),
+    )
+
+    assert cylinder_flow_interactor.field_type == "scalar"
+
+    assert isinstance(cylinder_flow_interactor.forcing_grid, forcing_grid_cls)
