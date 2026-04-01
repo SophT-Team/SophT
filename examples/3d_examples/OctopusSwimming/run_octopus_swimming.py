@@ -387,10 +387,7 @@ if __name__ == "__main__":
 
         click.echo(f"Number of threads for parallelism: {num_threads}")
 
-        if adult:
-            geometry_scale = 1.0
-        else:
-            geometry_scale = 0.1
+        geometry_scale = 1.0 if adult else 0.1
 
         # final_time = 40
         exp_non_dimensional_final_time = 10
