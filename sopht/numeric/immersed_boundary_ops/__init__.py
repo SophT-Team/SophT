@@ -4,3 +4,10 @@ from .EulerianLagrangianGridCommunicator2D import EulerianLagrangianGridCommunic
 from .EulerianLagrangianGridCommunicator3D import EulerianLagrangianGridCommunicator3D
 from .experimental.BrinkmannBoundaryForcing import BrinkmannBoundaryForcing
 from .VirtualBoundaryForcing import VirtualBoundaryForcing
+
+__all__ = [
+    "EulerianLagrangianGridCommunicator2D",
+    "EulerianLagrangianGridCommunicator3D",
+    "BrinkmannBoundaryForcing",
+    "VirtualBoundaryForcing",
+]
