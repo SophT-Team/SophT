@@ -1,11 +1,12 @@
 import elastica as ea
 import numpy as np
-import sopht.utils as spu
 from elastica.experimental.connection_contact_joint.parallel_connection import (
     SurfaceJointSideBySide,
     get_connection_vector_straight_straight_rod,
 )
 from scipy.interpolate import interp1d
+
+import sopht.utils as spu
 
 
 def compute_non_dimensional_rod_positions(
@@ -35,9 +36,7 @@ def compute_non_dimensional_rod_positions(
     non_dimensional_position_func_for_rod_along_axis = interp1d(
         non_dimensional_length, rod_positions_along_perp_axis
     )
-    element_positions = non_dimensional_position_func_for_rod_along_axis(
-        np.linspace(0, 1, n_elem)
-    )
+    element_positions = non_dimensional_position_func_for_rod_along_axis(np.linspace(0, 1, n_elem))
     positions = np.zeros((n_elem + 1))
     element_length = element_positions[1] - element_positions[0]
     positions[:-1] = element_positions - element_length / 2
@@ -69,8 +68,7 @@ class ElasticNetSimulator:
             ea.Damping,
             ea.CallBacks,
             ea.Connections,
-        ):
-            ...
+        ): ...
 
         # Set number of elements based on the number of rods
         num_gaps_along_x = num_rods_along_y - 1
@@ -102,9 +100,7 @@ class ElasticNetSimulator:
             start_collection[i, z_axis_idx] = base_radius
 
         for i in range(num_rods_along_x):
-            start_collection[i + num_rods_along_y, x_axis_idx] = (
-                i * self.spacing_between_rods
-            )
+            start_collection[i + num_rods_along_y, x_axis_idx] = i * self.spacing_between_rods
             start_collection[i + num_rods_along_y, z_axis_idx] = -base_radius
 
         # For plotting elastic net
@@ -140,9 +136,7 @@ class ElasticNetSimulator:
             # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
             positions = direction.reshape(rod_dim, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
-            positions += (start - np.dot(start, direction) * direction).reshape(
-                rod_dim, 1
-            )
+            positions += (start - np.dot(start, direction) * direction).reshape(rod_dim, 1)
 
             rod = ea.CosseratRod.straight_rod(
                 n_elem_rods_along_y,
@@ -175,9 +169,7 @@ class ElasticNetSimulator:
             # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
             positions = direction.reshape(rod_dim, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
-            positions += (start - np.dot(start, direction) * direction).reshape(
-                rod_dim, 1
-            )
+            positions += (start - np.dot(start, direction) * direction).reshape(rod_dim, 1)
 
             rod = ea.CosseratRod.straight_rod(
                 n_elem_rods_along_x,
@@ -242,9 +234,9 @@ class ElasticNetSimulator:
                             offset_btw_rods=offset_btw_rods[..., 0],
                         )
 
-        assert (
-            n_connection == num_rods_along_y * num_rods_along_x
-        ), "Not all rods are connected, change number of elements of rods along y or along x"
+        assert n_connection == num_rods_along_y * num_rods_along_x, (
+            "Not all rods are connected, change number of elements of rods along y or along x"
+        )
 
         # add damping
         damping_constant = 0.2
@@ -303,16 +295,10 @@ class ElasticNetSimulator:
                 if current_step % self.every == 0:
                     self.callback_params["time"].append(time)
                     self.callback_params["step"].append(current_step)
-                    self.callback_params["position"].append(
-                        system.position_collection.copy()
-                    )
-                    self.callback_params["com"].append(
-                        system.compute_position_center_of_mass()
-                    )
+                    self.callback_params["position"].append(system.position_collection.copy())
+                    self.callback_params["com"].append(system.compute_position_center_of_mass())
                     self.callback_params["radius"].append(system.radius.copy())
-                    self.callback_params["velocity"].append(
-                        system.velocity_collection.copy()
-                    )
+                    self.callback_params["velocity"].append(system.velocity_collection.copy())
                     self.callback_params["tangents"].append(system.tangents.copy())
 
         # Add call back for plotting time history of the rod
@@ -338,9 +324,7 @@ class ElasticNetSimulator:
     def run(
         self,
     ) -> None:
-        ea.integrate(
-            self.timestepper, self.net_simulator, self.final_time, self.total_steps
-        )
+        ea.integrate(self.timestepper, self.net_simulator, self.final_time, self.total_steps)
 
         if self.plot_result:
             x_axis_idx = spu.VectorField.x_axis_idx()
@@ -352,22 +336,16 @@ class ElasticNetSimulator:
                 fps=self.rendering_fps,
                 step=10,
                 x_limits=(
-                    self.elastic_net_origin[x_axis_idx]
-                    - 1.0 * self.elastic_net_length_x,
-                    self.elastic_net_origin[x_axis_idx]
-                    + 1.0 * self.elastic_net_length_x,
+                    self.elastic_net_origin[x_axis_idx] - 1.0 * self.elastic_net_length_x,
+                    self.elastic_net_origin[x_axis_idx] + 1.0 * self.elastic_net_length_x,
                 ),
                 y_limits=(
-                    self.elastic_net_origin[y_axis_idx]
-                    - 1.0 * self.elastic_net_length_y,
-                    self.elastic_net_origin[y_axis_idx]
-                    + 1.0 * self.elastic_net_length_y,
+                    self.elastic_net_origin[y_axis_idx] - 1.0 * self.elastic_net_length_y,
+                    self.elastic_net_origin[y_axis_idx] + 1.0 * self.elastic_net_length_y,
                 ),
                 z_limits=(
-                    self.elastic_net_origin[z_axis_idx]
-                    - 1.0 * self.elastic_net_length_x,
-                    self.elastic_net_origin[z_axis_idx]
-                    + 1.0 * self.elastic_net_length_x,
+                    self.elastic_net_origin[z_axis_idx] - 1.0 * self.elastic_net_length_x,
+                    self.elastic_net_origin[z_axis_idx] + 1.0 * self.elastic_net_length_x,
                 ),
                 vis3D=True,
             )

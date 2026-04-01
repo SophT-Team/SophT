@@ -1,9 +1,12 @@
 """Kernels for updating vorticity based on velocity forcing in 2D."""
+
+from typing import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(

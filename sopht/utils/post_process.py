@@ -1,6 +1,4 @@
-def make_video_from_image_series(
-    video_name: str, image_series_name: str, frame_rate: int
-) -> None:
+def make_video_from_image_series(video_name: str, image_series_name: str, frame_rate: int) -> None:
     """Makes a video using ffmpeg from series of images"""
     import os
 

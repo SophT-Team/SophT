@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (

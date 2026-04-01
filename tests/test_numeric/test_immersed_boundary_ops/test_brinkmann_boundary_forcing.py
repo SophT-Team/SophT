@@ -1,5 +1,4 @@
 import numpy as np
-
 import pytest
 
 from sopht.numeric.immersed_boundary_ops import BrinkmannBoundaryForcing
@@ -42,8 +41,7 @@ class MockBrinkmannBoundaryForcingSolution:
             self.grid_size // 3, self.grid_size // 3 + self.num_lag_nodes
         ).reshape(-1, self.num_lag_nodes)
         self.lag_grid_position_field = (
-            self.nearest_eul_grid_index_to_lag_grid * self.dx
-            + self.eul_grid_coord_shift
+            self.nearest_eul_grid_index_to_lag_grid * self.dx + self.eul_grid_coord_shift
         )
 
         # interaction step solution computation
@@ -63,9 +61,7 @@ class MockBrinkmannBoundaryForcingSolution:
         )
         # max number of Eulerian grid indices affected by Lagrangian grid
         self.max_num_of_eul_grid_idx_impacted_by_lag_grid = (
-            self.grid_dim
-            * self.num_lag_nodes
-            * (2 * self.interp_kernel_width) ** self.grid_dim
+            self.grid_dim * self.num_lag_nodes * (2 * self.interp_kernel_width) ** self.grid_dim
         )
 
     def check_interaction_step_solution(
@@ -203,9 +199,7 @@ def test_brinkmann_penalise_lag_grid_velocity_field(grid_dim, n_values, precisio
     )
 
     lag_grid_velocity_field = np.ones((grid_dim, mock_soln.num_lag_nodes), dtype=real_t)
-    brinkmann_boundary_forcing.lag_grid_flow_velocity_field = (
-        real_t(3) * lag_grid_velocity_field
-    )
+    brinkmann_boundary_forcing.lag_grid_flow_velocity_field = real_t(3) * lag_grid_velocity_field
     brinkmann_boundary_forcing.brinkmann_penalise_lag_grid_velocity_field(
         lag_grid_penalised_velocity_field=brinkmann_boundary_forcing.lag_grid_penalised_velocity_field,
         lag_grid_flow_velocity_field=brinkmann_boundary_forcing.lag_grid_flow_velocity_field,

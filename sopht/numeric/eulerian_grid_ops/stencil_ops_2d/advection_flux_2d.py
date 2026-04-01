@@ -1,9 +1,12 @@
 """Kernels for computing advection flux in 2D."""
+
+from typing import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_advection_flux_conservative_eno3_pyst_kernel_2d(

@@ -1,6 +1,7 @@
 import numpy as np
 import psutil
 import pytest
+
 from sopht.numeric.eulerian_grid_ops import (
     gen_divergence_pyst_kernel_3d,
 )
@@ -29,9 +30,7 @@ class DivergenceSolution:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.dim = 3
-        self.ref_field = np.random.randn(
-            self.dim, n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_field = np.random.randn(self.dim, n_samples, n_samples, n_samples).astype(real_t)
         self.inv_dx = real_t(0.1)
         self.ref_divergence = divergence_reference(self.ref_field, self.inv_dx)
 

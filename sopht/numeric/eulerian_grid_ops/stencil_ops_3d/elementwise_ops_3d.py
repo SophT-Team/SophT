@@ -1,9 +1,12 @@
 """Kernels for elementwise operations in 3D."""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_elementwise_sum_pyst_kernel_3d(
@@ -121,7 +124,6 @@ def gen_elementwise_copy_pyst_kernel_3d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int, int] | bool = False,
 ) -> Callable:
-
     # TODO expand docs
     """3D elementwise copy one field to another kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
@@ -204,7 +206,6 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
     num_threads: bool | int = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-
     # TODO expand docs
     """3D set field to fixed value at boundaries kernel generator."""
     assert width > 0 and isinstance(width, int), "invalid zone width"
@@ -273,7 +274,6 @@ def gen_add_fixed_val_pyst_kernel_3d(
     fixed_grid_size: tuple[int, int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-
     # TODO expand docs
     """3D add a fixed value to a field kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
@@ -357,12 +357,9 @@ def gen_elementwise_saxpby_pyst_kernel_3d(
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
-                field_1_prefac, field_2_prefac = sp.symbols(
-                    "field_1_prefac, field_2_prefac"
-                )
+                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
                 sum_field[0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0]
-                    + field_2_prefac * field_2[0, 0, 0]
+                    field_1_prefac * field_1[0, 0, 0] + field_2_prefac * field_2[0, 0, 0]
                 )
 
         case "vector":
@@ -377,12 +374,9 @@ def gen_elementwise_saxpby_pyst_kernel_3d(
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
-                field_1_prefac, field_2_prefac = sp.symbols(
-                    "field_1_prefac, field_2_prefac"
-                )
+                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
                 sum_field[0, 0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0, 0]
-                    + field_2_prefac * field_2[0, 0, 0, 0]
+                    field_1_prefac * field_1[0, 0, 0, 0] + field_2_prefac * field_2[0, 0, 0, 0]
                 )
 
         case _:
@@ -415,8 +409,7 @@ def gen_elementwise_cross_product_pyst_kernel_3d(
             f"result_field_i, field_1_j, field_1_k, field_2_j, field_2_k : {pyst_dtype}[{grid_info}]"
         )
         result_field_i[0, 0, 0] @= (
-            field_1_j[0, 0, 0] * field_2_k[0, 0, 0]
-            - field_2_j[0, 0, 0] * field_1_k[0, 0, 0]
+            field_1_j[0, 0, 0] * field_2_k[0, 0, 0] - field_2_j[0, 0, 0] * field_1_k[0, 0, 0]
         )
 
     elementwise_cross_product_single_axis_kernel_3d = ps.create_kernel(

@@ -1,5 +1,6 @@
 import elastica as ea
-from elastica._linalg import _batch_matvec, _batch_matrix_transpose, _batch_matmul
+from elastica._linalg import _batch_matmul, _batch_matrix_transpose, _batch_matvec
+
 import sopht.utils as spu
 
 
@@ -24,9 +25,7 @@ class FishConnection(ea.FreeJoint):
         y_axis_idx = spu.VectorField.y_axis_idx()
         fish_position = rod_one.position_collection.view()
         # TODO: spring defined between y positions figure out a better way.
-        target_distance = (
-            fish_position[y_axis_idx, :] - rod_two.position_collection[y_axis_idx, :]
-        )
+        target_distance = fish_position[y_axis_idx, :] - rod_two.position_collection[y_axis_idx, :]
         spring_force = self.k * target_distance
         rod_one.external_forces[y_axis_idx, :] -= spring_force
 

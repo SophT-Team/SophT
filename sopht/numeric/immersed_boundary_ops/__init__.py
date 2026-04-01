@@ -1,5 +1,6 @@
 """Immersed boundary operations."""
+
 from .EulerianLagrangianGridCommunicator2D import EulerianLagrangianGridCommunicator2D
 from .EulerianLagrangianGridCommunicator3D import EulerianLagrangianGridCommunicator3D
-from .VirtualBoundaryForcing import VirtualBoundaryForcing
 from .experimental.BrinkmannBoundaryForcing import BrinkmannBoundaryForcing
+from .VirtualBoundaryForcing import VirtualBoundaryForcing

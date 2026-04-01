@@ -30,11 +30,7 @@ def compute_diffused_point_source_field(
         point_mag
         / (4 * real_dtype(np.pi) * nu * t) ** (3 / 2)
         * np.exp(
-            -(
-                (x_grid - x_grid_cm) ** 2
-                + (y_grid - y_grid_cm) ** 2
-                + (z_grid - z_grid_cm) ** 2
-            )
+            -((x_grid - x_grid_cm) ** 2 + (y_grid - y_grid_cm) ** 2 + (z_grid - z_grid_cm) ** 2)
             / (4 * nu * t)
         )
     ).astype(real_dtype)

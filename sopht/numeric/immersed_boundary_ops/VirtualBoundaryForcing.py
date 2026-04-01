@@ -1,7 +1,7 @@
 """Virtual boundary forcing for flow-body feedback."""
-from numba import njit
 
 import numpy as np
+from numba import njit
 
 from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
     gen_set_fixed_val_pyst_kernel_2d,
@@ -74,9 +74,7 @@ class VirtualBoundaryForcing:
             interp_kernel_width = 2
 
         # creating buffers...
-        self.nearest_eul_grid_index_to_lag_grid = np.empty(
-            (grid_dim, num_lag_nodes), dtype=int
-        )
+        self.nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes), dtype=int)
         eul_grid_support_of_lag_grid_shape = (
             (grid_dim,) + (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         )
@@ -85,18 +83,10 @@ class VirtualBoundaryForcing:
         )
         interp_weights_shape = (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         self.interp_weights = np.empty(interp_weights_shape, dtype=real_t)
-        self.lag_grid_flow_velocity_field = np.zeros(
-            (grid_dim, num_lag_nodes), dtype=real_t
-        )
-        self.lag_grid_position_mismatch_field = np.zeros_like(
-            self.lag_grid_flow_velocity_field
-        )
-        self.lag_grid_velocity_mismatch_field = np.zeros_like(
-            self.lag_grid_position_mismatch_field
-        )
-        self.lag_grid_forcing_field = np.zeros_like(
-            self.lag_grid_velocity_mismatch_field
-        )
+        self.lag_grid_flow_velocity_field = np.zeros((grid_dim, num_lag_nodes), dtype=real_t)
+        self.lag_grid_position_mismatch_field = np.zeros_like(self.lag_grid_flow_velocity_field)
+        self.lag_grid_velocity_mismatch_field = np.zeros_like(self.lag_grid_position_mismatch_field)
+        self.lag_grid_forcing_field = np.zeros_like(self.lag_grid_velocity_mismatch_field)
 
         if grid_dim == 2:
             self.eul_lag_grid_communicator = EulerianLagrangianGridCommunicator2D(
@@ -135,9 +125,7 @@ class VirtualBoundaryForcing:
                 self.compute_interaction_force_on_eul_and_lag_grid_with_eul_grid_forcing_reset
             )
         else:
-            self.compute_interaction_forcing = (
-                self.compute_interaction_force_on_eul_and_lag_grid
-            )
+            self.compute_interaction_forcing = self.compute_interaction_force_on_eul_and_lag_grid
 
     @staticmethod
     @njit(cache=True, fastmath=True)

@@ -1,8 +1,9 @@
+import logging
+
 import elastica as ea
+import numpy as np
 from elastica._linalg import _batch_cross
 from elastica.utils import MaxDimension
-import logging
-import numpy as np
 
 
 class RectangularPlane(ea.RigidBodyBase):
@@ -48,9 +49,7 @@ class RectangularPlane(ea.RigidBodyBase):
         normal = plane_normal.reshape(MaxDimension.value(), self.n_elems)
         tangent = plane_tangent_along_length.reshape(MaxDimension.value(), self.n_elems)
         binormal = _batch_cross(normal, tangent)
-        self.director_collection = np.zeros(
-            (MaxDimension.value(), MaxDimension.value(), 1)
-        )
+        self.director_collection = np.zeros((MaxDimension.value(), MaxDimension.value(), 1))
         # TODO put checks for invalid normals and tangents
         self.director_collection[0, ...] = tangent / np.linalg.norm(tangent)
         self.director_collection[1, ...] = binormal / np.linalg.norm(binormal)

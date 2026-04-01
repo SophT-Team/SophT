@@ -1,9 +1,12 @@
 """Kernels for elementwise operations in 2D."""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_elementwise_sum_pyst_kernel_2d(
@@ -163,12 +166,10 @@ def gen_elementwise_complex_product_pyst_kernel_2d(
             f"product_field_imag, field_1_imag, field_2_imag : {pyst_dtype}[{grid_info}]"
         )
         product_field_real[0, 0] @= (
-            field_1_real[0, 0] * field_2_real[0, 0]
-            - field_1_imag[0, 0] * field_2_imag[0, 0]
+            field_1_real[0, 0] * field_2_real[0, 0] - field_1_imag[0, 0] * field_2_imag[0, 0]
         )
         product_field_imag[0, 0] @= (
-            field_1_real[0, 0] * field_2_imag[0, 0]
-            + field_1_imag[0, 0] * field_2_real[0, 0]
+            field_1_real[0, 0] * field_2_imag[0, 0] + field_1_imag[0, 0] * field_2_real[0, 0]
         )
 
     _elementwise_complex_product_pyst_kernel_2d = ps.create_kernel(
@@ -335,12 +336,8 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
-                field_1_prefac, field_2_prefac = sp.symbols(
-                    "field_1_prefac, field_2_prefac"
-                )
-                sum_field[0, 0] @= (
-                    field_1_prefac * field_1[0, 0] + field_2_prefac * field_2[0, 0]
-                )
+                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
+                sum_field[0, 0] @= field_1_prefac * field_1[0, 0] + field_2_prefac * field_2[0, 0]
 
         case "vector":
             grid_info = (
@@ -354,12 +351,9 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
-                field_1_prefac, field_2_prefac = sp.symbols(
-                    "field_1_prefac, field_2_prefac"
-                )
+                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
                 sum_field[0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0]
-                    + field_2_prefac * field_2[0, 0, 0]
+                    field_1_prefac * field_1[0, 0, 0] + field_2_prefac * field_2[0, 0, 0]
                 )
 
         case _:

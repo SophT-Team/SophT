@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from lid_driven_cavity_grid import LidDrivenCavityForcingGrid
+
 import sopht.simulator as sps
 import sopht.utils as spu
-from lid_driven_cavity_grid import LidDrivenCavityForcingGrid
 
 
 def lid_driven_cavity_case(
@@ -55,12 +56,8 @@ def lid_driven_cavity_case(
         cavity_com=ldc_com,
     )
     ldc_mask = (
-        np.fabs(flow_sim.position_field[x_axis_idx] - ldc_com[x_axis_idx])
-        < 0.5 * ldc_side_length
-    ) * (
-        np.fabs(flow_sim.position_field[y_axis_idx] - ldc_com[y_axis_idx])
-        < 0.5 * ldc_side_length
-    )
+        np.fabs(flow_sim.position_field[x_axis_idx] - ldc_com[x_axis_idx]) < 0.5 * ldc_side_length
+    ) * (np.fabs(flow_sim.position_field[y_axis_idx] - ldc_com[y_axis_idx]) < 0.5 * ldc_side_length)
 
     # iterate
     timescale = ldc_side_length / lid_velocity
@@ -73,7 +70,6 @@ def lid_driven_cavity_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < t_end:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -100,7 +96,7 @@ def lid_driven_cavity_case(
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/t_end*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / t_end * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
@@ -117,9 +113,7 @@ def lid_driven_cavity_case(
         foto_timer += dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     if save_diagnostic:
         plt.figure()

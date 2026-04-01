@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -31,9 +29,7 @@ class InplaneCurlSolution:
         # pystencil vector field needs to be (n, n, 2)
         self.transposed_ref_field = np.transpose(self.ref_field, axes=(1, 2, 0))
         self.prefactor = real_t(0.1)
-        self.ref_curl = inplane_curl_reference(
-            self.ref_field_x, self.ref_field_y, self.prefactor
-        )
+        self.ref_curl = inplane_curl_reference(self.ref_field_x, self.ref_field_y, self.prefactor)
 
     def check_equals(self, curl):
         np.testing.assert_allclose(self.ref_curl, curl, atol=self.test_tol)

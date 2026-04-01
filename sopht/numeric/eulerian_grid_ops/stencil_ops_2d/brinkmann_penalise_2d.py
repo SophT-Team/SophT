@@ -1,9 +1,12 @@
 """Kernels for Brinkmann penalisation in 2D."""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_brinkmann_penalise_pyst_kernel_2d(
@@ -93,9 +96,9 @@ def gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(
             f"penalised_field, field, char_field : {pyst_dtype}[{grid_info}]"
         )
         penalty_factor, penalty_val = sp.symbols("penalty_factor, penalty_val")
-        penalised_field[0, 0] @= (
-            field[0, 0] + penalty_factor * char_field[0, 0] * penalty_val
-        ) / (1 + penalty_factor * char_field[0, 0])
+        penalised_field[0, 0] @= (field[0, 0] + penalty_factor * char_field[0, 0] * penalty_val) / (
+            1 + penalty_factor * char_field[0, 0]
+        )
 
     brinkmann_penalise_vs_fixed_val_pyst_kernel_2d = ps.create_kernel(
         _brinkmann_penalise_vs_fixed_val_stencil_2d, config=kernel_config

@@ -1,9 +1,12 @@
 """Kernels for penalising field boundary in 3D."""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
@@ -76,9 +79,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
             @ps.kernel
             def penalise_field_x_front_boundary_stencil_3d():
-                field, x_grid_field = ps.fields(
-                    f"field, x_grid_field : {pyst_dtype}[{grid_info}]"
-                )
+                field, x_grid_field = ps.fields(f"field, x_grid_field : {pyst_dtype}[{grid_info}]")
                 field[0, 0, 0] @= field[0, 0, 0] * sp.sin(
                     sine_prefactor * (x_grid_field[0, 0, 0] - x_grid_field_start)
                 )
@@ -90,9 +91,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
             @ps.kernel
             def penalise_field_x_back_boundary_stencil_3d():
-                field, x_grid_field = ps.fields(
-                    f"field, x_grid_field : {pyst_dtype}[{grid_info}]"
-                )
+                field, x_grid_field = ps.fields(f"field, x_grid_field : {pyst_dtype}[{grid_info}]")
                 field[0, 0, 0] @= field[0, 0, 0] * sp.sin(
                     sine_prefactor * (x_grid_field_end - x_grid_field[0, 0, 0])
                 )
@@ -117,9 +116,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
             @ps.kernel
             def penalise_field_y_front_boundary_stencil_3d():
-                field, y_grid_field = ps.fields(
-                    f"field, y_grid_field : {pyst_dtype}[{grid_info}]"
-                )
+                field, y_grid_field = ps.fields(f"field, y_grid_field : {pyst_dtype}[{grid_info}]")
                 field[0, 0, 0] @= field[0, 0, 0] * sp.sin(
                     sine_prefactor * (y_grid_field[0, 0, 0] - y_grid_field_start)
                 )
@@ -131,9 +128,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
             @ps.kernel
             def penalise_field_y_back_boundary_stencil_3d():
-                field, y_grid_field = ps.fields(
-                    f"field, y_grid_field : {pyst_dtype}[{grid_info}]"
-                )
+                field, y_grid_field = ps.fields(f"field, y_grid_field : {pyst_dtype}[{grid_info}]")
                 field[0, 0, 0] @= field[0, 0, 0] * sp.sin(
                     sine_prefactor * (y_grid_field_end - y_grid_field[0, 0, 0])
                 )
@@ -158,9 +153,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
             @ps.kernel
             def penalise_field_z_front_boundary_stencil_3d():
-                field, z_grid_field = ps.fields(
-                    f"field, z_grid_field : {pyst_dtype}[{grid_info}]"
-                )
+                field, z_grid_field = ps.fields(f"field, z_grid_field : {pyst_dtype}[{grid_info}]")
                 field[0, 0, 0] @= field[0, 0, 0] * sp.sin(
                     sine_prefactor * (z_grid_field[0, 0, 0] - z_grid_field_start)
                 )
@@ -172,9 +165,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
             @ps.kernel
             def penalise_field_z_back_boundary_stencil_3d():
-                field, z_grid_field = ps.fields(
-                    f"field, z_grid_field : {pyst_dtype}[{grid_info}]"
-                )
+                field, z_grid_field = ps.fields(f"field, z_grid_field : {pyst_dtype}[{grid_info}]")
                 field[0, 0, 0] @= field[0, 0, 0] * sp.sin(
                     sine_prefactor * (z_grid_field_end - z_grid_field[0, 0, 0])
                 )
@@ -195,34 +186,22 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
                 # these parts involve broadcasting hence couldn't be pystencilized
                 field[:, :, :width] = field[:, :, (width - 1) : width]
                 field[:, :, -width:] = field[:, :, -width : (-width + 1)]
-                penalise_field_x_front_boundary_kernel_3d(
-                    field=field, x_grid_field=x_grid_field
-                )
-                penalise_field_x_back_boundary_kernel_3d(
-                    field=field, x_grid_field=x_grid_field
-                )
+                penalise_field_x_front_boundary_kernel_3d(field=field, x_grid_field=x_grid_field)
+                penalise_field_x_back_boundary_kernel_3d(field=field, x_grid_field=x_grid_field)
 
                 # then along Y
                 # these parts involve broadcasting hence couldn't be pystencilized
                 field[:, :width, :] = field[:, (width - 1) : width, :]
                 field[:, -width:, :] = field[:, -width : (-width + 1), :]
-                penalise_field_y_front_boundary_kernel_3d(
-                    field=field, y_grid_field=y_grid_field
-                )
-                penalise_field_y_back_boundary_kernel_3d(
-                    field=field, y_grid_field=y_grid_field
-                )
+                penalise_field_y_front_boundary_kernel_3d(field=field, y_grid_field=y_grid_field)
+                penalise_field_y_back_boundary_kernel_3d(field=field, y_grid_field=y_grid_field)
 
                 # then along Z
                 # these parts involve broadcasting hence couldn't be pystencilized
                 field[:width, :, :] = field[(width - 1) : width, :, :]
                 field[-width:, :, :] = field[-width : (-width + 1), :, :]
-                penalise_field_z_front_boundary_kernel_3d(
-                    field=field, z_grid_field=z_grid_field
-                )
-                penalise_field_z_back_boundary_kernel_3d(
-                    field=field, z_grid_field=z_grid_field
-                )
+                penalise_field_z_front_boundary_kernel_3d(field=field, z_grid_field=z_grid_field)
+                penalise_field_z_back_boundary_kernel_3d(field=field, z_grid_field=z_grid_field)
 
             match field_type:
                 case "scalar":

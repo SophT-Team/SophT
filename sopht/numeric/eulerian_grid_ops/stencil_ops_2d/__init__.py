@@ -1,4 +1,5 @@
 """Stencil based grid operations in 2D."""
+
 from .advection_flux_2d import gen_advection_flux_conservative_eno3_pyst_kernel_2d
 from .advection_timestep_2d import (
     gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d,
@@ -16,10 +17,10 @@ from .elementwise_ops_2d import (
     gen_add_fixed_val_pyst_kernel_2d,
     gen_elementwise_complex_product_pyst_kernel_2d,
     gen_elementwise_copy_pyst_kernel_2d,
+    gen_elementwise_saxpby_pyst_kernel_2d,
     gen_elementwise_sum_pyst_kernel_2d,
     gen_set_fixed_val_at_boundaries_pyst_kernel_2d,
     gen_set_fixed_val_pyst_kernel_2d,
-    gen_elementwise_saxpby_pyst_kernel_2d,
 )
 from .inplane_field_curl_2d import gen_inplane_field_curl_pyst_kernel_2d
 from .outplane_field_curl_2d import gen_outplane_field_curl_pyst_kernel_2d

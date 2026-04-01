@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -34,9 +32,7 @@ class UpdateVorticityFromVelocityForcingSolution:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.ref_vorticity_field = np.random.rand(n_samples, n_samples).astype(real_t)
-        self.ref_velocty_forcing_field = np.random.rand(2, n_samples, n_samples).astype(
-            real_t
-        )
+        self.ref_velocty_forcing_field = np.random.rand(2, n_samples, n_samples).astype(real_t)
         self.prefactor = real_t(0.1)
         self.ref_new_vorticity_field = update_vorticity_from_velocity_forcing_reference(
             self.ref_vorticity_field, self.ref_velocty_forcing_field, self.prefactor

@@ -1,8 +1,11 @@
 """Kernels for performing advection timestep in 3D."""
+
+from typing import Callable, Literal
+
 import numpy as np
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
@@ -49,9 +52,7 @@ def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
             velocity=velocity,
             inv_dx=-dt_by_dx,
         )
-        elementwise_sum_pyst_kernel_3d(
-            sum_field=field, field_1=field, field_2=advection_flux
-        )
+        elementwise_sum_pyst_kernel_3d(sum_field=field, field_1=field, field_2=advection_flux)
 
     match field_type:
         case "scalar":

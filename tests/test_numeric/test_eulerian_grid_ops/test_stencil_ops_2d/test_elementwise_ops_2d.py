@@ -1,17 +1,15 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
     gen_elementwise_complex_product_pyst_kernel_2d,
     gen_elementwise_copy_pyst_kernel_2d,
+    gen_elementwise_saxpby_pyst_kernel_2d,
     gen_elementwise_sum_pyst_kernel_2d,
     gen_set_fixed_val_at_boundaries_pyst_kernel_2d,
     gen_set_fixed_val_pyst_kernel_2d,
-    gen_elementwise_saxpby_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t
 
@@ -119,10 +117,8 @@ def test_elementwise_copy_pyst_kernel_2d(n_values, precision):
 @pytest.mark.parametrize("n_values", [16])
 def test_elementwise_complex_product_pyst_kernel_2d(n_values, precision):
     real_t = get_real_t(precision)
-    elementwise_complex_product_pyst_kernel = (
-        gen_elementwise_complex_product_pyst_kernel_2d(
-            real_t=real_t, num_threads=psutil.cpu_count(logical=False)
-        )
+    elementwise_complex_product_pyst_kernel = gen_elementwise_complex_product_pyst_kernel_2d(
+        real_t=real_t, num_threads=psutil.cpu_count(logical=False)
     )
     complex_dtype = np.complex64 if real_t == np.float32 else np.complex128
     field_1 = (1 + 2j) * np.ones((n_values, n_values), dtype=complex_dtype)

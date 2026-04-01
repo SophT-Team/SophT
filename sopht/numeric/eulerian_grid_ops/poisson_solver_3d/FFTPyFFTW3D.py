@@ -1,4 +1,5 @@
 """Class for performing FFT via PyFFTW in 3D."""
+
 import numpy as np
 import pyfftw
 
@@ -49,9 +50,7 @@ class FFTPyFFTW3D:
             flags=("FFTW_MEASURE",),
             threads=self.num_threads,
         )
-        self.pyfftw_fftn = pyfftw.builders.fftn(
-            self.field_pyfftw_buffer, threads=self.num_threads
-        )
+        self.pyfftw_fftn = pyfftw.builders.fftn(self.field_pyfftw_buffer, threads=self.num_threads)
         self.pyfftw_ifftn = pyfftw.builders.ifftn(
             self.fourier_field_pyfftw_buffer, threads=self.num_threads
         )

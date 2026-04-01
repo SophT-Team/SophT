@@ -1,14 +1,15 @@
-import numpy as np
-from sopht.utils.precision import get_real_t
-from set_environment_octopus import OctopusEnvironment
-import sopht.simulator as sps
-import elastica as ea
-import sopht.utils as spu
 import click
+import elastica as ea
+import numpy as np
 from octopus_initializer_functions import (
     assemble_octopus,
     initialize_activation_functions,
 )
+from set_environment_octopus import OctopusEnvironment
+
+import sopht.simulator as sps
+import sopht.utils as spu
+from sopht.utils.precision import get_real_t
 
 
 def octopus_swimming(
@@ -56,11 +57,7 @@ def octopus_swimming(
     moment_of_inertia = np.pi / 4 * base_radius**4
     # Kb = EI / (rho_f U^2 L^3 D)
     youngs_modulus = (
-        non_dim_bending_stiffness
-        * rho_f
-        * vel_scale**2
-        * base_length**3
-        * base_diameter
+        non_dim_bending_stiffness * rho_f * vel_scale**2 * base_length**3 * base_diameter
     ) / (moment_of_inertia)
     # bending_rigidity = youngs_modulus * moment_of_inertia
     # natural_frequency = 3.5160 / (base_length ** 2) * np.sqrt(bending_rigidity / (rho_s * base_area))
@@ -94,14 +91,14 @@ def octopus_swimming(
 
     # Connect rods
     for i, rod in enumerate(env.arm_rod_list):
-        env.simulator.connect(
-            rod, body_rod, first_connect_idx=0, second_connect_idx=0
-        ).using(ea.FreeJoint, k=youngs_modulus / 100, nu=0)
+        env.simulator.connect(rod, body_rod, first_connect_idx=0, second_connect_idx=0).using(
+            ea.FreeJoint, k=youngs_modulus / 100, nu=0
+        )
 
     # head tip
-    env.simulator.connect(
-        sphere, body_rod, first_connect_idx=0, second_connect_idx=-1
-    ).using(ea.FreeJoint, k=youngs_modulus / 100, nu=0)
+    env.simulator.connect(sphere, body_rod, first_connect_idx=0, second_connect_idx=-1).using(
+        ea.FreeJoint, k=youngs_modulus / 100, nu=0
+    )
 
     # Setup activation functions to control muscles
     activations, activation_functions = initialize_activation_functions(
@@ -151,9 +148,7 @@ def octopus_swimming(
         )
 
     sphere_diameter = 2 * sphere.radius
-    num_forcing_points_along_equator = int(
-        2 * 1.875 * sphere_diameter / y_range * grid_size_y
-    )
+    num_forcing_points_along_equator = int(2 * 1.875 * sphere_diameter / y_range * grid_size_y)
     sphere_flow_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=sphere,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -195,9 +190,7 @@ def octopus_swimming(
         )
         # Initialize rod io
         for rod_id, rod in enumerate(env.rod_list):
-            rod_io_list.append(
-                spu.CosseratRodIO(cosserat_rod=rod, dim=grid_dim, real_dtype=real_t)
-            )
+            rod_io_list.append(spu.CosseratRodIO(cosserat_rod=rod, dim=grid_dim, real_dtype=real_t))
 
         sphere_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
@@ -221,15 +214,12 @@ def octopus_swimming(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 for rod_id, rod in enumerate(env.rod_list):
@@ -242,9 +232,7 @@ def octopus_swimming(
                         time=flow_sim.time,
                     )
                 sphere_io.save(
-                    h5_file_name="sphere_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sphere_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 env.save_data()
@@ -286,11 +274,9 @@ def octopus_swimming(
             time_history.append(flow_sim.time)
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
@@ -352,9 +338,7 @@ def octopus_swimming(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=30
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=30)
     np.savetxt(
         "octopus_head_velocity_vs_time.csv",
         np.c_[
@@ -390,9 +374,7 @@ if __name__ == "__main__":
     @click.option("--activation_mag", default=0.2, help="Muscle activation magnitude.")
     @click.option("--period", default=2.0, help="Activation period.")
     @click.option("--re_scale", default=2.0, help="Reynold number scale.")
-    @click.option(
-        "--adult", default=True, help="True for Adult octopus, False for Juvenile"
-    )
+    @click.option("--adult", default=True, help="True for Adult octopus, False for Juvenile")
     def simulate_swimming_octopus(
         num_threads, nz, taper_ratio, activation_mag, period, re_scale, adult
     ):
@@ -433,10 +415,7 @@ if __name__ == "__main__":
         # non_dimensional_period = natural_frequency * period
 
         exp_non_dim_bending_stiffness = exp_bending_rigidity / (
-            exp_rho_f
-            * exp_U_free_stream**2
-            * exp_base_length**3
-            * exp_base_diameter
+            exp_rho_f * exp_U_free_stream**2 * exp_base_length**3 * exp_base_diameter
         )
         exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
         exp_Re *= re_scale

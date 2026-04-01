@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -11,9 +9,7 @@ from sopht.numeric.eulerian_grid_ops import (
 from sopht.utils.precision import get_real_t, get_test_tol
 
 
-def brinkmann_penalise_reference(
-    penalty_factor, char_field, penalty_field, field, real_t
-):
+def brinkmann_penalise_reference(penalty_factor, char_field, penalty_field, field, real_t):
     penalised_field = np.zeros_like(field)
     penalised_field[...] = (field + penalty_factor * char_field * penalty_field) / (
         real_t(1) + penalty_factor * char_field
@@ -38,9 +34,7 @@ class BrinkmannPenalisationSolution:
         )
 
         self.ref_vector_field = np.random.randn(2, n_samples, n_samples).astype(real_t)
-        self.ref_penalty_vector_field = np.random.randn(2, n_samples, n_samples).astype(
-            real_t
-        )
+        self.ref_penalty_vector_field = np.random.randn(2, n_samples, n_samples).astype(real_t)
         self.ref_penalised_vector_field = brinkmann_penalise_reference(
             self.penalty_factor,
             self.ref_char_field,
@@ -132,10 +126,7 @@ def test_brinkmann_penalise_scalar_field_vs_fixed_val_2d(n_values, precision):
     )
     np.testing.assert_allclose(
         penalised_field,
-        (
-            solution.ref_field
-            + solution.penalty_factor * solution.ref_char_field * penalty_val
-        )
+        (solution.ref_field + solution.penalty_factor * solution.ref_char_field * penalty_val)
         / (1 + solution.penalty_factor * solution.ref_char_field),
         atol=solution.test_tol,
     )

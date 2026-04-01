@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -46,9 +44,7 @@ class PenaliseFieldBoundarySolution:
         self.width = 4
         self.dx = real_t(0.1)
         self.grid_coord_shift = real_t(self.dx / 2)
-        x = np.linspace(
-            self.grid_coord_shift, 1 - self.grid_coord_shift, n_samples
-        ).astype(real_t)
+        x = np.linspace(self.grid_coord_shift, 1 - self.grid_coord_shift, n_samples).astype(real_t)
         y = x.copy()
         self.y_grid_field, self.x_grid_field = np.meshgrid(y, x, indexing="ij")
         self.ref_penalised_field = self.ref_field.copy()
@@ -75,16 +71,14 @@ def test_penalise_field_boundary_2d(n_values, precision):
     real_t = get_real_t(precision)
     solution = PenaliseFieldBoundarySolution(n_values, precision)
     field = solution.ref_field.copy()
-    penalise_field_towards_boundary_pyst_kernel = (
-        gen_penalise_field_boundary_pyst_kernel_2d(
-            width=solution.width,
-            dx=solution.dx,
-            x_grid_field=solution.x_grid_field,
-            y_grid_field=solution.y_grid_field,
-            real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
-        )
+    penalise_field_towards_boundary_pyst_kernel = gen_penalise_field_boundary_pyst_kernel_2d(
+        width=solution.width,
+        dx=solution.dx,
+        x_grid_field=solution.x_grid_field,
+        y_grid_field=solution.y_grid_field,
+        real_t=real_t,
+        fixed_grid_size=(n_values, n_values),
+        num_threads=psutil.cpu_count(logical=False),
     )
     penalise_field_towards_boundary_pyst_kernel(field=field)
     solution.check_equals(field)

@@ -1,18 +1,17 @@
 from collections import defaultdict
-import numpy as np
+
 import elastica as ea
-from elastica._calculus import _isnan_check
-from arm_functions_2d import StraightRodCallBack, CylinderCallBack
+import numpy as np
+from arm_functions_2d import CylinderCallBack, StraightRodCallBack
 from coomm.actuations.muscles import (
-    force_length_weight_poly,
-)
-from coomm.actuations.muscles import (
-    MuscleGroup,
+    ApplyMuscleGroups,
     LongitudinalMuscle,
+    MuscleGroup,
     ObliqueMuscle,
     TransverseMuscle,
-    ApplyMuscleGroups,
+    force_length_weight_poly,
 )
+from elastica._calculus import _isnan_check
 
 
 class BaseSimulator(
@@ -145,9 +144,7 @@ class ArmEnvironment:
     def set_muscles(self, base_radius: np.ndarray, arm: ea.CosseratRod) -> None:
         """Add muscle actuation"""
 
-        def add_muscle_actuation(
-            radius_base: np.ndarray, arm: ea.CosseratRod
-        ) -> list[MuscleGroup]:
+        def add_muscle_actuation(radius_base: np.ndarray, arm: ea.CosseratRod) -> list[MuscleGroup]:
 
             muscle_groups = []
 
@@ -162,9 +159,7 @@ class ArmEnvironment:
             OM_rotation_number = 6
 
             shearable_rod_area = np.pi * arm.radius**2
-            TM_rest_muscle_area = shearable_rod_area * (
-                TM_ratio_radius**2 - AN_ratio_radius**2
-            )
+            TM_rest_muscle_area = shearable_rod_area * (TM_ratio_radius**2 - AN_ratio_radius**2)
             LM_rest_muscle_area = shearable_rod_area * (LM_ratio_radius**2)
             OM_rest_muscle_area = shearable_rod_area * (OM_ratio_radius**2)
 
@@ -250,9 +245,7 @@ class ArmEnvironment:
             return muscle_groups
 
         self.muscle_groups = add_muscle_actuation(base_radius, arm)
-        self.muscle_callback_params_list: list = [
-            defaultdict(list) for _ in self.muscle_groups
-        ]
+        self.muscle_callback_params_list: list = [defaultdict(list) for _ in self.muscle_groups]
         self.simulator.add_forcing_to(self.shearable_rod).using(
             ApplyMuscleGroups,
             muscle_groups=self.muscle_groups,
@@ -282,7 +275,6 @@ class ArmEnvironment:
     def step(
         self, time: float, muscle_activations: list[np.ndarray]
     ) -> tuple[float, list[ea.CosseratRod], bool]:
-
         """Set muscle activations"""
         for muscle_group, activation in zip(self.muscle_groups, muscle_activations):
             muscle_group.apply_activation(activation)

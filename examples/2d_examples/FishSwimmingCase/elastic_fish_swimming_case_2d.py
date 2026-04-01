@@ -1,9 +1,10 @@
-import numpy as np
-import sopht.simulator as sps
-import sopht.utils as spu
 import click
+import numpy as np
 from elastic_fish_case_2d import ElasticFishSimulator
 from elastic_fish_utils.fish_geometry_2d import create_fish_geometry
+
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 def elastic_fish_swimming_case(
@@ -38,11 +39,7 @@ def elastic_fish_swimming_case(
     z_width = 1
     moment_of_inertia = base_diameter**3 * z_width / 12
     youngs_modulus = (
-        non_dim_bending_stiffness
-        * rho_f
-        * vel_scale**2
-        * base_length**3
-        / moment_of_inertia
+        non_dim_bending_stiffness * rho_f * vel_scale**2 * base_length**3 / moment_of_inertia
     )
 
     origin = np.array([0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.0])
@@ -117,15 +114,12 @@ def elastic_fish_swimming_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
@@ -171,7 +165,7 @@ def elastic_fish_swimming_case(
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"grid deviation L2 error: {cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}, "
                 f"fish pos: {fish_sim.shearable_rod.position_collection[0, 0]:.6f}, "
@@ -212,9 +206,7 @@ def elastic_fish_swimming_case(
     if save_data:
         spu.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
 
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=30
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=30)
     # Save data
     np.savetxt(
         "fish_forces_vs_time.csv",

@@ -1,6 +1,8 @@
-from typing import Type
 import os
+from typing import Type
+
 import elastica as ea
+
 from sopht.utils.io import IO
 
 

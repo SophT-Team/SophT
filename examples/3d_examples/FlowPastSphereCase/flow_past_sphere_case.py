@@ -1,6 +1,7 @@
 import click
 import elastica as ea
 import numpy as np
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -54,15 +55,11 @@ def flow_past_sphere_case(
     z_cm = 0.5 * flow_sim.z_range
     sphere_com = np.array([x_cm, y_cm, z_cm])
     density = 1e3
-    sphere = ea.Sphere(
-        center=sphere_com, base_radius=(sphere_diameter / 2.0), density=density
-    )
+    sphere = ea.Sphere(center=sphere_com, base_radius=(sphere_diameter / 2.0), density=density)
     # Since the sphere is fixed, we don't add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-BODY COMMUNICATOR SETUP START======
-    num_forcing_points_along_equator = int(
-        1.875 * sphere_diameter / x_range * grid_size_x
-    )
+    num_forcing_points_along_equator = int(1.875 * sphere_diameter / x_range * grid_size_x)
     sphere_flow_interactor = sps.RigidBodyFlowInteraction(
         rigid_body=sphere,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -138,8 +135,7 @@ def flow_past_sphere_case(
                     np.mean(
                         flow_sim.velocity_field[
                             x_axis_idx,
-                            sphere_center_on_euler_grid_idx : sphere_center_on_euler_grid_idx
-                            + 2,
+                            sphere_center_on_euler_grid_idx : sphere_center_on_euler_grid_idx + 2,
                             grid_size_y // 2 - 1 : grid_size_y // 2 + 1,
                             :,
                         ],
@@ -150,15 +146,11 @@ def flow_past_sphere_case(
             )
             if save_flow_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 sphere_io.save(
-                    h5_file_name="sphere_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sphere_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Velocity X comp, time: {flow_sim.time / timescale:.2f}")
@@ -189,7 +181,7 @@ def flow_past_sphere_case(
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/t_end*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / t_end * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"drag coeff: {drag_coeff:.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f} "
@@ -228,9 +220,7 @@ def flow_past_sphere_case(
     )
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     if save_flow_data:
         spu.make_dir_and_transfer_h5_data(dir_name="flow_data_h5")
@@ -242,9 +232,7 @@ if __name__ == "__main__":
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
     @click.option("--nx", default=128, help="Number of grid points in x direction.")
     @click.option("--reynolds", default=100.0, help="Reynolds number of flow.")
-    def simulate_parallelised_flow_past_sphere(
-        num_threads: int, nx: int, reynolds: float
-    ) -> None:
+    def simulate_parallelised_flow_past_sphere(num_threads: int, nx: int, reynolds: float) -> None:
         ny = nx // 2
         nz = nx // 2
         # in order Z, Y, X

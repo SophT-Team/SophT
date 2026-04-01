@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -18,13 +16,9 @@ def char_func_from_level_set_via_sine_heaviside_reference(
 ):
     char_func_field[...] = 0
     char_func_field[...] = char_func_field + (level_set_field >= blend_width)
-    char_func_field[...] = char_func_field + (
-        np.fabs(level_set_field) < blend_width
-    ) * real_t(0.5) * (
-        1
-        + level_set_field / blend_width
-        + np.sin(np.pi * level_set_field / blend_width) / np.pi
-    )
+    char_func_field[...] = char_func_field + (np.fabs(level_set_field) < blend_width) * real_t(
+        0.5
+    ) * (1 + level_set_field / blend_width + np.sin(np.pi * level_set_field / blend_width) / np.pi)
 
 
 class CharFuncFromLevelSetFuncSolution:

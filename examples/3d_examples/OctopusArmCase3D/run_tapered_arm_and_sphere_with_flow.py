@@ -1,11 +1,12 @@
+import click
+import elastica as ea
 import numpy as np
-from set_environment_tapered_arm_and_sphere_with_flow import Environment
 from arm_functions_3d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
+from matplotlib import pyplot as plt
+from set_environment_tapered_arm_and_sphere_with_flow import Environment
+
 import sopht.simulator as sps
 import sopht.utils as spu
-import elastica as ea
-import click
-from matplotlib import pyplot as plt
 
 
 def tapered_arm_and_cylinder_flow_coupling(
@@ -57,9 +58,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     poisson_ratio = 0.5
     shear_modulus = youngs_modulus / (2 * (1 + poisson_ratio))
 
-    start = np.zeros(grid_dim) + np.array(
-        [0.3 * x_range, 0.5 * y_range, 0.12 * z_range]
-    )
+    start = np.zeros(grid_dim) + np.array([0.3 * x_range, 0.5 * y_range, 0.12 * z_range])
     direction = np.array([1.0, 0.0, 0.0])
     normal = np.array([0.0, 1.0, 0.0])
 
@@ -138,9 +137,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     )
     # ==================FLOW SETUP END=========================
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    flow_body_interactors: list[
-        sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction
-    ] = []
+    flow_body_interactors: list[sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=env.shearable_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -191,9 +188,7 @@ def tapered_arm_and_cylinder_flow_coupling(
             },
         )
         # Initialize rod io
-        rod_io = spu.CosseratRodIO(
-            cosserat_rod=shearable_rod, dim=grid_dim, real_dtype=real_t
-        )
+        rod_io = spu.CosseratRodIO(cosserat_rod=shearable_rod, dim=grid_dim, real_dtype=real_t)
         # Initialize sphere io
         sphere_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         # Add vector field on lagrangian grid
@@ -214,15 +209,12 @@ def tapered_arm_and_cylinder_flow_coupling(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
@@ -230,9 +222,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                     time=flow_sim.time,
                 )
                 sphere_io.save(
-                    h5_file_name="sphere_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sphere_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Vorticity magnitude, time: {flow_sim.time / final_time:.2f}")
@@ -297,11 +287,9 @@ def tapered_arm_and_cylinder_flow_coupling(
             time_history.append(flow_sim.time)
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
@@ -316,9 +304,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         rod_time = flow_sim.time
         for i in range(rod_time_steps):
             # Activate longitudinal muscle
-            activation_functions[2].apply_activation(
-                env.shearable_rod, activations[2], rod_time
-            )
+            activation_functions[2].apply_activation(env.shearable_rod, activations[2], rod_time)
             # Do one elastica step
             env.time_step = local_rod_dt
             rod_time, systems, done = env.step(rod_time, activations)
@@ -338,12 +324,8 @@ def tapered_arm_and_cylinder_flow_coupling(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
-    spu.make_video_from_image_series(
-        video_name="rod_vel", image_series_name="vel", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
+    spu.make_video_from_image_series(video_name="rod_vel", image_series_name="vel", frame_rate=10)
 
 
 if __name__ == "__main__":

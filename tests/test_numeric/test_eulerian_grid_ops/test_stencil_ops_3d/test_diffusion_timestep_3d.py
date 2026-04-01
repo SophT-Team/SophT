@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -37,9 +35,7 @@ class DiffusionTimestepEulerForwardSolution:
             real_t,
         )
 
-        self.ref_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_vector_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
         self.ref_new_vector_field = np.zeros_like(self.ref_vector_field)
         self.ref_new_vector_field[0] = diffusion_timestep_euler_forward_reference(
             self.ref_vector_field[0],

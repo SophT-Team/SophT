@@ -1,9 +1,12 @@
 """Kernels for Brinkmann penalisation in 3D."""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_brinkmann_penalise_pyst_kernel_3d(
@@ -29,8 +32,7 @@ def gen_brinkmann_penalise_pyst_kernel_3d(
         )
         penalty_factor = sp.symbols("penalty_factor")
         penalised_field[0, 0, 0] @= (
-            field[0, 0, 0]
-            + penalty_factor * char_field[0, 0, 0] * penalty_field[0, 0, 0]
+            field[0, 0, 0] + penalty_factor * char_field[0, 0, 0] * penalty_field[0, 0, 0]
         ) / (1 + penalty_factor * char_field[0, 0, 0])
 
     brinkmann_penalise_pyst_kernel_3d = ps.create_kernel(

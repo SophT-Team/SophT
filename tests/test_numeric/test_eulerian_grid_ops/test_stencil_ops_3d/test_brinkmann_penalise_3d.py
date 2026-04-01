@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -10,9 +8,7 @@ from sopht.numeric.eulerian_grid_ops import (
 from sopht.utils.precision import get_real_t, get_test_tol
 
 
-def brinkmann_penalise_reference(
-    penalty_factor, char_field, penalty_field, field, real_t
-):
+def brinkmann_penalise_reference(penalty_factor, char_field, penalty_field, field, real_t):
     penalised_field = np.zeros_like(field)
     penalised_field[...] = (field + penalty_factor * char_field * penalty_field) / (
         real_t(1) + penalty_factor * char_field
@@ -25,12 +21,8 @@ class BrinkmannPenalisationSolution:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_penalty_field = np.random.randn(
-            n_samples, n_samples, n_samples
-        ).astype(real_t)
-        self.ref_char_field = np.random.randn(n_samples, n_samples, n_samples).astype(
-            real_t
-        )
+        self.ref_penalty_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_char_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
         self.penalty_factor = real_t(0.1)
         self.ref_penalised_field = brinkmann_penalise_reference(
             self.penalty_factor,
@@ -40,12 +32,10 @@ class BrinkmannPenalisationSolution:
             real_t=real_t,
         )
 
-        self.ref_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
-        self.ref_penalty_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_vector_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_penalty_vector_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(
+            real_t
+        )
         self.ref_penalised_vector_field = brinkmann_penalise_reference(
             self.penalty_factor,
             self.ref_char_field,
@@ -98,13 +88,11 @@ def test_brinkmann_penalise_vector_field_3d(n_values, precision):
     real_t = get_real_t(precision)
     solution = BrinkmannPenalisationSolution(n_values, precision)
     penalised_vector_field = np.zeros_like(solution.ref_penalised_vector_field)
-    brinkmann_penalise_vector_field_pyst_openmp_kernel_3d = (
-        gen_brinkmann_penalise_pyst_kernel_3d(
-            real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
-            field_type="vector",
-        )
+    brinkmann_penalise_vector_field_pyst_openmp_kernel_3d = gen_brinkmann_penalise_pyst_kernel_3d(
+        real_t=real_t,
+        fixed_grid_size=(n_values, n_values, n_values),
+        num_threads=psutil.cpu_count(logical=False),
+        field_type="vector",
     )
     brinkmann_penalise_vector_field_pyst_openmp_kernel_3d(
         penalised_vector_field=penalised_vector_field,

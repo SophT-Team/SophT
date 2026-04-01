@@ -1,24 +1,17 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from scipy.fft import irfftn, rfftn
 
 from sopht.numeric.eulerian_grid_ops import (
     FastDiagPoissonSolver3D,
-)
-from sopht.numeric.eulerian_grid_ops import (
     UnboundedPoissonSolverPYFFTW3D,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
 
 
 class UnboundedPoissonSolverSolution3D:
-    def __init__(
-        self, grid_size_z, grid_size_y, grid_size_x, x_range, precision="single"
-    ):
+    def __init__(self, grid_size_z, grid_size_y, grid_size_x, x_range, precision="single"):
         self.real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.grid_size_z = grid_size_z
@@ -40,13 +33,9 @@ class UnboundedPoissonSolverSolution3D:
             (2 * self.grid_size_z, 2 * self.grid_size_y, self.grid_size_x + 1),
             dtype=complex_dtype,
         )
-        self.fourier_greens_function_field = (
-            self.construct_fourier_greens_function_field()
-        )
+        self.fourier_greens_function_field = self.construct_fourier_greens_function_field()
         self.ref_solution_field = np.zeros_like(self.rhs_field)
-        self.ref_solution_field[...] = self.poisson_solve_reference(
-            rhs_field=self.rhs_field
-        )
+        self.ref_solution_field[...] = self.poisson_solve_reference(rhs_field=self.rhs_field)
 
         self.rhs_vector_field = np.random.randn(
             3, self.grid_size_z, self.grid_size_y, self.grid_size_x
@@ -58,15 +47,15 @@ class UnboundedPoissonSolverSolution3D:
             )
 
     def construct_fourier_greens_function_field(self):
-        x_double = np.linspace(
-            0, 2 * self.x_range - self.dx, 2 * self.grid_size_x
-        ).astype(self.real_t)
-        y_double = np.linspace(
-            0, 2 * self.y_range - self.dx, 2 * self.grid_size_y
-        ).astype(self.real_t)
-        z_double = np.linspace(
-            0, 2 * self.z_range - self.dx, 2 * self.grid_size_z
-        ).astype(self.real_t)
+        x_double = np.linspace(0, 2 * self.x_range - self.dx, 2 * self.grid_size_x).astype(
+            self.real_t
+        )
+        y_double = np.linspace(0, 2 * self.y_range - self.dx, 2 * self.grid_size_y).astype(
+            self.real_t
+        )
+        z_double = np.linspace(0, 2 * self.z_range - self.dx, 2 * self.grid_size_z).astype(
+            self.real_t
+        )
         # operations after this preserve dtype
         z_grid_double, y_grid_double, x_grid_double = np.meshgrid(
             z_double, y_double, x_double, indexing="ij"
@@ -89,17 +78,13 @@ class UnboundedPoissonSolverSolution3D:
         ] = rhs_field
         self.domain_doubled_fourier_buffer[...] = rfftn(self.domain_doubled_rhs_field)
         # Greens function convolution
-        self.domain_doubled_fourier_buffer[
-            ...
-        ] *= self.fourier_greens_function_field * (self.dx**3)
+        self.domain_doubled_fourier_buffer[...] *= self.fourier_greens_function_field * (self.dx**3)
         return irfftn(self.domain_doubled_fourier_buffer)[
             : self.grid_size_z, : self.grid_size_y, : self.grid_size_x
         ]
 
     def check_equals(self, solution_field):
-        np.testing.assert_allclose(
-            self.ref_solution_field, solution_field, atol=self.test_tol
-        )
+        np.testing.assert_allclose(self.ref_solution_field, solution_field, atol=self.test_tol)
 
     def check_vector_field_equals(self, solution_vector_field):
         np.testing.assert_allclose(
@@ -129,9 +114,7 @@ def test_unbounded_poisson_solve_pyfftw_3d(n_values, precision):
     )
     solution_field = np.zeros_like(solution.rhs_field)
     unbounded_poisson_solver_kernel = unbounded_poisson_solver.solve
-    unbounded_poisson_solver_kernel(
-        solution_field=solution_field, rhs_field=solution.rhs_field
-    )
+    unbounded_poisson_solver_kernel(solution_field=solution_field, rhs_field=solution.rhs_field)
     # assert correct
     solution.check_equals(solution_field)
 
@@ -218,9 +201,7 @@ def test_unbounded_poisson_solve_vector_field_neumann_fast_diag_3d(n_values, pre
             * np.cos(wave_number * np.pi * y_grid)
             * np.cos(wave_number * np.pi * z_grid)
         )
-    correct_solution_vector_field = rhs_vector_field / (
-        3 * (wave_number**2) * np.pi**2
-    )
+    correct_solution_vector_field = rhs_vector_field / (3 * (wave_number**2) * np.pi**2)
     solution_vector_field = np.zeros_like(rhs_vector_field)
 
     unbounded_poisson_solver = FastDiagPoissonSolver3D(

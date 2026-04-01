@@ -1,10 +1,13 @@
 """Kernels for computing diffusion flux in 3D."""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_diffusion_flux_pyst_kernel_3d(
@@ -27,9 +30,7 @@ def gen_diffusion_flux_pyst_kernel_3d(
 
     @ps.kernel
     def _diffusion_stencil_3d():
-        diffusion_flux, field = ps.fields(
-            f"diffusion_flux, field : {pyst_dtype}[{grid_info}]"
-        )
+        diffusion_flux, field = ps.fields(f"diffusion_flux, field : {pyst_dtype}[{grid_info}]")
         prefactor = sp.symbols("prefactor")
         diffusion_flux[0, 0, 0] @= prefactor * (
             field[1, 0, 0]
@@ -41,9 +42,7 @@ def gen_diffusion_flux_pyst_kernel_3d(
             - 6 * field[0, 0, 0]
         )
 
-    diffusion_kernel_3d = ps.create_kernel(
-        _diffusion_stencil_3d, config=kernel_config
-    ).compile()
+    diffusion_kernel_3d = ps.create_kernel(_diffusion_stencil_3d, config=kernel_config).compile()
     match reset_ghost_zone:
         case False:
             diffusion_flux_pyst_kernel_3d = diffusion_kernel_3d
@@ -66,17 +65,13 @@ def gen_diffusion_flux_pyst_kernel_3d(
                 Computes diffusion flux of 3D scalar field (field)
                 into scalar 3D field (diffusion_flux).
                 """
-                diffusion_kernel_3d(
-                    diffusion_flux=diffusion_flux, field=field, prefactor=prefactor
-                )
+                diffusion_kernel_3d(diffusion_flux=diffusion_flux, field=field, prefactor=prefactor)
 
                 # set boundary unaffected points to 0
                 # TODO need one sided corrections?
                 set_fixed_val_at_boundaries_3d(field=diffusion_flux, fixed_val=0)
 
-            diffusion_flux_pyst_kernel_3d = (
-                diffusion_flux_with_ghost_zone_reset_pyst_kernel_3d
-            )
+            diffusion_flux_pyst_kernel_3d = diffusion_flux_with_ghost_zone_reset_pyst_kernel_3d
 
     match field_type:
         case "scalar":

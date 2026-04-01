@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -23,9 +21,7 @@ def vorticity_stretching_timestep_euler_forward_reference(
     return vorticity_field + vorticity_stretching_flux_field
 
 
-def vorticity_stretching_timestep_ssprk3_reference(
-    vorticity_field, velocity_field, dt_by_2_dx
-):
+def vorticity_stretching_timestep_ssprk3_reference(vorticity_field, velocity_field, dt_by_2_dx):
     # first step
     vorticity_stretching_flux_field = vorticity_stretching_flux_reference(
         vorticity_field, velocity_field, prefactor=dt_by_2_dx
@@ -37,21 +33,15 @@ def vorticity_stretching_timestep_ssprk3_reference(
     vorticity_stretching_flux_field[...] = vorticity_stretching_flux_reference(
         post_step_1_vorticity_field, velocity_field, prefactor=dt_by_2_dx
     )
-    post_step_1_vorticity_field[...] = (
-        post_step_1_vorticity_field + vorticity_stretching_flux_field
-    )
+    post_step_1_vorticity_field[...] = post_step_1_vorticity_field + vorticity_stretching_flux_field
     post_step_2_vorticity_field = post_step_1_vorticity_field.view()
-    post_step_2_vorticity_field[...] = (
-        0.75 * vorticity_field + 0.25 * post_step_1_vorticity_field
-    )
+    post_step_2_vorticity_field[...] = 0.75 * vorticity_field + 0.25 * post_step_1_vorticity_field
 
     # third step
     vorticity_stretching_flux_field[...] = vorticity_stretching_flux_reference(
         post_step_2_vorticity_field, velocity_field, prefactor=(0.5 * dt_by_2_dx)
     )
-    post_step_2_vorticity_field[...] = (
-        post_step_2_vorticity_field + vorticity_stretching_flux_field
-    )
+    post_step_2_vorticity_field[...] = post_step_2_vorticity_field + vorticity_stretching_flux_field
     new_vorticity_field = np.zeros_like(vorticity_field)
     new_vorticity_field[...] = (1.0 / 3.0) * vorticity_field + (
         2.0 / 3.0
@@ -63,24 +53,18 @@ class VorticityStretchingTimestepSolution:
     def __init__(self, n_samples, time_stepper="euler_forward", precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_vorticity_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
-        self.ref_velocity_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_vorticity_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(
+            real_t
+        )
+        self.ref_velocity_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
         self.dt_by_2_dx = real_t(0.1)
         if time_stepper == "euler_forward":
-            self.ref_new_vorticity_field = (
-                vorticity_stretching_timestep_euler_forward_reference(
-                    self.ref_vorticity_field, self.ref_velocity_field, self.dt_by_2_dx
-                )
+            self.ref_new_vorticity_field = vorticity_stretching_timestep_euler_forward_reference(
+                self.ref_vorticity_field, self.ref_velocity_field, self.dt_by_2_dx
             )
         elif time_stepper == "ssprk3":
-            self.ref_new_vorticity_field = (
-                vorticity_stretching_timestep_ssprk3_reference(
-                    self.ref_vorticity_field, self.ref_velocity_field, self.dt_by_2_dx
-                )
+            self.ref_new_vorticity_field = vorticity_stretching_timestep_ssprk3_reference(
+                self.ref_vorticity_field, self.ref_velocity_field, self.dt_by_2_dx
             )
 
     def check_equals(self, new_vorticity_field):

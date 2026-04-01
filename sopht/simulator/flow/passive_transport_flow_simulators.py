@@ -1,7 +1,10 @@
-import numpy as np
-from .flow_simulators import FlowSimulator
-import sopht.numeric.eulerian_grid_ops as spne
 from typing import Callable, Literal, Type
+
+import numpy as np
+
+import sopht.numeric.eulerian_grid_ops as spne
+
+from .flow_simulators import FlowSimulator
 
 
 class PassiveTransportFlowSimulator(FlowSimulator):
@@ -37,9 +40,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
 
         """
         if field_type not in ["scalar", "vector"]:
-            raise ValueError(
-                "Invalid field type. Supported values include 'scalar' and 'vector'"
-            )
+            raise ValueError("Invalid field type. Supported values include 'scalar' and 'vector'")
         # TODO add support for passive transport of vector field in 2D
         if grid_dim == 2 and field_type == "vector":
             raise ValueError("Passive transport of vector 2D fields not supported yet.")
@@ -54,12 +55,8 @@ class PassiveTransportFlowSimulator(FlowSimulator):
             case "scalar":
                 self.primary_field = np.zeros(self.grid_size, dtype=self.real_t)
             case "vector":
-                self.primary_field = np.zeros(
-                    (self.grid_dim, *self.grid_size), dtype=self.real_t
-                )
-        self.velocity_field = np.zeros(
-            (self.grid_dim, *self.grid_size), dtype=self.real_t
-        )
+                self.primary_field = np.zeros((self.grid_dim, *self.grid_size), dtype=self.real_t)
+        self.velocity_field = np.zeros((self.grid_dim, *self.grid_size), dtype=self.real_t)
         # we use the same buffer for advection and diffusion fluxes
         self.buffer_scalar_field = np.zeros(self.grid_size, dtype=self.real_t)
 
@@ -67,32 +64,32 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         """Compile necessary kernels based on flow type"""
         match self.grid_dim:
             case 2:
-                self._diffusion_timestep = (
-                    spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
+                self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
+                    real_t=self.real_t,
+                    fixed_grid_size=self.grid_size,
+                    num_threads=self.num_threads,
+                )
+                self._advection_timestep = (
+                    spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
                         real_t=self.real_t,
                         fixed_grid_size=self.grid_size,
                         num_threads=self.num_threads,
                     )
                 )
-                self._advection_timestep = spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
+            case 3:
+                self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
                     real_t=self.real_t,
                     fixed_grid_size=self.grid_size,
                     num_threads=self.num_threads,
+                    field_type=self.field_type,
                 )
-            case 3:
-                self._diffusion_timestep = (
-                    spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
+                self._advection_timestep = (
+                    spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
                         real_t=self.real_t,
                         fixed_grid_size=self.grid_size,
                         num_threads=self.num_threads,
                         field_type=self.field_type,
                     )
-                )
-                self._advection_timestep = spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
-                    real_t=self.real_t,
-                    fixed_grid_size=self.grid_size,
-                    num_threads=self.num_threads,
-                    field_type=self.field_type,
                 )
 
     def _advection_and_diffusion_time_step(self, dt: float, **kwargs) -> None:

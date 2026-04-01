@@ -1,5 +1,7 @@
 """Unbounded Poisson solver kernels 3D via PyFFTW."""
+
 import numpy as np
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
 
@@ -37,15 +39,13 @@ class UnboundedPoissonSolverPYFFTW3D:
         self.rfft = pyfftw_construct.fft_plan
         self.irfft = pyfftw_construct.ifft_plan
         self.domain_doubled_buffer = pyfftw_construct.field_pyfftw_buffer
-        self.domain_doubled_fourier_buffer = (
-            pyfftw_construct.fourier_field_pyfftw_buffer
-        )
+        self.domain_doubled_fourier_buffer = pyfftw_construct.fourier_field_pyfftw_buffer
         # TODO avoid this allocation if possible, currently needed to do SIMD and
         #  parallel fourier space convolution
         self.convolution_buffer = np.zeros_like(self.domain_doubled_fourier_buffer)
         self._construct_fourier_greens_function_field()
-        self.fourier_greens_function_times_dx_cubed = (
-            self.domain_doubled_fourier_buffer * (self.dx**3)
+        self.fourier_greens_function_times_dx_cubed = self.domain_doubled_fourier_buffer * (
+            self.dx**3
         )
         self._gen_elementwise_operation_kernels()
         # vector field solve stuff

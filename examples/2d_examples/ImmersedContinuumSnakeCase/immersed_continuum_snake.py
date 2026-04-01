@@ -1,5 +1,6 @@
 import elastica as ea
 import numpy as np
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -20,9 +21,7 @@ def immersed_continuum_snake_case(
     y_axis_idx = spu.VectorField.y_axis_idx()
     # =================PYELASTICA STUFF BEGIN=====================
 
-    class ImmersedContinuumSnakeSimulator(
-        ea.BaseSystemCollection, ea.Forcing, ea.Damping
-    ):
+    class ImmersedContinuumSnakeSimulator(ea.BaseSystemCollection, ea.Forcing, ea.Damping):
         pass
 
     snake_sim = ImmersedContinuumSnakeSimulator()
@@ -128,7 +127,6 @@ def immersed_continuum_snake_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -155,7 +153,7 @@ def immersed_continuum_snake_case(
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"snake com: {np.mean(snake_rod.position_collection[x_axis_idx]):.4f}"
                 "grid deviation L2 error: "
@@ -170,9 +168,7 @@ def immersed_continuum_snake_case(
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
         for i in range(rod_time_steps):
-            rod_time = do_step(
-                timestepper, stages_and_updates, snake_sim, rod_time, local_rod_dt
-            )
+            rod_time = do_step(timestepper, stages_and_updates, snake_sim, rod_time, local_rod_dt)
             # timestep the cosserat_rod_flow_interactor
             cosserat_rod_flow_interactor.time_step(dt=local_rod_dt)
 
@@ -186,9 +182,7 @@ def immersed_continuum_snake_case(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
 
 if __name__ == "__main__":

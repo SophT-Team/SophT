@@ -1,5 +1,7 @@
-import numpy as np
 from typing import Literal
+
+import numpy as np
+
 from .navier_stokes_flow_simulators import UnboundedNavierStokesFlowSimulator3D
 
 

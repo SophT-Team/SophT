@@ -1,10 +1,13 @@
 import logging
+from typing import Optional, Type
+
 import numpy as np
+
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
+
 from .immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
-from typing import Type, Optional
 
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
@@ -47,13 +50,8 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         log = logging.getLogger()
         max_lag_grid_dx = self.forcing_grid.get_maximum_lagrangian_grid_spacing()
         grid_type = type(self.forcing_grid).__name__
-        log.warning(
-            "==========================================================\n"
-            f"For {grid_type}:"
-        )
-        if (
-            max_lag_grid_dx > 2 * dx
-        ):  # 2 here since the support of delta function is 2 grid points
+        log.warning(f"==========================================================\nFor {grid_type}:")
+        if max_lag_grid_dx > 2 * dx:  # 2 here since the support of delta function is 2 grid points
             log.warning(
                 f"Eulerian grid spacing (dx): {dx}"
                 f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} > 2 * dx"
@@ -72,8 +70,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
             )
         else:
             log.warning(
-                "Lagrangian grid is resolved almost the same as the Eulerian"
-                "\ngrid of the flow."
+                "Lagrangian grid is resolved almost the same as the Eulerian\ngrid of the flow."
             )
         log.warning("==========================================================")
 
@@ -133,7 +130,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         and body grids.
 
         """
-        grid_dev_error_l2_norm = np.linalg.norm(
-            self.lag_grid_position_mismatch_field
-        ) / np.sqrt(self.forcing_grid.num_lag_nodes)
+        grid_dev_error_l2_norm = np.linalg.norm(self.lag_grid_position_mismatch_field) / np.sqrt(
+            self.forcing_grid.num_lag_nodes
+        )
         return grid_dev_error_l2_norm

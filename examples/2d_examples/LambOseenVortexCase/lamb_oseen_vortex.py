@@ -1,5 +1,6 @@
-from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 import numpy as np
+from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -69,7 +70,6 @@ def lamb_oseen_vortex_flow_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < t_end:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -90,7 +90,7 @@ def lamb_oseen_vortex_flow_case(
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {flow_sim.time:.2f} ({((flow_sim.time-t_start)/(t_end-t_start)*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({((flow_sim.time - t_start) / (t_end - t_start) * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
@@ -116,9 +116,7 @@ def lamb_oseen_vortex_flow_case(
     )
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     # check error
     error_field = np.fabs(flow_sim.vorticity_field - final_analytical_vorticity_field)

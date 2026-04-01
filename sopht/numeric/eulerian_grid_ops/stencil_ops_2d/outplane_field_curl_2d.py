@@ -1,10 +1,13 @@
 """Kernels for computing curl of outplane field in 2D."""
+
+from typing import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_outplane_field_curl_pyst_kernel_2d(

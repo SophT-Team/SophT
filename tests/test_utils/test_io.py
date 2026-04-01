@@ -1,8 +1,10 @@
-import pytest
-import sopht.utils as spu
+import os
+
 import elastica as ea
 import numpy as np
-import os
+import pytest
+
+import sopht.utils as spu
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -453,9 +455,7 @@ def test_eulerian_field_io(grid_dim, precision, grid_size_x):
     x_range = 2.0
     dx = real_t(x_range / grid_size_x)
     eul_grid_shift = dx / 2.0
-    x = np.linspace(eul_grid_shift, x_range - eul_grid_shift, grid_size_x).astype(
-        real_t
-    )
+    x = np.linspace(eul_grid_shift, x_range - eul_grid_shift, grid_size_x).astype(real_t)
     position_field = np.flipud(np.array(np.meshgrid(*((x,) * grid_dim), indexing="ij")))
     h5_file_name = "eulerian_field.h5"
     time = 2.0

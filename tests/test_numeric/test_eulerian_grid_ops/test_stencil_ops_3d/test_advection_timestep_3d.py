@@ -1,15 +1,12 @@
 import numpy as np
-
 import psutil
-
 import pytest
+from test_advection_flux_3d import advection_flux_conservative_eno3_reference
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
-
-from test_advection_flux_3d import advection_flux_conservative_eno3_reference
 
 
 def advection_timestep_conservative_eno3_euler_forward_reference(
@@ -38,40 +35,34 @@ class AdvectionTimestepEulerForwardSolution:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
-        self.ref_velocity = np.random.rand(3, n_samples, n_samples, n_samples).astype(
-            real_t
-        )
+        self.ref_vector_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_velocity = np.random.rand(3, n_samples, n_samples, n_samples).astype(real_t)
         self.inv_dx = real_t(0.2)
         self.dt = real_t(0.1)
         self.flux_type = flux_type
         self.ref_new_vector_field = np.zeros_like(self.ref_vector_field)
         if self.flux_type == "conservative_eno3":
             self.kernel_width = 2
-            self.ref_new_field = (
-                advection_timestep_conservative_eno3_euler_forward_reference(
-                    field=self.ref_field,
-                    velocity_x=self.ref_velocity[0],
-                    velocity_y=self.ref_velocity[1],
-                    velocity_z=self.ref_velocity[2],
-                    inv_dx=self.inv_dx,
-                    dt=self.dt,
-                    real_t=real_t,
-                )
+            self.ref_new_field = advection_timestep_conservative_eno3_euler_forward_reference(
+                field=self.ref_field,
+                velocity_x=self.ref_velocity[0],
+                velocity_y=self.ref_velocity[1],
+                velocity_z=self.ref_velocity[2],
+                inv_dx=self.inv_dx,
+                dt=self.dt,
+                real_t=real_t,
             )
             for i in range(3):
-                self.ref_new_vector_field[
-                    i
-                ] = advection_timestep_conservative_eno3_euler_forward_reference(
-                    field=self.ref_vector_field[i],
-                    velocity_x=self.ref_velocity[0],
-                    velocity_y=self.ref_velocity[1],
-                    velocity_z=self.ref_velocity[2],
-                    inv_dx=self.inv_dx,
-                    dt=self.dt,
-                    real_t=real_t,
+                self.ref_new_vector_field[i] = (
+                    advection_timestep_conservative_eno3_euler_forward_reference(
+                        field=self.ref_vector_field[i],
+                        velocity_x=self.ref_velocity[0],
+                        velocity_y=self.ref_velocity[1],
+                        velocity_z=self.ref_velocity[2],
+                        inv_dx=self.inv_dx,
+                        dt=self.dt,
+                        real_t=real_t,
+                    )
                 )
 
     def check_equals(self, new_field):

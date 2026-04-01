@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -30,13 +28,9 @@ class DiffusionFluxSolution:
         self.test_tol = get_test_tol(precision)
         self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
         self.prefactor = real_t(0.1)
-        self.ref_diffusion_flux = diffuse_reference(
-            self.ref_field, self.prefactor, real_t
-        )
+        self.ref_diffusion_flux = diffuse_reference(self.ref_field, self.prefactor, real_t)
 
-        self.ref_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_vector_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
         self.ref_vector_field_diffusion_flux = np.zeros_like(self.ref_vector_field)
         self.ref_vector_field_diffusion_flux[0] = diffuse_reference(
             self.ref_vector_field[0],

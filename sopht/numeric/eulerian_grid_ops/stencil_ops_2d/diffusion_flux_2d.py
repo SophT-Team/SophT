@@ -1,10 +1,13 @@
 """Kernels for computing diffusion flux in 2D."""
+
+from typing import Callable
+
 import numpy as np
 import pystencils as ps
+import sympy as sp
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-import sympy as sp
-from typing import Callable
 
 
 def gen_diffusion_flux_pyst_kernel_2d(
@@ -26,9 +29,7 @@ def gen_diffusion_flux_pyst_kernel_2d(
 
     @ps.kernel
     def _diffusion_stencil_2d():
-        diffusion_flux, field = ps.fields(
-            f"diffusion_flux, field : {pyst_dtype}[{grid_info}]"
-        )
+        diffusion_flux, field = ps.fields(f"diffusion_flux, field : {pyst_dtype}[{grid_info}]")
         prefactor = sp.symbols("prefactor")
         diffusion_flux[0, 0] @= prefactor * (
             field[1, 0] + field[-1, 0] + field[0, 1] + field[0, -1] - 4 * field[0, 0]

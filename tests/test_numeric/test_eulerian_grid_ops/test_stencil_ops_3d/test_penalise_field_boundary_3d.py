@@ -1,11 +1,13 @@
+from typing import Literal
+
 import numpy as np
 import psutil
 import pytest
+
 from sopht.numeric.eulerian_grid_ops import (
     gen_penalise_field_boundary_pyst_kernel_3d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
-from typing import Literal
 
 
 def penalise_field_boundary_reference_3d(
@@ -57,15 +59,11 @@ class PenaliseFieldBoundarySolution:
     def __init__(self, n_samples, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field: np.ndarray = np.random.randn(
-            n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_field: np.ndarray = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
         self.width = 4
         self.dx = real_t(0.1)
         self.grid_coord_shift = real_t(self.dx / 2)
-        x = np.linspace(
-            self.grid_coord_shift, 1 - self.grid_coord_shift, n_samples
-        ).astype(real_t)
+        x = np.linspace(self.grid_coord_shift, 1 - self.grid_coord_shift, n_samples).astype(real_t)
         y = x.copy()
         z = x.copy()
         self.z_grid_field, self.y_grid_field, self.x_grid_field = np.meshgrid(
@@ -114,23 +112,19 @@ class PenaliseFieldBoundarySolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
-def test_penalise_field_boundary_3d(
-    n_values, precision, field_type: Literal["scalar", "vector"]
-):
+def test_penalise_field_boundary_3d(n_values, precision, field_type: Literal["scalar", "vector"]):
     real_t = get_real_t(precision)
     solution = PenaliseFieldBoundarySolution(n_values, precision)
-    penalise_field_towards_boundary_pyst_kernel = (
-        gen_penalise_field_boundary_pyst_kernel_3d(
-            width=solution.width,
-            dx=solution.dx,
-            x_grid_field=solution.x_grid_field,
-            y_grid_field=solution.y_grid_field,
-            z_grid_field=solution.z_grid_field,
-            real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
-            field_type=field_type,
-        )
+    penalise_field_towards_boundary_pyst_kernel = gen_penalise_field_boundary_pyst_kernel_3d(
+        width=solution.width,
+        dx=solution.dx,
+        x_grid_field=solution.x_grid_field,
+        y_grid_field=solution.y_grid_field,
+        z_grid_field=solution.z_grid_field,
+        real_t=real_t,
+        fixed_grid_size=(n_values, n_values, n_values),
+        num_threads=psutil.cpu_count(logical=False),
+        field_type=field_type,
     )
     match field_type:
         case "scalar":
@@ -151,26 +145,22 @@ def test_zero_width_penalise_field_boundary_3d(
 ):
     real_t = get_real_t(precision)
     solution = PenaliseFieldBoundarySolution(n_values, precision)
-    penalise_field_towards_boundary_pyst_kernel = (
-        gen_penalise_field_boundary_pyst_kernel_3d(
-            width=0,
-            dx=solution.dx,
-            x_grid_field=solution.x_grid_field,
-            y_grid_field=solution.y_grid_field,
-            z_grid_field=solution.z_grid_field,
-            real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
-            field_type=field_type,
-        )
+    penalise_field_towards_boundary_pyst_kernel = gen_penalise_field_boundary_pyst_kernel_3d(
+        width=0,
+        dx=solution.dx,
+        x_grid_field=solution.x_grid_field,
+        y_grid_field=solution.y_grid_field,
+        z_grid_field=solution.z_grid_field,
+        real_t=real_t,
+        fixed_grid_size=(n_values, n_values, n_values),
+        num_threads=psutil.cpu_count(logical=False),
+        field_type=field_type,
     )
     match field_type:
         case "scalar":
             field: np.ndarray = solution.ref_field.copy()
             penalise_field_towards_boundary_pyst_kernel(field=field)
-            np.testing.assert_allclose(
-                field, solution.ref_field, atol=get_test_tol(precision)
-            )
+            np.testing.assert_allclose(field, solution.ref_field, atol=get_test_tol(precision))
         case "vector":
             vector_field: np.ndarray = solution.ref_vector_field.copy()
             penalise_field_towards_boundary_pyst_kernel(vector_field=vector_field)

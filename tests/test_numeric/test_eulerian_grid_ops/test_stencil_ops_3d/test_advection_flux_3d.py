@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -17,182 +15,114 @@ def advection_flux_conservative_eno3_reference(
     advection_flux = np.zeros_like(field)
     face_velocity_x_east = real_t(0.5) * (
         velocity_x[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
-        + velocity_x[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1
-        ]
+        + velocity_x[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1]
     )
     face_velocity_x_west = real_t(0.5) * (
         velocity_x[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
-        + velocity_x[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1
-        ]
+        + velocity_x[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1]
     )
     face_velocity_y_north = real_t(0.5) * (
         velocity_y[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
-        + velocity_y[
-            kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w
-        ]
+        + velocity_y[kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w]
     )
     face_velocity_y_south = real_t(0.5) * (
         velocity_y[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
-        + velocity_y[
-            kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w
-        ]
+        + velocity_y[kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w]
     )
     face_velocity_z_up = real_t(0.5) * (
         velocity_z[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
-        + velocity_z[
-            kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
+        + velocity_z[kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
     )
     face_velocity_z_down = real_t(0.5) * (
         velocity_z[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
-        + velocity_z[
-            kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
+        + velocity_z[kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
     )
 
     nodal_flux = velocity_x * field
     upwind_switch = face_velocity_x_east > 0
     advection_flux_east = (
         real_t(1 / 3)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1
-        ]
-        + real_t(5 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1]
+        + real_t(5 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         - real_t(1 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1
-        ]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1]
     ) * upwind_switch + (real_t(1) - upwind_switch) * (
-        real_t(1 / 3)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        real_t(1 / 3) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         + real_t(5 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1
-        ]
-        - real_t(1 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, (2 * kernel_w) :]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1]
+        - real_t(1 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, (2 * kernel_w) :]
     )
     upwind_switch = face_velocity_x_west > 0
     advection_flux_west = (
-        real_t(1 / 3)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        real_t(1 / 3) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         + real_t(5 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1
-        ]
-        - real_t(1 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, : -(2 * kernel_w)]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1]
+        - real_t(1 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, : -(2 * kernel_w)]
     ) * upwind_switch + (real_t(1) - upwind_switch) * (
         real_t(1 / 3)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1
-        ]
-        + real_t(5 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1]
+        + real_t(5 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         - real_t(1 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1
-        ]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1]
     )
 
     nodal_flux[...] = velocity_y * field
     upwind_switch = face_velocity_y_north > 0
     advection_flux_north = (
         real_t(1 / 3)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w
-        ]
-        + real_t(5 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w]
+        + real_t(5 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         - real_t(1 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w
-        ]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w]
     ) * upwind_switch + (real_t(1) - upwind_switch) * (
-        real_t(1 / 3)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        real_t(1 / 3) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         + real_t(5 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w
-        ]
-        - real_t(1 / 6)
-        * nodal_flux[kernel_w:-kernel_w, (2 * kernel_w) :, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w]
+        - real_t(1 / 6) * nodal_flux[kernel_w:-kernel_w, (2 * kernel_w) :, kernel_w:-kernel_w]
     )
     upwind_switch = face_velocity_y_south > 0
     advection_flux_south = (
-        real_t(1 / 3)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        real_t(1 / 3) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         + real_t(5 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w
-        ]
-        - real_t(1 / 6)
-        * nodal_flux[kernel_w:-kernel_w, : -(2 * kernel_w), kernel_w:-kernel_w]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w]
+        - real_t(1 / 6) * nodal_flux[kernel_w:-kernel_w, : -(2 * kernel_w), kernel_w:-kernel_w]
     ) * upwind_switch + (real_t(1) - upwind_switch) * (
         real_t(1 / 3)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w
-        ]
-        + real_t(5 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w]
+        + real_t(5 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         - real_t(1 / 6)
-        * nodal_flux[
-            kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w
-        ]
+        * nodal_flux[kernel_w:-kernel_w, kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w]
     )
 
     nodal_flux[...] = velocity_z * field
     upwind_switch = face_velocity_z_up > 0
     advection_flux_up = (
         real_t(1 / 3)
-        * nodal_flux[
-            kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
-        + real_t(5 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        + real_t(5 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         - real_t(1 / 6)
-        * nodal_flux[
-            kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
+        * nodal_flux[kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
     ) * upwind_switch + (real_t(1) - upwind_switch) * (
-        real_t(1 / 3)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        real_t(1 / 3) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         + real_t(5 / 6)
-        * nodal_flux[
-            kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
-        - real_t(1 / 6)
-        * nodal_flux[(2 * kernel_w) :, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        - real_t(1 / 6) * nodal_flux[(2 * kernel_w) :, kernel_w:-kernel_w, kernel_w:-kernel_w]
     )
     upwind_switch = face_velocity_z_down > 0
     advection_flux_down = (
-        real_t(1 / 3)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        real_t(1 / 3) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         + real_t(5 / 6)
-        * nodal_flux[
-            kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
-        - real_t(1 / 6)
-        * nodal_flux[: -(2 * kernel_w), kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        - real_t(1 / 6) * nodal_flux[: -(2 * kernel_w), kernel_w:-kernel_w, kernel_w:-kernel_w]
     ) * upwind_switch + (real_t(1) - upwind_switch) * (
         real_t(1 / 3)
-        * nodal_flux[
-            kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
-        + real_t(5 / 6)
-        * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        * nodal_flux[kernel_w - 1 : -kernel_w - 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
+        + real_t(5 / 6) * nodal_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w]
         - real_t(1 / 6)
-        * nodal_flux[
-            kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w
-        ]
+        * nodal_flux[kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w, kernel_w:-kernel_w]
     )
 
-    advection_flux[
-        kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w
-    ] = inv_dx * (
+    advection_flux[kernel_w:-kernel_w, kernel_w:-kernel_w, kernel_w:-kernel_w] = inv_dx * (
         advection_flux_east
         - advection_flux_west
         + advection_flux_north
@@ -208,18 +138,10 @@ class AdvectionSolution:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_velocity_x = np.random.randn(n_samples, n_samples, n_samples).astype(
-            real_t
-        )
-        self.ref_velocity_y = np.random.randn(n_samples, n_samples, n_samples).astype(
-            real_t
-        )
-        self.ref_velocity_z = np.random.randn(n_samples, n_samples, n_samples).astype(
-            real_t
-        )
-        self.ref_velocity = np.zeros((3, n_samples, n_samples, n_samples)).astype(
-            real_t
-        )
+        self.ref_velocity_x = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_velocity_y = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_velocity_z = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_velocity = np.zeros((3, n_samples, n_samples, n_samples)).astype(real_t)
         self.ref_velocity[0] = self.ref_velocity_x
         self.ref_velocity[1] = self.ref_velocity_y
         self.ref_velocity[2] = self.ref_velocity_z
@@ -248,9 +170,7 @@ class AdvectionSolution:
 @pytest.mark.parametrize("n_values", [16])
 def test_advection_flux_cons_eno3_3d(n_values, precision):
     real_t = get_real_t(precision)
-    solution = AdvectionSolution(
-        n_values, flux_type="conservative_eno3", precision=precision
-    )
+    solution = AdvectionSolution(n_values, flux_type="conservative_eno3", precision=precision)
     advection_flux = np.zeros_like(solution.ref_advection_flux)
     advection_flux_conservative_eno3_kernel_3d = (
         gen_advection_flux_conservative_eno3_pyst_kernel_3d(

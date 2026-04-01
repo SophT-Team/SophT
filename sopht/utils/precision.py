@@ -1,4 +1,5 @@
 """Precision and tolerance details."""
+
 import numpy as np
 
 

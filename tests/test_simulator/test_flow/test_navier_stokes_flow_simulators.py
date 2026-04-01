@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
-import sopht.simulator as sps
+
 import sopht.numeric.eulerian_grid_ops as spne
+import sopht.simulator as sps
 import sopht.utils as spu
 
 
@@ -35,12 +36,8 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
     )
     ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
-    flow_sim.vorticity_field[...] = np.random.rand(
-        *flow_sim.vorticity_field.shape
-    ).astype(real_t)
-    flow_sim.velocity_field[...] = 0 * np.random.rand(
-        *flow_sim.velocity_field.shape
-    ).astype(real_t)
+    flow_sim.vorticity_field[...] = np.random.rand(*flow_sim.vorticity_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = 0 * np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
     flow_sim.eul_grid_forcing_field[...] = np.random.rand(
         *flow_sim.eul_grid_forcing_field.shape
     ).astype(real_t)
@@ -56,12 +53,10 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
         fixed_grid_size=grid_size,
         num_threads=num_threads,
     )
-    advection_timestep = (
-        spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
-            real_t=real_t,
-            fixed_grid_size=grid_size,
-            num_threads=num_threads,
-        )
+    advection_timestep = spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
+        real_t=real_t,
+        fixed_grid_size=grid_size,
+        num_threads=num_threads,
     )
     grid_size_y, grid_size_x = grid_size
     unbounded_poisson_solver = spne.UnboundedPoissonSolverPYFFTW2D(
@@ -155,9 +150,7 @@ def test_navier_stokes_flow_sim_2d_compute_stable_timestep(grid_size_x, precisio
     sim_dt = flow_sim.compute_stable_timestep(dt_prefac=dt_prefac)
     # next compute reference value
     tol = 10 * np.finfo(real_t).eps
-    advection_limit_dt = (
-        cfl * dx / (grid_dim * 2.0 + tol)
-    )  # max(sum(abs(velocity_field)))
+    advection_limit_dt = cfl * dx / (grid_dim * 2.0 + tol)  # max(sum(abs(velocity_field)))
     diffusion_limit_dt = 0.9 * dx**2 / (2 * grid_dim) / nu
     ref_dt = dt_prefac * min(advection_limit_dt, diffusion_limit_dt)
     assert ref_dt == sim_dt
@@ -202,12 +195,8 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     )
     ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
-    flow_sim.vorticity_field[...] = np.random.rand(
-        *flow_sim.vorticity_field.shape
-    ).astype(real_t)
-    flow_sim.velocity_field[...] = 0 * np.random.rand(
-        *flow_sim.velocity_field.shape
-    ).astype(real_t)
+    flow_sim.vorticity_field[...] = np.random.rand(*flow_sim.vorticity_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = 0 * np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
     flow_sim.eul_grid_forcing_field[...] = np.random.rand(
         *flow_sim.eul_grid_forcing_field.shape
     ).astype(real_t)
@@ -273,8 +262,7 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
         )
     else:
 
-        def filter_vector_field(vector_field):
-            ...
+        def filter_vector_field(vector_field): ...
 
     # manually timestep
     update_vorticity_from_velocity_forcing(
@@ -344,9 +332,7 @@ def test_navier_stokes_flow_sim_3d_compute_stable_timestep(grid_size_x, precisio
     sim_dt = flow_sim.compute_stable_timestep(dt_prefac=dt_prefac)
     # next compute reference value
     tol = 10 * np.finfo(real_t).eps
-    advection_limit_dt = (
-        cfl * dx / (grid_dim * 2.0 + tol)
-    )  # max(sum(abs(velocity_field)))
+    advection_limit_dt = cfl * dx / (grid_dim * 2.0 + tol)  # max(sum(abs(velocity_field)))
     diffusion_limit_dt = 0.9 * dx**2 / (2 * grid_dim) / nu
     ref_dt = dt_prefac * min(advection_limit_dt, diffusion_limit_dt)
     assert ref_dt == sim_dt
@@ -354,9 +340,7 @@ def test_navier_stokes_flow_sim_3d_compute_stable_timestep(grid_size_x, precisio
 
 @pytest.mark.parametrize("grid_size_x", [4, 8])
 @pytest.mark.parametrize("precision", ["single", "double"])
-def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(
-    grid_size_x, precision
-):
+def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision):
     num_threads = 4
     grid_dim = 3
     x_range = 1.0
@@ -386,7 +370,5 @@ def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(
         field=flow_sim.vorticity_field,
         inv_dx=(1.0 / dx),
     )
-    ref_vorticity_divg_l2_norm = np.linalg.norm(divergence_field) * dx ** (
-        grid_dim / 2.0
-    )
+    ref_vorticity_divg_l2_norm = np.linalg.norm(divergence_field) * dx ** (grid_dim / 2.0)
     assert vorticity_divergence_l2_norm == ref_vorticity_divg_l2_norm

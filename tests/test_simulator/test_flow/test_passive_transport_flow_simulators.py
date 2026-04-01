@@ -1,8 +1,9 @@
 import numpy as np
 import pytest
-import sopht.utils as spu
-import sopht.simulator as sps
+
 import sopht.numeric.eulerian_grid_ops as spne
+import sopht.simulator as sps
+import sopht.utils as spu
 
 
 @pytest.mark.parametrize("grid_dim", [2, 3])
@@ -38,12 +39,8 @@ def test_passive_transport_flow_simulator_time_step(
     )
     ref_time = init_time + dt
     # initialise flow sim state (passive fields)
-    flow_sim.velocity_field[...] = np.random.rand(
-        *flow_sim.velocity_field.shape
-    ).astype(real_t)
-    flow_sim.primary_field[...] = np.random.rand(*flow_sim.primary_field.shape).astype(
-        real_t
-    )
+    flow_sim.velocity_field[...] = np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
+    flow_sim.primary_field[...] = np.random.rand(*flow_sim.primary_field.shape).astype(real_t)
     ref_primary_field = flow_sim.primary_field.copy()
     flow_sim.time_step(dt=dt)
 
@@ -53,32 +50,32 @@ def test_passive_transport_flow_simulator_time_step(
     diffusion_timestep = None
     match grid_dim:
         case 2:
-            diffusion_timestep = (
-                spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
+            diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
+                real_t=real_t,
+                fixed_grid_size=grid_size,
+                num_threads=num_threads,
+            )
+            advection_timestep = (
+                spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
                     real_t=real_t,
                     fixed_grid_size=grid_size,
                     num_threads=num_threads,
                 )
             )
-            advection_timestep = spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
+        case 3:
+            diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
                 real_t=real_t,
                 fixed_grid_size=grid_size,
                 num_threads=num_threads,
+                field_type=field_type,
             )
-        case 3:
-            diffusion_timestep = (
-                spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
+            advection_timestep = (
+                spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
                     real_t=real_t,
                     fixed_grid_size=grid_size,
                     num_threads=num_threads,
                     field_type=field_type,
                 )
-            )
-            advection_timestep = spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
-                real_t=real_t,
-                fixed_grid_size=grid_size,
-                num_threads=num_threads,
-                field_type=field_type,
             )
     # manually timestep
     advection_timestep(
@@ -99,9 +96,7 @@ def test_passive_transport_flow_simulator_time_step(
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("grid_size_x", [4, 8])
 @pytest.mark.parametrize("precision", ["single", "double"])
-def test_passive_transport_flow_sim_compute_stable_timestep(
-    grid_dim, grid_size_x, precision
-):
+def test_passive_transport_flow_sim_compute_stable_timestep(grid_dim, grid_size_x, precision):
     num_threads = 4
     x_range = 1.0
     nu = 1e-2
@@ -123,9 +118,7 @@ def test_passive_transport_flow_sim_compute_stable_timestep(
     sim_dt = flow_sim.compute_stable_timestep(dt_prefac=dt_prefac)
     # next compute reference value
     tol = 10 * np.finfo(real_t).eps
-    advection_limit_dt = (
-        cfl * dx / (grid_dim * 2.0 + tol)
-    )  # max(sum(abs(velocity_field)))
+    advection_limit_dt = cfl * dx / (grid_dim * 2.0 + tol)  # max(sum(abs(velocity_field)))
     diffusion_limit_dt = 0.9 * dx**2 / (2 * grid_dim) / nu
     ref_dt = dt_prefac * min(advection_limit_dt, diffusion_limit_dt)
     assert ref_dt == sim_dt

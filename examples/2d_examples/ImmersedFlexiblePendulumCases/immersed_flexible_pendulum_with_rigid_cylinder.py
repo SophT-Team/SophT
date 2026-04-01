@@ -1,6 +1,7 @@
 import elastica as ea
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -31,9 +32,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     # setting up test params
     n_elem = 40
     start = np.array([0.5, 0.7, 0.0])
-    direction = np.array(
-        [np.sin(rod_start_incline_angle), -np.cos(rod_start_incline_angle), 0.0]
-    )
+    direction = np.array([np.sin(rod_start_incline_angle), -np.cos(rod_start_incline_angle), 0.0])
     normal = np.array([0.0, 0.0, 1.0])
     rod_length = 0.25
     base_radius = 0.0025
@@ -79,9 +78,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     cyl_length = 1.0
     cyl_radius = 0.05
     cylinder_density = 1e-3 * density
-    cylinder = ea.Cylinder(
-        cyl_start, direction, normal, cyl_length, cyl_radius, cylinder_density
-    )
+    cylinder = ea.Cylinder(cyl_start, direction, normal, cyl_length, cyl_radius, cylinder_density)
     pendulum_sim.append(cylinder)
     # =================PYELASTICA STUFF END=====================
     # ==================FLOW SETUP START=========================
@@ -101,9 +98,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     # ==================FLOW SETUP END=========================
 
     # ==================FLOW-BODY COMMUNICATORS SETUP START======
-    flow_body_interactors: list[
-        sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction
-    ] = []
+    flow_body_interactors: list[sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=pendulum_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -159,7 +154,6 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -188,23 +182,17 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
             )
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
 
             # dump forces
             T.append(flow_sim.time)
-            cylinder_force.append(
-                np.linalg.norm(cylinder_flow_interactor.body_flow_forces)
-            )
-            rod_force.append(
-                np.linalg.norm(cosserat_rod_flow_interactor.body_flow_forces)
-            )
+            cylinder_force.append(np.linalg.norm(cylinder_flow_interactor.body_flow_forces))
+            rod_force.append(np.linalg.norm(cosserat_rod_flow_interactor.body_flow_forces))
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.25)
@@ -232,9 +220,7 @@ def immersed_flexible_pendulum_with_rigid_cylinder_case(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     plt.figure()
     plt.plot(np.array(T), np.array(cylinder_force), label="force on cylinder")

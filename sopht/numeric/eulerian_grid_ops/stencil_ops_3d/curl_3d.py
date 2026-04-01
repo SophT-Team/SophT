@@ -1,10 +1,13 @@
 """Kernels for computing curl in 3D."""
+
+from typing import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_curl_pyst_kernel_3d(
@@ -35,9 +38,7 @@ def gen_curl_pyst_kernel_3d(
             field_z[0, 1, 0] - field_z[0, -1, 0] - field_y[1, 0, 0] + field_y[-1, 0, 0]
         )
 
-    _curl_x_comp_3d = ps.create_kernel(
-        _curl_x_comp_stencil_3d, config=kernel_config
-    ).compile()
+    _curl_x_comp_3d = ps.create_kernel(_curl_x_comp_stencil_3d, config=kernel_config).compile()
 
     @ps.kernel
     def _curl_y_comp_stencil_3d():
@@ -50,9 +51,7 @@ def gen_curl_pyst_kernel_3d(
             field_x[1, 0, 0] - field_x[-1, 0, 0] - field_z[0, 0, 1] + field_z[0, 0, -1]
         )
 
-    _curl_y_comp_3d = ps.create_kernel(
-        _curl_y_comp_stencil_3d, config=kernel_config
-    ).compile()
+    _curl_y_comp_3d = ps.create_kernel(_curl_y_comp_stencil_3d, config=kernel_config).compile()
 
     @ps.kernel
     def _curl_z_comp_stencil_3d():
@@ -66,16 +65,12 @@ def gen_curl_pyst_kernel_3d(
             field_y[0, 0, 1] - field_y[0, 0, -1] - field_x[0, 1, 0] + field_x[0, -1, 0]
         )
 
-    _curl_z_comp_3d = ps.create_kernel(
-        _curl_z_comp_stencil_3d, config=kernel_config
-    ).compile()
+    _curl_z_comp_3d = ps.create_kernel(_curl_z_comp_stencil_3d, config=kernel_config).compile()
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
 
-    def curl_pyst_kernel_3d(
-        curl: np.ndarray, field: np.ndarray, prefactor: float
-    ) -> None:
+    def curl_pyst_kernel_3d(curl: np.ndarray, field: np.ndarray, prefactor: float) -> None:
         """Curl in 3D.
 
         Computes curl (3D vector field) essentially vector

@@ -1,10 +1,10 @@
+from typing import Optional, Type
+
 import elastica as ea
 import numpy as np
-from sopht.simulator.immersed_body import (
-    ImmersedBodyForcingGrid,
-    ImmersedBodyFlowInteraction,
-)
-from typing import Type, Optional
+
+from sopht.simulator.immersed_body.immersed_body_flow_interaction import ImmersedBodyFlowInteraction
+from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBodyForcingGrid
 
 
 class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):

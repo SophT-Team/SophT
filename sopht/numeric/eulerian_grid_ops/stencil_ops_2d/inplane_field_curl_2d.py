@@ -1,13 +1,13 @@
 """Kernels for computing curl of inplane field in 2D."""
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
 
 
-def gen_inplane_field_curl_pyst_kernel_2d(
-    real_t, num_threads=False, fixed_grid_size=False
-):
+def gen_inplane_field_curl_pyst_kernel_2d(real_t, num_threads=False, fixed_grid_size=False):
     """2D Inplane field curl kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -20,13 +20,9 @@ def gen_inplane_field_curl_pyst_kernel_2d(
 
     @ps.kernel
     def _inplane_field_curl_stencil_2d():
-        curl, field_x, field_y = ps.fields(
-            f"curl, field_x, field_y : {pyst_dtype}[{grid_info}]"
-        )
+        curl, field_x, field_y = ps.fields(f"curl, field_x, field_y : {pyst_dtype}[{grid_info}]")
         prefactor = sp.symbols("prefactor")
-        curl[0, 0] @= (
-            field_y[0, 1] - field_y[0, -1] - field_x[1, 0] + field_x[-1, 0]
-        ) * prefactor
+        curl[0, 0] @= (field_y[0, 1] - field_y[0, -1] - field_x[1, 0] + field_x[-1, 0]) * prefactor
 
     _inplane_field_curl_pyst_kernel_2d = ps.create_kernel(
         _inplane_field_curl_stencil_2d, config=kernel_config

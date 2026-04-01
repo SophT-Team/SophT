@@ -1,15 +1,19 @@
-import pytest
-import sopht.utils as spu
-import sopht.simulator as sps
+import os
+
 import elastica as ea
 import numpy as np
-import os
+import pytest
 from numpy.testing import assert_allclose
+
+import sopht.simulator as sps
+import sopht.utils as spu
 
 xfail_reason = (
     "Upstream issue with PyElastica restart functionality, "
     "see https://github.com/GazzolaLab/PyElastica/issues/528"
 )
+
+
 @pytest.mark.xfail(reason=xfail_reason)
 @pytest.mark.parametrize("grid_size_x", [32])
 @pytest.mark.parametrize("precision", ["single"])
@@ -67,10 +71,7 @@ def run_sim(
     with_free_stream: bool,
     filter_vorticity: bool,
 ):
-    class RestartTestSimulator(
-        ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
-    ):
-        ...
+    class RestartTestSimulator(ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping): ...
 
     restart_test_simulator = RestartTestSimulator()
 
@@ -154,9 +155,7 @@ def run_sim(
     free_stream_velocity = np.array([1.0, 0.0, 0.0])
     real_t = spu.get_real_t(precision)
     timestepper = ea.PositionVerlet()
-    do_step, stages_and_updates = ea.extend_stepper_interface(
-        timestepper, restart_test_simulator
-    )
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, restart_test_simulator)
 
     recorded_data = []
 
@@ -169,9 +168,7 @@ def run_sim(
         },
     )
     # Initialize sphere IO
-    rod_io = spu.CosseratRodIO(
-        cosserat_rod=cosserat_rod, dim=grid_dim, real_dtype=real_t
-    )
+    rod_io = spu.CosseratRodIO(cosserat_rod=cosserat_rod, dim=grid_dim, real_dtype=real_t)
     # Initialize forcing io
     forcing_io = spu.IO(dim=grid_dim, real_dtype=real_t)
     # Add vector field on lagrangian grid
@@ -192,7 +189,6 @@ def run_sim(
         )
 
     while flow_sim.time < final_time:
-
         if save_data:
             io.save(
                 h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
@@ -203,9 +199,7 @@ def run_sim(
                 time=flow_sim.time,
             )
             forcing_io.save(
-                h5_file_name="forcing_grid_"
-                + str("%0.4d" % (flow_sim.time * 100))
-                + ".h5",
+                h5_file_name="forcing_grid_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                 time=flow_sim.time,
             )
             ea.save_state(restart_test_simulator, restart_dir, flow_sim.time)

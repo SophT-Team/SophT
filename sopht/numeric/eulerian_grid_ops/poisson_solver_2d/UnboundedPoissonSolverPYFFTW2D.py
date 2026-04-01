@@ -1,5 +1,7 @@
 """Unbounded Poisson solver kernels 2D via PyFFTW."""
+
 import numpy as np
+
 import sopht.numeric.eulerian_grid_ops as spne
 
 
@@ -32,15 +34,13 @@ class UnboundedPoissonSolverPYFFTW2D:
         self.rfft = pyfftw_construct.fft_plan
         self.irfft = pyfftw_construct.ifft_plan
         self.domain_doubled_buffer = pyfftw_construct.field_pyfftw_buffer
-        self.domain_doubled_fourier_buffer = (
-            pyfftw_construct.fourier_field_pyfftw_buffer
-        )
+        self.domain_doubled_fourier_buffer = pyfftw_construct.fourier_field_pyfftw_buffer
         # TODO avoid this allocation if possible, currently needed to do SIMD and
         #  parallel fourier space convolution
         self.convolution_buffer = np.zeros_like(self.domain_doubled_fourier_buffer)
         self._construct_fourier_greens_function_field()
-        self.fourier_greens_function_times_dx_squared = (
-            self.domain_doubled_fourier_buffer * (self.dx**2)
+        self.fourier_greens_function_times_dx_squared = self.domain_doubled_fourier_buffer * (
+            self.dx**2
         )
         self._gen_elementwise_operation_kernels()
 
@@ -61,9 +61,7 @@ class UnboundedPoissonSolverPYFFTW2D:
         with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
             greens_function_field = -np.log(even_reflected_distance_field) / (2 * np.pi)
         # Regularization term
-        greens_function_field[0, 0] = -(2 * np.log(self.dx / np.sqrt(np.pi)) - 1) / (
-            4 * np.pi
-        )
+        greens_function_field[0, 0] = -(2 * np.log(self.dx / np.sqrt(np.pi)) - 1) / (4 * np.pi)
         self.rfft(
             input_array=greens_function_field,
             output_array=self.domain_doubled_fourier_buffer,
@@ -127,7 +125,5 @@ class UnboundedPoissonSolverPYFFTW2D:
 
         self.elementwise_copy_kernel_2d(
             field=solution_field,
-            rhs_field=self.domain_doubled_buffer[
-                : self.grid_size_y, : self.grid_size_x
-            ],
+            rhs_field=self.domain_doubled_buffer[: self.grid_size_y, : self.grid_size_x],
         )

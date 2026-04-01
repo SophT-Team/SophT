@@ -1,5 +1,7 @@
 import logging
+
 import numpy as np
+
 import sopht.simulator as sps
 
 
@@ -36,9 +38,9 @@ def test_rectangular_plane(caplog):
     assert plane.n_elems == 1
     assert plane.length == length
     assert plane.breadth == breadth
-    correct_director = np.array(
-        [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
-    ).reshape(plane_dim, plane_dim, 1)
+    correct_director = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]).reshape(
+        plane_dim, plane_dim, 1
+    )
     np.testing.assert_allclose(plane.director_collection, correct_director)
     np.testing.assert_allclose(plane.position_collection, origin.reshape(plane_dim, 1))
     np.testing.assert_allclose(plane.velocity_collection, 0.0)

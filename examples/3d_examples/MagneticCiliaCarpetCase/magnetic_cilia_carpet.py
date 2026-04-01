@@ -1,6 +1,7 @@
 import elastica as ea
 import magneto_pyelastica as mea
 import numpy as np
+
 import sopht.utils as spu
 
 
@@ -76,8 +77,7 @@ class MagneticCiliaCarpetSimulator:
             ea.Forcing,
             ea.Damping,
             ea.CallBacks,
-        ):
-            ...
+        ): ...
 
         self.plot_result = plot_result
         self.magnetic_beam_sim = MagneticBeamSimulator()
@@ -119,19 +119,14 @@ class MagneticCiliaCarpetSimulator:
         y_axis_idx = spu.VectorField.y_axis_idx()
         start_collection = np.zeros((n_rods, grid_dim))
         for i in range(n_rods):
-            start_collection[i, x_axis_idx] = (
-                i % num_rods_along_x
-            ) * self.spacing_between_rods
-            start_collection[i, y_axis_idx] = (
-                i // num_rods_along_x
-            ) * self.spacing_between_rods
+            start_collection[i, x_axis_idx] = (i % num_rods_along_x) * self.spacing_between_rods
+            start_collection[i, y_axis_idx] = (i // num_rods_along_x) * self.spacing_between_rods
 
         # Shift the carpet to the provided centroid
         self.carpet_base_centroid = carpet_base_centroid
         current_carpet_start_centroid = np.mean(start_collection, axis=0)
         start_collection += (
-            self.carpet_base_centroid.reshape(-1, grid_dim)
-            - current_carpet_start_centroid
+            self.carpet_base_centroid.reshape(-1, grid_dim) - current_carpet_start_centroid
         )
 
         direction = np.array([0.0, 0.0, 1.0])
@@ -147,16 +142,10 @@ class MagneticCiliaCarpetSimulator:
             / (volume * magnetic_field_strength * self.rod_base_length)
         )
         magnetization_angle_x = spatial_magnetisation_phase_diff + (
-            2
-            * np.pi
-            * start_collection[..., x_axis_idx]
-            / spatial_magnetisation_wavelength_x
+            2 * np.pi * start_collection[..., x_axis_idx] / spatial_magnetisation_wavelength_x
         )
         magnetization_angle_y = spatial_magnetisation_phase_diff + (
-            2
-            * np.pi
-            * start_collection[..., y_axis_idx]
-            / spatial_magnetisation_wavelength_y
+            2 * np.pi * start_collection[..., y_axis_idx] / spatial_magnetisation_wavelength_y
         )
         self.magnetic_rod_list = []
         magnetization_direction_list = []
@@ -176,16 +165,13 @@ class MagneticCiliaCarpetSimulator:
                         [
                             np.sin(magnetization_angle_x[i]),
                             np.sin(magnetization_angle_y[i]),
-                            np.cos(magnetization_angle_x[i])
-                            + np.cos(magnetization_angle_y[i]),
+                            np.cos(magnetization_angle_x[i]) + np.cos(magnetization_angle_y[i]),
                         ]
                     ).reshape(3, 1)
                     * np.ones(n_elem)
                     / np.sqrt(
                         2
-                        + 2
-                        * np.cos(magnetization_angle_x[i])
-                        * np.cos(magnetization_angle_y[i])
+                        + 2 * np.cos(magnetization_angle_x[i]) * np.cos(magnetization_angle_y[i])
                         + 1e-12
                     )
                 )
@@ -278,16 +264,10 @@ class MagneticCiliaCarpetSimulator:
                 if current_step % self.every == 0:
                     self.callback_params["time"].append(time)
                     self.callback_params["step"].append(current_step)
-                    self.callback_params["position"].append(
-                        system.position_collection.copy()
-                    )
-                    self.callback_params["com"].append(
-                        system.compute_position_center_of_mass()
-                    )
+                    self.callback_params["position"].append(system.position_collection.copy())
+                    self.callback_params["com"].append(system.compute_position_center_of_mass())
                     self.callback_params["radius"].append(system.radius.copy())
-                    self.callback_params["velocity"].append(
-                        system.velocity_collection.copy()
-                    )
+                    self.callback_params["velocity"].append(system.velocity_collection.copy())
                     self.callback_params["tangents"].append(system.tangents.copy())
 
         # Add call back for plotting time history of the rod
@@ -314,9 +294,7 @@ class MagneticCiliaCarpetSimulator:
         self,
     ) -> None:
         """Run simulation"""
-        ea.integrate(
-            self.timestepper, self.magnetic_beam_sim, self.final_time, self.total_steps
-        )
+        ea.integrate(self.timestepper, self.magnetic_beam_sim, self.final_time, self.total_steps)
 
         if self.plot_result:
             x_axis_idx = spu.VectorField.x_axis_idx()

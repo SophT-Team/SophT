@@ -1,13 +1,10 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from scipy.fft import irfftn, rfftn
 
-from sopht.numeric.eulerian_grid_ops import FFTPyFFTW2D
 from sopht.numeric.eulerian_grid_ops import (
+    FFTPyFFTW2D,
     fft_ifft_via_scipy_kernel_2d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
@@ -33,9 +30,7 @@ class FFTSolution:
         return (self.ref_fourier_field, self.ref_inv_fourier_field)
 
     def check_equals(self, fourier_field, inv_fourier_field):
-        np.testing.assert_allclose(
-            self.ref_fourier_field, fourier_field, atol=self.test_tol
-        )
+        np.testing.assert_allclose(self.ref_fourier_field, fourier_field, atol=self.test_tol)
         np.testing.assert_allclose(
             self.ref_inv_fourier_field, inv_fourier_field, atol=self.test_tol
         )

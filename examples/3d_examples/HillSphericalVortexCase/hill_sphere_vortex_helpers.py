@@ -1,4 +1,5 @@
 import numpy as np
+
 import sopht.utils as spu
 
 
@@ -64,12 +65,8 @@ class HillSphereVortex:
         )
         grid_size = x_grid.shape
         vorticity = np.zeros((self.grid_dim, *grid_size))
-        vorticity[spu.VectorField.x_axis_idx()] = (
-            -vorticity_mag * local_y_grid / cylinder_r_grid
-        )
-        vorticity[spu.VectorField.y_axis_idx()] = (
-            vorticity_mag * local_x_grid / cylinder_r_grid
-        )
+        vorticity[spu.VectorField.x_axis_idx()] = -vorticity_mag * local_y_grid / cylinder_r_grid
+        vorticity[spu.VectorField.y_axis_idx()] = vorticity_mag * local_x_grid / cylinder_r_grid
         return vorticity
 
     def get_velocity(
@@ -86,21 +83,10 @@ class HillSphereVortex:
         grid_size = x_grid.shape
         velocity = np.zeros((self.grid_dim, *grid_size))
         radial_velocity = (
-            1.5
-            * self.free_stream_velocity
-            * local_z_grid
-            * cylinder_r_grid
-            / self.vortex_radius**2
-        ) * (
-            inside_vortex
-            + (1 - inside_vortex) * (self.vortex_radius / sphere_r_grid) ** 5
-        )
-        velocity[spu.VectorField.x_axis_idx()] = (
-            radial_velocity * local_x_grid / cylinder_r_grid
-        )
-        velocity[spu.VectorField.y_axis_idx()] = (
-            radial_velocity * local_y_grid / cylinder_r_grid
-        )
+            1.5 * self.free_stream_velocity * local_z_grid * cylinder_r_grid / self.vortex_radius**2
+        ) * (inside_vortex + (1 - inside_vortex) * (self.vortex_radius / sphere_r_grid) ** 5)
+        velocity[spu.VectorField.x_axis_idx()] = radial_velocity * local_x_grid / cylinder_r_grid
+        velocity[spu.VectorField.y_axis_idx()] = radial_velocity * local_y_grid / cylinder_r_grid
         velocity[spu.VectorField.z_axis_idx()] = inside_vortex * (
             -1.5
             * self.free_stream_velocity
@@ -116,13 +102,7 @@ class HillSphereVortex:
         return velocity
 
     def get_kinetic_energy(self) -> float:
-        kinetic_energy = (
-            10.0
-            * np.pi
-            / 7.0
-            * self.free_stream_velocity**2
-            * self.vortex_radius**3
-        )
+        kinetic_energy = 10.0 * np.pi / 7.0 * self.free_stream_velocity**2 * self.vortex_radius**3
         return kinetic_energy
 
     def get_vortex_stretching(

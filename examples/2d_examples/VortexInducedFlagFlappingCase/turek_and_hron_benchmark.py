@@ -2,6 +2,7 @@ import click
 import elastica as ea
 import matplotlib.pyplot as plt
 import numpy as np
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -172,9 +173,7 @@ def flow_past_rod_case(
     # Since the cylinder is fixed, we don't add it to pyelastica simulator,
     # and directly use it for setting up the flow interactor.
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
-    flow_body_interactors: list[
-        sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction
-    ] = []
+    flow_body_interactors: list[sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=flow_past_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -244,9 +243,7 @@ def flow_past_rod_case(
             },
         )
         # Initialize rod IO
-        rod_io = spu.CosseratRodIO(
-            cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
-        )
+        rod_io = spu.CosseratRodIO(cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t)
         # Next we initialise fixed locations IOs and dump then only once
         fixed_location_interactors = {
             "top_wall": top_wall_flow_interactor,
@@ -265,9 +262,7 @@ def flow_past_rod_case(
     # =================TIMESTEPPING====================
     flow_past_sim.finalize()
     timestepper = ea.PositionVerlet()
-    do_step, stages_and_updates = ea.extend_stepper_interface(
-        timestepper, flow_past_sim
-    )
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, flow_past_sim)
     foto_timer = 0.0
     timescale = base_length / velocity_free_stream
     final_time = non_dim_final_time * timescale
@@ -287,7 +282,6 @@ def flow_past_rod_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -322,19 +316,15 @@ def flow_past_rod_case(
             )
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
             if save_flow_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
@@ -392,9 +382,7 @@ def flow_past_rod_case(
         data_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     plt.figure()
     plt.plot(np.array(tip_time), np.array(tip_position)[..., x_axis_idx], label="X")
@@ -433,9 +421,7 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option(
-        "--sim_grid_size_x", default=256, help="Number of grid points in x direction."
-    )
+    @click.option("--sim_grid_size_x", default=256, help="Number of grid points in x direction.")
     @click.option(
         "--nondim_final_time",
         default=29.0,

@@ -1,9 +1,12 @@
 """Kernels applying laplacian filter on 3d grid for scalar and vector fields"""
+
+from typing import Callable, Literal
+
 import numpy as np
 import pystencils as ps
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_laplacian_filter_kernel_3d(
@@ -48,42 +51,24 @@ def gen_laplacian_filter_kernel_3d(
 
     @ps.kernel
     def _laplacian_filter_3d_x() -> None:
-        filter_flux, field = ps.fields(
-            f"filter_flux, field : {pyst_dtype}[{grid_info}]"
-        )
-        filter_flux[0, 0, 0] @= 0.25 * (
-            -field[0, 0, 1] - field[0, 0, -1] + 2 * field[0, 0, 0]
-        )
+        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
+        filter_flux[0, 0, 0] @= 0.25 * (-field[0, 0, 1] - field[0, 0, -1] + 2 * field[0, 0, 0])
 
-    laplacian_filter_3d_x = ps.create_kernel(
-        _laplacian_filter_3d_x, config=kernel_config
-    ).compile()
+    laplacian_filter_3d_x = ps.create_kernel(_laplacian_filter_3d_x, config=kernel_config).compile()
 
     @ps.kernel
     def _laplacian_filter_3d_y() -> None:
-        filter_flux, field = ps.fields(
-            f"filter_flux, field : {pyst_dtype}[{grid_info}]"
-        )
-        filter_flux[0, 0, 0] @= 0.25 * (
-            -field[0, 1, 0] - field[0, -1, 0] + 2 * field[0, 0, 0]
-        )
+        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
+        filter_flux[0, 0, 0] @= 0.25 * (-field[0, 1, 0] - field[0, -1, 0] + 2 * field[0, 0, 0])
 
-    laplacian_filter_3d_y = ps.create_kernel(
-        _laplacian_filter_3d_y, config=kernel_config
-    ).compile()
+    laplacian_filter_3d_y = ps.create_kernel(_laplacian_filter_3d_y, config=kernel_config).compile()
 
     @ps.kernel
     def _laplacian_filter_3d_z() -> None:
-        filter_flux, field = ps.fields(
-            f"filter_flux, field : {pyst_dtype}[{grid_info}]"
-        )
-        filter_flux[0, 0, 0] @= 0.25 * (
-            -field[1, 0, 0] - field[-1, 0, 0] + 2 * field[0, 0, 0]
-        )
+        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
+        filter_flux[0, 0, 0] @= 0.25 * (-field[1, 0, 0] - field[-1, 0, 0] + 2 * field[0, 0, 0])
 
-    laplacian_filter_3d_z = ps.create_kernel(
-        _laplacian_filter_3d_z, config=kernel_config
-    ).compile()
+    laplacian_filter_3d_z = ps.create_kernel(_laplacian_filter_3d_z, config=kernel_config).compile()
 
     elementwise_copy_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
         real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size

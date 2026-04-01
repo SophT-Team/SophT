@@ -1,10 +1,11 @@
+import click
 import numpy as np
+from elastic_fish_case import ElasticFishSimulator
+from elastic_fish_utils.fish_geometry import create_fish_geometry
+from elastic_fish_utils.fish_grid import FishSurfaceForcingGrid
+
 import sopht.simulator as sps
 import sopht.utils as spu
-import click
-from elastic_fish_case import ElasticFishSimulator
-from elastic_fish_utils.fish_grid import FishSurfaceForcingGrid
-from elastic_fish_utils.fish_geometry import create_fish_geometry
 
 
 def elastic_fish_swimming_case(
@@ -51,9 +52,7 @@ def elastic_fish_swimming_case(
         / moment_of_inertia
     )
 
-    origin = np.array(
-        [0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range]
-    )
+    origin = np.array([0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range])
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
@@ -194,7 +193,7 @@ def elastic_fish_swimming_case(
                 fish_sim.shearable_rod.compute_position_center_of_mass().copy()
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f},"
                 " grid deviation L2 error: "
@@ -243,9 +242,7 @@ def elastic_fish_swimming_case(
 
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
@@ -273,9 +270,7 @@ def elastic_fish_swimming_case(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=30
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=30)
 
     # Save data
     np.savetxt(
@@ -339,10 +334,7 @@ if __name__ == "__main__":
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
         exp_non_dim_bending_stiffness = exp_bending_rigidity / (
-            exp_rho_f
-            * exp_velocity_scale**2
-            * exp_base_length**3
-            * exp_base_diameter
+            exp_rho_f * exp_velocity_scale**2 * exp_base_length**3 * exp_base_diameter
         )
         exp_actuation_reynolds_number = (
             exp_base_length * exp_velocity_scale / exp_kinematic_viscosity

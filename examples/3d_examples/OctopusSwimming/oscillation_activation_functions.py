@@ -44,7 +44,6 @@ class OscillationActivation:
         time = round(time, 5)
 
         if time > self.start_time and time < self.end_time:
-
             sigmoid = 1 / (1 + np.exp(-self.a * (self.frequency * time - self.b)))
 
             fiber_activation = (
@@ -64,7 +63,6 @@ class OscillationActivation:
 
 
 if __name__ == "__main__":
-
     A = 20
     omega_r = 10
     beta = 3

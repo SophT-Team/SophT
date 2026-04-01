@@ -1,11 +1,12 @@
-import elastica as ea
-from elastica._linalg import _batch_cross
-import numpy as np
-from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
-from sopht.simulator.immersed_body.rigid_body.derived_rigid_bodies import (
-    RectangularPlane,
-)
 from typing import Union
+
+import elastica as ea
+import numpy as np
+from elastica._linalg import _batch_cross
+
+from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBodyForcingGrid
+
+from .derived_rigid_bodies import RectangularPlane
 
 
 class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
@@ -14,13 +15,10 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
-    def __init__(
-        self, grid_dim: int, num_lag_nodes: int, rigid_body: ea.Cylinder
-    ) -> None:
+    def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: ea.Cylinder) -> None:
         if grid_dim != 2:
             raise ValueError(
-                "Invalid grid dimensions. 2D cylinder forcing grid is only "
-                "defined for grid_dim=2"
+                "Invalid grid dimensions. 2D cylinder forcing grid is only defined for grid_dim=2"
             )
         self.cylinder = rigid_body
         super().__init__(grid_dim, num_lag_nodes)
@@ -63,9 +61,7 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
     ) -> None:
         """Transfer forcing from lagrangian forcing grid to the cylinder"""
         # negative sign due to Newtons third law
-        body_flow_forces[: self.grid_dim] = -np.sum(
-            lag_grid_forcing_field, axis=1
-        ).reshape(-1, 1)
+        body_flow_forces[: self.grid_dim] = -np.sum(lag_grid_forcing_field, axis=1).reshape(-1, 1)
 
         # torque from grid forcing
         # Q @ (0, 0, torque) = d3 dot (0, 0, torque) = Q[2, 2] * (0, 0, torque)
@@ -86,23 +82,13 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
 
     """
 
-    def __init__(
-        self, grid_dim: int, rigid_body: ea.Cylinder, num_forcing_points: int
-    ) -> None:
-        super().__init__(
-            grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body
-        )
+    def __init__(self, grid_dim: int, rigid_body: ea.Cylinder, num_forcing_points: int) -> None:
+        super().__init__(grid_dim=grid_dim, num_lag_nodes=num_forcing_points, rigid_body=rigid_body)
 
         dtheta = 2.0 * np.pi / self.num_lag_nodes
-        theta = np.linspace(
-            0 + dtheta / 2.0, 2.0 * np.pi - dtheta / 2.0, self.num_lag_nodes
-        )
-        self.local_frame_relative_position_field[0, :] = self.cylinder.radius * np.cos(
-            theta
-        )
-        self.local_frame_relative_position_field[1, :] = self.cylinder.radius * np.sin(
-            theta
-        )
+        theta = np.linspace(0 + dtheta / 2.0, 2.0 * np.pi - dtheta / 2.0, self.num_lag_nodes)
+        self.local_frame_relative_position_field[0, :] = self.cylinder.radius * np.cos(theta)
+        self.local_frame_relative_position_field[1, :] = self.cylinder.radius * np.sin(theta)
 
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
@@ -120,13 +106,10 @@ SupportedRigidBody3D = Union[ea.Cylinder, ea.Sphere, RectangularPlane]
 class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid of a 3D rigid body with cross-section."""
 
-    def __init__(
-        self, grid_dim: int, num_lag_nodes: int, rigid_body: SupportedRigidBody3D
-    ) -> None:
+    def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: SupportedRigidBody3D) -> None:
         if grid_dim != 3:
             raise ValueError(
-                "Invalid grid dimensions. 3D Rigid body forcing grid is only "
-                "defined for grid_dim=3"
+                "Invalid grid dimensions. 3D Rigid body forcing grid is only defined for grid_dim=3"
             )
         self.rigid_body = rigid_body
         super().__init__(grid_dim, num_lag_nodes)
@@ -140,8 +123,7 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
             self.local_frame_relative_position_field,
         )
         self.position_field[...] = (
-            self.rigid_body.position_collection
-            + self.global_frame_relative_position_field
+            self.rigid_body.position_collection + self.global_frame_relative_position_field
         )
 
     def compute_lag_grid_velocity_field(self) -> None:
@@ -169,9 +151,7 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
         body_flow_torques[...] = -np.dot(
             self.rigid_body.director_collection[:, :, 0],
             np.sum(
-                _batch_cross(
-                    self.global_frame_relative_position_field, lag_grid_forcing_field
-                ),
+                _batch_cross(self.global_frame_relative_position_field, lag_grid_forcing_field),
                 axis=1,
             ).reshape(-1, 1),
         )
@@ -195,18 +175,13 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         # keep same density of points along surface
         self.num_forcing_points_along_circumference = int(
             np.ceil(
-                self.num_forcing_points_along_length
-                * cylinder_circumference
-                / rigid_body.length
+                self.num_forcing_points_along_length * cylinder_circumference / rigid_body.length
             )
         )
         num_lag_nodes = (
-            self.num_forcing_points_along_length
-            * self.num_forcing_points_along_circumference
+            self.num_forcing_points_along_length * self.num_forcing_points_along_circumference
         )
-        super().__init__(
-            grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
-        )
+        super().__init__(grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body)
 
         dtheta = 2.0 * np.pi / self.num_forcing_points_along_circumference
         theta = np.linspace(
@@ -219,9 +194,7 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
             0.5 * self.rigid_body.length,
             self.num_forcing_points_along_length,
         )
-        for idx in range(
-            0, self.num_lag_nodes, self.num_forcing_points_along_circumference
-        ):
+        for idx in range(0, self.num_lag_nodes, self.num_forcing_points_along_circumference):
             self.local_frame_relative_position_field[
                 0, idx : idx + self.num_forcing_points_along_circumference
             ] = self.rigid_body.radius * np.cos(theta)
@@ -240,8 +213,7 @@ class OpenEndCircularCylinderForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
         return max(
-            self.rigid_body.radius
-            * (2.0 * np.pi / self.num_forcing_points_along_circumference),
+            self.rigid_body.radius * (2.0 * np.pi / self.num_forcing_points_along_circumference),
             self.rigid_body.length / self.num_forcing_points_along_length,
         )
 
@@ -256,19 +228,12 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         num_forcing_points_along_equator: int,
     ) -> None:
         self.num_forcing_points_along_equator = num_forcing_points_along_equator
-        polar_angle_grid = np.linspace(
-            0, np.pi, self.num_forcing_points_along_equator // 2
-        )
+        polar_angle_grid = np.linspace(0, np.pi, self.num_forcing_points_along_equator // 2)
         num_forcing_points_along_latitudes = (
-            np.rint(num_forcing_points_along_equator * np.sin(polar_angle_grid)).astype(
-                int
-            )
-            + 1
+            np.rint(num_forcing_points_along_equator * np.sin(polar_angle_grid)).astype(int) + 1
         )
         num_lag_nodes = sum(num_forcing_points_along_latitudes)
-        super().__init__(
-            grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
-        )
+        super().__init__(grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body)
         global_frame_relative_position_x = np.array([], dtype=float)
         global_frame_relative_position_y = np.array([], dtype=float)
         global_frame_relative_position_z = np.array([], dtype=float)
@@ -280,15 +245,11 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
             )
             global_frame_relative_position_x = np.append(
                 global_frame_relative_position_x,
-                self.rigid_body.radius
-                * np.sin(polar_angle)
-                * np.cos(azimuthal_angle_grid),
+                self.rigid_body.radius * np.sin(polar_angle) * np.cos(azimuthal_angle_grid),
             )
             global_frame_relative_position_y = np.append(
                 global_frame_relative_position_y,
-                self.rigid_body.radius
-                * np.sin(polar_angle)
-                * np.sin(azimuthal_angle_grid),
+                self.rigid_body.radius * np.sin(polar_angle) * np.sin(azimuthal_angle_grid),
             )
             global_frame_relative_position_z = np.append(
                 global_frame_relative_position_z,
@@ -296,15 +257,9 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
                 * np.cos(polar_angle)
                 * np.ones(num_forcing_points_along_latitude),
             )
-        self.global_frame_relative_position_field[0] = np.array(
-            global_frame_relative_position_x
-        )
-        self.global_frame_relative_position_field[1] = np.array(
-            global_frame_relative_position_y
-        )
-        self.global_frame_relative_position_field[2] = np.array(
-            global_frame_relative_position_z
-        )
+        self.global_frame_relative_position_field[0] = np.array(global_frame_relative_position_x)
+        self.global_frame_relative_position_field[1] = np.array(global_frame_relative_position_y)
+        self.global_frame_relative_position_field[2] = np.array(global_frame_relative_position_z)
 
         # to ensure position/velocity are consistent during initialisation
         self.compute_lag_grid_position_field()
@@ -313,9 +268,7 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # ds = radius * dtheta
-        return self.rigid_body.radius * (
-            2 * np.pi / self.num_forcing_points_along_equator
-        )
+        return self.rigid_body.radius * (2 * np.pi / self.num_forcing_points_along_equator)
 
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the rigid sphere.
@@ -325,8 +278,7 @@ class SphereForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         Hence, overloading the method here.
         """
         self.position_field[...] = (
-            self.rigid_body.position_collection
-            + self.global_frame_relative_position_field
+            self.rigid_body.position_collection + self.global_frame_relative_position_field
         )
 
 
@@ -344,12 +296,8 @@ class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
             num_forcing_points_along_length * rigid_body.breadth / rigid_body.length
         )
         self.grid_spacing = rigid_body.length / self.num_forcing_points_along_length
-        num_lag_nodes = (
-            self.num_forcing_points_along_length * self.num_forcing_points_along_breadth
-        )
-        super().__init__(
-            grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body
-        )
+        num_lag_nodes = self.num_forcing_points_along_length * self.num_forcing_points_along_breadth
+        super().__init__(grid_dim=grid_dim, num_lag_nodes=num_lag_nodes, rigid_body=rigid_body)
 
         grid_range_along_length = np.linspace(
             -0.5 * rigid_body.length,
@@ -363,9 +311,7 @@ class RectangularPlaneForcingGrid(ThreeDimensionalRigidBodyForcingGrid):
         )
         # local frame is set such that first 2 axes (d1 and d2) are in
         # the plane coordinates, third axis (d3) is plane normal direction
-        length_grid, breadth_grid = np.meshgrid(
-            grid_range_along_length, grid_range_along_breadth
-        )
+        length_grid, breadth_grid = np.meshgrid(grid_range_along_length, grid_range_along_breadth)
         self.local_frame_relative_position_field[0] = length_grid.reshape(
             -1,
         )

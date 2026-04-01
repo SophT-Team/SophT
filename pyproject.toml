@@ -49,7 +49,7 @@ tests = [
     "coverage",
     "pytest-cov",
     "mypy",
-    "psutil", 
+    "psutil",
 ]
 lint = [
     "ruff"
@@ -92,7 +92,7 @@ exclude = [
     "venv",
 ]
 
-line-length = 88
+line-length = 100
 indent-width = 4
 
 target-version = "py310"

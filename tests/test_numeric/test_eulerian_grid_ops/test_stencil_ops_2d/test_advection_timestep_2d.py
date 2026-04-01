@@ -1,15 +1,12 @@
 import numpy as np
-
 import psutil
-
 import pytest
+from test_advection_flux_2d import advection_flux_conservative_eno_ord3_reference
 
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
-
-from test_advection_flux_2d import advection_flux_conservative_eno_ord3_reference
 
 
 def advection_timestep_conservative_eno3_euler_forward_reference(
@@ -42,15 +39,13 @@ class AdvectionTimestepSolution:
         self.dt = real_t(0.1)
         if timestepper == "euler_forward" and flux_type == "conservative_eno3":
             self.kernel_width = 2
-            self.ref_new_field = (
-                advection_timestep_conservative_eno3_euler_forward_reference(
-                    field=self.ref_field,
-                    velocity_x=self.ref_velocity[0],
-                    velocity_y=self.ref_velocity[1],
-                    inv_dx=self.inv_dx,
-                    dt=self.dt,
-                    real_t=real_t,
-                )
+            self.ref_new_field = advection_timestep_conservative_eno3_euler_forward_reference(
+                field=self.ref_field,
+                velocity_x=self.ref_velocity[0],
+                velocity_y=self.ref_velocity[1],
+                inv_dx=self.inv_dx,
+                dt=self.dt,
+                real_t=real_t,
             )
 
     def check_equals(self, new_field):

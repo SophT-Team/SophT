@@ -1,12 +1,15 @@
 import logging
+from typing import Callable, Literal
+
 import numpy as np
+
+import sopht.numeric.eulerian_grid_ops as spne
+import sopht.utils as spu
+
 from .flow_simulators import FlowSimulator
 from .passive_transport_flow_simulators import (
     compute_advection_diffusion_stable_timestep,
 )
-import sopht.numeric.eulerian_grid_ops as spne
-import sopht.utils as spu
-from typing import Callable, Literal
 
 
 class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
@@ -74,12 +77,10 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
 
     def _compile_kernels(self) -> None:
         """Compile necessary kernels based on simulator flags"""
-        self._diffusion_timestep = (
-            spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
-                real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
-                num_threads=self.num_threads,
-            )
+        self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
+            real_t=self.real_t,
+            fixed_grid_size=self.grid_size,
+            num_threads=self.num_threads,
         )
         self._advection_timestep = (
             spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
@@ -101,16 +102,14 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
             num_threads=self.num_threads,
             fixed_grid_size=self.grid_size,
         )
-        self._penalise_field_towards_boundary = (
-            spne.gen_penalise_field_boundary_pyst_kernel_2d(
-                width=self.penalty_zone_width,
-                dx=self.dx,
-                x_grid_field=self.position_field[spu.VectorField.x_axis_idx()],
-                y_grid_field=self.position_field[spu.VectorField.y_axis_idx()],
-                real_t=self.real_t,
-                num_threads=self.num_threads,
-                fixed_grid_size=self.grid_size,
-            )
+        self._penalise_field_towards_boundary = spne.gen_penalise_field_boundary_pyst_kernel_2d(
+            width=self.penalty_zone_width,
+            dx=self.dx,
+            x_grid_field=self.position_field[spu.VectorField.x_axis_idx()],
+            y_grid_field=self.position_field[spu.VectorField.y_axis_idx()],
+            real_t=self.real_t,
+            num_threads=self.num_threads,
+            fixed_grid_size=self.grid_size,
         )
         if self.with_forcing:
             self._update_vorticity_from_velocity_forcing = (
@@ -146,8 +145,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
 
             def update_velocity_with_free_stream(
                 free_stream_velocity: np.ndarray,
-            ) -> None:
-                ...
+            ) -> None: ...
 
         self._update_velocity_with_free_stream = update_velocity_with_free_stream
 
@@ -157,9 +155,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         if self.with_forcing:
             self._flow_time_step = self._navier_stokes_with_forcing_time_step
 
-    def _navier_stokes_time_step(
-        self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)
-    ):
+    def _navier_stokes_time_step(self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)):
         # advect vorticity
         self._advection_timestep(
             field=self.vorticity_field,
@@ -184,9 +180,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
             field=self.stream_func_field,
             prefactor=self.real_t(0.5 / self.dx),
         )
-        self._update_velocity_with_free_stream(
-            free_stream_velocity=free_stream_velocity
-        )
+        self._update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 
     def _navier_stokes_with_forcing_time_step(
         self, dt: float, free_stream_velocity: np.ndarray = np.zeros(2)
@@ -197,9 +191,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
             prefactor=self.real_t(dt / (2 * self.dx * self.flow_density)),
         )
         self._navier_stokes_time_step(dt=dt, free_stream_velocity=free_stream_velocity)
-        self._set_field(
-            vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim
-        )
+        self._set_field(vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim)
 
     def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
@@ -266,8 +258,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         if self.filter_vorticity:
             log = logging.getLogger()
             log.warning(
-                "==============================================="
-                "\nVorticity filtering is turned on."
+                "===============================================\nVorticity filtering is turned on."
             )
             # default values for the filter setting dictionary
             default_filter_setting_dict: dict[
@@ -304,9 +295,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
     def _init_fields(self) -> None:
         """Initialize the necessary field arrays in 3D"""
         # Initialize flow field
-        self.vorticity_field = np.zeros(
-            (self.grid_dim, *self.grid_size), dtype=self.real_t
-        )
+        self.vorticity_field = np.zeros((self.grid_dim, *self.grid_size), dtype=self.real_t)
         self.velocity_field = np.zeros_like(self.vorticity_field)
         # we use the same buffer for advection, diffusion and velocity recovery
         self.buffer_vector_field = np.zeros_like(self.vorticity_field)
@@ -318,16 +307,16 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
 
     def _compile_kernels(self) -> None:
         """Compile necessary kernels based on 3D simulator flags"""
-        self._diffusion_timestep = (
-            spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
-                real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
-                num_threads=self.num_threads,
-                field_type="vector",
-            )
+        self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
+            real_t=self.real_t,
+            fixed_grid_size=self.grid_size,
+            num_threads=self.num_threads,
+            field_type="vector",
         )
         grid_size_z, grid_size_y, grid_size_x = self.grid_size
-        self._unbounded_poisson_solver: spne.UnboundedPoissonSolverPYFFTW3D | spne.FastDiagPoissonSolver3D
+        self._unbounded_poisson_solver: (
+            spne.UnboundedPoissonSolverPYFFTW3D | spne.FastDiagPoissonSolver3D
+        )
         if self.poisson_solver_type == "greens_function_convolution":
             self._unbounded_poisson_solver = spne.UnboundedPoissonSolverPYFFTW3D(
                 grid_size_z=grid_size_z,
@@ -352,25 +341,21 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             num_threads=self.num_threads,
             fixed_grid_size=self.grid_size,
         )
-        self._penalise_field_towards_boundary = (
-            spne.gen_penalise_field_boundary_pyst_kernel_3d(
-                width=self.penalty_zone_width,
-                dx=self.dx,
-                x_grid_field=self.position_field[spu.VectorField.x_axis_idx()],
-                y_grid_field=self.position_field[spu.VectorField.y_axis_idx()],
-                z_grid_field=self.position_field[spu.VectorField.z_axis_idx()],
-                real_t=self.real_t,
-                num_threads=self.num_threads,
-                fixed_grid_size=self.grid_size,
-                field_type="vector",
-            )
+        self._penalise_field_towards_boundary = spne.gen_penalise_field_boundary_pyst_kernel_3d(
+            width=self.penalty_zone_width,
+            dx=self.dx,
+            x_grid_field=self.position_field[spu.VectorField.x_axis_idx()],
+            y_grid_field=self.position_field[spu.VectorField.y_axis_idx()],
+            z_grid_field=self.position_field[spu.VectorField.z_axis_idx()],
+            real_t=self.real_t,
+            num_threads=self.num_threads,
+            fixed_grid_size=self.grid_size,
+            field_type="vector",
         )
-        self._elementwise_cross_product = (
-            spne.gen_elementwise_cross_product_pyst_kernel_3d(
-                real_t=self.real_t,
-                num_threads=self.num_threads,
-                fixed_grid_size=self.grid_size,
-            )
+        self._elementwise_cross_product = spne.gen_elementwise_cross_product_pyst_kernel_3d(
+            real_t=self.real_t,
+            num_threads=self.num_threads,
+            fixed_grid_size=self.grid_size,
         )
         self._update_vorticity_from_velocity_forcing = (
             spne.gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
@@ -387,8 +372,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         )
 
         # filter kernel compilation
-        def filter_vector_field(vector_field: np.ndarray) -> None:
-            ...
+        def filter_vector_field(vector_field: np.ndarray) -> None: ...
 
         self._filter_vector_field = filter_vector_field
         if self.filter_vorticity and self.filter_setting_dict is not None:
@@ -431,8 +415,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
 
             def update_velocity_with_free_stream(
                 free_stream_velocity: np.ndarray,
-            ) -> None:
-                ...
+            ) -> None: ...
 
         self._update_velocity_with_free_stream = update_velocity_with_free_stream
 
@@ -478,9 +461,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             field=self.stream_func_field,
             prefactor=self.real_t(0.5 / self.dx),
         )
-        self._update_velocity_with_free_stream(
-            free_stream_velocity=free_stream_velocity
-        )
+        self._update_velocity_with_free_stream(free_stream_velocity=free_stream_velocity)
 
     def _navier_stokes_with_forcing_time_step(
         self,
@@ -493,9 +474,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             prefactor=self.real_t(dt / (2 * self.dx * self.flow_density)),
         )
         self._navier_stokes_time_step(dt=dt, free_stream_velocity=free_stream_velocity)
-        self._set_field(
-            vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim
-        )
+        self._set_field(vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim)
 
     def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
@@ -518,7 +497,5 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             field=self.vorticity_field,
             inv_dx=(1.0 / self.dx),
         )
-        vorticity_divg_l2_norm = np.linalg.norm(divergence_field) * self.dx ** (
-            self.grid_dim / 2.0
-        )
+        vorticity_divg_l2_norm = np.linalg.norm(divergence_field) * self.dx ** (self.grid_dim / 2.0)
         return vorticity_divg_l2_norm

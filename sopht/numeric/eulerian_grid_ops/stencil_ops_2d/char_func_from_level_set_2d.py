@@ -1,9 +1,12 @@
 """Kernels for computing characteristic function from level set field in 2D."""
+
+from typing import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_2d(

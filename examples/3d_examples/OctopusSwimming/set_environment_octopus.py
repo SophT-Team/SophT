@@ -1,18 +1,16 @@
 from collections import defaultdict
-import numpy as np
-import elastica as ea
-from elastica._calculus import _isnan_check
 
+import elastica as ea
+import numpy as np
 from coomm.actuations.muscles import (
-    force_length_weight_poly,
-)
-from coomm.actuations.muscles import (
-    MuscleGroup,
+    ApplyMuscleGroups,
     LongitudinalMuscle,
+    MuscleGroup,
     ObliqueMuscle,
     TransverseMuscle,
-    ApplyMuscleGroups,
+    force_length_weight_poly,
 )
+from elastica._calculus import _isnan_check
 
 
 class BaseSimulator(
@@ -120,9 +118,7 @@ class OctopusEnvironment:
             OM_ratio_radius = 0.00075 / radius_base
             OM_rotation_number = 6
             shearable_rod_area = np.pi * arm.radius**2
-            TM_rest_muscle_area = shearable_rod_area * (
-                TM_ratio_radius**2 - AN_ratio_radius**2
-            )
+            TM_rest_muscle_area = shearable_rod_area * (TM_ratio_radius**2 - AN_ratio_radius**2)
             LM_rest_muscle_area = shearable_rod_area * (LM_ratio_radius**2)
             OM_rest_muscle_area = shearable_rod_area * (OM_ratio_radius**2)
             # stress is in unit [Pa]
@@ -261,7 +257,6 @@ class OctopusEnvironment:
         return self.total_steps, self.get_systems()
 
     def step(self, time, muscle_activations):
-
         """Set muscle activations"""
         for rod_id in range(len(self.arm_rod_list)):
             for muscle_group, activation in zip(
@@ -313,29 +308,17 @@ class OctopusEnvironment:
             arm_velocity_history[i, :, :, :] = np.array(
                 self.post_processing_dict_list[i]["velocity"]
             )
-            arm_radius_history[i, :, :] = np.array(
-                self.post_processing_dict_list[i]["radius"]
-            )
+            arm_radius_history[i, :, :] = np.array(self.post_processing_dict_list[i]["radius"])
 
         # Body
-        body_position_history = np.array(
-            self.post_processing_dict_list[n_arms]["position"]
-        )
-        body_velocity_history = np.array(
-            self.post_processing_dict_list[n_arms]["velocity"]
-        )
+        body_position_history = np.array(self.post_processing_dict_list[n_arms]["position"])
+        body_velocity_history = np.array(self.post_processing_dict_list[n_arms]["velocity"])
         body_radius_history = np.array(self.post_processing_dict_list[n_arms]["radius"])
 
         # Head
-        head_position_history = np.array(
-            self.post_processing_dict_list[n_arms + 1]["position"]
-        )
-        head_velocity_history = np.array(
-            self.post_processing_dict_list[n_arms + 1]["velocity"]
-        )
-        head_radius_history = np.array(
-            self.post_processing_dict_list[n_arms + 1]["radius"]
-        )
+        head_position_history = np.array(self.post_processing_dict_list[n_arms + 1]["position"])
+        head_velocity_history = np.array(self.post_processing_dict_list[n_arms + 1]["velocity"])
+        head_radius_history = np.array(self.post_processing_dict_list[n_arms + 1]["radius"])
 
         import os
 

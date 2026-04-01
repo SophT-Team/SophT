@@ -1,6 +1,6 @@
+import elastica as ea
 import numpy as np
 import numpy.typing as npt
-import elastica as ea
 from elastica._rotations import _get_rotation_matrix
 from oscillation_activation_functions import OscillationActivation
 from set_environment_octopus import OctopusEnvironment
@@ -51,8 +51,7 @@ def assemble_octopus(
             + (direction_from_center_to_rod)
             * (
                 # center rod            # this rod
-                +2 * base_radius
-                + base_radius
+                +2 * base_radius + base_radius
             )
             * 0
         )
@@ -81,9 +80,7 @@ def assemble_octopus(
     octopus_head_length = 2 * base_radius * slenderness_ratio_head / 2
     octopus_head_n_elems = int(n_elems * octopus_head_length / base_length)
 
-    octopus_head_radius = (
-        2 * base_radius * np.linspace(0.9, 1.0, octopus_head_n_elems) ** 3
-    )
+    octopus_head_radius = 2 * base_radius * np.linspace(0.9, 1.0, octopus_head_n_elems) ** 3
 
     body_rod = ea.CosseratRod.straight_rod(
         n_elements=octopus_head_n_elems,
@@ -121,9 +118,7 @@ def initialize_activation_functions(
         activations.append([])
         activation_functions.append([])
         for m in range(len(env.rod_muscle_groups[rod_id])):
-            activations[rod_id].append(
-                np.zeros(env.rod_muscle_groups[rod_id][m].activation.shape)
-            )
+            activations[rod_id].append(np.zeros(env.rod_muscle_groups[rod_id][m].activation.shape))
             if m == 4:
                 activation_functions[rod_id].append(
                     OscillationActivation(

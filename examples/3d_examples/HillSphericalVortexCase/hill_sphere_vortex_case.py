@@ -1,5 +1,6 @@
-from hill_sphere_vortex_helpers import HillSphereVortex
 import numpy as np
+from hill_sphere_vortex_helpers import HillSphereVortex
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -37,9 +38,7 @@ def hill_sphere_vortex_case(
     )
     free_stream_velocity = 1.0
     vortex_radius = 0.25 * flow_sim.x_range
-    hill_sphere_vortex = HillSphereVortex(
-        free_stream_velocity, vortex_radius, vortex_origin
-    )
+    hill_sphere_vortex = HillSphereVortex(free_stream_velocity, vortex_radius, vortex_origin)
     flow_sim.vorticity_field[...] = hill_sphere_vortex.get_vorticity(
         x_grid=flow_sim.position_field[x_axis_idx],
         y_grid=flow_sim.position_field[y_axis_idx],
@@ -61,26 +60,21 @@ def hill_sphere_vortex_case(
         prefactor=flow_sim.real_t(0.5 / flow_sim.dx),
     )
     # compute diagnostics
-    numerical_kinetic_energy = (
-        0.5 * np.sum(np.square(flow_sim.velocity_field)) * flow_sim.dx**3
-    )
+    numerical_kinetic_energy = 0.5 * np.sum(np.square(flow_sim.velocity_field)) * flow_sim.dx**3
     analytical_kinetic_energy = hill_sphere_vortex.get_kinetic_energy()
     kinetic_energy_error = (
-        np.fabs(analytical_kinetic_energy - numerical_kinetic_energy)
-        / analytical_kinetic_energy
+        np.fabs(analytical_kinetic_energy - numerical_kinetic_energy) / analytical_kinetic_energy
     )
-    print(f"kinetic energy error (%): {kinetic_energy_error*100}")
+    print(f"kinetic energy error (%): {kinetic_energy_error * 100}")
     vel_error_field = (flow_sim.velocity_field - analytical_velocity_field) / np.amax(
         np.fabs(analytical_velocity_field)
     )
     l2_norm_error = np.linalg.norm(vel_error_field) * flow_sim.dx**1.5
     linf_norm_error = np.amax(np.fabs(vel_error_field))
-    print(f"Velocity error (%): L2: {l2_norm_error*100}, Linf: {linf_norm_error*100}")
+    print(f"Velocity error (%): L2: {l2_norm_error * 100}, Linf: {linf_norm_error * 100}")
 
     # check centerline velocity (axial velocity along Z axis)
-    centerline_z = flow_sim.position_field[
-        z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2
-    ]
+    centerline_z = flow_sim.position_field[z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2]
     sim_centerline_vel_z = flow_sim.velocity_field[
         z_axis_idx, ..., grid_size_y // 2, grid_size_x // 2
     ]

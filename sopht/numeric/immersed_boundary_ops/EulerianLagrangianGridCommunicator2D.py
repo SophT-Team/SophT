@@ -1,7 +1,7 @@
 """Eulerian-Lagrangian grid communicator in 2D."""
-from numba import njit
 
 import numpy as np
+from numba import njit
 
 
 class EulerianLagrangianGridCommunicator2D:
@@ -50,16 +50,12 @@ class EulerianLagrangianGridCommunicator2D:
             )
         )
         if interp_kernel_type == "peskin":
-            self.interpolation_weights_kernel = (
-                generate_peskin_interpolation_weights_kernel_2d(
-                    dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
-                )
+            self.interpolation_weights_kernel = generate_peskin_interpolation_weights_kernel_2d(
+                dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
             )
         elif interp_kernel_type == "cosine":
-            self.interpolation_weights_kernel = (
-                generate_cosine_interpolation_weights_kernel_2d(
-                    dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
-                )
+            self.interpolation_weights_kernel = generate_cosine_interpolation_weights_kernel_2d(
+                dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
             )
         else:
             raise ValueError(
@@ -118,18 +114,14 @@ def generate_local_eulerian_grid_support_of_lagrangian_grid_kernel_2d(
         # grid point, due to floating point error, this can cause the nearest index to
         # shift by -1. However, this behaviour is expected and accounted for in the
         # followup interpolation kernels.
-        nearest_eul_grid_index_to_lag_grid[...] = (
-            lag_positions - eul_grid_coord_shift
-        ) // dx
+        nearest_eul_grid_index_to_lag_grid[...] = (lag_positions - eul_grid_coord_shift) // dx
         # TODO We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         # get relative distance (support) of body
         # reshape done to broadcast
         local_eul_grid_support_of_lag_grid[...] = (
             (
-                nearest_eul_grid_index_to_lag_grid.reshape(
-                    grid_dim, 1, 1, num_lag_nodes
-                )
+                nearest_eul_grid_index_to_lag_grid.reshape(grid_dim, 1, 1, num_lag_nodes)
                 + local_eul_grid_support_indices
             )
             * dx
@@ -183,9 +175,7 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_2d(
     n_components : number of components in Lagrangian field
 
     """
-    assert (
-        n_components == 1 or n_components == 2
-    ), "invalid number of components for interpolation!"
+    assert n_components == 1 or n_components == 2, "invalid number of components for interpolation!"
     # grid/problem dimensions
     grid_dim = 2
 
@@ -211,14 +201,10 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_2d(
                 eul_grid_field[
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
@@ -248,14 +234,10 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_2d(
                     0,
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
@@ -264,14 +246,10 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_2d(
                     1,
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
@@ -293,9 +271,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_2d(
     n_components : number of components in Lagrangian field
 
     """
-    assert (
-        n_components == 1 or n_components == 2
-    ), "invalid number of components for interpolation!"
+    assert n_components == 1 or n_components == 2, "invalid number of components for interpolation!"
 
     @njit(cache=True, fastmath=True)
     def lagrangian_to_eulerian_grid_interpolation_kernel_2d(
@@ -318,17 +294,11 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_2d(
             eul_grid_field[
                 nearest_eul_grid_index_to_lag_grid[1, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                 nearest_eul_grid_index_to_lag_grid[0, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                + interp_kernel_width
-                + 1,
-            ] += (
-                lag_grid_field[..., i] * interp_weights[..., i]
-            )
+                + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
+            ] += lag_grid_field[..., i] * interp_weights[..., i]
 
     @njit(cache=True, fastmath=True)
     def vector_field_lagrangian_to_eulerian_grid_interpolation_kernel_2d(
@@ -352,14 +322,10 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_2d(
                 ...,
                 nearest_eul_grid_index_to_lag_grid[1, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                 nearest_eul_grid_index_to_lag_grid[0, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
             ] += (
                 np.ascontiguousarray(lag_grid_field[..., i]).reshape(-1, 1, 1)
                 * interp_weights[..., i]
@@ -413,14 +379,12 @@ def generate_cosine_interpolation_weights_kernel_2d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 2
-    assert (
-        interp_kernel_width == 2
-    ), "Interpolation kernel inconsistent with interpolation kernel width!"
+    assert interp_kernel_width == 2, (
+        "Interpolation kernel inconsistent with interpolation kernel width!"
+    )
 
     @njit(cache=True, fastmath=True)
-    def cosine_interpolation_weights_kernel_2d(
-        interp_weights, local_eul_grid_support_of_lag_grid
-    ):
+    def cosine_interpolation_weights_kernel_2d(interp_weights, local_eul_grid_support_of_lag_grid):
         """Compute the interpolation weights using 2D cosine delta function.
 
         Result stored in interp_weights of shape
@@ -432,14 +396,8 @@ def generate_cosine_interpolation_weights_kernel_2d(dx, interp_kernel_width, rea
         local_eul_grid_support_of_lag_grid /= dx
         interp_weights[...] = (
             real_t((0.25 / dx) ** grid_dim)
-            * (
-                real_t(1.0)
-                + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[0])
-            )
-            * (
-                real_t(1.0)
-                + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[1])
-            )
+            * (real_t(1.0) + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[0]))
+            * (real_t(1.0) + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[1]))
         )
 
     return cosine_interpolation_weights_kernel_2d
@@ -455,14 +413,12 @@ def generate_peskin_interpolation_weights_kernel_2d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 2
-    assert (
-        interp_kernel_width == 2
-    ), "Interpolation kernel inconsistent with interpolation kernel width!"
+    assert interp_kernel_width == 2, (
+        "Interpolation kernel inconsistent with interpolation kernel width!"
+    )
 
     @njit(cache=True, fastmath=True)
-    def peskin_interpolation_weights_kernel_2d(
-        interp_weights, local_eul_grid_support_of_lag_grid
-    ):
+    def peskin_interpolation_weights_kernel_2d(interp_weights, local_eul_grid_support_of_lag_grid):
         """Compute the interpolation weights using 2D delta function by Peskin, 2002.
 
         Result stored in interp_weights of shape
@@ -471,9 +427,7 @@ def generate_peskin_interpolation_weights_kernel_2d(dx, interp_kernel_width, rea
         (grid_dim, 2 * interp_kernel_width, 2 * interp_kernel_width, ...)
         Applicable for interp_kernel_width = 2
         """
-        local_eul_grid_support_of_lag_grid[...] = (
-            np.fabs(local_eul_grid_support_of_lag_grid) / dx
-        )
+        local_eul_grid_support_of_lag_grid[...] = np.fabs(local_eul_grid_support_of_lag_grid) / dx
         interp_weights[...] = (
             (0.125 / dx) ** grid_dim
             * (

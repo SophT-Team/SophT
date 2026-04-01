@@ -2,6 +2,7 @@ import click
 import elastica as ea
 import matplotlib.pyplot as plt
 import numpy as np
+
 import sopht.simulator as sps
 import sopht.utils as spu
 
@@ -32,18 +33,14 @@ def flow_past_rod_case(
     y_range = grid_size_y / grid_size_x * x_range
     # =================PYELASTICA STUFF BEGIN=====================
 
-    class FlowPastRodSimulator(
-        ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
-    ):
+    class FlowPastRodSimulator(ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping):
         pass
 
     flow_past_sim = FlowPastRodSimulator()
     # setting up test params
     n_elem = grid_size_x // 8
     start = np.array([base_length, 0.501 * y_range, 0.0])
-    direction = np.array(
-        [np.cos(rod_start_incline_angle), np.sin(rod_start_incline_angle), 0.0]
-    )
+    direction = np.array([np.cos(rod_start_incline_angle), np.sin(rod_start_incline_angle), 0.0])
     normal = np.array([0.0, 0.0, 1.0])
     base_radius = 0.01
     base_area = np.pi * base_radius**2
@@ -139,16 +136,12 @@ def flow_past_rod_case(
             },
         )
         # Initialize rod IO
-        rod_io = spu.CosseratRodIO(
-            cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
-        )
+        rod_io = spu.CosseratRodIO(cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t)
 
     # =================TIMESTEPPING====================
     flow_past_sim.finalize()
     timestepper = ea.PositionVerlet()
-    do_step, stages_and_updates = ea.extend_stepper_interface(
-        timestepper, flow_past_sim
-    )
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, flow_past_sim)
     foto_timer = 0.0
     timescale = base_length / velocity_free_stream
     final_time = nondim_final_time * timescale
@@ -167,7 +160,6 @@ def flow_past_rod_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -194,16 +186,14 @@ def flow_past_rod_case(
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 "grid deviation L2 error: "
                 f"{cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}"
             )
             if save_flow_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
@@ -255,9 +245,7 @@ def flow_past_rod_case(
         data_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     plt.figure()
     plt.plot(np.array(tip_time), np.array(tip_position)[..., x_axis_idx], label="X")
@@ -291,9 +279,7 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option(
-        "--sim_grid_size_x", default=256, help="Number of grid points in x direction."
-    )
+    @click.option("--sim_grid_size_x", default=256, help="Number of grid points in x direction.")
     @click.option(
         "--nondim_final_time",
         default=75.0,

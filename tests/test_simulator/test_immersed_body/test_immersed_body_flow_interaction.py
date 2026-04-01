@@ -1,8 +1,10 @@
 import logging
+
 import numpy as np
 import pytest
-from sopht.utils.precision import get_real_t
+
 import sopht.simulator as sps
+from sopht.utils.precision import get_real_t
 from tests.test_simulator.test_immersed_body.rigid_body.test_rigid_body_forcing_grids import (
     mock_2d_cylinder,
 )
@@ -35,12 +37,8 @@ def mock_2d_cylinder_flow_interactor(num_forcing_points=16):
 @pytest.mark.parametrize("num_forcing_points", [1, 4, 64])
 def test_immersed_body_interactor_warnings(num_forcing_points, caplog):
     with caplog.at_level(logging.WARNING):
-        cylinder_flow_interactor, _, _, dx = mock_2d_cylinder_flow_interactor(
-            num_forcing_points
-        )
-    max_lag_grid_dx = (
-        cylinder_flow_interactor.forcing_grid.get_maximum_lagrangian_grid_spacing()
-    )
+        cylinder_flow_interactor, _, _, dx = mock_2d_cylinder_flow_interactor(num_forcing_points)
+    max_lag_grid_dx = cylinder_flow_interactor.forcing_grid.get_maximum_lagrangian_grid_spacing()
     if max_lag_grid_dx > 2 * dx:
         warning_message = (
             f"Eulerian grid spacing (dx): {dx}"
@@ -60,8 +58,7 @@ def test_immersed_body_interactor_warnings(num_forcing_points, caplog):
         )
     else:
         warning_message = (
-            "Lagrangian grid is resolved almost the same as the Eulerian"
-            "\ngrid of the flow."
+            "Lagrangian grid is resolved almost the same as the Eulerian\ngrid of the flow."
         )
     assert warning_message in caplog.text
 
@@ -115,12 +112,8 @@ def test_immersed_body_interactor_compute_flow_forces_and_torques():
         body_flow_torques=ref_body_flow_torques,
         lag_grid_forcing_field=cylinder_flow_interactor.lag_grid_forcing_field,
     )
-    np.testing.assert_allclose(
-        ref_body_flow_forces, cylinder_flow_interactor.body_flow_forces
-    )
-    np.testing.assert_allclose(
-        ref_body_flow_torques, cylinder_flow_interactor.body_flow_torques
-    )
+    np.testing.assert_allclose(ref_body_flow_forces, cylinder_flow_interactor.body_flow_forces)
+    np.testing.assert_allclose(ref_body_flow_torques, cylinder_flow_interactor.body_flow_torques)
 
 
 def test_immersed_body_interactor_get_grid_deviation_error_l2_norm():

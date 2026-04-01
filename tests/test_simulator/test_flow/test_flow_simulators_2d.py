@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 import sopht.simulator as sps
 from sopht.utils.precision import get_real_t
 
@@ -7,9 +8,7 @@ from sopht.utils.precision import get_real_t
 @pytest.mark.parametrize("grid_size_x", [8, 16])
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("with_free_stream", [True, False])
-def test_flow_sim_2d_navier_stokes_with_forcing_timestep(
-    grid_size_x, precision, with_free_stream
-):
+def test_flow_sim_2d_navier_stokes_with_forcing_timestep(grid_size_x, precision, with_free_stream):
     num_threads = 4
     grid_dim = 2
     x_range = 1.0
@@ -30,12 +29,8 @@ def test_flow_sim_2d_navier_stokes_with_forcing_timestep(
         time=init_time,
     )
     # initialise flow sim state (vorticity and forcing)
-    flow_sim.vorticity_field[...] = np.random.rand(
-        *flow_sim.vorticity_field.shape
-    ).astype(real_t)
-    flow_sim.velocity_field[...] = 0 * np.random.rand(
-        *flow_sim.velocity_field.shape
-    ).astype(real_t)
+    flow_sim.vorticity_field[...] = np.random.rand(*flow_sim.vorticity_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = 0 * np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
     flow_sim.eul_grid_forcing_field[...] = np.random.rand(
         *flow_sim.eul_grid_forcing_field.shape
     ).astype(real_t)

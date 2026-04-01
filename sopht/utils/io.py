@@ -1,7 +1,9 @@
 """Module for Input/Output via HD5 format."""
+
 import h5py
 import numpy as np
 from elastica.rod.cosserat_rod import CosseratRod
+
 import sopht.utils as spu
 
 
@@ -136,12 +138,10 @@ class IO:
         keyword name, similar to numpy savez function.
         https://numpy.org/doc/stable/reference/generated/numpy.savez.html#numpy.savez
         """
-        assert (
-            len(lagrangian_grid.shape) == 2
-        ), "lagrangian grid has to be a 2D (dim, N) array."
-        assert (
-            lagrangian_grid.shape[0] == self.dim
-        ), "Invalid lagrangian grid dimension (only 2D and 3D)"
+        assert len(lagrangian_grid.shape) == 2, "lagrangian grid has to be a 2D (dim, N) array."
+        assert lagrangian_grid.shape[0] == self.dim, (
+            "Invalid lagrangian grid dimension (only 2D and 3D)"
+        )
 
         if lagrangian_grid_name is None:
             lagrangian_grid_name = f"Lagrangian_grid_{self.lagrangian_grid_count}"
@@ -161,9 +161,7 @@ class IO:
             # Add each field into local dictionary
             field = fields_for_io[field_name]
             self.lagrangian_fields[field_name] = field
-            self.lagrangian_fields_with_grid_name[lagrangian_grid_name].append(
-                field_name
-            )
+            self.lagrangian_fields_with_grid_name[lagrangian_grid_name].append(field_name)
 
             # Assign field types
             if field.shape[0] == lagrangian_grid.shape[1]:
@@ -242,9 +240,7 @@ class IO:
                         for idx_dim in range(self.dim):
                             eulerian_vector_grp.create_dataset(
                                 f"{field_name}_{idx_dim}",
-                                data=field[idx_dim, ...].reshape(
-                                    1, *self.eulerian_grid_size
-                                ),
+                                data=field[idx_dim, ...].reshape(1, *self.eulerian_grid_size),
                             )
                     else:
                         raise ValueError(
@@ -268,9 +264,7 @@ class IO:
             for lagrangian_grid_name in self.lagrangian_grids:
                 lagrangian_grid_grp = lagrangian_grp.create_group(lagrangian_grid_name)
                 lagrangian_grid = self.lagrangian_grids[lagrangian_grid_name]
-                lagrangian_grid_grp.create_dataset(
-                    "Grid", data=np.transpose(lagrangian_grid)
-                )
+                lagrangian_grid_grp.create_dataset("Grid", data=np.transpose(lagrangian_grid))
                 if lagrangian_grid_name in self.lagrangian_grid_connection:
                     lagrangian_grid_grp.create_dataset(
                         "Connection",
@@ -280,9 +274,7 @@ class IO:
                 lagrangian_scalar_grp = lagrangian_grid_grp.create_group("Scalar")
                 lagrangian_vector_grp = lagrangian_grid_grp.create_group("Vector")
                 # Go over and save all fields that lie on the current lagrangian grid
-                for field_name in self.lagrangian_fields_with_grid_name[
-                    lagrangian_grid_name
-                ]:
+                for field_name in self.lagrangian_fields_with_grid_name[lagrangian_grid_name]:
                     field = self.lagrangian_fields[field_name]
                     field_type = self.lagrangian_fields_type[field_name]
                     if field_type == "Scalar":
@@ -326,27 +318,25 @@ class IO:
                 for field_name in self.eulerian_fields:
                     field_type = self.eulerian_fields_type[field_name]
                     if field_type == "Scalar":
-                        assert (
-                            f"Eulerian/{field_type}/{field_name}" in keys
-                        ), f"Unable to find scalar field {field_name} in loaded file!"
+                        assert f"Eulerian/{field_type}/{field_name}" in keys, (
+                            f"Unable to find scalar field {field_name} in loaded file!"
+                        )
                         # zero indexing here to account for additional dimension
                         # added during save
-                        self.eulerian_fields[field_name][...] = f["Eulerian"][
-                            field_type
-                        ][field_name][0, ...]
+                        self.eulerian_fields[field_name][...] = f["Eulerian"][field_type][
+                            field_name
+                        ][0, ...]
                     elif field_type == "Vector":
                         for idx_dim in range(self.dim):
-                            assert (
-                                f"Eulerian/{field_type}/{field_name}_{idx_dim}" in keys
-                            ), (
+                            assert f"Eulerian/{field_type}/{field_name}_{idx_dim}" in keys, (
                                 f"Unable to find vector field {field_name}_{idx_dim} "
                                 f"in loaded file!"
                             )
                             # zero indexing here to account for additional dimension
                             # added during save
-                            self.eulerian_fields[field_name][idx_dim, ...] = f[
-                                "Eulerian"
-                            ][field_type][f"{field_name}_{idx_dim}"][0, ...]
+                            self.eulerian_fields[field_name][idx_dim, ...] = f["Eulerian"][
+                                field_type
+                            ][f"{field_name}_{idx_dim}"][0, ...]
                     else:
                         raise ValueError(
                             "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
@@ -369,22 +359,20 @@ class IO:
             if self.lagrangian_fields:
                 # First loop over and load each of the lagrangian grids
                 for lagrangian_grid_name in self.lagrangian_grids:
-                    assert (
-                        f"Lagrangian/{lagrangian_grid_name}/Grid" in keys
-                    ), f"Unable to find grid '{lagrangian_grid_name}' in loaded file!"
+                    assert f"Lagrangian/{lagrangian_grid_name}/Grid" in keys, (
+                        f"Unable to find grid '{lagrangian_grid_name}' in loaded file!"
+                    )
                     self.lagrangian_grids[lagrangian_grid_name][...] = np.transpose(
                         f["Lagrangian"][lagrangian_grid_name]["Grid"][...]
                     )
 
                     if f"Lagrangian/{lagrangian_grid_name}/Connection" in keys:
-                        self.lagrangian_grid_connection[lagrangian_grid_name] = f[
-                            "Lagrangian"
-                        ][lagrangian_grid_name]["Connection"][...]
+                        self.lagrangian_grid_connection[lagrangian_grid_name] = f["Lagrangian"][
+                            lagrangian_grid_name
+                        ]["Connection"][...]
 
                     # Load all the fields living on the current lagrangian grid
-                    for field_name in self.lagrangian_fields_with_grid_name[
-                        lagrangian_grid_name
-                    ]:
+                    for field_name in self.lagrangian_fields_with_grid_name[lagrangian_grid_name]:
                         field_type = self.lagrangian_fields_type[field_name]
                         if field_type == "Scalar":
                             assert (
@@ -406,16 +394,13 @@ class IO:
                                 f"{lagrangian_grid_name} in loaded file!"
                             )
                             self.lagrangian_fields[field_name][...] = np.moveaxis(
-                                f["Lagrangian"][lagrangian_grid_name][field_type][
-                                    field_name
-                                ][...],
+                                f["Lagrangian"][lagrangian_grid_name][field_type][field_name][...],
                                 -1,
                                 0,
                             )
                         else:
                             raise ValueError(
-                                "Unsupported lagrangian_field_type "
-                                "('Scalar' and 'Vector' only)"
+                                "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
                             )
 
         return time
@@ -439,26 +424,16 @@ class IO:
         geometry_type = "ORIGIN_DXDYDZ"
 
         grid_size = (
-            self.eulerian_grid_size
-            if self.dim == 3
-            else np.insert(self.eulerian_grid_size, 0, 1)
+            self.eulerian_grid_size if self.dim == 3 else np.insert(self.eulerian_grid_size, 0, 1)
         )
-        origin = (
-            self.eulerian_origin
-            if self.dim == 3
-            else np.insert(self.eulerian_origin, 0, 0.0)
-        )
+        origin = self.eulerian_origin if self.dim == 3 else np.insert(self.eulerian_origin, 0, 0.0)
         dx = self.eulerian_dx if self.dim == 3 else np.insert(self.eulerian_dx, 0, 0.0)
 
-        grid_size_string = np.array2string(
-            grid_size, precision=self.precision, separator="    "
-        )[1:-1]
-        origin_string = np.array2string(
-            origin, precision=self.precision, separator="    "
-        )[1:-1]
-        dx_string = np.array2string(dx, precision=self.precision, separator="    ")[
+        grid_size_string = np.array2string(grid_size, precision=self.precision, separator="    ")[
             1:-1
         ]
+        origin_string = np.array2string(origin, precision=self.precision, separator="    ")[1:-1]
+        dx_string = np.array2string(dx, precision=self.precision, separator="    ")[1:-1]
 
         def generate_field_entry(file_name, field_name, field_type):
             if field_type == "Scalar":
@@ -559,9 +534,7 @@ class IO:
                 separator="    ",
             )[1:-1]
 
-            for field_name in self.lagrangian_fields_with_grid_name[
-                lagrangian_grid_name
-            ]:
+            for field_name in self.lagrangian_fields_with_grid_name[lagrangian_grid_name]:
                 field_type = self.lagrangian_fields_type[field_name]
 
                 if field_type == "Scalar":
@@ -621,9 +594,7 @@ class CosseratRodIO(IO):
     Derived IO class for Cosserat rod IO.
     """
 
-    def __init__(
-        self, cosserat_rod: CosseratRod, dim: int, real_dtype: type = np.float64
-    ) -> None:
+    def __init__(self, cosserat_rod: CosseratRod, dim: int, real_dtype: type = np.float64) -> None:
         super().__init__(dim, real_dtype)
         self.cosserat_rod = cosserat_rod
 

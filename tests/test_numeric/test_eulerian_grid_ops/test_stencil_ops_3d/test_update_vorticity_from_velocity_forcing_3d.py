@@ -1,7 +1,5 @@
 import numpy as np
-
 import psutil
-
 import pytest
 
 from sopht.numeric.eulerian_grid_ops import (
@@ -56,19 +54,15 @@ class UpdateVorticityFromVelocityForcingSolution:
     def __init__(self, n_samples, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_vorticity_field = np.random.rand(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
-        self.ref_velocity_forcing_field = np.random.rand(
-            3, n_samples, n_samples, n_samples
-        ).astype(real_t)
+        self.ref_vorticity_field = np.random.rand(3, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_velocity_forcing_field = np.random.rand(3, n_samples, n_samples, n_samples).astype(
+            real_t
+        )
         self.prefactor = real_t(0.1)
-        self.ref_new_vorticity_field = (
-            update_vorticity_from_velocity_forcing_reference_3d(
-                self.ref_vorticity_field,
-                self.ref_velocity_forcing_field,
-                self.prefactor,
-            )
+        self.ref_new_vorticity_field = update_vorticity_from_velocity_forcing_reference_3d(
+            self.ref_vorticity_field,
+            self.ref_velocity_forcing_field,
+            self.prefactor,
         )
 
     def check_equals(self, new_vorticity_field):
@@ -106,9 +100,7 @@ def test_update_vorticity_from_penalised_velocity_3d(n_values, precision):
     real_t = get_real_t(precision)
     vorticity_field = np.random.rand(3, n_values, n_values, n_values).astype(real_t)
     velocity_field = np.random.rand(3, n_values, n_values, n_values).astype(real_t)
-    penalised_velocity_field = np.random.rand(3, n_values, n_values, n_values).astype(
-        real_t
-    )
+    penalised_velocity_field = np.random.rand(3, n_values, n_values, n_values).astype(real_t)
     prefactor = real_t(0.1)
     ref_new_vorticity_field = update_vorticity_from_velocity_forcing_reference_3d(
         vorticity_field=vorticity_field,
