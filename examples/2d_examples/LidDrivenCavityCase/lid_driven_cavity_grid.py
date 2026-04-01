@@ -78,13 +78,11 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
         """Computes positions of the lid driven cavity"""
         # We don't do anything here, since these are computed statically
         # during initialisation
-        pass
 
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocities of the lid driven cavity"""
         # We don't do anything here, since these are computed statically
         # during initialisation
-        pass
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -94,7 +92,6 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
     ) -> None:
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
         # This field is added to make this class concrete
-        pass
 
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""

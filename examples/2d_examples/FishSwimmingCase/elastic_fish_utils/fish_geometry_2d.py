@@ -175,7 +175,7 @@ def update_rod_for_fish_geometry(
                 shear_modulus * I0_3[i],
             ],
         )
-    for i in range(0, MaxDimension.value()):
+    for i in range(MaxDimension.value()):
         if not np.all(bend_matrix[i, i, :] > Tolerance.atol()):
             msg = "Bend matrix must be greater than 0."
             raise ValueError(msg)

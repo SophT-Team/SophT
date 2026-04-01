@@ -212,7 +212,7 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
         """
         # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             lag_grid_field[i] = np.sum(
                 eul_grid_field[
                     nearest_eul_grid_index_to_lag_grid[2, i]
@@ -245,7 +245,7 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
         """
         # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             # numba doesnt allow multiple axes for np.sum :/,
             # hence needs to be done serially
             lag_grid_field[0, i] = np.sum(
@@ -332,7 +332,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         """
         # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             eul_grid_field[
                 nearest_eul_grid_index_to_lag_grid[2, i]
                 - interp_kernel_width
@@ -362,7 +362,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         """
         # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range( num_lag_nodes):
             eul_grid_field[
                 ...,
                 nearest_eul_grid_index_to_lag_grid[2, i]
