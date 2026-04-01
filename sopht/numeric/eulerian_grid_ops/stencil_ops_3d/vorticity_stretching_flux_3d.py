@@ -15,7 +15,7 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D Vorticity stretching flux kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -99,7 +99,7 @@ def gen_vorticity_stretching_flux_pyst_kernel_3d(
         )
 
         # set boundary unaffected points to 0
-        # TODO need one sided corrections?
+        # TODO: need one sided corrections?
         set_fixed_val_at_boundaries_3d(
             vector_field=vorticity_stretching_flux_field, fixed_vals=[0, 0, 0]
         )

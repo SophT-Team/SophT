@@ -106,7 +106,7 @@ def elastic_fish_swimming_case(
 
     if save_data:
         # setup IO
-        # TODO internalise this in flow simulator as dump_fields
+        # TODO: internalise this in flow simulator as dump_fields
         io_origin = np.array(
             [
                 flow_sim.position_field[z_axis_idx].min(),

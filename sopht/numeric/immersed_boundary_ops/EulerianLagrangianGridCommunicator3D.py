@@ -12,7 +12,7 @@ class EulerianLagrangianGridCommunicator3D:
     1. Find grid intersections (nearest indices)
     2. Interpolate fields back and forth
     3. Compute interpolation weights for interpolation
-    TODO add proper style docs
+    TODO: add proper style docs
     """
 
     def __init__(
@@ -119,7 +119,7 @@ def generate_local_eulerian_grid_support_of_lagrangian_grid_kernel_3d(
         # shift by -1. However, this behaviour is expected and accounted for in the
         # followup interpolation kernels.
         nearest_eul_grid_index_to_lag_grid[...] = (lag_positions - eul_grid_coord_shift) // dx
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         # get relative distance (support) of body
         # reshape done to broadcast
@@ -209,7 +209,7 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         for i in range(0, num_lag_nodes):
             lag_grid_field[i] = np.sum(
@@ -242,7 +242,7 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         for i in range(0, num_lag_nodes):
             # numba doesnt allow multiple axes for np.sum :/,
@@ -330,7 +330,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         for i in range(0, num_lag_nodes):
             eul_grid_field[
@@ -360,7 +360,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         for i in range(0, num_lag_nodes):
             eul_grid_field[

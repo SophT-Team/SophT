@@ -14,7 +14,7 @@ def gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
     fixed_grid_size: tuple[int, int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D Diffusion euler forward timestep kernel generator."""
     elementwise_sum_pyst_kernel_3d = spne.gen_elementwise_sum_pyst_kernel_3d(
         real_t=real_t,

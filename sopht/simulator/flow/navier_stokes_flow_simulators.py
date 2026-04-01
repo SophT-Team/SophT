@@ -333,7 +333,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
                 grid_size_x=grid_size_x,
                 dx=self.dx,
                 real_t=self.real_t,
-                # TODO add different options here later
+                # TODO: add different options here later
                 bc_type="homogenous_neumann_along_xyz",
             )
         self._curl = spne.gen_curl_pyst_kernel_3d(

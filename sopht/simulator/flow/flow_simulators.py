@@ -15,7 +15,7 @@ class FlowSimulator:
     def __init__(
         self,
         grid_dim: int,
-        # TODO fix mypy error and enable type hint
+        # TODO: fix mypy error and enable type hint
         grid_size,  # : tuple[int, int] | tuple[int, int, int],
         x_range: float,
         real_t: Type = np.float32,

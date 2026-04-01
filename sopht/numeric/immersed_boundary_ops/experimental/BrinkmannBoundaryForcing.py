@@ -23,7 +23,7 @@ class BrinkmannBoundaryForcing:
     Brinkmann boundary forcing class for computing feedback between the
     Lagrangian body and Eulerian grid flow, using Lagrangian variant of
     Brinkmann penalisation.
-    TODO add proper style docs
+    TODO: add proper style docs
     """
 
     def __init__(
@@ -40,7 +40,7 @@ class BrinkmannBoundaryForcing:
     ):
         """Class initialiser.
 
-        TODO add proper style docs
+        TODO: add proper style docs
         Takes in inputs:
         brinkmann_coeff: Brinkmann penalisation coefficient for computing penalty
         force, set to a high value

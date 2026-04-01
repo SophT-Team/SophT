@@ -50,7 +50,7 @@ class RectangularPlane(ea.RigidBodyBase):
         tangent = plane_tangent_along_length.reshape(MaxDimension.value(), self.n_elems)
         binormal = _batch_cross(normal, tangent)
         self.director_collection = np.zeros((MaxDimension.value(), MaxDimension.value(), 1))
-        # TODO put checks for invalid normals and tangents
+        # TODO: put checks for invalid normals and tangents
         self.director_collection[0, ...] = tangent / np.linalg.norm(tangent)
         self.director_collection[1, ...] = binormal / np.linalg.norm(binormal)
         self.director_collection[2, ...] = normal / np.linalg.norm(normal)

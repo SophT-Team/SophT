@@ -18,7 +18,7 @@ def get_pyst_kernel_config(
     """Returns the pystencils kernel config based on the data
     dtype and number of threads"""
     pyst_dtype = get_pyst_dtype(real_t)
-    # TODO check out more options here!
+    # TODO: check out more options here!
     kernel_config = ps.CreateKernelConfig(
         data_type=pyst_dtype,
         default_number_float=pyst_dtype,

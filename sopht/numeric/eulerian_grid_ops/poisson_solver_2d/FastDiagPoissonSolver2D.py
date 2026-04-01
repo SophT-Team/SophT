@@ -34,7 +34,7 @@ class FastDiagPoissonSolver2D:
 
     def _construct_poisson_matrices(self) -> tuple[np.ndarray, np.ndarray]:
         """Construct the finite difference Poisson matrices."""
-        # TODO can add higher order options..
+        # TODO: can add higher order options..
         inv_dx2 = self.real_t(1 / self.dx / self.dx)
         poisson_matrix_x = inv_dx2 * spp.diags(
             [-1, 2, -1],

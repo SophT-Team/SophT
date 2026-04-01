@@ -24,7 +24,7 @@ def test_passive_transport_flow_simulator_time_step(
     dx = real_t(x_range / grid_size_x)
     dt = 2.0
     init_time = 1.0
-    # TODO support this option in future
+    # TODO: support this option in future
     if grid_dim == 2 and field_type == "vector":
         return
     flow_sim = sps.PassiveTransportFlowSimulator(

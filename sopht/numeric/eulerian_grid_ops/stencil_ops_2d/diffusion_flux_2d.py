@@ -16,7 +16,7 @@ def gen_diffusion_flux_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     reset_ghost_zone: bool = True,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D Diffusion flux kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -66,7 +66,7 @@ def gen_diffusion_flux_pyst_kernel_2d(
                 )
 
                 # set boundary unaffected points to 0
-                # TODO need one sided corrections?
+                # TODO: need one sided corrections?
                 set_fixed_val_at_boundaries_2d(field=diffusion_flux, fixed_val=0)
 
             return diffusion_flux_with_ghost_zone_reset_pyst_kernel_2d

@@ -172,7 +172,7 @@ def octopus_swimming(
     if save_data:
         rod_io_list = []
         # setup IO
-        # TODO internalise this in flow simulator as dump_fields
+        # TODO: internalise this in flow simulator as dump_fields
         io_origin = np.array(
             [
                 flow_sim.position_field[z_axis_idx].min(),
@@ -241,7 +241,7 @@ def octopus_swimming(
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
-                # TODO have a function for computing velocity magnitude
+                # TODO: have a function for computing velocity magnitude
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[

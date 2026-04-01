@@ -20,7 +20,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
     fixed_grid_size: tuple[int, int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D penalise field boundary kernel generator."""
     assert width >= 0 and isinstance(width, int), "invalid zone width"
     match width:

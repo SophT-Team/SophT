@@ -156,7 +156,7 @@ def immersed_magnetic_cilia_carpet_case(
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
-                # TODO function for velocity magnitude
+                # TODO: function for velocity magnitude
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[

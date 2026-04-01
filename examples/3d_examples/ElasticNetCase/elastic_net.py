@@ -74,7 +74,7 @@ class ElasticNetSimulator:
         num_gaps_along_x = num_rods_along_y - 1
         num_gaps_along_y = num_rods_along_x - 1
         # below 1 is needed for correctly connecting rods
-        # TODO @armantekinalp please clarify
+        # TODO: @armantekinalp please clarify
         n_elem_rods_along_x = 1 + num_gaps_along_y * num_rod_elements_per_gap
         n_elem_rods_along_y = 1 + num_gaps_along_x * num_rod_elements_per_gap
 

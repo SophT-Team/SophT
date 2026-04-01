@@ -15,7 +15,7 @@ def gen_elementwise_sum_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise sum kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -64,7 +64,7 @@ def gen_set_fixed_val_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D set field to fixed value kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -119,7 +119,7 @@ def gen_elementwise_copy_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise copy one field to another kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -146,7 +146,7 @@ def gen_elementwise_complex_product_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise complex number product kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -199,7 +199,7 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
     num_threads: bool | int = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D set field to fixed value at boundaries kernel generator."""
     assert width > 0 and isinstance(width, int), "invalid zone width"
     set_fixed_val_kernel_2d = gen_set_fixed_val_pyst_kernel_2d(
@@ -259,7 +259,7 @@ def gen_add_fixed_val_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D add a fixed value to a field kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -318,7 +318,7 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise saxpby (s = a * x + b * y) kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)

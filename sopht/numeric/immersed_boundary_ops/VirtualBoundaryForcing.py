@@ -23,7 +23,7 @@ class VirtualBoundaryForcing:
     Virtual boundary forcing class for computing feedback between the
     Lagrangian body and Eulerian grid flow, using virtual boundary method
     Refer to Goldstein 1993, JCP for details on the penalty force computation.
-    TODO add proper style docs
+    TODO: add proper style docs
     """
 
     def __init__(
@@ -42,7 +42,7 @@ class VirtualBoundaryForcing:
     ):
         """Class initialiser.
 
-        TODO add proper style docs
+        TODO: add proper style docs
         Takes in inputs:
         virtual_boundary_stiffness_coeff: stiffness coefficient for computing penalty
         force, set to a high values

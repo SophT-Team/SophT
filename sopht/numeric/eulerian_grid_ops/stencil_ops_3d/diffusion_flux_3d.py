@@ -17,7 +17,7 @@ def gen_diffusion_flux_pyst_kernel_3d(
     field_type: Literal["scalar", "vector"] = "scalar",
     reset_ghost_zone: bool = True,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D Diffusion flux kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -68,7 +68,7 @@ def gen_diffusion_flux_pyst_kernel_3d(
                 diffusion_kernel_3d(diffusion_flux=diffusion_flux, field=field, prefactor=prefactor)
 
                 # set boundary unaffected points to 0
-                # TODO need one sided corrections?
+                # TODO: need one sided corrections?
                 set_fixed_val_at_boundaries_3d(field=diffusion_flux, fixed_val=0)
 
             diffusion_flux_pyst_kernel_3d = diffusion_flux_with_ghost_zone_reset_pyst_kernel_3d

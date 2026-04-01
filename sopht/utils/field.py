@@ -2,7 +2,7 @@ class VectorField:
     """
     Class representing vector fields.
     Useful for slicing individual axes.
-    TODO can use later as dtype for vector fields in simulator
+    TODO: can use later as dtype for vector fields in simulator
     """
 
     @staticmethod

@@ -16,7 +16,7 @@ def gen_curl_pyst_kernel_3d(
     fixed_grid_size: tuple[int, int, int] | bool = False,
     reset_ghost_zone: bool = True,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D Curl kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -126,7 +126,7 @@ def gen_curl_pyst_kernel_3d(
                 """
                 curl_pyst_kernel_3d(curl, field, prefactor)
                 # set boundary unaffected points to 0
-                # TODO need one sided corrections?
+                # TODO: need one sided corrections?
                 set_fixed_val_at_boundaries_3d(vector_field=curl, fixed_vals=[0, 0, 0])
 
             return curl_with_ghost_zone_reset_pyst_kernel_3d

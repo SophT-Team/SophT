@@ -18,7 +18,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D penalise field boundary kernel generator."""
     assert width >= 0 and isinstance(width, int), "invalid zone width"
 

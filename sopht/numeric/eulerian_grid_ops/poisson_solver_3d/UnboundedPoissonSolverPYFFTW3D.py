@@ -40,7 +40,7 @@ class UnboundedPoissonSolverPYFFTW3D:
         self.irfft = pyfftw_construct.ifft_plan
         self.domain_doubled_buffer = pyfftw_construct.field_pyfftw_buffer
         self.domain_doubled_fourier_buffer = pyfftw_construct.fourier_field_pyfftw_buffer
-        # TODO avoid this allocation if possible, currently needed to do SIMD and
+        # TODO: avoid this allocation if possible, currently needed to do SIMD and
         #  parallel fourier space convolution
         self.convolution_buffer = np.zeros_like(self.domain_doubled_fourier_buffer)
         self._construct_fourier_greens_function_field()
@@ -94,13 +94,13 @@ class UnboundedPoissonSolverPYFFTW3D:
                 self.domain_doubled_buffer.shape[2],
             ),
         )
-        # TODO add kernel strides info to enable fixed size version
+        # TODO: add kernel strides info to enable fixed size version
         self.elementwise_copy_kernel_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
             real_t=self.real_t,
             num_threads=self.num_threads,
         )
         # this one operates on fourier buffer
-        # TODO add kernel strides info to enable fixed size version
+        # TODO: add kernel strides info to enable fixed size version
         self.elementwise_complex_product_kernel_3d = (
             spne.gen_elementwise_complex_product_pyst_kernel_3d(
                 real_t=self.real_t,

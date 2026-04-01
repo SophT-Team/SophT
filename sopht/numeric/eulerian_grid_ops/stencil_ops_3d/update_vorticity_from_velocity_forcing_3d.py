@@ -14,7 +14,7 @@ def gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """Update vorticity based on velocity forcing in 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -137,7 +137,7 @@ def gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """Update vorticity based on penalised velocity in 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)

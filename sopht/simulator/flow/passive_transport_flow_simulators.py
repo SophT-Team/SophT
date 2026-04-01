@@ -41,7 +41,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         """
         if field_type not in ["scalar", "vector"]:
             raise ValueError("Invalid field type. Supported values include 'scalar' and 'vector'")
-        # TODO add support for passive transport of vector field in 2D
+        # TODO: add support for passive transport of vector field in 2D
         if grid_dim == 2 and field_type == "vector":
             raise ValueError("Passive transport of vector 2D fields not supported yet.")
         self.kinematic_viscosity = kinematic_viscosity

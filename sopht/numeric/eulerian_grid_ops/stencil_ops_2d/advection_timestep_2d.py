@@ -12,7 +12,7 @@ def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D Advection (ENO3 stencil) Euler forward timestep generator."""
     elementwise_sum_pyst_kernel_2d = spne.gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,

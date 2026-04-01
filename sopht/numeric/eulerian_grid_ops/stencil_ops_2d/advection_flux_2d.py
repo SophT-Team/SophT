@@ -14,7 +14,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D conservative ENO3 advection flux kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -31,7 +31,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
             f"advection_flux, field, velocity_x : {pyst_dtype}[{grid_info}]"
         )
         inv_dx = sp.symbols("inv_dx")
-        # TODO SHOULD HAVE CODEGEN FOR THIS!
+        # TODO: SHOULD HAVE CODEGEN FOR THIS!
         advection_flux[0, 0] @= advection_flux[0, 0] + inv_dx * (
             (
                 (1 / 3) * field[0, 1] * velocity_x[0, 1]
@@ -58,7 +58,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
             f"advection_flux, field, velocity_x : {pyst_dtype}[2D]"
         )
         inv_dx = sp.symbols("inv_dx")
-        # TODO SHOULD HAVE CODEGEN FOR THIS!
+        # TODO: SHOULD HAVE CODEGEN FOR THIS!
         advection_flux[0, 0] @= advection_flux[0, 0] - inv_dx * (
             (
                 (1 / 3) * field[0, 0] * velocity_x[0, 0]
@@ -83,7 +83,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
             f"advection_flux, field, velocity_y : {pyst_dtype}[{grid_info}]"
         )
         inv_dx = sp.symbols("inv_dx")
-        # TODO SHOULD HAVE CODEGEN FOR THIS!
+        # TODO: SHOULD HAVE CODEGEN FOR THIS!
         advection_flux[0, 0] @= advection_flux[0, 0] + inv_dx * (
             (
                 (1 / 3) * field[1, 0] * velocity_y[1, 0]
@@ -108,7 +108,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
             f"advection_flux, field, velocity_y : {pyst_dtype}[{grid_info}]"
         )
         inv_dx = sp.symbols("inv_dx")
-        # TODO SHOULD HAVE CODEGEN FOR THIS!
+        # TODO: SHOULD HAVE CODEGEN FOR THIS!
         advection_flux[0, 0] @= advection_flux[0, 0] - inv_dx * (
             (
                 (1 / 3) * field[0, 0] * velocity_y[0, 0]
@@ -135,7 +135,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
         velocity: np.ndarray,
         inv_dx: float,
     ) -> None:
-        # TODO expand docs
+        # TODO: expand docs
         """2D conservative ENO3 advection flux kernel."""
         _advection_flux_x_front_conservative_eno3_kernel_2d(
             advection_flux=advection_flux,

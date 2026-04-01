@@ -64,7 +64,7 @@ def flow_past_rod_case(
     # see Gilmanov et al. 2015
     # poisson_ratio_plate = 0.4
     # poisson_ratio_correction_factor = 1.0 - poisson_ratio_plate**2
-    # TODO after convergence see if we really need it?
+    # TODO: after convergence see if we really need it?
     # nondim_bending_stiffness /= poisson_ratio_correction_factor
     # nondim_bending_stiffness = youngs_modulus * moment_of_inertia
     # / (rho_f vel_free_stream^2 base_length^3)
