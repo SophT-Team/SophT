@@ -72,7 +72,8 @@ def gen_brinkmann_penalise_pyst_kernel_2d(
             return brinkmann_penalise_vector_field_pyst_kernel_2d
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(
@@ -136,4 +137,5 @@ def gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(
 
             return brinkmann_penalise_vector_field_vs_fixed_val_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)

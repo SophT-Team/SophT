@@ -51,7 +51,8 @@ def gen_elementwise_sum_pyst_kernel_2d(
                 sum_field[0, 0, 0] @= field_1[0, 0, 0] + field_2[0, 0, 0]
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
     return ps.create_kernel(_elementwise_sum_stencil_2d, config=kernel_config).compile()
 
@@ -109,7 +110,8 @@ def gen_set_fixed_val_pyst_kernel_2d(
 
             return vector_field_set_fixed_val_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_elementwise_copy_pyst_kernel_2d(
@@ -245,7 +247,8 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
 
             return vector_field_set_fixed_val_at_boundaries_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_add_fixed_val_pyst_kernel_2d(
@@ -304,7 +307,8 @@ def gen_add_fixed_val_pyst_kernel_2d(
 
             return vector_field_add_fixed_val_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_elementwise_saxpby_pyst_kernel_2d(
@@ -352,6 +356,7 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
                 )
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
     return ps.create_kernel(_elementwise_saxpby_stencil_2d, config=kernel_config).compile()

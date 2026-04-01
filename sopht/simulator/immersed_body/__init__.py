@@ -1,4 +1,5 @@
 """Immersed body module for the SophT Simulator."""
+
 from .cosserat_rod.cosserat_rod_flow_interaction import (
     CosseratRodFlowInteraction,
 )

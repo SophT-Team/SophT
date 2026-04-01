@@ -17,9 +17,8 @@ class TwoDimensionalCylinderForcingGrid(ImmersedBodyForcingGrid):
 
     def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: ea.Cylinder) -> None:
         if grid_dim != 2:
-            raise ValueError(
-                "Invalid grid dimensions. 2D cylinder forcing grid is only defined for grid_dim=2"
-            )
+            msg = "Invalid grid dimensions. 2D cylinder forcing grid is only defined for grid_dim=2"
+            raise ValueError(msg)
         self.cylinder = rigid_body
         super().__init__(grid_dim, num_lag_nodes)
         self.local_frame_relative_position_field = np.zeros_like(self.position_field)
@@ -108,9 +107,10 @@ class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
 
     def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: SupportedRigidBody3D) -> None:
         if grid_dim != 3:
-            raise ValueError(
+            msg = (
                 "Invalid grid dimensions. 3D Rigid body forcing grid is only defined for grid_dim=3"
             )
+            raise ValueError(msg)
         self.rigid_body = rigid_body
         super().__init__(grid_dim, num_lag_nodes)
         self.local_frame_relative_position_field = np.zeros_like(self.position_field)

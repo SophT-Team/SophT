@@ -79,4 +79,5 @@ def gen_brinkmann_penalise_pyst_kernel_3d(
 
             return brinkmann_penalise_vector_field_pyst_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)

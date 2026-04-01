@@ -26,10 +26,11 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
         surface_grid_density_for_largest_element: int,
     ) -> None:
         if grid_dim != 3:
-            raise ValueError(
+            msg = (
                 "Invalid grid dimensions. Cosserat rod surface forcing grid is only "
                 "defined for grid_dim=3"
             )
+            raise ValueError(msg)
         self.cosserat_rod = cosserat_rod
 
         self.width, self.height = create_fish_geometry(cosserat_rod.rest_lengths)

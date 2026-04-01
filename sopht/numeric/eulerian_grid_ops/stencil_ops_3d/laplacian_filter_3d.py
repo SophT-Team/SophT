@@ -163,7 +163,8 @@ def gen_laplacian_filter_kernel_3d(
         case "convolution":
             scalar_field_filter_kernel_3d = scalar_field_convolution_filter_kernel_3d
         case _:
-            raise ValueError("Invalid filter type")
+            msg = "Invalid filter type"
+            raise ValueError(msg)
 
     # Depending on the field type return the relevant filter implementation
     match field_type:
@@ -184,4 +185,5 @@ def gen_laplacian_filter_kernel_3d(
 
             return vector_filed_filter_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)

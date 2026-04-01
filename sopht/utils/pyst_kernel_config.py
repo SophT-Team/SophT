@@ -8,7 +8,8 @@ def get_pyst_dtype(real_t: type) -> str:
         return "float32"
     if real_t == np.float64:
         return "float64"
-    raise ValueError("Invalid real type")
+    msg = "Invalid real type"
+    raise ValueError(msg)
 
 
 def get_pyst_kernel_config(

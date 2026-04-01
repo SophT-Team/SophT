@@ -58,10 +58,11 @@ class EulerianLagrangianGridCommunicator2D:
                 dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
             )
         else:
-            raise ValueError(
+            msg = (
                 "Invalid interpolation kernel type. Current supported types are"
                 "'cosine' and 'peskin'."
             )
+            raise ValueError(msg)
 
 
 def generate_local_eulerian_grid_support_of_lagrangian_grid_kernel_2d(

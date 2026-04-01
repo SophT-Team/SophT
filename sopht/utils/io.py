@@ -243,9 +243,8 @@ class IO:
                                 data=field[idx_dim, ...].reshape(1, *self.eulerian_grid_size),
                             )
                     else:
-                        raise ValueError(
-                            "Unsupported eulerian_field_type ('Scalar' and 'Vector' only)"
-                        )
+                        msg = "Unsupported eulerian_field_type ('Scalar' and 'Vector' only)"
+                        raise ValueError(msg)
                 # Save eulerian simulation parameters
                 eulerian_params_grp = eulerian_grp.create_group("Parameters")
                 eulerian_params_grp.attrs["origin"] = self.eulerian_origin
@@ -284,9 +283,8 @@ class IO:
                             field_name, data=np.moveaxis(field, 0, -1)
                         )
                     else:
-                        raise ValueError(
-                            "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
-                        )
+                        msg = "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
+                        raise ValueError(msg)
 
         # Generate xdmf files for every grid
         if self.eulerian_fields:
@@ -338,9 +336,8 @@ class IO:
                                 field_type
                             ][f"{field_name}_{idx_dim}"][0, ...]
                     else:
-                        raise ValueError(
-                            "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
-                        )
+                        msg = "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
+                        raise ValueError(msg)
 
                 # Load 'Parameters' and assert equals for restart consistency
                 np.testing.assert_allclose(
@@ -399,9 +396,8 @@ class IO:
                                 0,
                             )
                         else:
-                            raise ValueError(
-                                "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
-                            )
+                            msg = "Unsupported lagrangian_field_type ('Scalar' and 'Vector' only)"
+                            raise ValueError(msg)
 
         return time
 
@@ -657,7 +653,8 @@ class EulerianFieldIO(IO):
                     ]
                 )
             case _:
-                raise ValueError("Position field of invalid shape.")
+                msg = "Position field of invalid shape."
+                raise ValueError(msg)
         # get grid spacing from X coodinate field
         x_grid_flattened_field = position_field[spu.VectorField.x_axis_idx()].reshape(
             -1,

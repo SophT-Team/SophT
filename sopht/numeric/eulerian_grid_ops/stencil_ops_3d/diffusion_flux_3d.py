@@ -111,4 +111,5 @@ def gen_diffusion_flux_pyst_kernel_3d(
 
             return vector_field_diffusion_flux_pyst_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)

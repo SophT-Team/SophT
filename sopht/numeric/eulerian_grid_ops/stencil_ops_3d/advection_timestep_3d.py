@@ -95,4 +95,5 @@ def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
 
             return vector_field_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)

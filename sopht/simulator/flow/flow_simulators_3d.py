@@ -47,7 +47,8 @@ def UnboundedFlowSimulator3D(
         case "navier_stokes_with_forcing":
             with_forcing = True
         case _:
-            raise ValueError("Invalid flow type given")
+            msg = "Invalid flow type given"
+            raise ValueError(msg)
 
     return UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,

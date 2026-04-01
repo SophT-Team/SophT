@@ -283,7 +283,8 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         ]
         self.poisson_solver_type = poisson_solver_type
         if self.poisson_solver_type not in supported_poisson_solver_types:
-            raise ValueError("Invalid Poisson solver type given")
+            msg = "Invalid Poisson solver type given"
+            raise ValueError(msg)
         super().__init__(
             grid_dim=3,
             grid_size=grid_size,

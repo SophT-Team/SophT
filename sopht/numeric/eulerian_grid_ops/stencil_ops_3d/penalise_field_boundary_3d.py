@@ -47,7 +47,8 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
                     return penalise_vector_field_boundary_pyst_kernel_3d
 
                 case _:
-                    raise ValueError("Invalid field type")
+                    msg = "Invalid field type"
+                    raise ValueError(msg)
 
         case _:
             pyst_dtype = spu.get_pyst_dtype(real_t)
@@ -233,4 +234,5 @@ def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
 
                     return penalise_vector_field_boundary_pyst_kernel_3d
                 case _:
-                    raise ValueError("Invalid field type")
+                    msg = "Invalid field type"
+                    raise ValueError(msg)

@@ -19,7 +19,8 @@ def restart_simulation(
             iter_num.append(int(filename.split("_")[-1].split(".")[0]))
 
     if len(iter_num) == 0:
-        raise FileNotFoundError("There is no file to load in the directory.")
+        msg = "There is no file to load in the directory."
+        raise FileNotFoundError(msg)
 
     latest = max(iter_num)
     # load sopht data
@@ -29,9 +30,8 @@ def restart_simulation(
     rod_time = ea.load_state(restart_simulator, restart_dir, True)
 
     if curr_time != rod_time:
-        raise ValueError(
-            "Simulation time of the flow is not matched with the Elastica, check your inputs!"
-        )
+        msg = "Simulation time of the flow is not matched with the Elastica, check your inputs!"
+        raise ValueError(msg)
     print(f"sopht_{latest:04d}.h5 has been loaded")
 
     return curr_time

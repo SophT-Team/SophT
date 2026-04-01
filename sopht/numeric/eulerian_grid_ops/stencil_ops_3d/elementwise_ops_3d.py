@@ -51,7 +51,8 @@ def gen_elementwise_sum_pyst_kernel_3d(
                 sum_field[0, 0, 0, 0] @= field_1[0, 0, 0, 0] + field_2[0, 0, 0, 0]
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
     return ps.create_kernel(_elementwise_sum_stencil_3d, config=kernel_config).compile()
 
@@ -114,7 +115,8 @@ def gen_set_fixed_val_pyst_kernel_3d(
 
             return vector_field_set_fixed_val_pyst_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_elementwise_copy_pyst_kernel_3d(
@@ -138,9 +140,7 @@ def gen_elementwise_copy_pyst_kernel_3d(
         field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
         field[0, 0, 0] @= rhs_field[0, 0, 0]
 
-    return ps.create_kernel(
-        _elementwise_copy_stencil_3d, config=kernel_config
-    ).compile()
+    return ps.create_kernel(_elementwise_copy_stencil_3d, config=kernel_config).compile()
 
 
 def gen_elementwise_complex_product_pyst_kernel_3d(
@@ -262,7 +262,8 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
 
             return vector_field_set_fixed_val_at_boundaries_pyst_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_add_fixed_val_pyst_kernel_3d(
@@ -327,7 +328,8 @@ def gen_add_fixed_val_pyst_kernel_3d(
 
             return vector_field_add_fixed_val_pyst_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_elementwise_saxpby_pyst_kernel_3d(
@@ -377,11 +379,10 @@ def gen_elementwise_saxpby_pyst_kernel_3d(
                 )
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
-    return ps.create_kernel(
-        _elementwise_saxpby_stencil_3d, config=kernel_config
-    ).compile()
+    return ps.create_kernel(_elementwise_saxpby_stencil_3d, config=kernel_config).compile()
 
 
 def gen_elementwise_cross_product_pyst_kernel_3d(

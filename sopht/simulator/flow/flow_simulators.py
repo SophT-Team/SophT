@@ -32,7 +32,8 @@ class FlowSimulator:
 
         """
         if grid_dim not in [2, 3]:
-            raise ValueError("Invalid grid dimensions. Supported values include 2 and 3.")
+            msg = "Invalid grid dimensions. Supported values include 2 and 3."
+            raise ValueError(msg)
         self.grid_dim = grid_dim
         self.grid_size = grid_size
         self.x_range = x_range

@@ -487,7 +487,8 @@ def test_eulerian_field_io(grid_dim, precision, grid_size_x):
                 ]
             )
         case _:
-            raise ValueError("Position field of invalid shape.")
+            msg = "Position field of invalid shape."
+            raise ValueError(msg)
     io_dx = dx * np.ones(grid_dim)
     io_grid_size = np.array(grid_size)
     io.define_eulerian_grid(origin=io_origin, dx=io_dx, grid_size=io_grid_size)

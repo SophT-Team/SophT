@@ -133,10 +133,11 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         if grid_dim != 2:
-            raise ValueError(
+            msg = (
                 "Invalid grid dimensions. Cosserat rod edge forcing grid is only "
                 "defined for grid_dim=2"
             )
+            raise ValueError(msg)
         self.cosserat_rod = cosserat_rod
         # 1 for element center 2 for edges
         num_lag_nodes = cosserat_rod.n_elems + 2 * cosserat_rod.n_elems
@@ -290,10 +291,11 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         with_cap: bool = False,
     ) -> None:
         if grid_dim != 3:
-            raise ValueError(
+            msg = (
                 "Invalid grid dimensions. Cosserat rod surface forcing grid is only "
                 "defined for grid_dim=3"
             )
+            raise ValueError(msg)
         self.cosserat_rod = cosserat_rod
         self.n_elems = cosserat_rod.n_elems
 

@@ -9,7 +9,8 @@ def get_real_t(precision: str = "single") -> type:
         return np.float32
     if precision == "double":
         return np.float64
-    raise ValueError("Precision argument must be single or double")
+    msg = "Precision argument must be single or double"
+    raise ValueError(msg)
 
 
 def get_test_tol(precision: str = "single") -> float:
