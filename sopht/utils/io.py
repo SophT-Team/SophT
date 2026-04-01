@@ -108,10 +108,11 @@ class IO:
             elif field.shape == (self.dim, *self.eulerian_grid_size):
                 self.eulerian_fields_type[field_name] = "Vector"
             else:
-                raise ValueError(
+                msg = (
                     f"Unable to identify eulerian field type "
                     f"(scalar / vector) based on field dimension {field.shape}"
                 )
+                raise ValueError(msg)
 
     def add_as_lagrangian_fields_for_io(
         self,
@@ -169,10 +170,11 @@ class IO:
             elif field.shape == lagrangian_grid.shape:
                 self.lagrangian_fields_type[field_name] = "Vector"
             else:
-                raise ValueError(
+                msg = (
                     f"Unable to identify lagrangian field type "
                     f"(scalar / vector) based on field dimension {field.shape}"
                 )
+                raise ValueError(msg)
 
     def save(self, h5_file_name: str, time: float = 0.0) -> None:  # noqa: C901
         """
