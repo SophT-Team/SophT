@@ -55,7 +55,7 @@ def plot_video_of_rod_surface(
     # video pre-processing
     print("plot scene visualization video")
     FFMpegWriter = animation.writers["ffmpeg"]
-    metadata = dict(title="Movie Test", artist="Matplotlib", comment="Movie support!")
+    metadata = {"title": "Movie Test", "artist": "Matplotlib", "comment": "Movie support!"}
     writer = FFMpegWriter(fps=fps, metadata=metadata)
     dpi = kwargs.get("dpi", 100)
     xlim = kwargs.get("x_limits", (-1.0, 1.0))
