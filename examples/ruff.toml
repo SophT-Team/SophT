@@ -3,5 +3,6 @@ extend = "../pyproject.toml"
 [lint]
 extend-ignore = [
    "D",      # pydocstyle
+   "INP001", # implicit-namespace-package
    "T20",    # flake8-print
 ]
