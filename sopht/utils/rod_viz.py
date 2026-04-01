@@ -10,7 +10,7 @@ from tqdm import tqdm
 from sopht.utils.field import VectorField
 
 
-def plot_video_of_rod_surface(  # noqa C901
+def plot_video_of_rod_surface(
     rods_history: Sequence[dict],
     video_name="video.mp4",
     fps: int = 60,

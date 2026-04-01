@@ -44,7 +44,7 @@ def gen_elementwise_sum_pyst_kernel_2d(
             )
 
             @ps.kernel
-            def _elementwise_sum_stencil_2d():  # noqa F811
+            def _elementwise_sum_stencil_2d():
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
@@ -346,7 +346,7 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
             )
 
             @ps.kernel
-            def _elementwise_saxpby_stencil_2d():  # noqa F811
+            def _elementwise_saxpby_stencil_2d():
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )

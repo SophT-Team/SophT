@@ -10,7 +10,7 @@ import sympy as sp
 import sopht.utils as spu
 
 
-def gen_penalise_field_boundary_pyst_kernel_3d(  # noqa: C901
+def gen_penalise_field_boundary_pyst_kernel_3d(
     width: int,
     dx: float,
     x_grid_field: np.ndarray,

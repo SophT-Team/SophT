@@ -176,7 +176,7 @@ class IO:
                 )
                 raise ValueError(msg)
 
-    def save(self, h5_file_name: str, time: float = 0.0) -> None:  # noqa: C901
+    def save(self, h5_file_name: str, time: float = 0.0) -> None:
         """
         This is a wrapper function to call _save function.
 
@@ -190,7 +190,7 @@ class IO:
 
         self._save(h5_file_name, time)
 
-    def _save(self, h5_file_name: str, time: float = 0.0) -> None:  # noqa: C901
+    def _save(self, h5_file_name: str, time: float = 0.0) -> None:
         """
         Save added fields to hdf5 file.
 
@@ -294,7 +294,7 @@ class IO:
         if self.lagrangian_fields:
             self.generate_xdmf_lagrangian(h5_file_name=h5_file_name, time=time)
 
-    def load(self, h5_file_name: str) -> float:  # noqa: C901
+    def load(self, h5_file_name: str) -> float:
         """Load fields from hdf5 file.
 
         Field arrays need to be allocated and added to `eulerian_fields` and/or
