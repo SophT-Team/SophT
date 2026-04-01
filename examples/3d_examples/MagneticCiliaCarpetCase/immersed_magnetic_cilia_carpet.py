@@ -1,9 +1,8 @@
 import numpy as np
-from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
-
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.simulator as sps
 import sopht.utils as spu
+from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
 def immersed_magnetic_cilia_carpet_case(

@@ -1,9 +1,8 @@
 import click
 import numpy as np
-from elastic_net import ElasticNetSimulator
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from elastic_net import ElasticNetSimulator
 
 
 def immersed_elastic_net_case(

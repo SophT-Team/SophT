@@ -1,7 +1,6 @@
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_curl_pyst_kernel_3d,
 )

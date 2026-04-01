@@ -1,8 +1,7 @@
 import numpy as np
-from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from lamb_oseen_helpers import compute_lamb_oseen_velocity, compute_lamb_oseen_vorticity
 
 
 def lamb_oseen_vortex_flow_case(

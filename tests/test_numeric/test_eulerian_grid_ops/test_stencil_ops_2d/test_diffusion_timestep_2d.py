@@ -1,12 +1,11 @@
 import numpy as np
 import psutil
 import pytest
-from test_diffusion_flux_2d import diffusion_flux_reference
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_diffusion_timestep_euler_forward_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
+from test_diffusion_flux_2d import diffusion_flux_reference
 
 
 def diffusion_timestep_euler_forward_reference(field, nu_dt_by_dx2, real_t):

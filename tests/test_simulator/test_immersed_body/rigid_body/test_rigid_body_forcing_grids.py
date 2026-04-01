@@ -1,7 +1,6 @@
 import elastica as ea
 import numpy as np
 import pytest
-
 import sopht.simulator as sps
 import sopht.utils as spu
 from sopht.utils import get_test_tol

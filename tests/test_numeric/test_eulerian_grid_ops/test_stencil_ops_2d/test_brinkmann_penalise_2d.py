@@ -1,7 +1,6 @@
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_brinkmann_penalise_pyst_kernel_2d,
     gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d,

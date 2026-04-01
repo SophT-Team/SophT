@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.simulator as sps
 import sopht.utils as spu

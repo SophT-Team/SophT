@@ -1,7 +1,6 @@
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_3d,
     gen_elementwise_complex_product_pyst_kernel_3d,

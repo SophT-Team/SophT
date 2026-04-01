@@ -1,14 +1,13 @@
 import click
 import elastica as ea
 import numpy as np
+import sopht.simulator as sps
+import sopht.utils as spu
 from octopus_initializer_functions import (
     assemble_octopus,
     initialize_activation_functions,
 )
 from set_environment_octopus import OctopusEnvironment
-
-import sopht.simulator as sps
-import sopht.utils as spu
 from sopht.utils.precision import get_real_t
 
 

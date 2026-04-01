@@ -1,14 +1,12 @@
 import elastica as ea
 import numpy as np
+import sopht.utils as spu
 from elastic_fish_utils.carling_fish_bc import CarlingFishBC
 from elastic_fish_utils.fish_connection import FishConnection
 from elastic_fish_utils.fish_geometry import (
     create_fish_geometry,
     update_rod_for_fish_geometry,
 )
-
-import sopht.utils as spu
-
 
 _default_origin: np.ndarray = np.array([0.0, 0.0, 0.0])
 _default_normal: np.ndarray = np.array([0.0, 0.0, 1.0])

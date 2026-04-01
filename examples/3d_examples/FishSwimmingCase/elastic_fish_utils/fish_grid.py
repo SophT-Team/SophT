@@ -1,7 +1,6 @@
 import elastica as ea
 import numpy as np
 from elastica._linalg import _batch_cross, _batch_matrix_transpose, _batch_matvec
-
 from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 
 from .fish_geometry import create_fish_geometry

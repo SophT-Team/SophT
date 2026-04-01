@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 import pytest
-
 import sopht.simulator as sps
 
 

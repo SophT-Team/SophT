@@ -2,7 +2,6 @@ import numpy as np
 import psutil
 import pytest
 from scipy.fft import irfftn, rfftn
-
 from sopht.numeric.eulerian_grid_ops import (
     FFTPyFFTW2D,
     fft_ifft_via_scipy_kernel_2d,

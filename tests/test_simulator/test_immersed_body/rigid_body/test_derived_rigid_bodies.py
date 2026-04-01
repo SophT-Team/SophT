@@ -1,9 +1,7 @@
 import logging
 
 import numpy as np
-
 import sopht.simulator as sps
-
 
 _default_origin = np.array([1.0, 1.0, 1.0])
 

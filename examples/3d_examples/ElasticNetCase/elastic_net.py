@@ -1,13 +1,11 @@
 import elastica as ea
 import numpy as np
+import sopht.utils as spu
 from elastica.experimental.connection_contact_joint.parallel_connection import (
     SurfaceJointSideBySide,
     get_connection_vector_straight_straight_rod,
 )
 from scipy.interpolate import interp1d
-
-import sopht.utils as spu
-
 
 _zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
 

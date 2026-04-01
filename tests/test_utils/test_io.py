@@ -3,7 +3,6 @@ import os
 import elastica as ea
 import numpy as np
 import pytest
-
 import sopht.utils as spu
 
 

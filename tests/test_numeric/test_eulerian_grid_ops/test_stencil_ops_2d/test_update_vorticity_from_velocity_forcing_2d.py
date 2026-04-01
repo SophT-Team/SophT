@@ -1,7 +1,6 @@
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d,
     gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d,

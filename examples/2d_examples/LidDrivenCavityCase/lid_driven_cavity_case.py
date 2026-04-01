@@ -1,9 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from lid_driven_cavity_grid import LidDrivenCavityForcingGrid
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from lid_driven_cavity_grid import LidDrivenCavityForcingGrid
 
 
 def lid_driven_cavity_case(

@@ -1,8 +1,7 @@
 import numpy as np
-from hill_sphere_vortex_helpers import HillSphereVortex
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from hill_sphere_vortex_helpers import HillSphereVortex
 
 
 def hill_sphere_vortex_case(

@@ -2,7 +2,6 @@ import click
 import elastica as ea
 import matplotlib.pyplot as plt
 import numpy as np
-
 import sopht.simulator as sps
 import sopht.utils as spu
 

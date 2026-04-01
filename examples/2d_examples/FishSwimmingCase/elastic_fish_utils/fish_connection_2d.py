@@ -1,7 +1,6 @@
 import elastica as ea
-from elastica._linalg import _batch_matmul, _batch_matrix_transpose, _batch_matvec
-
 import sopht.utils as spu
+from elastica._linalg import _batch_matmul, _batch_matrix_transpose, _batch_matvec
 
 
 class FishConnection(ea.FreeJoint):

@@ -1,8 +1,7 @@
 import numpy as np
-from point_source_helpers import compute_diffused_point_source_field
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from point_source_helpers import compute_diffused_point_source_field
 
 
 def point_source_advection_diffusion_case(

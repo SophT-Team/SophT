@@ -1,7 +1,6 @@
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_2d,
 )

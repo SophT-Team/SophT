@@ -2,7 +2,6 @@ import numpy as np
 import psutil
 import pytest
 from scipy.fft import irfftn, rfftn
-
 from sopht.numeric.eulerian_grid_ops import (
     FastDiagPoissonSolver3D,
     UnboundedPoissonSolverPYFFTW3D,

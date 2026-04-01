@@ -1,5 +1,4 @@
 import numpy as np
-
 import sopht.utils as spu
 
 

@@ -1,7 +1,6 @@
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d,
     gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d,

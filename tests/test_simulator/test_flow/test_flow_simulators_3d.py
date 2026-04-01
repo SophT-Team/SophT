@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 import sopht.simulator as sps
 import sopht.utils as spu
 

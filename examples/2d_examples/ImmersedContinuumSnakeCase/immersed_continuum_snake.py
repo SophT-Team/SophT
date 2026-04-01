@@ -1,6 +1,5 @@
 import elastica as ea
 import numpy as np
-
 import sopht.simulator as sps
 import sopht.utils as spu
 

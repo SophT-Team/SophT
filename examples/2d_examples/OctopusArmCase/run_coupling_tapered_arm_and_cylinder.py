@@ -1,9 +1,8 @@
 import numpy as np
-from arm_functions_2d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
-from set_environment_tapered_arm_cylinder import Environment
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from arm_functions_2d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
+from set_environment_tapered_arm_cylinder import Environment
 
 
 def tapered_arm_and_cylinder_flow_coupling(

@@ -362,7 +362,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         """
         # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range( num_lag_nodes):
+        for i in range(num_lag_nodes):
             eul_grid_field[
                 ...,
                 nearest_eul_grid_index_to_lag_grid[2, i]

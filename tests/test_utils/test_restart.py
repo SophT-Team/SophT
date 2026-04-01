@@ -3,10 +3,9 @@ import os
 import elastica as ea
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from numpy.testing import assert_allclose
 
 xfail_reason = (
     "Upstream issue with PyElastica restart functionality, "

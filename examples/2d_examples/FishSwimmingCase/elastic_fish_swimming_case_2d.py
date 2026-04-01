@@ -1,10 +1,9 @@
 import click
 import numpy as np
-from elastic_fish_case_2d import ElasticFishSimulator
-from elastic_fish_utils.fish_geometry_2d import create_fish_geometry
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from elastic_fish_case_2d import ElasticFishSimulator
+from elastic_fish_utils.fish_geometry_2d import create_fish_geometry
 
 
 def elastic_fish_swimming_case(

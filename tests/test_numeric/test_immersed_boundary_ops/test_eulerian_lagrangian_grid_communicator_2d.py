@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from sopht.numeric.immersed_boundary_ops import EulerianLagrangianGridCommunicator2D
 from sopht.utils.precision import get_real_t, get_test_tol
 

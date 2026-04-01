@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 from sopht.utils import get_real_t, get_test_tol
 
 

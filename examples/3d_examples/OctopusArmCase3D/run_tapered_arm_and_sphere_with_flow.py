@@ -1,12 +1,11 @@
 import click
 import elastica as ea
 import numpy as np
+import sopht.simulator as sps
+import sopht.utils as spu
 from arm_functions_3d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
 from matplotlib import pyplot as plt
 from set_environment_tapered_arm_and_sphere_with_flow import Environment
-
-import sopht.simulator as sps
-import sopht.utils as spu
 
 
 def tapered_arm_and_cylinder_flow_coupling(

@@ -1,5 +1,4 @@
 import numpy as np
-
 import sopht.simulator as sps
 from sopht.utils.precision import get_real_t
 from tests.test_simulator.test_immersed_body.rigid_body.test_rigid_body_forcing_grids import (

@@ -3,7 +3,6 @@ from typing import Literal
 import numpy as np
 import psutil
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_penalise_field_boundary_pyst_kernel_3d,
 )

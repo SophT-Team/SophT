@@ -1,10 +1,9 @@
 import click
 import elastica as ea
 import numpy as np
-from matplotlib import pyplot as plt
-
 import sopht.simulator as sps
 import sopht.utils as spu
+from matplotlib import pyplot as plt
 
 
 def flow_past_rod_case(

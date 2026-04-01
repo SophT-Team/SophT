@@ -1,9 +1,7 @@
 import elastica as ea
 import magneto_pyelastica as mea
 import numpy as np
-
 import sopht.utils as spu
-
 
 _zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
 

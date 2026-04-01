@@ -1,12 +1,11 @@
 import numpy as np
 import psutil
 import pytest
-from test_advection_flux_3d import advection_flux_conservative_eno3_reference
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
+from test_advection_flux_3d import advection_flux_conservative_eno3_reference
 
 
 def advection_timestep_conservative_eno3_euler_forward_reference(

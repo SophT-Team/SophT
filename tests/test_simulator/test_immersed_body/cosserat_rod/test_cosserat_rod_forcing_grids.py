@@ -1,9 +1,8 @@
 import elastica as ea
 import numpy as np
 import pytest
-from elastica.interaction import _elements_to_nodes_inplace, _node_to_element_velocity
-
 import sopht.simulator as sps
+from elastica.interaction import _elements_to_nodes_inplace, _node_to_element_velocity
 from sopht.utils.precision import get_test_tol
 
 

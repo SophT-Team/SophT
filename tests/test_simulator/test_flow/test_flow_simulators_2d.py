@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-
 import sopht.simulator as sps
 from sopht.utils.precision import get_real_t
 

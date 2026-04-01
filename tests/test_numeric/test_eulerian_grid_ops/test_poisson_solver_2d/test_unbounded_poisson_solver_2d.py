@@ -3,7 +3,6 @@ import numpy.linalg as la
 import psutil
 import pytest
 from scipy.fft import irfftn, rfftn
-
 from sopht.numeric.eulerian_grid_ops import (
     FastDiagPoissonSolver2D,
     UnboundedPoissonSolverPYFFTW2D,
