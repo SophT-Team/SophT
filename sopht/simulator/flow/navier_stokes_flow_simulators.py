@@ -1,5 +1,6 @@
 import logging
-from typing import Callable, Literal
+from typing import Literal
+from collections.abc import Callable
 
 import numpy as np
 

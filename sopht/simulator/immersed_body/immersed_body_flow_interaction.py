@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Type
+from typing import Optional
 
 import numpy as np
 
@@ -19,7 +19,7 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         eul_grid_velocity_field: np.ndarray,
         body_flow_forces: np.ndarray,
         body_flow_torques: np.ndarray,
-        forcing_grid_cls: Type[ImmersedBodyForcingGrid],
+        forcing_grid_cls: type[ImmersedBodyForcingGrid],
         virtual_boundary_stiffness_coeff: float,
         virtual_boundary_damping_coeff: float,
         dx: float,

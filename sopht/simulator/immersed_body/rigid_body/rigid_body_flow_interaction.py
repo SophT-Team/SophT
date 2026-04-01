@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import Optional
 
 import numpy as np
 from elastica import RigidBodyBase
@@ -19,7 +19,7 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         virtual_boundary_damping_coeff: float,
         dx: float,
         grid_dim: int,
-        forcing_grid_cls: Type[ImmersedBodyForcingGrid],
+        forcing_grid_cls: type[ImmersedBodyForcingGrid],
         real_t: type = np.float64,
         eul_grid_coord_shift: Optional[float] = None,
         interp_kernel_width: Optional[float] = None,

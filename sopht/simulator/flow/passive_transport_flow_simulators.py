@@ -1,4 +1,5 @@
-from typing import Callable, Literal, Type
+from typing import Literal
+from collections.abc import Callable
 
 import numpy as np
 
@@ -21,7 +22,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         grid_size: tuple[int, int] | tuple[int, int, int],
         x_range: float,
         cfl: float = 0.1,
-        real_t: Type = np.float32,
+        real_t: type = np.float32,
         num_threads: int = 1,
         time: float = 0.0,
         field_type: Literal["scalar", "vector"] = "scalar",

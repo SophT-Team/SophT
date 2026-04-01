@@ -1,6 +1,6 @@
 """Kernels for performing advection timestep in 2D."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 

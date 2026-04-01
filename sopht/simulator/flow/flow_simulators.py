@@ -1,6 +1,5 @@
 import logging
 from abc import abstractmethod
-from typing import Type
 
 import numpy as np
 
@@ -18,7 +17,7 @@ class FlowSimulator:
         # TODO: fix mypy error and enable type hint
         grid_size,  # : tuple[int, int] | tuple[int, int, int],
         x_range: float,
-        real_t: Type = np.float32,
+        real_t: type = np.float32,
         num_threads: int = 1,
         time: float = 0.0,
     ) -> None:

@@ -1,6 +1,6 @@
 """Kernels for updating vorticity based on velocity forcing in 2D."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 import pystencils as ps

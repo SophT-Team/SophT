@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 import elastica as ea
 
@@ -7,7 +6,7 @@ from sopht.utils.io import IO
 
 
 def restart_simulation(
-    restart_simulator: Type[ea.BaseSystemCollection],
+    restart_simulator: ea.BaseSystemCollection,
     io: IO,
     rod_io: IO,
     forcing_io: IO,

@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 import matplotlib.animation as animation
 import numpy as np

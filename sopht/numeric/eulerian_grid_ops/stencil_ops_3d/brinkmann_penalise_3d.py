@@ -1,6 +1,7 @@
 """Kernels for Brinkmann penalisation in 3D."""
 
-from typing import Callable, Literal
+from typing import Literal
+from collections.abc import Callable
 
 import numpy as np
 import pystencils as ps

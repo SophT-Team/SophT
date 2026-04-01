@@ -1,6 +1,7 @@
 """Kernels applying laplacian filter on 3d grid for scalar and vector fields"""
 
-from typing import Callable, Literal
+from typing import Literal
+from collections.abc import Callable
 
 import numpy as np
 import pystencils as ps

@@ -1,6 +1,6 @@
 """Kernels for performing vorticity stretching timestep in 3D."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 
