@@ -45,8 +45,7 @@ def gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_3d(
             )
         )
 
-    char_func_from_level_set_via_sine_heaviside_pyst_kernel_3d = ps.create_kernel(
+    return ps.create_kernel(
         _char_func_from_level_set_via_sine_heaviside_stencil_3d,
         config=kernel_config,
     ).compile()
-    return char_func_from_level_set_via_sine_heaviside_pyst_kernel_3d

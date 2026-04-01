@@ -295,8 +295,7 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
 
     if n_components == 1:
         return eulerian_to_lagrangian_grid_interpolation_kernel_3d
-    else:
-        return vector_field_eulerian_to_lagrangian_grid_interpolation_kernel_3d
+    return vector_field_eulerian_to_lagrangian_grid_interpolation_kernel_3d
 
 
 def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
@@ -381,8 +380,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
 
     if n_components == 1:
         return lagrangian_to_eulerian_grid_interpolation_kernel_3d
-    else:
-        return vector_field_lagrangian_to_eulerian_grid_interpolation_kernel_3d
+    return vector_field_lagrangian_to_eulerian_grid_interpolation_kernel_3d
 
 
 def generate_cosine_interpolation_weights_kernel_3d(dx, interp_kernel_width, real_t):

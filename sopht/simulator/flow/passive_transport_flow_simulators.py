@@ -138,8 +138,7 @@ def compute_advection_diffusion_stable_timestep(
     # This may need a numba or pystencil version
     tol = 10 * np.finfo(real_t).eps
     velocity_magnitude_field[...] = np.sum(np.fabs(velocity_field), axis=0)
-    dt = min(
+    return min(
         cfl * dx / (np.amax(velocity_magnitude_field) + tol),
         0.9 * dx**2 / (2 * grid_dim) / kinematic_viscosity + tol,
     )
-    return dt

@@ -512,7 +512,7 @@ class IO:
             field_grid_size,
             lagrangian_grid_name,
         ):
-            entry = f"""<Attribute Name="{field_name}" Active="1"
+            return f"""<Attribute Name="{field_name}" Active="1"
             AttributeType="{field_type}" Center="Node">
                 <DataItem Dimensions="{field_grid_size}" NumberType="Float"
                 Precision="{self.precision}" Format="HDF">
@@ -521,7 +521,6 @@ class IO:
             </Attribute>
 
                 """
-            return entry
 
         for lagrangian_grid_name in self.lagrangian_grids:
             xmf_file_name = h5_file_name.replace(".h5", f"_{lagrangian_grid_name}.xmf")

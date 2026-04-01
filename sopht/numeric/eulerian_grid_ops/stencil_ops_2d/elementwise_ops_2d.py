@@ -53,10 +53,7 @@ def gen_elementwise_sum_pyst_kernel_2d(
         case _:
             raise ValueError("Invalid field type")
 
-    elementwise_sum_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_sum_stencil_2d, config=kernel_config
-    ).compile()
-    return elementwise_sum_pyst_kernel_2d
+    return ps.create_kernel(_elementwise_sum_stencil_2d, config=kernel_config).compile()
 
 
 def gen_set_fixed_val_pyst_kernel_2d(
@@ -136,10 +133,7 @@ def gen_elementwise_copy_pyst_kernel_2d(
         field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
         field[0, 0] @= rhs_field[0, 0]
 
-    elementwise_copy_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_copy_stencil_2d, config=kernel_config
-    ).compile()
-    return elementwise_copy_pyst_kernel_2d
+    return ps.create_kernel(_elementwise_copy_stencil_2d, config=kernel_config).compile()
 
 
 def gen_elementwise_complex_product_pyst_kernel_2d(
@@ -360,7 +354,4 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
         case _:
             raise ValueError("Invalid field type")
 
-    elementwise_saxpby_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_saxpby_stencil_2d, config=kernel_config
-    ).compile()
-    return elementwise_saxpby_pyst_kernel_2d
+    return ps.create_kernel(_elementwise_saxpby_stencil_2d, config=kernel_config).compile()

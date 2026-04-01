@@ -9,14 +9,13 @@ def mock_xy_plane(origin=np.array([1.0, 1.0, 1.0]), length=1.0, breadth=0.5):
     """Returns a mock XY plane for testing"""
     normal = np.array([0.0, 0.0, 1.0])
     tangent = np.array([1.0, 0.0, 0.0])
-    plane = sps.RectangularPlane(
+    return sps.RectangularPlane(
         origin=origin,
         plane_normal=normal,
         plane_tangent_along_length=tangent,
         plane_length=length,
         plane_breadth=breadth,
     )
-    return plane
 
 
 def test_rectangular_plane(caplog):

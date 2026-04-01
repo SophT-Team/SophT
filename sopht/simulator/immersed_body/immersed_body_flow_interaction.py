@@ -130,7 +130,6 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         and body grids.
 
         """
-        grid_dev_error_l2_norm = np.linalg.norm(self.lag_grid_position_mismatch_field) / np.sqrt(
+        return np.linalg.norm(self.lag_grid_position_mismatch_field) / np.sqrt(
             self.forcing_grid.num_lag_nodes
         )
-        return grid_dev_error_l2_norm

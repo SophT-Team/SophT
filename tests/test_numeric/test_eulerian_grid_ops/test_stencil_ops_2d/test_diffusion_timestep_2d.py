@@ -11,8 +11,7 @@ from sopht.utils.precision import get_real_t, get_test_tol
 
 def diffusion_timestep_euler_forward_reference(field, nu_dt_by_dx2, real_t):
     diffusion_flux = diffusion_flux_reference(field, prefactor=nu_dt_by_dx2, real_t=real_t)
-    new_field = field + diffusion_flux
-    return new_field
+    return field + diffusion_flux
 
 
 class DiffusionTimestepSolution:

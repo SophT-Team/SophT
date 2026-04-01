@@ -26,8 +26,7 @@ def advection_timestep_conservative_eno3_euler_forward_reference(
         inv_dx=inv_dx,
         real_t=real_t,
     )
-    new_field = field - dt * advection_flux
-    return new_field
+    return field - dt * advection_flux
 
 
 class AdvectionTimestepEulerForwardSolution:

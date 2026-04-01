@@ -19,8 +19,7 @@ def diffusion_timestep_euler_forward_reference(field, nu_dt_by_dx2, real_t):
         + field[:-2, 1:-1, 1:-1]
         - real_t(6) * field[1:-1, 1:-1, 1:-1]
     )
-    new_field = field + diffusion_flux
-    return new_field
+    return field + diffusion_flux
 
 
 class DiffusionTimestepEulerForwardSolution:

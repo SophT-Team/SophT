@@ -42,8 +42,7 @@ class HillSphereVortex:
         return local_x_grid, local_y_grid, local_z_grid, cylinder_r_grid, sphere_r_grid
 
     def get_inside_vortex_mask(self, sphere_r_grid: np.ndarray) -> np.ndarray:
-        inside_vortex = sphere_r_grid < self.vortex_radius
-        return inside_vortex
+        return sphere_r_grid < self.vortex_radius
 
     def get_vorticity(
         self, x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray
@@ -102,8 +101,7 @@ class HillSphereVortex:
         return velocity
 
     def get_kinetic_energy(self) -> float:
-        kinetic_energy = 10.0 * np.pi / 7.0 * self.free_stream_velocity**2 * self.vortex_radius**3
-        return kinetic_energy
+        return 10.0 * np.pi / 7.0 * self.free_stream_velocity**2 * self.vortex_radius**3
 
     def get_vortex_stretching(
         self, x_grid: np.ndarray, y_grid: np.ndarray, z_grid: np.ndarray

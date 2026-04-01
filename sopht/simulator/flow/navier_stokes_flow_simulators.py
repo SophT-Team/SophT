@@ -498,5 +498,4 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             field=self.vorticity_field,
             inv_dx=(1.0 / self.dx),
         )
-        vorticity_divg_l2_norm = np.linalg.norm(divergence_field) * self.dx ** (self.grid_dim / 2.0)
-        return vorticity_divg_l2_norm
+        return np.linalg.norm(divergence_field) * self.dx ** (self.grid_dim / 2.0)

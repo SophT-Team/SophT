@@ -9,5 +9,4 @@ def get_lab_cmap(res: int = 256) -> ListedColormap:
     bottom = cm.get_cmap("Blues", res)
 
     newcolors = np.vstack((top(np.linspace(0.75, 0, res)), bottom(np.linspace(0, 0.75, res))))
-    lab_cmap = ListedColormap(newcolors, name="OrangeBlue").reversed()
-    return lab_cmap
+    return ListedColormap(newcolors, name="OrangeBlue").reversed()

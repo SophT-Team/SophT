@@ -49,7 +49,7 @@ def UnboundedFlowSimulator3D(
         case _:
             raise ValueError("Invalid flow type given")
 
-    flow_simulator = UnboundedNavierStokesFlowSimulator3D(
+    return UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=kinematic_viscosity,
@@ -62,4 +62,3 @@ def UnboundedFlowSimulator3D(
         poisson_solver_type=poisson_solver_type,
         **kwargs,
     )
-    return flow_simulator

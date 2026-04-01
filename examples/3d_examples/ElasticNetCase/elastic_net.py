@@ -312,14 +312,13 @@ class ElasticNetSimulator:
 
     def time_step(self, time: float, time_step: float) -> float:
         """Time step the simulator"""
-        time = self.do_step(
+        return self.do_step(
             self.timestepper,
             self.stages_and_updates,
             self.net_simulator,
             time,
             time_step,
         )
-        return time
 
     def run(
         self,
