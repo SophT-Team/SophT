@@ -1,4 +1,27 @@
-from .flow import *
-from .immersed_body import *
+from .flow import (
+    FlowSimulator,
+    UnboundedFlowSimulator2D,
+    UnboundedFlowSimulator3D,
+    UnboundedNavierStokesFlowSimulator2D,
+    UnboundedNavierStokesFlowSimulator3D,
+    PassiveTransportFlowSimulator,
+)
 
-__all__ = flow.__all__ + immersed_body.__all__
+from .immersed_body import (
+    CosseratRodFlowInteraction,
+    CosseratRodEdgeForcingGrid,
+    CosseratRodElementCentricForcingGrid,
+    CosseratRodNodalForcingGrid,
+    CosseratRodSurfaceForcingGrid,
+    ImmersedBodyFlowInteraction,
+    ImmersedBodyForcingGrid,
+    FlowForces,
+    RectangularPlane,
+    RigidBodyFlowInteraction,
+    CircularCylinderForcingGrid,
+    OpenEndCircularCylinderForcingGrid,
+    RectangularPlaneForcingGrid,
+    SphereForcingGrid,
+    ThreeDimensionalRigidBodyForcingGrid,
+    TwoDimensionalCylinderForcingGrid,
+)
