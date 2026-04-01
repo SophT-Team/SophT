@@ -1,3 +1,5 @@
+"""Flow module for the SophT Simulator."""
+
 from .flow_simulators import FlowSimulator
 from .flow_simulators_2d import UnboundedFlowSimulator2D
 from .flow_simulators_3d import UnboundedFlowSimulator3D
