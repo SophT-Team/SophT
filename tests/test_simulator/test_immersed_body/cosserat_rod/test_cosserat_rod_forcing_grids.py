@@ -261,12 +261,11 @@ class MockEdgeForcingGrid:
 @pytest.mark.parametrize("n_elems", [8, 16])
 def test_rod_edge_grid_dimension(grid_dim, n_elems):
     straight_rod = mock_straight_rod(n_elems)
-    with pytest.raises(ValueError) as exc_info:
-        _ = sps.CosseratRodEdgeForcingGrid(grid_dim=grid_dim, cosserat_rod=straight_rod)
     error_msg = (
         "Invalid grid dimensions. Cosserat rod edge forcing grid is only defined for grid_dim=2"
     )
-    assert exc_info.value.args[0] == error_msg
+    with pytest.raises(ValueError, match=error_msg):
+        _ = sps.CosseratRodEdgeForcingGrid(grid_dim=grid_dim, cosserat_rod=straight_rod)
 
 
 @pytest.mark.parametrize("n_elems", [8, 16])
@@ -551,16 +550,15 @@ class MockSurfaceForcingGrid:
 @pytest.mark.parametrize("n_elems", [8, 16])
 def test_rod_surface_grid_dimension(grid_dim, n_elems):
     straight_rod = mock_straight_rod(n_elems)
-    with pytest.raises(ValueError) as exc_info:
+    error_msg = (
+        "Invalid grid dimensions. Cosserat rod surface forcing grid is only defined for grid_dim=3"
+    )
+    with pytest.raises(ValueError, match=error_msg):
         _ = sps.CosseratRodSurfaceForcingGrid(
             grid_dim=grid_dim,
             cosserat_rod=straight_rod,
             surface_grid_density_for_largest_element=1,
         )
-    error_msg = (
-        "Invalid grid dimensions. Cosserat rod surface forcing grid is only defined for grid_dim=3"
-    )
-    assert exc_info.value.args[0] == error_msg
 
 
 @pytest.mark.parametrize("n_elems", [8, 16])

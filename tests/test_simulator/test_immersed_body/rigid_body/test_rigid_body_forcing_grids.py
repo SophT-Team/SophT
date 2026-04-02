@@ -26,16 +26,15 @@ def mock_2d_cylinder():
 def test_circular_cylinder_grid_invalid_dim(grid_dim):
     cylinder = mock_2d_cylinder()
     if grid_dim != 2:
-        with pytest.raises(ValueError) as exc_info:
+        error_msg = (
+            "Invalid grid dimensions. 2D cylinder forcing grid is only defined for grid_dim=2"
+        )
+        with pytest.raises(ValueError, match=error_msg):
             _ = sps.CircularCylinderForcingGrid(
                 grid_dim=grid_dim,
                 rigid_body=cylinder,
                 num_forcing_points=8,
             )
-        error_msg = (
-            "Invalid grid dimensions. 2D cylinder forcing grid is only defined for grid_dim=2"
-        )
-        assert exc_info.value.args[0] == error_msg
 
 
 @pytest.mark.parametrize("num_forcing_points", [8, 16])
@@ -157,16 +156,15 @@ def mock_3d_sphere():
 def test_sphere_grid_invalid_dim(grid_dim):
     sphere = mock_3d_sphere()
     if grid_dim != 3:
-        with pytest.raises(ValueError) as exc_info:
+        error_msg = (
+            "Invalid grid dimensions. 3D Rigid body forcing grid is only defined for grid_dim=3"
+        )
+        with pytest.raises(ValueError, match=error_msg):
             _ = sps.SphereForcingGrid(
                 grid_dim=grid_dim,
                 rigid_body=sphere,
                 num_forcing_points_along_equator=8,
             )
-        error_msg = (
-            "Invalid grid dimensions. 3D Rigid body forcing grid is only defined for grid_dim=3"
-        )
-        assert exc_info.value.args[0] == error_msg
 
 
 @pytest.mark.parametrize("num_forcing_points_along_equator", [8, 16])
