@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import elastica as ea
 
@@ -13,10 +13,7 @@ def restart_simulation(
     restart_dir: str,
 ) -> float:
     # find latest saved data
-    iter_num = []
-    for filename in os.listdir():
-        if "sopht" in filename and "h5" in filename:
-            iter_num.append(int(filename.split("_")[-1].split(".")[0]))
+    iter_num = [int(filename.stem.split("_")[-1]) for filename in Path.cwd().glob("sopht_*.h5")]
 
     if len(iter_num) == 0:
         msg = "There is no file to load in the directory."
