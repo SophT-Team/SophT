@@ -3,10 +3,10 @@
 from .flow import (
     FlowSimulator,
     PassiveTransportFlowSimulator,
-    UnboundedFlowSimulator2D,
-    UnboundedFlowSimulator3D,
     UnboundedNavierStokesFlowSimulator2D,
     UnboundedNavierStokesFlowSimulator3D,
+    create_unbounded_flow_simulator_2d,
+    create_unbounded_flow_simulator_3d,
 )
 from .immersed_body import (
     CircularCylinderForcingGrid,
@@ -46,8 +46,8 @@ __all__ = [
     "SphereForcingGrid",
     "ThreeDimensionalRigidBodyForcingGrid",
     "TwoDimensionalCylinderForcingGrid",
-    "UnboundedFlowSimulator2D",
-    "UnboundedFlowSimulator3D",
     "UnboundedNavierStokesFlowSimulator2D",
     "UnboundedNavierStokesFlowSimulator3D",
+    "create_unbounded_flow_simulator_2d",
+    "create_unbounded_flow_simulator_3d",
 ]

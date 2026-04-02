@@ -25,7 +25,7 @@ def test_flow_sim_3d_navier_stokes_with_forcing_timestep(
     init_time = 1.0
     filter_type = "convolution"
     filter_order = 2
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -78,7 +78,7 @@ def test_flow_sim_3d_compute_stable_timestep(grid_size_x, precision):
     real_t = spu.get_real_t(precision)
     grid_size = (grid_size_x,) * grid_dim
     cfl = 0.2
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
         CFL=cfl,
@@ -113,7 +113,7 @@ def test_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision):
     real_t = spu.get_real_t(precision)
     grid_size = (grid_size_x,) * grid_dim
     cfl = 0.2
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
         CFL=cfl,

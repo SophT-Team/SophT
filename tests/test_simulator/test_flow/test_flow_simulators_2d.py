@@ -17,7 +17,7 @@ def test_flow_sim_2d_navier_stokes_with_forcing_timestep(grid_size_x, precision,
     dt = 2.0
     free_stream_velocity = np.array([3.0, 4.0])
     init_time = 1.0
-    flow_sim = sps.UnboundedFlowSimulator2D(
+    flow_sim = sps.create_unbounded_flow_simulator_2d(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=nu,
@@ -66,7 +66,7 @@ def test_flow_sim_2d_compute_stable_timestep(grid_size_x, precision):
     real_t = get_real_t(precision)
     grid_size = (grid_size_x,) * grid_dim
     cfl = 0.2
-    flow_sim = sps.UnboundedFlowSimulator2D(
+    flow_sim = sps.create_unbounded_flow_simulator_2d(
         grid_size=grid_size,
         x_range=x_range,
         CFL=cfl,

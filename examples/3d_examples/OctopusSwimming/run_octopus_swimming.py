@@ -112,7 +112,7 @@ def octopus_swimming(
     # ==================FLOW SETUP START=========================
     # Flow parameters
     kinematic_viscosity = base_diameter * vel_scale / reynolds_number
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=kinematic_viscosity,

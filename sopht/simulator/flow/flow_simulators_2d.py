@@ -5,7 +5,7 @@ import numpy as np
 from .navier_stokes_flow_simulators import UnboundedNavierStokesFlowSimulator2D
 
 
-def UnboundedFlowSimulator2D(
+def create_unbounded_flow_simulator_2d(
     grid_size: tuple[int, int],
     x_range: float,
     kinematic_viscosity: float,
