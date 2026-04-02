@@ -24,6 +24,7 @@ dependencies = [
     "pyfftw",
     "pystencils",
     "ffmpeg-python",
+    "typing-extensions",
 ]
 
 [project.urls]

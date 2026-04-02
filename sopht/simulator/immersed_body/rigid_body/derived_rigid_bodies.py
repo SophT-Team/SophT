@@ -4,9 +4,11 @@ import elastica as ea
 import numpy as np
 from elastica._linalg import _batch_cross
 from elastica.utils import MaxDimension
+from typing_extensions import override
 
 
 class RectangularPlane(ea.RigidBodyBase):
+    @override
     def __init__(
         self,
         origin: np.ndarray,

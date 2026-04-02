@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+from typing_extensions import override
 
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
@@ -22,6 +23,7 @@ _zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
 class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
     """Class for 2D unbounded Navier Stokes flow simulator"""
 
+    @override
     def __init__(
         self,
         grid_size: tuple[int, int],
@@ -68,6 +70,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
             time=time,
         )
 
+    @override
     def _init_fields(self) -> None:
         """Initialize the necessary field arrays"""
         # Initialize flow field
@@ -82,6 +85,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
             # this one holds the forcing from bodies
             self.eul_grid_forcing_field = np.zeros_like(self.velocity_field)
 
+    @override
     def _compile_kernels(self) -> None:
         """Compile necessary kernels based on simulator flags"""
         self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
@@ -156,6 +160,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
 
         self._update_velocity_with_free_stream = update_velocity_with_free_stream
 
+    @override
     def _finalise_flow_time_step(self) -> None:
         # defqult time step
         self._flow_time_step: Callable = self._navier_stokes_time_step
@@ -202,6 +207,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         self._navier_stokes_time_step(dt=dt, free_stream_velocity=free_stream_velocity)
         self._set_field(vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim)
 
+    @override
     def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
         dt = compute_advection_diffusion_stable_timestep(
@@ -219,6 +225,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
 class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
     """Class for 3D unbounded Navier Stokes flow simulator"""
 
+    @override
     def __init__(
         self,
         grid_size: tuple[int, int, int],
@@ -302,6 +309,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             time=time,
         )
 
+    @override
     def _init_fields(self) -> None:
         """Initialize the necessary field arrays in 3D"""
         # Initialize flow field
@@ -315,6 +323,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             # this one holds the forcing from bodies
             self.eul_grid_forcing_field = np.zeros_like(self.velocity_field)
 
+    @override
     def _compile_kernels(self) -> None:
         """Compile necessary kernels based on 3D simulator flags"""
         self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
@@ -429,6 +438,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
 
         self._update_velocity_with_free_stream = update_velocity_with_free_stream
 
+    @override
     def _finalise_flow_time_step(self) -> None:
         # defqult time step
         self._flow_time_step: Callable = self._navier_stokes_time_step
@@ -486,6 +496,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         self._navier_stokes_time_step(dt=dt, free_stream_velocity=free_stream_velocity)
         self._set_field(vector_field=self.eul_grid_forcing_field, fixed_vals=[0.0] * self.grid_dim)
 
+    @override
     def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
         dt = compute_advection_diffusion_stable_timestep(

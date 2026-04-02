@@ -5,6 +5,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 from elastica.rod.cosserat_rod import CosseratRod
+from typing_extensions import override
 
 import sopht.utils as spu
 
@@ -613,6 +614,7 @@ class CosseratRodIO(IO):
     Derived IO class for Cosserat rod IO.
     """
 
+    @override
     def __init__(self, cosserat_rod: CosseratRod, dim: int, real_dtype: type = np.float64) -> None:
         super().__init__(dim, real_dtype)
         self.cosserat_rod = cosserat_rod
@@ -629,6 +631,7 @@ class CosseratRodIO(IO):
             lagrangian_grid_connect=True,
         )
 
+    @override
     def save(self, h5_file_name: str, time: float = 0.0) -> None:
         self._update_rod_element_position()
         self._save(h5_file_name=h5_file_name, time=time)
@@ -645,6 +648,7 @@ class EulerianFieldIO(IO):
     Derived IO class for saving Eulerian grid fields.
     """
 
+    @override
     def __init__(
         self, position_field: np.ndarray, eulerian_fields_dict: dict[str, np.ndarray]
     ) -> None:

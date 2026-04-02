@@ -2,6 +2,7 @@ import elastica as ea
 import numpy as np
 from elastica._linalg import _batch_cross, _batch_matrix_transpose, _batch_matvec
 from elastica.interaction import _elements_to_nodes_inplace, _node_to_element_velocity
+from typing_extensions import override
 
 from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBodyForcingGrid
 
@@ -9,6 +10,7 @@ from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBod
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
+    @override
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         num_lag_nodes = cosserat_rod.n_elems + 1
         super().__init__(grid_dim, num_lag_nodes)
@@ -19,14 +21,17 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
         self.position_field[...] = self.cosserat_rod.position_collection[: self.grid_dim]
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
         self.velocity_field[...] = self.cosserat_rod.velocity_collection[: self.grid_dim]
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -67,6 +72,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # estimated distance between consecutive elements
@@ -76,6 +82,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
+    @override
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         num_lag_nodes = cosserat_rod.n_elems
         super().__init__(grid_dim, num_lag_nodes)
@@ -85,6 +92,7 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
         self.position_field[...] = (
@@ -92,12 +100,14 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
             + self.cosserat_rod.position_collection[: self.grid_dim, :-1]
         ) / 2.0
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
         self.velocity_field[...] = _node_to_element_velocity(
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )[: self.grid_dim]
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -113,6 +123,7 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
         # torque from grid forcing (don't modify since set = 0 at initialisation)
         # because no torques acting on element centers
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # estimated distance between consecutive elements
@@ -131,6 +142,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
+    @override
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         if grid_dim != 2:
             msg = (
@@ -163,6 +175,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
 
@@ -194,6 +207,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             rod_element_position - self.moment_arm
         )[: self.grid_dim]
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
@@ -221,6 +235,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             element_velocity + _batch_cross(omega_collection, -self.moment_arm)
         )[: self.grid_dim]
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -267,6 +282,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         return np.amax(self.cosserat_rod.lengths)
@@ -284,6 +300,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
+    @override
     def __init__(
         self,
         grid_dim: int,
@@ -387,6 +404,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
 
@@ -421,6 +439,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Surface positions are moment_arm + element center position
         self.position_field += self.moment_arm
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
@@ -446,6 +465,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # v_elem + omega X moment_arm
         self.velocity_field += _batch_cross(self.grid_point_omega, self.moment_arm)
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -476,6 +496,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 axis=1,
             )
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         grid_angular_spacing = 2 * np.pi / self.surface_grid_density_for_largest_element

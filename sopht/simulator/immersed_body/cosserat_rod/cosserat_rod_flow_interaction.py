@@ -1,5 +1,6 @@
 import elastica as ea
 import numpy as np
+from typing_extensions import override
 
 from sopht.simulator.immersed_body.immersed_body_flow_interaction import ImmersedBodyFlowInteraction
 from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBodyForcingGrid
@@ -8,6 +9,7 @@ from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBod
 class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
     """Class for Cosserat rod flow interaction."""
 
+    @override
     def __init__(
         self,
         cosserat_rod: ea.CosseratRod,

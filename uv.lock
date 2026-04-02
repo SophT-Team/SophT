@@ -1531,6 +1531,7 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -1568,6 +1569,7 @@ requires-dist = [
     { name = "pystencils" },
     { name = "scipy" },
     { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 provides-extras = ["examples"]
 

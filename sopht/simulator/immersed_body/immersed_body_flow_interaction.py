@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from typing_extensions import override
 
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 
@@ -12,6 +13,7 @@ from .immersed_body_forcing_grid import (
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
     """Base class for immersed body flow interaction."""
 
+    @override
     def __init__(
         self,
         eul_grid_forcing_field: np.ndarray,

@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
+from typing_extensions import override
 
 import sopht.numeric.eulerian_grid_ops as spne
 
@@ -17,6 +18,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
     or vector field.
     """
 
+    @override
     def __init__(
         self,
         kinematic_viscosity: float,
@@ -54,6 +56,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         self.field_type = field_type
         super().__init__(grid_dim, grid_size, x_range, real_t, num_threads, time)
 
+    @override
     def _init_fields(self) -> None:
         """Initialize the necessary field arrays"""
         match self.field_type:
@@ -65,6 +68,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
         # we use the same buffer for advection and diffusion fluxes
         self.buffer_scalar_field = np.zeros(self.grid_size, dtype=self.real_t)
 
+    @override
     def _compile_kernels(self) -> None:
         """Compile necessary kernels based on flow type"""
         match self.grid_dim:
@@ -111,10 +115,12 @@ class PassiveTransportFlowSimulator(FlowSimulator):
             nu_dt_by_dx2=self.real_t(self.kinematic_viscosity * dt / self.dx / self.dx),
         )
 
+    @override
     def _finalise_flow_time_step(self) -> None:
         """Finalise the flow time step"""
         self._flow_time_step: Callable = self._advection_and_diffusion_time_step
 
+    @override
     def compute_stable_timestep(self, dt_prefac: float = 1.0) -> float:
         """Compute upper limit for stable time-stepping."""
         dt = compute_advection_diffusion_stable_timestep(
