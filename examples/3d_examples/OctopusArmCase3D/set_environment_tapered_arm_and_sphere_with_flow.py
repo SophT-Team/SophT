@@ -30,7 +30,7 @@ class ArmEnvironment:
         final_time: float,
         time_step: float = 1.0e-5,
         rendering_fps: int = 30,
-        COLLECT_DATA_FOR_POSTPROCESSING: bool = True,
+        collect_data_for_postprocessing: bool = True,
     ) -> None:
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
@@ -40,24 +40,24 @@ class ArmEnvironment:
         self.total_steps = int(self.final_time / self.time_step)
         self.rendering_fps = rendering_fps
         self.step_skip = int(1.0 / (self.rendering_fps * self.time_step))
-        self.COLLECT_DATA_FOR_POSTPROCESSING = COLLECT_DATA_FOR_POSTPROCESSING
+        self.collect_data_for_postprocessing = collect_data_for_postprocessing
 
     def get_systems(
         self,
     ) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
-    def set_arm(self, E: float, rod: ea.CosseratRod) -> None:
-        self.set_rod(E, rod)
+    def set_arm(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
+        self.set_rod(youngs_modulus, rod)
         self.set_muscles(self.shearable_rod)
 
-    def setup(self, E: float, rod: ea.CosseratRod) -> None:
-        self.set_arm(E, rod)
+    def setup(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
+        self.set_arm(youngs_modulus, rod)
 
-    def set_rod(self, E: float, rod: ea.CosseratRod) -> None:
+    def set_rod(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
         """Set up a rod"""
 
-        self.E = E
+        self.E = youngs_modulus
         self.shearable_rod = rod
         self.simulator.append(self.shearable_rod)
 
@@ -188,10 +188,10 @@ class ArmEnvironment:
             callback_params_list=self.muscle_callback_params_list,
         )
 
-    def reset(self, E: float, rod: ea.CosseratRod) -> None:
+    def reset(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
         self.simulator = BaseSimulator()
 
-        self.setup(E, rod)
+        self.setup(youngs_modulus, rod)
 
         """ Finalize the simulator and create time stepper """
 
@@ -244,5 +244,5 @@ class Environment(ArmEnvironment):
     def get_systems(self) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
-    def setup(self, E: float, rod: ea.CosseratRod) -> None:
-        self.set_arm(E, rod)
+    def setup(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
+        self.set_arm(youngs_modulus, rod)

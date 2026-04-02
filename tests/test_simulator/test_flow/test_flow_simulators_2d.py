@@ -69,7 +69,7 @@ def test_flow_sim_2d_compute_stable_timestep(grid_size_x, precision):
     flow_sim = sps.create_unbounded_flow_simulator_2d(
         grid_size=grid_size,
         x_range=x_range,
-        CFL=cfl,
+        cfl=cfl,
         kinematic_viscosity=nu,
         real_t=real_t,
         num_threads=num_threads,

@@ -81,7 +81,7 @@ def test_flow_sim_3d_compute_stable_timestep(grid_size_x, precision):
     flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
-        CFL=cfl,
+        cfl=cfl,
         kinematic_viscosity=nu,
         real_t=real_t,
         num_threads=num_threads,
@@ -116,7 +116,7 @@ def test_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision):
     flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
-        CFL=cfl,
+        cfl=cfl,
         kinematic_viscosity=nu,
         real_t=real_t,
         num_threads=num_threads,

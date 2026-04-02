@@ -52,7 +52,7 @@ class OctopusEnvironment:
         final_time,
         time_step=1.0e-5,
         rendering_fps=30,
-        COLLECT_DATA_FOR_POSTPROCESSING=True,
+        collect_data_for_postprocessing=True,
     ):
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
@@ -62,24 +62,24 @@ class OctopusEnvironment:
         self.total_steps = int(self.final_time / self.time_step)
         self.rendering_fps = rendering_fps
         self.step_skip = int(1.0 / (self.rendering_fps * self.time_step))
-        self.COLLECT_DATA_FOR_POSTPROCESSING = COLLECT_DATA_FOR_POSTPROCESSING
+        self.collect_data_for_postprocessing = collect_data_for_postprocessing
 
     def get_systems(
         self,
     ):
         return self.rod_list  # [self.shearable_rod]
 
-    def set_arm(self, E, density, rod, rod_id):
-        self.set_rod(E, density, rod)
+    def set_arm(self, youngs_modulus, density, rod, rod_id):
+        self.set_rod(youngs_modulus, density, rod)
         self.set_muscles(rod, rod_id)
 
-    def setup(self, E, density, rod, rod_id):
-        self.set_arm(E, density, rod, rod_id)
+    def setup(self, youngs_modulus, density, rod, rod_id):
+        self.set_arm(youngs_modulus, density, rod, rod_id)
 
-    def set_rod(self, E, density, rod):
+    def set_rod(self, youngs_modulus, density, rod):
         """Set up a rod"""
 
-        self.E = E
+        self.E = youngs_modulus
         # self.shearable_rod = rod
         self.simulator.append(rod)
 
@@ -214,7 +214,7 @@ class OctopusEnvironment:
             callback_params_list=self.muscle_callback_params_list[arm_id],
         )
 
-    def reset(self, E, density, rod_list, arm_rod_list, rigid_body_list):
+    def reset(self, youngs_modulus, density, rod_list, arm_rod_list, rigid_body_list):
         self.simulator = BaseSimulator()
 
         self.rod_list = rod_list
@@ -228,7 +228,7 @@ class OctopusEnvironment:
             self.muscle_callback_params_list.append([])
 
         for rod_id, rod in enumerate(rod_list):
-            self.setup(E, density, rod, rod_id)
+            self.setup(youngs_modulus, density, rod, rod_id)
 
         for _, body in enumerate(rigid_body_list):
             self.simulator.append(body)

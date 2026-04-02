@@ -32,7 +32,7 @@ class ArmEnvironment:
         final_time: float,
         time_step: float = 1.0e-5,
         rendering_fps: int = 30,
-        COLLECT_DATA_FOR_POSTPROCESSING: bool = True,
+        collect_data_for_postprocessing: bool = True,
     ) -> None:
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
@@ -42,7 +42,7 @@ class ArmEnvironment:
         self.total_steps = int(self.final_time / self.time_step)
         self.rendering_fps = rendering_fps
         self.step_skip = int(1.0 / (self.rendering_fps * self.time_step))
-        self.COLLECT_DATA_FOR_POSTPROCESSING = COLLECT_DATA_FOR_POSTPROCESSING
+        self.collect_data_for_postprocessing = collect_data_for_postprocessing
 
     def get_systems(
         self,
