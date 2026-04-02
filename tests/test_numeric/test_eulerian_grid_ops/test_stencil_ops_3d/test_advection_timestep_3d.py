@@ -29,12 +29,24 @@ def advection_timestep_conservative_eno3_euler_forward_reference(
 
 
 class AdvectionTimestepEulerForwardSolution:
-    def __init__(self, n_samples, flux_type="conservative_eno3", precision="single"):
+    def __init__(
+        self,
+        n_samples,
+        rng_generator: np.random.Generator,
+        flux_type="conservative_eno3",
+        precision="single",
+    ):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_vector_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_velocity = np.random.rand(3, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
+        self.ref_vector_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
+        ).astype(real_t)
+        self.ref_velocity = rng_generator.random((3, n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
         self.inv_dx = real_t(0.2)
         self.dt = real_t(0.1)
         self.flux_type = flux_type
@@ -80,10 +92,11 @@ class AdvectionTimestepEulerForwardSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_advection_eno3_euler_forward(n_values, precision):
+def test_advection_eno3_euler_forward(n_values, precision, rng):
     real_t = get_real_t(precision)
     solution = AdvectionTimestepEulerForwardSolution(
         n_values,
+        rng,
         flux_type="conservative_eno3",
         precision=precision,
     )
@@ -108,10 +121,11 @@ def test_advection_eno3_euler_forward(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vector_field_advection_timestep_eno3_3d(n_values, precision):
+def test_vector_field_advection_timestep_eno3_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
     solution = AdvectionTimestepEulerForwardSolution(
         n_values,
+        rng,
         flux_type="conservative_eno3",
         precision=precision,
     )

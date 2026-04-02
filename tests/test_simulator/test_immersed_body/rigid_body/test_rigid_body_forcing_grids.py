@@ -247,7 +247,7 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
 
 
 @pytest.mark.parametrize("num_forcing_points_along_equator", [8, 16])
-def test_sphere_grid_force_transfer(num_forcing_points_along_equator):
+def test_sphere_grid_force_transfer(num_forcing_points_along_equator, rng):
     sphere = mock_3d_sphere()
     grid_dim = 3
     sphere_forcing_grid = sps.SphereForcingGrid(
@@ -258,7 +258,7 @@ def test_sphere_grid_force_transfer(num_forcing_points_along_equator):
     body_flow_forces = np.zeros((grid_dim, 1))
     body_flow_torques = np.zeros_like(body_flow_forces)
     lag_grid_forcing_field = np.zeros((grid_dim, sphere_forcing_grid.num_lag_nodes))
-    uniform_forcing = np.random.rand(grid_dim, 1)
+    uniform_forcing = rng.random((grid_dim, 1))
     lag_grid_forcing_field[...] = uniform_forcing
     sphere_forcing_grid.transfer_forcing_from_grid_to_body(
         body_flow_forces=body_flow_forces,

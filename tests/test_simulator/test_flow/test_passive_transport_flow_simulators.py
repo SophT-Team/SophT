@@ -14,6 +14,7 @@ def test_passive_transport_flow_simulator_time_step(
     field_type,
     grid_size_x,
     precision,
+    rng,
 ):
     num_threads = 4
     x_range = 1.0
@@ -38,8 +39,8 @@ def test_passive_transport_flow_simulator_time_step(
     )
     ref_time = init_time + dt
     # initialise flow sim state (passive fields)
-    flow_sim.velocity_field[...] = np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
-    flow_sim.primary_field[...] = np.random.rand(*flow_sim.primary_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = rng.random(flow_sim.velocity_field.shape).astype(real_t)
+    flow_sim.primary_field[...] = rng.random(flow_sim.primary_field.shape).astype(real_t)
     ref_primary_field = flow_sim.primary_field.copy()
     flow_sim.time_step(dt=dt)
 

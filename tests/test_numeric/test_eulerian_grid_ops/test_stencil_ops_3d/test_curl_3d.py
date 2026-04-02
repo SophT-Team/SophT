@@ -37,12 +37,18 @@ def curl_reference(field_x, field_y, field_z, prefactor):
 
 
 class CurlSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field_x = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_field_y = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_field_z = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_field_x = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
+        self.ref_field_y = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
+        self.ref_field_z = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
         self.prefactor = real_t(0.1)
         self.ref_curl_x, self.ref_curl_y, self.ref_curl_z = curl_reference(
             self.ref_field_x, self.ref_field_y, self.ref_field_z, self.prefactor
@@ -70,9 +76,9 @@ class CurlSolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("reset_ghost_zone", [True, False])
-def test_curl_3d(n_values, precision, reset_ghost_zone):
+def test_curl_3d(n_values, precision, reset_ghost_zone, rng):
     real_t = get_real_t(precision)
-    solution = CurlSolution(n_values, precision)
+    solution = CurlSolution(n_values, rng, precision)
     curl = np.ones_like(solution.ref_curl) if reset_ghost_zone else np.zeros_like(solution.ref_curl)
     curl_pyst_kernel_3d = gen_curl_pyst_kernel_3d(
         real_t=real_t,

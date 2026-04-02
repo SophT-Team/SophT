@@ -16,10 +16,14 @@ def fft_ifft_reference(field):
 
 
 class FFTSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(
+        self, rng_generator: np.random.Generator, n_samples: int, precision: str = "single"
+    ):
         self.real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(self.real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            self.real_t
+        )
         self.ref_fourier_field, self.ref_inv_fourier_field = fft_ifft_reference(self.ref_field)
 
     @property
@@ -35,8 +39,8 @@ class FFTSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [8])
-def test_scipy_fft_3d(n_values, precision):
-    solution = FFTSolution(n_values, precision=precision)
+def test_scipy_fft_3d(n_values, precision, rng):
+    solution = FFTSolution(rng_generator=rng, n_samples=n_values, precision=precision)
     fourier_field = np.zeros_like(solution.ref_fourier_field)
     inv_fourier_field = np.zeros_like(solution.ref_inv_fourier_field)
     max_num_threads = psutil.cpu_count(logical=False)
@@ -52,9 +56,9 @@ def test_scipy_fft_3d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [8])
-def test_pyfftw_fft_3d(n_values, precision):
+def test_pyfftw_fft_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = FFTSolution(n_values, precision=precision)
+    solution = FFTSolution(rng_generator=rng, n_samples=n_values, precision=precision)
     max_num_threads = psutil.cpu_count(logical=False)
     pyfftw = FFTPyFFTW3D(n_values, n_values, n_values, num_threads=max_num_threads, real_t=real_t)
     fourier_field = np.zeros_like(solution.ref_fourier_field)

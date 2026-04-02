@@ -47,13 +47,21 @@ def vorticity_stretching_timestep_ssprk3_reference(vorticity_field, velocity_fie
 
 
 class VorticityStretchingTimestepSolution:
-    def __init__(self, n_samples, time_stepper="euler_forward", precision="single"):
+    def __init__(
+        self,
+        n_samples,
+        rng_generator: np.random.Generator,
+        time_stepper="euler_forward",
+        precision="single",
+    ):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_vorticity_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(
-            real_t
-        )
-        self.ref_velocity_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_vorticity_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
+        ).astype(real_t)
+        self.ref_velocity_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
+        ).astype(real_t)
         self.dt_by_2_dx = real_t(0.1)
         if time_stepper == "euler_forward":
             self.ref_new_vorticity_field = vorticity_stretching_timestep_euler_forward_reference(
@@ -74,10 +82,10 @@ class VorticityStretchingTimestepSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vort_stretching_timestep_euler_forward_3d(n_values, precision):
+def test_vort_stretching_timestep_euler_forward_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
     solution = VorticityStretchingTimestepSolution(
-        n_values, time_stepper="euler_forward", precision=precision
+        n_values, rng, time_stepper="euler_forward", precision=precision
     )
     vorticity_field = solution.ref_vorticity_field.copy()
     vorticity_stretching_flux_field = np.ones_like(vorticity_field)
@@ -99,10 +107,10 @@ def test_vort_stretching_timestep_euler_forward_3d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vort_stretching_timestep_ssprk3_3d(n_values, precision):
+def test_vort_stretching_timestep_ssprk3_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
     solution = VorticityStretchingTimestepSolution(
-        n_values, time_stepper="ssprk3", precision=precision
+        n_values, rng, time_stepper="ssprk3", precision=precision
     )
     vorticity_field = solution.ref_vorticity_field.copy()
     vorticity_stretching_flux_field = np.ones_like(vorticity_field)

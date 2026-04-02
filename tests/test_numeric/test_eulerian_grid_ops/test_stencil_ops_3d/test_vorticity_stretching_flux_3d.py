@@ -37,13 +37,15 @@ def vorticity_stretching_flux_reference(vorticity_field, velocity_field, prefact
 
 
 class VorticityStretchingFluxSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_vorticity_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(
-            real_t
-        )
-        self.ref_velocity_field = np.random.randn(3, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_vorticity_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
+        ).astype(real_t)
+        self.ref_velocity_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
+        ).astype(real_t)
         self.prefactor = real_t(0.1)
         self.ref_vorticity_stretching_flux_field = vorticity_stretching_flux_reference(
             self.ref_vorticity_field, self.ref_velocity_field, self.prefactor
@@ -59,9 +61,9 @@ class VorticityStretchingFluxSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vort_stretching_flux_3d(n_values, precision):
+def test_vort_stretching_flux_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = VorticityStretchingFluxSolution(n_values, precision)
+    solution = VorticityStretchingFluxSolution(n_values, rng, precision)
     vorticity_stretching_flux_field = np.zeros_like(solution.ref_vorticity_stretching_flux_field)
     vorticity_stretching_flux_kernel_3d = gen_vorticity_stretching_flux_pyst_kernel_3d(
         real_t=real_t,

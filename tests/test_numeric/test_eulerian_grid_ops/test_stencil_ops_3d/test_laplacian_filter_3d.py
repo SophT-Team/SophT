@@ -151,13 +151,14 @@ def test_laplacian_filter_random_field(
     filter_order,
     field_type,
     filter_type,
+    rng,
 ):
     real_t = get_real_t(precision)
     dim = 3
     test_field = (
-        np.random.rand(n_values, n_values, n_values).astype(real_t)
+        rng.random((n_values, n_values, n_values)).astype(real_t)
         if field_type == "scalar"
-        else np.random.rand(dim, n_values, n_values, n_values).astype(real_t)
+        else rng.random((dim, n_values, n_values, n_values)).astype(real_t)
     )
     numpy_ref_field = test_field.copy()
     field_buffer = (

@@ -10,7 +10,15 @@ from sopht.utils.precision import get_real_t, get_test_tol
 
 
 class UnboundedPoissonSolverSolution3D:
-    def __init__(self, grid_size_z, grid_size_y, grid_size_x, x_range, precision="single"):
+    def __init__(
+        self,
+        grid_size_z: int,
+        grid_size_y: int,
+        grid_size_x: int,
+        x_range: float,
+        rng_generator: np.random.Generator,
+        precision: str = "single",
+    ):
         self.real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.grid_size_z = grid_size_z
@@ -20,8 +28,8 @@ class UnboundedPoissonSolverSolution3D:
         self.y_range = x_range * (grid_size_y / grid_size_x)
         self.z_range = x_range * (grid_size_z / grid_size_x)
         self.dx = self.real_t(x_range / grid_size_x)
-        self.rhs_field = np.random.randn(
-            self.grid_size_z, self.grid_size_y, self.grid_size_x
+        self.rhs_field = rng_generator.standard_normal(
+            (self.grid_size_z, self.grid_size_y, self.grid_size_x)
         ).astype(self.real_t)
         self.domain_doubled_rhs_field = np.zeros(
             (2 * self.grid_size_z, 2 * self.grid_size_y, 2 * self.grid_size_x),
@@ -36,8 +44,8 @@ class UnboundedPoissonSolverSolution3D:
         self.ref_solution_field = np.zeros_like(self.rhs_field)
         self.ref_solution_field[...] = self.poisson_solve_reference(rhs_field=self.rhs_field)
 
-        self.rhs_vector_field = np.random.randn(
-            3, self.grid_size_z, self.grid_size_y, self.grid_size_x
+        self.rhs_vector_field = rng_generator.standard_normal(
+            (3, self.grid_size_z, self.grid_size_y, self.grid_size_x)
         ).astype(self.real_t)
         self.ref_solution_vector_field = np.zeros_like(self.rhs_vector_field)
         for i in range(3):
@@ -93,7 +101,7 @@ class UnboundedPoissonSolverSolution3D:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_unbounded_poisson_solve_pyfftw_3d(n_values, precision):
+def test_unbounded_poisson_solve_pyfftw_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
     x_range = real_t(2.0)
     solution = UnboundedPoissonSolverSolution3D(
@@ -102,6 +110,7 @@ def test_unbounded_poisson_solve_pyfftw_3d(n_values, precision):
         grid_size_x=n_values,
         x_range=x_range,
         precision=precision,
+        rng_generator=rng,
     )
     unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW3D(
         grid_size_z=n_values,
@@ -120,7 +129,7 @@ def test_unbounded_poisson_solve_pyfftw_3d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_unbounded_vector_field_poisson_solve_pyfftw_3d(n_values, precision):
+def test_unbounded_vector_field_poisson_solve_pyfftw_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
     x_range = real_t(2.0)
     solution = UnboundedPoissonSolverSolution3D(
@@ -129,6 +138,7 @@ def test_unbounded_vector_field_poisson_solve_pyfftw_3d(n_values, precision):
         grid_size_x=n_values,
         x_range=x_range,
         precision=precision,
+        rng_generator=rng,
     )
     unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW3D(
         grid_size_z=n_values,

@@ -17,12 +17,16 @@ def brinkmann_penalise_reference(penalty_factor, char_field, penalty_field, fiel
 
 
 class BrinkmannPenalisationSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(
+        self, rng_generator: np.random.Generator, n_samples: int, precision: str = "single"
+    ) -> None:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_penalty_field = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_char_field = np.random.randn(n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
+        self.ref_penalty_field = rng_generator.standard_normal((n_samples, n_samples)).astype(
+            real_t
+        )
+        self.ref_char_field = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
         self.penalty_factor = real_t(0.1)
         self.ref_penalised_field = brinkmann_penalise_reference(
             self.penalty_factor,
@@ -32,8 +36,12 @@ class BrinkmannPenalisationSolution:
             real_t,
         )
 
-        self.ref_vector_field = np.random.randn(2, n_samples, n_samples).astype(real_t)
-        self.ref_penalty_vector_field = np.random.randn(2, n_samples, n_samples).astype(real_t)
+        self.ref_vector_field = rng_generator.standard_normal((2, n_samples, n_samples)).astype(
+            real_t
+        )
+        self.ref_penalty_vector_field = rng_generator.standard_normal(
+            (2, n_samples, n_samples)
+        ).astype(real_t)
         self.ref_penalised_vector_field = brinkmann_penalise_reference(
             self.penalty_factor,
             self.ref_char_field,
@@ -59,9 +67,9 @@ class BrinkmannPenalisationSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_brinkmann_penalise_scalar_field_2d(n_values, precision):
+def test_brinkmann_penalise_scalar_field_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = BrinkmannPenalisationSolution(n_values, precision)
+    solution = BrinkmannPenalisationSolution(rng, n_values, precision)
     penalised_field = np.zeros_like(solution.ref_penalised_field)
     brinkmann_penalise_pyst_kernel = gen_brinkmann_penalise_pyst_kernel_2d(
         real_t=real_t,
@@ -81,9 +89,9 @@ def test_brinkmann_penalise_scalar_field_2d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_brinkmann_penalise_vector_field_2d(n_values, precision):
+def test_brinkmann_penalise_vector_field_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = BrinkmannPenalisationSolution(n_values, precision)
+    solution = BrinkmannPenalisationSolution(rng, n_values, precision)
     penalised_vector_field = np.zeros_like(solution.ref_penalised_vector_field)
     brinkmann_penalise_vector_field_pyst_kernel = gen_brinkmann_penalise_pyst_kernel_2d(
         real_t=real_t,
@@ -103,9 +111,9 @@ def test_brinkmann_penalise_vector_field_2d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_brinkmann_penalise_scalar_field_vs_fixed_val_2d(n_values, precision):
+def test_brinkmann_penalise_scalar_field_vs_fixed_val_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = BrinkmannPenalisationSolution(n_values, precision)
+    solution = BrinkmannPenalisationSolution(rng, n_values, precision)
     penalised_field = np.zeros_like(solution.ref_penalised_field)
     brinkmann_penalise_field_vs_fixed_val_pyst_kernel = (
         gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(
@@ -133,9 +141,9 @@ def test_brinkmann_penalise_scalar_field_vs_fixed_val_2d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_brinkmann_penalise_vector_field_vs_fixed_val_2d(n_values, precision):
+def test_brinkmann_penalise_vector_field_vs_fixed_val_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = BrinkmannPenalisationSolution(n_values, precision)
+    solution = BrinkmannPenalisationSolution(rng, n_values, precision)
     penalised_vector_field = np.zeros_like(solution.ref_penalised_vector_field)
     brinkmann_penalise_vector_field_vs_fixed_val_pyst_kernel = (
         gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(

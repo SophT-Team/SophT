@@ -17,7 +17,7 @@ def _remove_h5_xmf():
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_eulerian_grid_scalar_field_io(dim, precision):
+def test_eulerian_grid_scalar_field_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
 
@@ -30,8 +30,8 @@ def test_eulerian_grid_scalar_field_io(dim, precision):
     eul_grid_shift = dx / 2
 
     # Initialize scalar field
-    scalar_field = np.random.randn(*np.flip(grid_size)).astype(real_t)
-    time = np.random.rand()
+    scalar_field = rng.standard_normal(tuple(np.flip(grid_size))).astype(real_t)
+    time = rng.random()
 
     # Initialize IO
     origin_io = eul_grid_shift * np.ones(dim)
@@ -67,7 +67,7 @@ def test_eulerian_grid_scalar_field_io(dim, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_eulerian_grid_vector_field_io(dim, precision):
+def test_eulerian_grid_vector_field_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
 
@@ -80,8 +80,8 @@ def test_eulerian_grid_vector_field_io(dim, precision):
     eul_grid_shift = dx / 2
 
     # Initialize vector field
-    vector_field = np.random.randn(dim, *np.flip(grid_size)).astype(real_t)
-    time = np.random.rand()
+    vector_field = rng.standard_normal((dim, *np.flip(grid_size))).astype(real_t)
+    time = rng.random()
 
     # Initialize IO
     origin_io = eul_grid_shift * np.ones(dim)
@@ -115,7 +115,7 @@ def test_eulerian_grid_vector_field_io(dim, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_eulerian_grid_multiple_field_io(dim, precision):
+def test_eulerian_grid_multiple_field_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
 
@@ -128,9 +128,9 @@ def test_eulerian_grid_multiple_field_io(dim, precision):
     eul_grid_shift = dx / 2
 
     # Initialize vector field (i.e. source)
-    scalar_field = np.random.randn(*np.flip(grid_size)).astype(real_t)
-    vector_field = np.random.randn(dim, *np.flip(grid_size)).astype(real_t)
-    time = np.random.rand()
+    scalar_field = rng.standard_normal(tuple(np.flip(grid_size))).astype(real_t)
+    vector_field = rng.standard_normal((dim, *np.flip(grid_size))).astype(real_t)
+    time = rng.random()
 
     # Initialize IO
     origin_io = eul_grid_shift * np.ones(dim)
@@ -173,7 +173,7 @@ def test_eulerian_grid_multiple_field_io(dim, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_lagrangian_grid_scalar_field_io(dim, precision):
+def test_lagrangian_grid_scalar_field_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
     num_lagrangian_nodes = 64
@@ -194,7 +194,7 @@ def test_lagrangian_grid_scalar_field_io(dim, precision):
 
     # Initialize scalar field
     scalar_field = np.linspace(0, 1, num_lagrangian_nodes)
-    time = np.random.rand()
+    time = rng.random()
 
     # Initialize IO
     io = spu.IO(dim=dim, real_dtype=real_t)
@@ -239,7 +239,7 @@ def test_lagrangian_grid_scalar_field_io(dim, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_lagrangian_grid_vector_field_io(dim, precision):
+def test_lagrangian_grid_vector_field_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
     num_lagrangian_nodes = 64
@@ -265,7 +265,7 @@ def test_lagrangian_grid_vector_field_io(dim, precision):
     vector_field[spu.VectorField.y_axis_idx(), :] = radius * np.cos(theta)
     if dim == 3:
         vector_field[spu.VectorField.z_axis_idx(), :] = dzdt
-    time = np.random.rand()
+    time = rng.random()
 
     # Initialize IO
     io = spu.IO(dim=dim, real_dtype=real_t)
@@ -310,7 +310,7 @@ def test_lagrangian_grid_vector_field_io(dim, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_lagrangian_grid_multiple_field_io(dim, precision):
+def test_lagrangian_grid_multiple_field_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
     num_lagrangian_nodes = 64
@@ -330,14 +330,14 @@ def test_lagrangian_grid_multiple_field_io(dim, precision):
         lagrangian_grid_position[spu.VectorField.z_axis_idx(), :] = z
 
     # Initialize scalar and vector field
-    scalar_field = np.random.randn(num_lagrangian_nodes)
+    scalar_field = rng.standard_normal(num_lagrangian_nodes)
     # Here we consider vector fields as the tangent direction along the spiral
     vector_field = np.zeros_like(lagrangian_grid_position)
     vector_field[spu.VectorField.x_axis_idx(), :] = -radius * np.sin(theta)
     vector_field[spu.VectorField.y_axis_idx(), :] = radius * np.cos(theta)
     if dim == 3:
         vector_field[spu.VectorField.z_axis_idx(), :] = dzdt
-    time = np.random.rand()
+    time = rng.random()
 
     # Initialize IO
     io = spu.IO(dim=dim, real_dtype=real_t)
@@ -391,7 +391,7 @@ def test_lagrangian_grid_multiple_field_io(dim, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("dim", [2, 3])
-def test_cosserat_rod_io(dim, precision):
+def test_cosserat_rod_io(dim, precision, rng):
     real_t = spu.get_real_t(precision)
     testing_atol = spu.get_test_tol(precision)
 
@@ -417,7 +417,7 @@ def test_cosserat_rod_io(dim, precision):
         density,
         youngs_modulus=youngs_modulus,
     )
-    time = np.random.rand()
+    time = rng.random()
 
     # Initialize cosserat rod io
     rod_io = spu.CosseratRodIO(cosserat_rod=rod, dim=dim, real_dtype=real_t)
@@ -454,11 +454,11 @@ def test_cosserat_rod_io(dim, precision):
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("grid_size_x", [8, 16])
-def test_eulerian_field_io(grid_dim, precision, grid_size_x):
+def test_eulerian_field_io(grid_dim, precision, grid_size_x, rng):
     real_t = spu.get_real_t(precision)
     grid_size = (grid_size_x,) * grid_dim
-    scalar_field = np.random.rand(*grid_size).astype(real_t)
-    vector_field = np.random.rand(grid_dim, *grid_size).astype(real_t)
+    scalar_field = rng.random(grid_size).astype(real_t)
+    vector_field = rng.random((grid_dim, *grid_size)).astype(real_t)
 
     x_range = 2.0
     dx = real_t(x_range / grid_size_x)

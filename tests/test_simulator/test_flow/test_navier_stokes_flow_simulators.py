@@ -10,7 +10,7 @@ import sopht.utils as spu
 @pytest.mark.parametrize("with_free_stream", [True, False])
 @pytest.mark.parametrize("flow_density", [1.0, 0.1])
 def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
-    grid_size_x, precision, with_free_stream, flow_density
+    grid_size_x, precision, with_free_stream, flow_density, rng
 ):
     num_threads = 4
     grid_dim = 2
@@ -35,11 +35,11 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
     )
     ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
-    flow_sim.vorticity_field[...] = np.random.rand(*flow_sim.vorticity_field.shape).astype(real_t)
-    flow_sim.velocity_field[...] = 0 * np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
-    flow_sim.eul_grid_forcing_field[...] = np.random.rand(
-        *flow_sim.eul_grid_forcing_field.shape
-    ).astype(real_t)
+    flow_sim.vorticity_field[...] = rng.random(flow_sim.vorticity_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = 0 * rng.random(flow_sim.velocity_field.shape).astype(real_t)
+    flow_sim.eul_grid_forcing_field[...] = rng.random(flow_sim.eul_grid_forcing_field.shape).astype(
+        real_t
+    )
     ref_vorticity_field = flow_sim.vorticity_field.copy()
     ref_velocity_field = flow_sim.velocity_field.copy()
     ref_eul_grid_forcing_field = flow_sim.eul_grid_forcing_field.copy()
@@ -166,6 +166,7 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     with_free_stream,
     filter_vorticity,
     flow_density,
+    rng,
 ):
     num_threads = 4
     grid_dim = 3
@@ -194,11 +195,11 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     )
     ref_time = init_time + dt
     # initialise flow sim state (vorticity and forcing)
-    flow_sim.vorticity_field[...] = np.random.rand(*flow_sim.vorticity_field.shape).astype(real_t)
-    flow_sim.velocity_field[...] = 0 * np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
-    flow_sim.eul_grid_forcing_field[...] = np.random.rand(
-        *flow_sim.eul_grid_forcing_field.shape
-    ).astype(real_t)
+    flow_sim.vorticity_field[...] = rng.random(flow_sim.vorticity_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = 0 * rng.random(flow_sim.velocity_field.shape).astype(real_t)
+    flow_sim.eul_grid_forcing_field[...] = rng.random(flow_sim.eul_grid_forcing_field.shape).astype(
+        real_t
+    )
     ref_vorticity_field = flow_sim.vorticity_field.copy()
     ref_velocity_field = flow_sim.velocity_field.copy()
     ref_eul_grid_forcing_field = flow_sim.eul_grid_forcing_field.copy()
@@ -339,7 +340,7 @@ def test_navier_stokes_flow_sim_3d_compute_stable_timestep(grid_size_x, precisio
 
 @pytest.mark.parametrize("grid_size_x", [4, 8])
 @pytest.mark.parametrize("precision", ["single", "double"])
-def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision):
+def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision, rng):
     num_threads = 4
     grid_dim = 3
     x_range = 1.0
@@ -354,7 +355,7 @@ def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x,
         real_t=real_t,
         num_threads=num_threads,
     )
-    flow_sim.vorticity_field[...] = np.random.rand(grid_dim, *grid_size)
+    flow_sim.vorticity_field[...] = rng.random((grid_dim, *grid_size))
     vorticity_divergence_l2_norm = flow_sim.get_vorticity_divergence_l2_norm()
 
     # compute manually

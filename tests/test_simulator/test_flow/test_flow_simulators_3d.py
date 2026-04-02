@@ -13,6 +13,7 @@ def test_flow_sim_3d_navier_stokes_with_forcing_timestep(
     precision,
     with_free_stream,
     filter_vorticity,
+    rng,
 ):
     num_threads = 4
     grid_dim = 3
@@ -38,11 +39,11 @@ def test_flow_sim_3d_navier_stokes_with_forcing_timestep(
         filter_setting_dict={"type": filter_type, "order": filter_order},
     )
     # initialise flow sim state (vorticity and forcing)
-    flow_sim.vorticity_field[...] = np.random.rand(*flow_sim.vorticity_field.shape).astype(real_t)
-    flow_sim.velocity_field[...] = 0 * np.random.rand(*flow_sim.velocity_field.shape).astype(real_t)
-    flow_sim.eul_grid_forcing_field[...] = np.random.rand(
-        *flow_sim.eul_grid_forcing_field.shape
-    ).astype(real_t)
+    flow_sim.vorticity_field[...] = rng.random(flow_sim.vorticity_field.shape).astype(real_t)
+    flow_sim.velocity_field[...] = 0 * rng.random(flow_sim.velocity_field.shape).astype(real_t)
+    flow_sim.eul_grid_forcing_field[...] = rng.random(flow_sim.eul_grid_forcing_field.shape).astype(
+        real_t
+    )
     # generate reference simulator
     ref_flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(
         grid_size=grid_size,
@@ -105,7 +106,7 @@ def test_flow_sim_3d_compute_stable_timestep(grid_size_x, precision):
 
 @pytest.mark.parametrize("grid_size_x", [4, 8])
 @pytest.mark.parametrize("precision", ["single", "double"])
-def test_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision):
+def test_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision, rng):
     num_threads = 4
     grid_dim = 3
     x_range = 1.0
@@ -121,7 +122,7 @@ def test_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x, precision):
         real_t=real_t,
         num_threads=num_threads,
     )
-    flow_sim.vorticity_field[...] = np.random.rand(grid_dim, *grid_size)
+    flow_sim.vorticity_field[...] = rng.random((grid_dim, *grid_size))
     vorticity_divergence_l2_norm = flow_sim.get_vorticity_divergence_l2_norm()
     # generate reference simulator
     ref_flow_sim = sps.UnboundedNavierStokesFlowSimulator3D(

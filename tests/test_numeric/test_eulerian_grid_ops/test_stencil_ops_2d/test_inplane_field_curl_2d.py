@@ -17,11 +17,11 @@ def inplane_curl_reference(field_x, field_y, prefactor):
 
 
 class InplaneCurlSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field_x = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_field_y = np.random.randn(n_samples, n_samples).astype(real_t)
+        self.ref_field_x = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
+        self.ref_field_y = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
         self.ref_field = np.zeros((2, n_samples, n_samples)).astype(real_t)
         self.ref_field[0] = self.ref_field_x
         self.ref_field[1] = self.ref_field_y
@@ -36,9 +36,9 @@ class InplaneCurlSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_inplane_field_curl(n_values, precision):
+def test_inplane_field_curl(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = InplaneCurlSolution(n_values, precision)
+    solution = InplaneCurlSolution(n_values, rng, precision)
     curl = np.zeros_like(solution.ref_curl)
     inplane_field_curl_kernel = gen_inplane_field_curl_pyst_kernel_2d(
         real_t=real_t,

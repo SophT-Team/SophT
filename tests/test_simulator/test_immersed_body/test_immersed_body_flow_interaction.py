@@ -14,7 +14,7 @@ def mock_2d_cylinder_flow_interactor(num_forcing_points=16):
     grid_dim = 2
     cylinder = mock_2d_cylinder()
     grid_size = (16,) * grid_dim
-    eul_grid_velocity_field = np.random.rand(grid_dim, *grid_size)
+    eul_grid_velocity_field = np.random.default_rng(seed=0).random((grid_dim, *grid_size))
     eul_grid_forcing_field = np.zeros_like(eul_grid_velocity_field)
     # chosen so that cylinder lies within domain
     dx = cylinder.length / 4.0

@@ -24,15 +24,16 @@ def advection_timestep_conservative_eno3_euler_forward_reference(
 class AdvectionTimestepSolution:
     def __init__(
         self,
-        n_samples,
-        timestepper="euler_forward",
-        flux_type="conservative_eno3",
-        precision="single",
+        rng_generator: np.random.Generator,
+        n_samples: int,
+        timestepper: str = "euler_forward",
+        flux_type: str = "conservative_eno3",
+        precision: str = "single",
     ):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_velocity = np.random.rand(2, n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
+        self.ref_velocity = rng_generator.standard_normal((2, n_samples, n_samples)).astype(real_t)
         self.inv_dx = real_t(0.2)
         self.dt = real_t(0.1)
         if timestepper == "euler_forward" and flux_type == "conservative_eno3":
@@ -56,9 +57,10 @@ class AdvectionTimestepSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_euler_forward_conservative_eno3_2d(n_values, precision):
+def test_euler_forward_conservative_eno3_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
     solution = AdvectionTimestepSolution(
+        rng,
         n_values,
         timestepper="euler_forward",
         flux_type="conservative_eno3",

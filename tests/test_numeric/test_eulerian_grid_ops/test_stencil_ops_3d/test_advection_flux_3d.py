@@ -133,13 +133,27 @@ def advection_flux_conservative_eno3_reference(
 
 
 class AdvectionSolution:
-    def __init__(self, n_samples, flux_type="conservative_eno3", precision="single"):
+    def __init__(
+        self,
+        n_samples,
+        rng_generator: np.random.Generator,
+        flux_type="conservative_eno3",
+        precision="single",
+    ):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_velocity_x = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_velocity_y = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.ref_velocity_z = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
+        self.ref_velocity_x = rng_generator.standard_normal(
+            (n_samples, n_samples, n_samples)
+        ).astype(real_t)
+        self.ref_velocity_y = rng_generator.standard_normal(
+            (n_samples, n_samples, n_samples)
+        ).astype(real_t)
+        self.ref_velocity_z = rng_generator.standard_normal(
+            (n_samples, n_samples, n_samples)
+        ).astype(real_t)
         self.ref_velocity = np.zeros((3, n_samples, n_samples, n_samples)).astype(real_t)
         self.ref_velocity[0] = self.ref_velocity_x
         self.ref_velocity[1] = self.ref_velocity_y
@@ -167,9 +181,9 @@ class AdvectionSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_advection_flux_cons_eno3_3d(n_values, precision):
+def test_advection_flux_cons_eno3_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = AdvectionSolution(n_values, flux_type="conservative_eno3", precision=precision)
+    solution = AdvectionSolution(n_values, rng, flux_type="conservative_eno3", precision=precision)
     advection_flux = np.zeros_like(solution.ref_advection_flux)
     advection_flux_conservative_eno3_kernel_3d = (
         gen_advection_flux_conservative_eno3_pyst_kernel_3d(

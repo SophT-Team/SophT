@@ -11,7 +11,14 @@ from sopht.utils.precision import get_real_t, get_test_tol
 
 
 class UnboundedPoissonSolverSolution2D:
-    def __init__(self, grid_size_y, grid_size_x, x_range, precision):
+    def __init__(
+        self,
+        grid_size_y: int,
+        grid_size_x: int,
+        x_range: float,
+        precision: str,
+        rng_generator: np.random.Generator,
+    ):
         self.real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.grid_size_y = grid_size_y
@@ -19,7 +26,9 @@ class UnboundedPoissonSolverSolution2D:
         self.x_range = x_range
         self.y_range = self.x_range * (grid_size_y / grid_size_x)
         self.dx = self.real_t(x_range / grid_size_x)
-        self.rhs_field = np.random.randn(self.grid_size_y, self.grid_size_x).astype(self.real_t)
+        self.rhs_field = rng_generator.standard_normal((self.grid_size_y, self.grid_size_x)).astype(
+            self.real_t
+        )
         self.domain_doubled_rhs_field = np.zeros(
             (2 * self.grid_size_y, 2 * self.grid_size_x), dtype=self.real_t
         )
@@ -64,11 +73,15 @@ class UnboundedPoissonSolverSolution2D:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_unbounded_poisson_solve_pyfftw_2d(n_values, precision):
+def test_unbounded_poisson_solve_pyfftw_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
     x_range = real_t(2.0)
     solution = UnboundedPoissonSolverSolution2D(
-        grid_size_y=n_values, grid_size_x=n_values, x_range=x_range, precision=precision
+        grid_size_y=n_values,
+        grid_size_x=n_values,
+        x_range=x_range,
+        precision=precision,
+        rng_generator=rng,
     )
     unbounded_poisson_solver = UnboundedPoissonSolverPYFFTW2D(
         grid_size_y=n_values,

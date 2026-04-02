@@ -55,10 +55,12 @@ def penalise_field_boundary_reference_3d(
 
 
 class PenaliseFieldBoundarySolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field: np.ndarray = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_field: np.ndarray = rng_generator.standard_normal(
+            (n_samples, n_samples, n_samples)
+        ).astype(real_t)
         self.width = 4
         self.dx = real_t(0.1)
         self.grid_coord_shift = real_t(self.dx / 2)
@@ -78,8 +80,8 @@ class PenaliseFieldBoundarySolution:
             self.width,
             self.dx,
         )
-        self.ref_vector_field: np.ndarray = np.random.randn(
-            3, n_samples, n_samples, n_samples
+        self.ref_vector_field: np.ndarray = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
         ).astype(real_t)
         self.ref_penalised_vector_field = self.ref_vector_field.copy()
         for i in range(3):
@@ -111,9 +113,11 @@ class PenaliseFieldBoundarySolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
-def test_penalise_field_boundary_3d(n_values, precision, field_type: Literal["scalar", "vector"]):
+def test_penalise_field_boundary_3d(
+    n_values, precision, field_type: Literal["scalar", "vector"], rng
+):
     real_t = get_real_t(precision)
-    solution = PenaliseFieldBoundarySolution(n_values, precision)
+    solution = PenaliseFieldBoundarySolution(n_values, rng, precision)
     penalise_field_towards_boundary_pyst_kernel = gen_penalise_field_boundary_pyst_kernel_3d(
         width=solution.width,
         dx=solution.dx,
@@ -140,10 +144,10 @@ def test_penalise_field_boundary_3d(n_values, precision, field_type: Literal["sc
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
 def test_zero_width_penalise_field_boundary_3d(
-    n_values, precision, field_type: Literal["scalar", "vector"]
+    n_values, precision, field_type: Literal["scalar", "vector"], rng
 ):
     real_t = get_real_t(precision)
-    solution = PenaliseFieldBoundarySolution(n_values, precision)
+    solution = PenaliseFieldBoundarySolution(n_values, rng, precision)
     penalise_field_towards_boundary_pyst_kernel = gen_penalise_field_boundary_pyst_kernel_3d(
         width=0,
         dx=solution.dx,

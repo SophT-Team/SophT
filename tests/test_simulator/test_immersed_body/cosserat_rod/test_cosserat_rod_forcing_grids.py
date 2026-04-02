@@ -55,12 +55,12 @@ def test_pyelastica__node_to_element_velocity_func_validity(n_elems):
 
 
 @pytest.mark.parametrize("n_elems", [8, 16])
-def test_pyelastica__elements_to_nodes_inplace(n_elems):
+def test_pyelastica__elements_to_nodes_inplace(n_elems, rng):
     """
     Testing validity of elements to nodes inplace function of pyelastica
     """
     n_nodes = n_elems + 1
-    mock_vector = np.random.random((3, n_elems))
+    mock_vector = rng.random((3, n_elems))
     test_vector = np.zeros((3, n_nodes))
     correct_vector = np.zeros((3, n_nodes))
     correct_vector[:, 1:] += 0.5 * mock_vector

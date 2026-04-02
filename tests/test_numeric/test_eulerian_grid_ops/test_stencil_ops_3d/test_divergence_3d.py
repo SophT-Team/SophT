@@ -25,11 +25,13 @@ def divergence_reference(field, inv_dx):
 
 
 class DivergenceSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
         self.dim = 3
-        self.ref_field = np.random.randn(self.dim, n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal(
+            (self.dim, n_samples, n_samples, n_samples)
+        ).astype(real_t)
         self.inv_dx = real_t(0.1)
         self.ref_divergence = divergence_reference(self.ref_field, self.inv_dx)
 
@@ -44,9 +46,9 @@ class DivergenceSolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("reset_ghost_zone", [True, False])
-def test_divergence_3d(n_values, precision, reset_ghost_zone):
+def test_divergence_3d(n_values, precision, reset_ghost_zone, rng):
     real_t = get_real_t(precision)
-    solution = DivergenceSolution(n_values, precision)
+    solution = DivergenceSolution(n_values, rng, precision)
     divergence = (
         np.ones_like(solution.ref_divergence)
         if reset_ghost_zone
