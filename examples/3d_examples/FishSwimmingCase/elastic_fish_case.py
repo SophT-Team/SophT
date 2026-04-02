@@ -89,7 +89,7 @@ class ElasticFishSimulator:
             FishConnection, k=self.shearable_rod.shear_matrix[2, 2, 0]
         )
 
-        self.dt = dt_scale * self.shearable_rod.rest_lengths[0]  #
+        self.dt = dt_scale * self.shearable_rod.rest_lengths[0]
         self.simulator.dampen(self.shearable_rod).using(
             ea.AnalyticalLinearDamper,
             damping_constant=damping_constant,
