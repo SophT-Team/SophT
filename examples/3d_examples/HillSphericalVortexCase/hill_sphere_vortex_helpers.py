@@ -12,7 +12,7 @@ class HillSphereVortex:
     https://en.wikipedia.org/wiki/Vortex_ring
 
     Branlard, E. (2017). Spherical Geometry Models: Flow About a Sphere
-    and Hill’s Vortex. In Wind Turbine Aerodynamics and Vorticity-Based
+    and Hill's Vortex. In Wind Turbine Aerodynamics and Vorticity-Based
     Methods (pp. 407-417). Springer, Cham.
     """
 
