@@ -22,7 +22,8 @@ dependencies = [
     "pyelastica",
     "matplotlib",
     "pyfftw",
-    "pystencils"
+    "pystencils",
+    "ffmpeg-python",
 ]
 
 [project.urls]
@@ -34,7 +35,7 @@ Issues = "https://github.com/SophT-Team/SophT/issues"
 examples = [
     "click",
     # "coomm",
-    "magneto_pyelastica"
+    "magneto_pyelastica",
 ]
 
 # https://hatch.pypa.io/latest/config/build/#build-system
@@ -106,6 +107,8 @@ ignore = [
     "C901",    # too-complex
     "COM812",  # missing-trailing-comma
     "CPY001",  # Missing copyright notice at top of file
+    # TODO: enable once the documentation styles are settled
+    "D",       # pydocstyle
     "D203",    # blank line required before class docstring
     "D211",    # no-blank-line-before-class
     "D213",    # multi-line-summary-second-line
@@ -116,6 +119,7 @@ ignore = [
     "PLR0913", # too-many-arguments
     "PLR0915", # too-many-statements
     "PLR2004", # magic-value-comparison
+    "S607",    # start-process-with-partial-path
     "TD002",   # Missing author in TODO
     "TD003",   # missing-todo-link
     "TRY003",  # raise-vanilla-args
