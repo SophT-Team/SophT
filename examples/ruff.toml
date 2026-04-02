@@ -4,5 +4,6 @@ extend = "../pyproject.toml"
 extend-ignore = [
    "D",      # pydocstyle
    "INP001", # implicit-namespace-package
+   "N806",   # non-lowercase-variable-in-function
    "T20",    # flake8-print
 ]

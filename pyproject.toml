@@ -117,6 +117,7 @@ ignore = [
     "FBT",     # boolean trap
     "FIX002",  # line-contains-todo
     "N999",    # invalid-module-name
+    "PLR0912", # too-many-branches
     "PLR0913", # too-many-arguments
     "PLR0915", # too-many-statements
     "PLR2004", # magic-value-comparison
