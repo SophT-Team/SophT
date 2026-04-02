@@ -1,4 +1,5 @@
 from collections import defaultdict
+from pathlib import Path
 
 import elastica as ea
 import numpy as np
@@ -320,13 +321,10 @@ class OctopusEnvironment:
         head_velocity_history = np.array(self.post_processing_dict_list[n_arms + 1]["velocity"])
         head_radius_history = np.array(self.post_processing_dict_list[n_arms + 1]["radius"])
 
-        import os
-
-        current_path = os.getcwd()
-        save_folder = os.path.join(current_path, "data")
-        os.makedirs(save_folder, exist_ok=True)
+        save_folder = Path.cwd() / "data"
+        save_folder.mkdir(parents=True, exist_ok=True)
         np.savez(
-            os.path.join(save_folder, "octopus_arm_body.npz"),
+            save_folder / "octopus_arm_body.npz",
             time=time,
             arm_position_history=arm_position_history,
             arm_velocity_history=arm_velocity_history,

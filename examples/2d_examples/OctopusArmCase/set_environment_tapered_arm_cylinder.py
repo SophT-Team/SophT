@@ -1,4 +1,5 @@
 from collections import defaultdict
+from pathlib import Path
 
 import elastica as ea
 import numpy as np
@@ -304,14 +305,11 @@ class ArmEnvironment:
         """
         return time, self.get_systems(), done
 
-    def save_data(self, filename: str = "simulation", **kwargs) -> None:
+    def save_data(self, filename: str = "octopus_arm_test", **kwargs) -> None:
         # Save data in numpy format
-        import os
-
-        current_path = os.getcwd()
-        current_path = kwargs.get("folder_name", current_path)
-        save_folder = os.path.join(current_path, "data")
-        os.makedirs(save_folder, exist_ok=True)
+        current_path = Path(kwargs.get("folder_name", Path.cwd()))
+        save_folder = current_path / "data"
+        save_folder.mkdir(parents=True, exist_ok=True)
 
         self.post_processing_dict_list = [self.rod_parameters_dict]
         time = np.array(self.post_processing_dict_list[0]["time"])
@@ -338,7 +336,7 @@ class ArmEnvironment:
             )
 
         np.savez(
-            os.path.join(save_folder, "octopus_arm_test.npz"),
+            save_folder / f"{filename}.npz",
             time=time,
             straight_rods_position_history=straight_rods_position_history,
             straight_rods_radius_history=straight_rods_radius_history,
