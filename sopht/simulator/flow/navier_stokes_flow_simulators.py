@@ -1,6 +1,5 @@
 import logging
-from collections.abc import Callable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
@@ -11,6 +10,10 @@ from .flow_simulators import FlowSimulator
 from .passive_transport_flow_simulators import (
     compute_advection_diffusion_stable_timestep,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 _zeros_2: np.ndarray = np.zeros(2, dtype=np.float64)
 _zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)

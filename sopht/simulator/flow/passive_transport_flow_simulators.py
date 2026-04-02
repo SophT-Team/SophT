@@ -1,11 +1,13 @@
-from collections.abc import Callable
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 
 import sopht.numeric.eulerian_grid_ops as spne
 
 from .flow_simulators import FlowSimulator
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class PassiveTransportFlowSimulator(FlowSimulator):
