@@ -126,11 +126,11 @@ def immersed_elastic_net_case(
             if save_flow_data:
                 update_elastic_net_lag_grid_fields()
                 io.save(
-                    h5_file_name="flow_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"flow_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 elastic_net_io.save(
-                    h5_file_name="lag_grid_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"lag_grid_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Velocity magnitude, time: {flow_sim.time:.2f}")
@@ -163,7 +163,7 @@ def immersed_elastic_net_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             grid_dev_error = 0.0
             for flow_body_interactor in rod_flow_interactor_list:

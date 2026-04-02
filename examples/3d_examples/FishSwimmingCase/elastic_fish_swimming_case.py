@@ -182,7 +182,7 @@ def elastic_fish_swimming_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             time_history.append(flow_sim.time)
             forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
@@ -243,11 +243,11 @@ def elastic_fish_swimming_case(
 
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
 

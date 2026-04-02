@@ -189,15 +189,15 @@ def run_sim(
     while flow_sim.time < final_time:
         if save_data:
             io.save(
-                h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                 time=flow_sim.time,
             )
             rod_io.save(
-                h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                 time=flow_sim.time,
             )
             forcing_io.save(
-                h5_file_name="forcing_grid_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                h5_file_name=f"forcing_grid_{int(flow_sim.time * 100):04d}.h5",
                 time=flow_sim.time,
             )
             ea.save_state(restart_test_simulator, restart_dir, flow_sim.time)

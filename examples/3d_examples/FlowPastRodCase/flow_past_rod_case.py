@@ -201,7 +201,7 @@ def flow_past_rod_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             time_history.append(flow_sim.time)
             rod_angle.append(rod_incline_angle_with_horizon(flow_past_rod))
@@ -219,11 +219,11 @@ def flow_past_rod_case(
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
 

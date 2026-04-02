@@ -145,11 +145,11 @@ def flow_past_sphere_case(
             )
             if save_flow_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 sphere_io.save(
-                    h5_file_name="sphere_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sphere_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Velocity X comp, time: {flow_sim.time / timescale:.2f}")
@@ -177,7 +177,7 @@ def flow_past_sphere_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time / t_end * 100):2.1f}%), "

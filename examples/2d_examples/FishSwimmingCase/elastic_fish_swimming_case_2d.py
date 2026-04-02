@@ -118,11 +118,11 @@ def elastic_fish_swimming_case(
             foto_timer = 0.0
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             ax.set_title(
@@ -161,7 +161,7 @@ def elastic_fish_swimming_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
             grid_dev_error_l2_norm = cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm()
             print(

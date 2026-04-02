@@ -109,7 +109,7 @@ def flow_through_circular_pipe_case(
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             # midplane along X
@@ -132,7 +132,7 @@ def flow_through_circular_pipe_case(
             spu.save_and_clear_fig(
                 fig,
                 ax,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
 
         dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)

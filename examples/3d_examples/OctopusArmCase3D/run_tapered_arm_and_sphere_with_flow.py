@@ -213,15 +213,15 @@ def tapered_arm_and_cylinder_flow_coupling(
             foto_timer = 0.0
             if save_data:
                 io.save(
-                    h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 sphere_io.save(
-                    h5_file_name="sphere_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"sphere_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Vorticity magnitude, time: {flow_sim.time / final_time:.2f}")
@@ -259,7 +259,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
 
             plt.rcParams.update({"font.size": 22})
@@ -280,7 +280,7 @@ def tapered_arm_and_cylinder_flow_coupling(
             axs[0].set_ylim(-1.5, 1.5)
             plt.tight_layout()
             fig_2.align_ylabels()
-            fig_2.savefig("vel_" + str("%0.5d" % (flow_sim.time * 100)) + ".png")
+            fig_2.savefig(f"vel_{int(flow_sim.time * 100):05d}.png")
             plt.close(plt.gcf())
 
             time_history.append(flow_sim.time)

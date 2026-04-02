@@ -86,7 +86,7 @@ def lamb_oseen_vortex_flow_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
 
             progress = (flow_sim.time - t_start) / (t_end - t_start) * 100

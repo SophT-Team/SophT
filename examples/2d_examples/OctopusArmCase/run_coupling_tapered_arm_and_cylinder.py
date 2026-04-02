@@ -170,7 +170,7 @@ def tapered_arm_and_cylinder_flow_coupling(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:

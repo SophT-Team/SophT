@@ -149,7 +149,7 @@ def immersed_continuum_snake_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
