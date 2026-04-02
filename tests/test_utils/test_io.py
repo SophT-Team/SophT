@@ -1,9 +1,18 @@
-import os
+from pathlib import Path
 
 import elastica as ea
 import numpy as np
 import pytest
 import sopht.utils as spu
+
+
+def _remove_h5_xmf():
+    """Utility for removing h5 and xmf files in the current working directory"""
+    cwd = Path.cwd()
+    for h5_file in cwd.glob("*.xmf"):
+        h5_file.unlink(missing_ok=True)
+    for h5_file in cwd.glob("*.h5"):
+        h5_file.unlink(missing_ok=True)
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -53,7 +62,7 @@ def test_eulerian_grid_scalar_field_io(dim, precision):
         atol=testing_atol,
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -101,7 +110,7 @@ def test_eulerian_grid_vector_field_io(dim, precision):
         atol=testing_atol,
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -159,7 +168,7 @@ def test_eulerian_grid_multiple_field_io(dim, precision):
         atol=testing_atol,
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -225,7 +234,7 @@ def test_lagrangian_grid_scalar_field_io(dim, precision):
         atol=testing_atol,
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -296,7 +305,7 @@ def test_lagrangian_grid_vector_field_io(dim, precision):
         atol=testing_atol,
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -377,7 +386,7 @@ def test_lagrangian_grid_multiple_field_io(dim, precision):
         atol=testing_atol,
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -439,7 +448,7 @@ def test_cosserat_rod_io(dim, precision):
         rod_element_radius_saved, rod_element_radius_loaded, atol=testing_atol
     )
     np.testing.assert_allclose(time, time_loaded, atol=testing_atol)
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -507,4 +516,4 @@ def test_eulerian_field_io(grid_dim, precision, grid_size_x):
         atol=spu.get_test_tol(precision),
     )
     np.testing.assert_allclose(time, time_loaded, atol=spu.get_test_tol(precision))
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()

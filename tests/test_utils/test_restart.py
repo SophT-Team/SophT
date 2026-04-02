@@ -1,11 +1,10 @@
-import os
-
 import elastica as ea
 import numpy as np
 import pytest
 import sopht.simulator as sps
 import sopht.utils as spu
 from numpy.testing import assert_allclose
+from test_io import _remove_h5_xmf
 
 xfail_reason = (
     "Upstream issue with PyElastica restart functionality, "
@@ -55,7 +54,7 @@ def test_restart_simulation(precision, grid_size_x, with_free_stream, filter_vor
         filter_vorticity=filter_vorticity,
     )
 
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
     for i in range(len(recorded_data_restarted)):
         assert_allclose(recorded_data_restarted[i], recorded_data_full[i])
