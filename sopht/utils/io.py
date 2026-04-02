@@ -108,9 +108,8 @@ class IO:
             msg = "Eulerian mesh is not defined!"
             raise ValueError(msg)
 
-        for field_name in fields_for_io:
+        for field_name, field in fields_for_io.items():
             # Add each field into local dictionary
-            field = fields_for_io[field_name]
             self.eulerian_fields[field_name] = field
 
             # Assign field types
@@ -171,9 +170,8 @@ class IO:
         # Create a list of to store names of fields that lie on
         # grid with grid name `lagrangian_grid_name`
         self.lagrangian_fields_with_grid_name[lagrangian_grid_name] = []
-        for field_name in fields_for_io:
+        for field_name, field in fields_for_io.items():
             # Add each field into local dictionary
-            field = fields_for_io[field_name]
             self.lagrangian_fields[field_name] = field
             self.lagrangian_fields_with_grid_name[lagrangian_grid_name].append(field_name)
 
