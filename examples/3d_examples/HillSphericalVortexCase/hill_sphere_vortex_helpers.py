@@ -49,7 +49,7 @@ class HillSphereVortex:
         (
             local_x_grid,
             local_y_grid,
-            local_z_grid,
+            _,
             cylinder_r_grid,
             sphere_r_grid,
         ) = self.compute_local_coordinates(x_grid, y_grid, z_grid)

@@ -306,7 +306,7 @@ def tapered_arm_and_cylinder_flow_coupling(
             activation_functions[2].apply_activation(env.shearable_rod, activations[2], rod_time)
             # Do one elastica step
             env.time_step = local_rod_dt
-            rod_time, systems, done = env.step(rod_time, activations)
+            rod_time, _, _ = env.step(rod_time, activations)
 
             # timestep the body_flow_interactors
             for flow_body_interactor in flow_body_interactors:

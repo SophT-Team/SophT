@@ -87,12 +87,7 @@ def test_immersed_body_interactor_call_method():
 
 
 def test_immersed_body_interactor_compute_flow_forces_and_torques():
-    (
-        cylinder_flow_interactor,
-        eul_grid_forcing_field,
-        eul_grid_velocity_field,
-        _,
-    ) = mock_2d_cylinder_flow_interactor()
+    cylinder_flow_interactor, _, eul_grid_velocity_field, _ = mock_2d_cylinder_flow_interactor()
     cylinder_flow_interactor.compute_flow_forces_and_torques()
 
     ref_body_flow_forces = np.zeros_like(cylinder_flow_interactor.body_flow_forces)

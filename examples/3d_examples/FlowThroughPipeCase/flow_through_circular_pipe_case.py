@@ -22,7 +22,7 @@ def flow_through_circular_pipe_case(
     This example considers the case of steady flow through a pipe in 3D.
     """
     grid_dim = 3
-    grid_size_z, grid_size_y, grid_size_x = grid_size
+    grid_size_z, _, grid_size_x = grid_size
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()

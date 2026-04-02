@@ -55,7 +55,7 @@ class ArmEnvironment:
         return [self.rod_parameters_dict]
 
     def set_arm(self) -> None:
-        base_length, radius = self.set_rod()
+        _, radius = self.set_rod()
         self.set_muscles(radius[0], self.shearable_rod)
 
     def setup(self) -> None:
