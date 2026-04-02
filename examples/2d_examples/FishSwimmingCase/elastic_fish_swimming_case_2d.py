@@ -163,10 +163,11 @@ def elastic_fish_swimming_case(
                 cbar,
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
+            grid_dev_error_l2_norm = cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm()
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
-                f"grid deviation L2 error: {cosserat_rod_flow_interactor.get_grid_deviation_error_l2_norm():.6f}, "
+                f"grid deviation L2 error: {grid_dev_error_l2_norm:.6f}, "
                 f"fish pos: {fish_sim.shearable_rod.position_collection[0, 0]:.6f}, "
                 f"flow_dt: {flow_sim.compute_stable_timestep(dt_prefac=0.125):.6f}"
             )

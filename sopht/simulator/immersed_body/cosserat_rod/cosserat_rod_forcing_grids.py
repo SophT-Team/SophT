@@ -175,7 +175,8 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             : self.grid_dim
         ]
 
-        # Rod normal is used to compute the edge points. Rod normal is not necessarily be same as the d1.
+        # Rod normal is used to compute the edge points.
+        # Rod normal is not necessarily be same as the d1.
         # Here we also assume rod will always be in XY plane.
         rod_normal_direction = _batch_cross(self.z_vector, self.cosserat_rod.tangents)
 
@@ -311,7 +312,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             / np.max(self.cosserat_rod.radius[:])
             * self.surface_grid_density_for_largest_element
         ).astype(int)
-        # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
+        # If there are less than 1 point then set it equal to 1,
+        # since we will place it on the element center.
         self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
 
         # store grid point radius ratio for each forcing point
@@ -324,7 +326,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                     np.linspace(0, 2 * np.pi, self.surface_grid_points[i], endpoint=False)
                 )
             else:
-                # If there is only one point, then that point is on the element center so pass empty array.
+                # If there is only one point, then that point is on the element center so
+                # pass empty array.
                 self.surface_point_rotation_angle_list.append(np.array([]))
 
         # Modify surface grid quantities to account for caps
@@ -338,8 +341,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Since lag grid points are on the surface, for each node we need to compute moment arm.
         self.moment_arm = np.zeros_like(self.position_field)
 
-        # Depending on the rod taper number of surface points can vary between elements, so we need start_idx and
-        # end_idx to slice grid points according to element they belong.
+        # Depending on the rod taper number of surface points can vary between elements,
+        # so we need start_idx and end_idx to slice grid points according to element they belong.
         self.start_idx = np.zeros((self.n_elems), dtype=int)
         self.end_idx = np.zeros((self.n_elems), dtype=int)
 
@@ -353,8 +356,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         self.local_frame_surface_points = np.zeros_like(self.position_field)
 
-        # Compute surface(grid) point positions on local frame for each element. If there is one grid point then
-        # that point is on the element center so just pass 0.0
+        # Compute surface(grid) point positions on local frame for each element.
+        # If there is one grid point then that point is on the element center so just pass 0.0
         for i, surface_point_rotation_angle in enumerate(self.surface_point_rotation_angle_list):
             if surface_point_rotation_angle.size == 0:
                 # This is true if there is only one point for element, and it is on element center.
@@ -543,8 +546,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
             # (3) Update grid point rotation angle on rod ends
             if self.surface_grid_points[rod_end_idx] > 1:
-                # If there are more than one point on the surface then compute the angle of these points.
-                # Surface points are on the local frame
+                # If there are more than one point on the surface then compute the
+                # angle of these points. Surface points are on the local frame.
                 surface_point_angles_list = []
                 # first, include outer most surface point angles
                 surface_point_angles_list.extend(

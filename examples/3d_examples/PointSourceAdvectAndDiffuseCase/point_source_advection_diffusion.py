@@ -77,8 +77,9 @@ def point_source_advection_diffusion_case(
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
+            progress = (flow_sim.time - t_start) / (t_end - t_start) * 100
             print(
-                f"time: {flow_sim.time:.2f} ({((flow_sim.time - t_start) / (t_end - t_start) * 100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({progress:2.1f}%), "
                 f"max_vort: {np.amax(vorticity_field):.4f}"
             )
             if save_data:

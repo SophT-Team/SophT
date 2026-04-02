@@ -16,8 +16,8 @@ def compute_non_dimensional_rod_positions(
     rod_positions_along_perp_axis: np.ndarray,
 ) -> tuple[np.ndarray, float]:
     """
-    This function is used to compute the node positions of rods such that element centers of rods are
-    at same position as the perpendicular rod element positions.
+    This function is used to compute the node positions of rods such that element centers
+    of rods are at same position as the perpendicular rod element positions.
 
     Parameters
     ----------
@@ -134,7 +134,8 @@ class ElasticNetSimulator:
                 num_rods_along_x,
                 start_collection[num_rods_along_y:, x_axis_idx],
             )
-            # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
+            # non_dimensional_positions is a 1D vector multiply with
+            # direction to convert position_collection.
             positions = direction.reshape(rod_dim, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
             positions += (start - np.dot(start, direction) * direction).reshape(rod_dim, 1)
@@ -167,7 +168,8 @@ class ElasticNetSimulator:
                 num_rods_along_y,
                 start_collection[:num_rods_along_y, y_axis_idx],
             )
-            # non_dimensional_positions is a 1D vector multiply with direction to convert position_collection.
+            # non_dimensional_positions is a 1D vector multiply with direction
+            # to convert position_collection.
             positions = direction.reshape(rod_dim, 1) * non_dimensional_positions
             # Position start at correct x but not y, z position. Update the position vector.
             positions += (start - np.dot(start, direction) * direction).reshape(rod_dim, 1)

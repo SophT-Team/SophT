@@ -6,9 +6,7 @@ from sopht.numeric.eulerian_grid_ops import (
     gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
-from tests.test_numeric.test_eulerian_grid_ops.test_stencil_ops_3d.test_vorticity_stretching_flux_3d import (
-    vorticity_stretching_flux_reference,
-)
+from test_vorticity_stretching_flux_3d import vorticity_stretching_flux_reference
 
 
 def vorticity_stretching_timestep_euler_forward_reference(

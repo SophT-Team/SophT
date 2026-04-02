@@ -338,7 +338,10 @@ if __name__ == "__main__":
         rod_start_incline_angle = np.deg2rad(90 - 90 / (1 + 3.32 * Ca_B**1.33) ** 0.407 + 0.5)
 
         print(
-            f"Re: {exp_Re}, Ca: {exp_cauchy_number}, Fr: {exp_froude_number}, Angle: {rod_start_incline_angle}"
+            f"Re: {exp_Re}, "
+            f"Ca: {exp_cauchy_number}, "
+            f"Fr: {exp_froude_number}, "
+            f"Angle: {rod_start_incline_angle}"
         )
 
         flow_past_rod_case(

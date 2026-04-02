@@ -61,7 +61,9 @@ def octopus_swimming(
         non_dim_bending_stiffness * rho_f * vel_scale**2 * base_length**3 * base_diameter
     ) / (moment_of_inertia)
     # bending_rigidity = youngs_modulus * moment_of_inertia
-    # natural_frequency = 3.5160 / (base_length ** 2) * np.sqrt(bending_rigidity / (rho_s * base_area))
+    # natural_frequency = 3.5160 / (base_length ** 2) * np.sqrt(
+    #     bending_rigidity / (rho_s * base_area)
+    # )
 
     poisson_ratio = 0.5
     shear_modulus = youngs_modulus / (2 * (1 + poisson_ratio))
@@ -409,7 +411,9 @@ if __name__ == "__main__":
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
 
-        # natural_frequency = 3.5160 / (exp_base_length**2) * np.sqrt(exp_bending_rigidity/(exp_rho_s*exp_base_area))
+        # natural_frequency = 3.5160 / (exp_base_length**2) * np.sqrt(
+        #     exp_bending_rigidity / (exp_rho_s * exp_base_area)
+        # )
         # non_dimensional_period = natural_frequency * period
 
         exp_non_dim_bending_stiffness = exp_bending_rigidity / (

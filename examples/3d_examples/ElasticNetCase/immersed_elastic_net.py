@@ -168,8 +168,10 @@ def immersed_elastic_net_case(
             grid_dev_error = 0.0
             for flow_body_interactor in rod_flow_interactor_list:
                 grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
+
+            progress = flow_sim.time / elastic_net_sim.final_time * 100
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time / elastic_net_sim.final_time * 100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({progress:2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}, "

@@ -405,7 +405,8 @@ def gen_elementwise_cross_product_pyst_kernel_3d(
     @ps.kernel
     def _elementwise_cross_product_single_axis_stencil_3d():
         result_field_i, field_1_j, field_1_k, field_2_j, field_2_k = ps.fields(
-            f"result_field_i, field_1_j, field_1_k, field_2_j, field_2_k : {pyst_dtype}[{grid_info}]"
+            f"result_field_i, field_1_j, field_1_k, field_2_j, field_2_k : "
+            f"{pyst_dtype}[{grid_info}]"
         )
         result_field_i[0, 0, 0] @= (
             field_1_j[0, 0, 0] * field_2_k[0, 0, 0] - field_2_j[0, 0, 0] * field_1_k[0, 0, 0]

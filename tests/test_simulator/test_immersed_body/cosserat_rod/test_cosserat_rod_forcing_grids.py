@@ -331,13 +331,21 @@ def test_rod_edge_grid_grid_kinematics(n_elems):
             axis,
             correct_forcing_grid.start_idx_elems : correct_forcing_grid.end_idx_elems,
         ] = element_position
+        left_edge_slice = slice(
+            correct_forcing_grid.start_idx_left_edge_nodes,
+            correct_forcing_grid.end_idx_left_edge_nodes,
+        )
         correct_forcing_grid.position_field[
             axis,
-            correct_forcing_grid.start_idx_left_edge_nodes : correct_forcing_grid.end_idx_left_edge_nodes,
+            left_edge_slice,
         ] = element_position + correct_forcing_grid.moment_arm[axis]
+        right_edge_slice = slice(
+            correct_forcing_grid.start_idx_right_edge_nodes,
+            correct_forcing_grid.end_idx_right_edge_nodes,
+        )
         correct_forcing_grid.position_field[
             axis,
-            correct_forcing_grid.start_idx_right_edge_nodes : correct_forcing_grid.end_idx_right_edge_nodes,
+            right_edge_slice,
         ] = element_position - correct_forcing_grid.moment_arm[axis]
 
     # Check if moment arm is correct
@@ -376,13 +384,21 @@ def test_rod_edge_grid_grid_kinematics(n_elems):
             axis,
             correct_forcing_grid.start_idx_elems : correct_forcing_grid.end_idx_elems,
         ] = element_velocity
+        left_edge_slice = slice(
+            correct_forcing_grid.start_idx_left_edge_nodes,
+            correct_forcing_grid.end_idx_left_edge_nodes,
+        )
         correct_forcing_grid.velocity_field[
             axis,
-            correct_forcing_grid.start_idx_left_edge_nodes : correct_forcing_grid.end_idx_left_edge_nodes,
+            left_edge_slice,
         ] = element_velocity + omega_cross_moment_arm[axis, :]
+        right_edge_slice = slice(
+            correct_forcing_grid.start_idx_right_edge_nodes,
+            correct_forcing_grid.end_idx_right_edge_nodes,
+        )
         correct_forcing_grid.velocity_field[
             axis,
-            correct_forcing_grid.start_idx_right_edge_nodes : correct_forcing_grid.end_idx_right_edge_nodes,
+            right_edge_slice,
         ] = element_velocity - omega_cross_moment_arm[axis, :]
 
     np.testing.assert_allclose(

@@ -88,8 +88,10 @@ def lamb_oseen_vortex_flow_case(
                 cbar,
                 file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
             )
+
+            progress = (flow_sim.time - t_start) / (t_end - t_start) * 100
             print(
-                f"time: {flow_sim.time:.2f} ({((flow_sim.time - t_start) / (t_end - t_start) * 100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({progress:2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}"
             )
 
