@@ -128,7 +128,7 @@ class IO:
     def add_as_lagrangian_fields_for_io(
         self,
         lagrangian_grid: np.ndarray,
-        lagrangian_grid_name: str = None,
+        lagrangian_grid_name: str | None = None,
         lagrangian_grid_connect: bool = False,
         **fields_for_io,
     ) -> None:
