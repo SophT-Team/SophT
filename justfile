@@ -34,7 +34,7 @@ sys_info:
         echo "Python version: $($python_cmd -V 2>&1)"
 
 test:
-    @pytest tests
+    @pytest tests --disable-warnings -v
 
 typecheck:
     @mypy sopht
