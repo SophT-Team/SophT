@@ -126,9 +126,9 @@ class OctopusEnvironment:
             TM_max_muscle_stress = 1.5 * self.E  # 15_000.0
             LM_max_muscle_stress = 10 * self.E  # 50_000.0 * 2
             OM_max_muscle_stress = 5 * self.E  # 50_000.0
-            muscle_dict = dict(
-                force_length_weight=force_length_weight_poly,
-            )
+            muscle_dict = {
+                "force_length_weight": force_length_weight_poly,
+            }
 
             # Add a transverse muscle
             muscle_groups.append(
