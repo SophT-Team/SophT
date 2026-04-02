@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import numpy as np
 
@@ -25,8 +24,8 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         dx: float,
         grid_dim: int,
         real_t: type = np.float64,
-        eul_grid_coord_shift: Optional[float] = None,
-        interp_kernel_width: Optional[float] = None,
+        eul_grid_coord_shift: float | None = None,
+        interp_kernel_width: float | None = None,
         enable_eul_grid_forcing_reset: bool = False,
         num_threads: int | bool = False,
         start_time: float = 0.0,

@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 from elastica import RigidBodyBase
 
@@ -21,8 +19,8 @@ class RigidBodyFlowInteraction(ImmersedBodyFlowInteraction):
         grid_dim: int,
         forcing_grid_cls: type[ImmersedBodyForcingGrid],
         real_t: type = np.float64,
-        eul_grid_coord_shift: Optional[float] = None,
-        interp_kernel_width: Optional[float] = None,
+        eul_grid_coord_shift: float | None = None,
+        interp_kernel_width: float | None = None,
         enable_eul_grid_forcing_reset: bool = False,
         num_threads: int | bool = False,
         start_time: float = 0.0,
