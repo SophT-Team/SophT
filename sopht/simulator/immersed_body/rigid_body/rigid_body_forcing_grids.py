@@ -1,5 +1,3 @@
-from typing import Union
-
 import elastica as ea
 import numpy as np
 from elastica._linalg import _batch_cross
@@ -99,13 +97,15 @@ class CircularCylinderForcingGrid(TwoDimensionalCylinderForcingGrid):
         return self.cylinder.radius * (2.0 * np.pi / self.num_lag_nodes)
 
 
-SupportedRigidBody3D = Union[ea.Cylinder, ea.Sphere, RectangularPlane]
-
-
 class ThreeDimensionalRigidBodyForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid of a 3D rigid body with cross-section."""
 
-    def __init__(self, grid_dim: int, num_lag_nodes: int, rigid_body: SupportedRigidBody3D) -> None:
+    def __init__(
+        self,
+        grid_dim: int,
+        num_lag_nodes: int,
+        rigid_body: ea.Cylinder | ea.Sphere | RectangularPlane,
+    ) -> None:
         if grid_dim != 3:
             msg = (
                 "Invalid grid dimensions. 3D Rigid body forcing grid is only defined for grid_dim=3"
