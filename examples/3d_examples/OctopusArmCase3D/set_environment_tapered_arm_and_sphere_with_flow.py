@@ -122,21 +122,21 @@ class ArmEnvironment:
             )
 
             # Add 4 longitudinal muscles
-            for k in range(4):
-                muscle_groups.append(
-                    MuscleGroup(
-                        muscles=[
-                            LongitudinalMuscle(
-                                muscle_init_angle=np.pi * 0.5 * k,
-                                ratio_muscle_position=LM_ratio_muscle_position,
-                                rest_muscle_area=LM_rest_muscle_area,
-                                max_muscle_stress=LM_max_muscle_stress,
-                                **muscle_dict,
-                            )
-                        ],
-                        type_name="LM",
-                    )
+            muscle_groups += [
+                MuscleGroup(
+                    muscles=[
+                        LongitudinalMuscle(
+                            muscle_init_angle=np.pi * 0.5 * k,
+                            ratio_muscle_position=LM_ratio_muscle_position,
+                            rest_muscle_area=LM_rest_muscle_area,
+                            max_muscle_stress=LM_max_muscle_stress,
+                            **muscle_dict,
+                        )
+                    ],
+                    type_name="LM",
                 )
+                for k in range(4)
+            ]
 
             # Add a clockwise oblique muscle group (4 muscles)
             muscle_groups.append(
