@@ -1,8 +1,7 @@
 from collections.abc import Sequence
 
-import matplotlib.animation as animation
 import numpy as np
-from matplotlib import cm
+from matplotlib import animation, cm
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 from tqdm import tqdm
