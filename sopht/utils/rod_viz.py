@@ -53,9 +53,9 @@ def plot_video_of_rod_surface(
 
     # video pre-processing
     print("plot scene visualization video")
-    FFMpegWriter = animation.writers["ffmpeg"]
+    ffmpeg_writer = animation.writers["ffmpeg"]
     metadata = {"title": "Movie Test", "artist": "Matplotlib", "comment": "Movie support!"}
-    writer = FFMpegWriter(fps=fps, metadata=metadata)
+    writer = ffmpeg_writer(fps=fps, metadata=metadata)
     dpi = kwargs.get("dpi", 100)
     xlim = kwargs.get("x_limits", (-1.0, 1.0))
     ylim = kwargs.get("y_limits", (-1.0, 1.0))
@@ -120,8 +120,8 @@ def plot_video_of_rod_surface(
                 ax.add_artist(sphere_artists[sphere_idx])
 
         # ax.set_aspect("equal")
-        video_name_3D = folder_name + "3D_" + video_name
-        with writer.saving(fig, video_name_3D, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
+        video_name_3d = folder_name + "3D_" + video_name
+        with writer.saving(fig, video_name_3d, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
             for time_idx in tqdm(range(0, sim_time.shape[0], int(step))):
                 for rod_idx in range(n_visualized_rods):
                     inst_position, inst_radius = rod_history_unpacker(rod_idx, time_idx)
@@ -217,9 +217,9 @@ def plot_video_of_rod_surface(
                 ax.add_artist(sphere_artists[sphere_idx])
 
         ax.set_aspect("equal")
-        video_name_2D = folder_name + "2D_xy_" + video_name
+        video_name_2d = folder_name + "2D_xy_" + video_name
 
-        with writer.saving(fig, video_name_2D, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
+        with writer.saving(fig, video_name_2d, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
             for time_idx in tqdm(range(0, sim_time.shape[0], int(step))):
                 for rod_idx in range(n_visualized_rods):
                     inst_position, inst_radius = rod_history_unpacker(rod_idx, time_idx)
@@ -315,9 +315,9 @@ def plot_video_of_rod_surface(
                 ax.add_artist(sphere_artists[sphere_idx])
 
         ax.set_aspect("equal")
-        video_name_2D = folder_name + "2D_zy_" + video_name
+        video_name_2d = folder_name + "2D_zy_" + video_name
 
-        with writer.saving(fig, video_name_2D, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
+        with writer.saving(fig, video_name_2d, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
             for time_idx in tqdm(range(0, sim_time.shape[0], int(step))):
                 for rod_idx in range(n_visualized_rods):
                     inst_position, inst_radius = rod_history_unpacker(rod_idx, time_idx)
@@ -414,9 +414,9 @@ def plot_video_of_rod_surface(
                 ax.add_artist(sphere_artists[sphere_idx])
 
         ax.set_aspect("equal")
-        video_name_2D = folder_name + "2D_xz_" + video_name
+        video_name_2d = folder_name + "2D_xz_" + video_name
 
-        with writer.saving(fig, video_name_2D, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
+        with writer.saving(fig, video_name_2d, dpi), plt.style.context("seaborn-v0_8-whitegrid"):
             for time_idx in tqdm(range(0, sim_time.shape[0], int(step))):
                 for rod_idx in range(n_visualized_rods):
                     inst_position, inst_radius = rod_history_unpacker(rod_idx, time_idx)
