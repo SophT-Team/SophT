@@ -23,8 +23,8 @@ clean: clean_ds_store clean_mypy_cache clean_pycache clean_pytest_cache clean_ru
 format:
     ruff format sopht tests examples
 
-lint:
-    ruff check --fix sopht tests examples
+check:
+    ruff check --statistics sopht tests examples
 
 sys_info:
     @echo "Operating System: {{ os() }}"
