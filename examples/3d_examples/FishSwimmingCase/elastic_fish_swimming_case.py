@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 import numpy as np
 import sopht.simulator as sps
@@ -202,7 +204,7 @@ def elastic_fish_swimming_case(
                 f" force norm: {np.linalg.norm(forces)}"
                 f"flow_dt: {flow_sim.compute_stable_timestep(dt_prefac=0.125):.6f}"
             )
-            with open("fish_velocity_vs_time.csv", "ab") as f:
+            with Path("fish_velocity_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[
@@ -217,14 +219,14 @@ def elastic_fish_swimming_case(
                     delimiter=",",
                 )
 
-            with open("fish_com_position_vs_time.csv", "ab") as f:
+            with Path("fish_com_position_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[np.hstack((flow_sim.time, com_position_history[-1]))].T,
                     delimiter=",",
                 )
 
-            with open("fish_forces_vs_time.csv", "ab") as f:
+            with Path("fish_forces_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[

@@ -1,5 +1,7 @@
 """Module for Input/Output via HD5 format."""
 
+from pathlib import Path
+
 import h5py
 import numpy as np
 from elastica.rod.cosserat_rod import CosseratRod
@@ -508,7 +510,7 @@ class IO:
     </Domain>
 </Xdmf>
 """
-        with open(h5_file_name.replace(".h5", "_eulerian.xmf"), "w") as f:
+        with Path(h5_file_name.replace(".h5", "_eulerian.xmf")).open("w") as f:
             f.write(xdmffile)
 
     def generate_xdmf_lagrangian(self, h5_file_name: str, time: float) -> None:
@@ -604,7 +606,7 @@ class IO:
 </Xdmf>
 """
 
-            with open(xmf_file_name, "w") as f:
+            with Path(xmf_file_name).open("w") as f:
                 f.write(xdmffile)
 
 

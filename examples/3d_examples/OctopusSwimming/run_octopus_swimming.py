@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 import elastica as ea
 import numpy as np
@@ -282,7 +284,7 @@ def octopus_swimming(
             )
             head_com_velocity_history.append(sphere.velocity_collection[..., 0].copy())
             head_com_position_history.append(sphere.position_collection[..., 0].copy())
-            with open("octopus_head_velocity_vs_time.csv", "ab") as f:
+            with Path("octopus_head_velocity_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[
@@ -297,7 +299,7 @@ def octopus_swimming(
                     delimiter=",",
                 )
 
-            with open("octopus_head_position_vs_time.csv", "ab") as f:
+            with Path("octopus_head_position_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[np.hstack((flow_sim.time, head_com_position_history[-1]))].T,
