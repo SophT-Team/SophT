@@ -264,7 +264,7 @@ def flow_past_rod_case(
         if data_timer >= data_timer_limit or data_timer == 0:
             data_timer = 0.0
             tip_time.append(flow_sim.time / timescale)
-            tip_position.append((flow_past_rod.position_collection[(x_axis_idx), -1]))
+            tip_position.append(flow_past_rod.position_collection[(x_axis_idx), -1])
 
         # compute timestep
         flow_dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)

@@ -31,7 +31,7 @@ class RectangularPlane(ea.RigidBodyBase):
         Currently only supports imposed modes, cannot track
         dynamics in pyelastica!
         """
-        super(RectangularPlane, self).__init__()
+        super().__init__()
 
         logger = logging.getLogger()
         logger.warning(

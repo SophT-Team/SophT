@@ -29,7 +29,7 @@ class SigmoidActivationLongitudinalMuscles:
     def apply_activation(self, system, activation: np.ndarray, time: float = 0.0) -> None:
         n_elems = self.end_idx - self.start_idx
         index = np.arange(0, n_elems, dtype=np.int64)
-        fiber_activation = np.zeros((n_elems))
+        fiber_activation = np.zeros(n_elems)
         activation *= 0
 
         time = round(time, 5)

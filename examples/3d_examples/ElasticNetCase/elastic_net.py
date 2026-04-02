@@ -38,7 +38,7 @@ def compute_non_dimensional_rod_positions(
         non_dimensional_length, rod_positions_along_perp_axis
     )
     element_positions = non_dimensional_position_func_for_rod_along_axis(np.linspace(0, 1, n_elem))
-    positions = np.zeros((n_elem + 1))
+    positions = np.zeros(n_elem + 1)
     element_length = element_positions[1] - element_positions[0]
     positions[:-1] = element_positions - element_length / 2
     positions[-1] = element_positions[-1] + element_length / 2

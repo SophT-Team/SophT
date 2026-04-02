@@ -113,8 +113,8 @@ class FishSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.rod_element_global_frame_omega = np.zeros_like(self.rod_element_position)
 
         self.grid_point_director_transpose = np.zeros((3, 3, self.num_lag_nodes))
-        self.grid_point_radius = np.zeros((self.num_lag_nodes))
-        self.grid_point_dilitation = np.zeros((self.num_lag_nodes))
+        self.grid_point_radius = np.zeros(self.num_lag_nodes)
+        self.grid_point_dilitation = np.zeros(self.num_lag_nodes)
         self.grid_point_omega = np.zeros_like(self.position_field)
         self.lag_grid_torque_field = np.zeros_like(self.position_field)
 

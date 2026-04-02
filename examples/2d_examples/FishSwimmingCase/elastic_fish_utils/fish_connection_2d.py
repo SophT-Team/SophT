@@ -10,7 +10,7 @@ class FishConnection(ea.FreeJoint):
     """
 
     def __init__(self, k: float) -> None:
-        super(FishConnection, self).__init__(k, nu=0)
+        super().__init__(k, nu=0)
         self.k = k
 
     def apply_forces(

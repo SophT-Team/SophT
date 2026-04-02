@@ -315,7 +315,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
 
         # store grid point radius ratio for each forcing point
-        self.grid_point_radius_ratio = np.ones((self.surface_grid_points.sum()))
+        self.grid_point_radius_ratio = np.ones(self.surface_grid_points.sum())
         # Generate rotation angle of each grid point
         self.surface_point_rotation_angle_list = []
         for i in range(self.n_elems):
@@ -376,7 +376,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.rod_element_global_frame_omega = np.zeros_like(self.rod_element_position)
 
         self.grid_point_director_transpose = np.zeros((3, 3, self.num_lag_nodes))
-        self.grid_point_radius = np.zeros((self.num_lag_nodes))
+        self.grid_point_radius = np.zeros(self.num_lag_nodes)
         self.grid_point_omega = np.zeros_like(self.position_field)
         self.lag_grid_torque_field = np.zeros_like(self.position_field)
 

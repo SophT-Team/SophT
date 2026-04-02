@@ -500,7 +500,7 @@ class MockSurfaceForcingGrid:
                         self.grid_point_radius_ratio[i],
                         np.hstack(
                             [
-                                np.ones((num_grid_points)) * end_elem_radius_ratio[j]
+                                np.ones(num_grid_points) * end_elem_radius_ratio[j]
                                 for j, num_grid_points in enumerate(end_elem_surface_grid_points)
                             ]
                         ),
