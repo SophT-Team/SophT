@@ -1,5 +1,4 @@
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_diffusion_flux_pyst_kernel_2d,
@@ -42,7 +41,7 @@ class DiffusionFluxSolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("reset_ghost_zone", [True, False])
-def test_diffusion_flux_2d(n_values, precision, reset_ghost_zone, rng):
+def test_diffusion_flux_2d(n_values, precision, reset_ghost_zone, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = DiffusionFluxSolution(n_values, rng, precision)
     diffusion_flux = (
@@ -52,7 +51,7 @@ def test_diffusion_flux_2d(n_values, precision, reset_ghost_zone, rng):
     )
     diffusion_flux_pyst_kernel = gen_diffusion_flux_pyst_kernel_2d(
         real_t=real_t,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         fixed_grid_size=(n_values, n_values),
         reset_ghost_zone=reset_ghost_zone,
     )

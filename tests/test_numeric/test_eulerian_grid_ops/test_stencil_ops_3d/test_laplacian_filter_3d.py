@@ -1,5 +1,4 @@
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_laplacian_filter_kernel_3d,
@@ -107,11 +106,7 @@ def vector_laplacian_filter(vector_field: np.ndarray, filter_order: int, filter_
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
 @pytest.mark.parametrize("filter_type", ["convolution", "multiplicative"])
 def test_laplacian_filter_constant_field(
-    n_values,
-    precision,
-    filter_order,
-    field_type,
-    filter_type,
+    n_values, precision, filter_order, field_type, filter_type, max_cpu_count
 ):
     real_t = get_real_t(precision)
     dim = 3
@@ -132,7 +127,7 @@ def test_laplacian_filter_constant_field(
         filter_flux_buffer=filter_flux_buffer,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         field_type=field_type,
         filter_type=filter_type,
     )
@@ -146,12 +141,7 @@ def test_laplacian_filter_constant_field(
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
 @pytest.mark.parametrize("filter_type", ["convolution", "multiplicative"])
 def test_laplacian_filter_random_field(
-    n_values,
-    precision,
-    filter_order,
-    field_type,
-    filter_type,
-    rng,
+    n_values, precision, filter_order, field_type, filter_type, rng, max_cpu_count
 ):
     real_t = get_real_t(precision)
     dim = 3
@@ -171,7 +161,7 @@ def test_laplacian_filter_random_field(
         filter_flux_buffer=filter_flux_buffer,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         field_type=field_type,
         filter_type=filter_type,
     )

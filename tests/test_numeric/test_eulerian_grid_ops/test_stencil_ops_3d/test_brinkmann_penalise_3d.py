@@ -1,5 +1,4 @@
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_brinkmann_penalise_pyst_kernel_3d,
@@ -68,14 +67,14 @@ class BrinkmannPenalisationSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_brinkmann_penalise_scalar_field_3d(n_values, precision, rng):
+def test_brinkmann_penalise_scalar_field_3d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = BrinkmannPenalisationSolution(n_values, rng, precision)
     penalised_field = np.zeros_like(solution.ref_penalised_field)
     brinkmann_penalise_pyst_openmp_kernel_3d = gen_brinkmann_penalise_pyst_kernel_3d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         field_type="scalar",
     )
     brinkmann_penalise_pyst_openmp_kernel_3d(
@@ -91,14 +90,14 @@ def test_brinkmann_penalise_scalar_field_3d(n_values, precision, rng):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_brinkmann_penalise_vector_field_3d(n_values, precision, rng):
+def test_brinkmann_penalise_vector_field_3d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = BrinkmannPenalisationSolution(n_values, rng, precision)
     penalised_vector_field = np.zeros_like(solution.ref_penalised_vector_field)
     brinkmann_penalise_vector_field_pyst_openmp_kernel_3d = gen_brinkmann_penalise_pyst_kernel_3d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         field_type="vector",
     )
     brinkmann_penalise_vector_field_pyst_openmp_kernel_3d(

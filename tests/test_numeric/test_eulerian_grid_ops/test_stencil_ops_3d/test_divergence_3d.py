@@ -1,5 +1,4 @@
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_divergence_pyst_kernel_3d,
@@ -46,7 +45,7 @@ class DivergenceSolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("reset_ghost_zone", [True, False])
-def test_divergence_3d(n_values, precision, reset_ghost_zone, rng):
+def test_divergence_3d(n_values, precision, reset_ghost_zone, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = DivergenceSolution(n_values, rng, precision)
     divergence = (
@@ -57,7 +56,7 @@ def test_divergence_3d(n_values, precision, reset_ghost_zone, rng):
     divergence_pyst_kernel_3d = gen_divergence_pyst_kernel_3d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         reset_ghost_zone=reset_ghost_zone,
     )
     divergence_pyst_kernel_3d(

@@ -1,5 +1,4 @@
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d,
@@ -82,7 +81,7 @@ class VorticityStretchingTimestepSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vort_stretching_timestep_euler_forward_3d(n_values, precision, rng):
+def test_vort_stretching_timestep_euler_forward_3d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = VorticityStretchingTimestepSolution(
         n_values, rng, time_stepper="euler_forward", precision=precision
@@ -93,7 +92,7 @@ def test_vort_stretching_timestep_euler_forward_3d(n_values, precision, rng):
         gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=max_cpu_count,
         )
     )
     vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
@@ -107,7 +106,7 @@ def test_vort_stretching_timestep_euler_forward_3d(n_values, precision, rng):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vort_stretching_timestep_ssprk3_3d(n_values, precision, rng):
+def test_vort_stretching_timestep_ssprk3_3d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = VorticityStretchingTimestepSolution(
         n_values, rng, time_stepper="ssprk3", precision=precision
@@ -119,7 +118,7 @@ def test_vort_stretching_timestep_ssprk3_3d(n_values, precision, rng):
             real_t=real_t,
             midstep_buffer_vector_field=np.zeros_like(vorticity_field),
             fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=max_cpu_count,
         )
     )
     vorticity_stretching_timestep_ssprk3_pyst_kernel_3d(

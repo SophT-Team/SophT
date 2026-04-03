@@ -1,5 +1,4 @@
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d,
@@ -49,7 +48,7 @@ class UpdateVorticityFromVelocityForcingSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_update_vorticity_from_velocity_forcing_2d(n_values, precision, rng):
+def test_update_vorticity_from_velocity_forcing_2d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = UpdateVorticityFromVelocityForcingSolution(n_values, rng, precision)
     vorticity_field = solution.ref_vorticity_field.copy()
@@ -57,7 +56,7 @@ def test_update_vorticity_from_velocity_forcing_2d(n_values, precision, rng):
         gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=max_cpu_count,
         )
     )
     update_vorticity_from_velocity_forcing_pyst_kernel(
@@ -70,7 +69,7 @@ def test_update_vorticity_from_velocity_forcing_2d(n_values, precision, rng):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_update_vorticity_from_penalised_velocity_2d(n_values, precision, rng):
+def test_update_vorticity_from_penalised_velocity_2d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     vorticity_field = rng.random((n_values, n_values)).astype(real_t)
     velocity_field = rng.random((2, n_values, n_values)).astype(real_t)
@@ -85,7 +84,7 @@ def test_update_vorticity_from_penalised_velocity_2d(n_values, precision, rng):
         gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=max_cpu_count,
         )
     )
     update_vorticity_from_penalised_vorticity_kernel(

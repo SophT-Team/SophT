@@ -1,7 +1,6 @@
 from typing import Literal
 
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_penalise_field_boundary_pyst_kernel_3d,
@@ -114,7 +113,7 @@ class PenaliseFieldBoundarySolution:
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
 def test_penalise_field_boundary_3d(
-    n_values, precision, field_type: Literal["scalar", "vector"], rng
+    n_values, precision, field_type: Literal["scalar", "vector"], rng, max_cpu_count
 ):
     real_t = get_real_t(precision)
     solution = PenaliseFieldBoundarySolution(n_values, rng, precision)
@@ -126,7 +125,7 @@ def test_penalise_field_boundary_3d(
         z_grid_field=solution.z_grid_field,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         field_type=field_type,
     )
     match field_type:
@@ -144,7 +143,7 @@ def test_penalise_field_boundary_3d(
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("field_type", ["scalar", "vector"])
 def test_zero_width_penalise_field_boundary_3d(
-    n_values, precision, field_type: Literal["scalar", "vector"], rng
+    n_values, precision, field_type: Literal["scalar", "vector"], rng, max_cpu_count
 ):
     real_t = get_real_t(precision)
     solution = PenaliseFieldBoundarySolution(n_values, rng, precision)
@@ -156,7 +155,7 @@ def test_zero_width_penalise_field_boundary_3d(
         z_grid_field=solution.z_grid_field,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=max_cpu_count,
         field_type=field_type,
     )
     match field_type:
