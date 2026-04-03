@@ -1,5 +1,5 @@
 from pathlib import Path
-from shutil import rmtree
+from shutil import move, rmtree
 
 import ffmpeg
 
@@ -34,4 +34,4 @@ def make_dir_and_transfer_h5_data(dir_name: str, clean_dir: bool = True) -> None
 
     sub_dir.mkdir(parents=True, exist_ok=True)
     for h5_file in list(cwd.glob("*.xmf")) + list(cwd.glob("*.h5")):
-        h5_file.rename(sub_dir / h5_file.name)
+        move(h5_file, sub_dir)
