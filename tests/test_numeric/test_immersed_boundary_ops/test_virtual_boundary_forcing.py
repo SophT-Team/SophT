@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t, get_test_tol
@@ -365,7 +366,7 @@ def test_compute_interaction_with_eul_grid_forcing_reset(grid_dim, n_values, pre
         num_lag_nodes=mock_soln.num_lag_nodes,
         real_t=mock_soln.real_t,
         enable_eul_grid_forcing_reset=True,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     eul_grid_velocity_shape = (grid_dim,) + (n_values,) * grid_dim
     eul_grid_forcing_field = rng.random(eul_grid_velocity_shape).astype(real_t)

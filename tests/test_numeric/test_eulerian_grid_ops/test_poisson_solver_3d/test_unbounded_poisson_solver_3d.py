@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from scipy.fft import irfftn, rfftn
 from sopht.numeric.eulerian_grid_ops import (
@@ -118,7 +119,7 @@ def test_unbounded_poisson_solve_pyfftw_3d(n_values, precision, rng):
         grid_size_x=n_values,
         x_range=x_range,
         real_t=real_t,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     solution_field = np.zeros_like(solution.rhs_field)
     unbounded_poisson_solver_kernel = unbounded_poisson_solver.solve
@@ -146,7 +147,7 @@ def test_unbounded_vector_field_poisson_solve_pyfftw_3d(n_values, precision, rng
         grid_size_x=n_values,
         x_range=x_range,
         real_t=real_t,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     solution_vector_field = np.zeros_like(solution.rhs_vector_field)
     unbounded_poisson_solver_kernel = unbounded_poisson_solver.vector_field_solve

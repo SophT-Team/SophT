@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_flux_conservative_eno3_pyst_kernel_2d,
@@ -121,7 +122,7 @@ def test_advection_flux_conservative_eno3(n_values, precision, rng):
     advection_flux_conservative_eno3_kernel = gen_advection_flux_conservative_eno3_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     advection_flux_conservative_eno3_kernel(
         advection_flux=advection_flux,

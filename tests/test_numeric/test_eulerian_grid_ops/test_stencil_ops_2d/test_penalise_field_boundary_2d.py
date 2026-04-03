@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_penalise_field_boundary_pyst_kernel_2d,
@@ -77,7 +78,7 @@ def test_penalise_field_boundary_2d(n_values, precision, rng):
         y_grid_field=solution.y_grid_field,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     penalise_field_towards_boundary_pyst_kernel(field=field)
     solution.check_equals(field)

@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d,
@@ -72,7 +73,7 @@ def test_euler_forward_conservative_eno3_2d(n_values, precision, rng):
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=multiprocessing.cpu_count(),
         )
     )
     field = solution.ref_field.copy()

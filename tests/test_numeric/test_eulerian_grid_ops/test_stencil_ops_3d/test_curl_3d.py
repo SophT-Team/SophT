@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_curl_pyst_kernel_3d,
@@ -83,7 +84,7 @@ def test_curl_3d(n_values, precision, reset_ghost_zone, rng):
     curl_pyst_kernel_3d = gen_curl_pyst_kernel_3d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         reset_ghost_zone=reset_ghost_zone,
     )
     curl_pyst_kernel_3d(

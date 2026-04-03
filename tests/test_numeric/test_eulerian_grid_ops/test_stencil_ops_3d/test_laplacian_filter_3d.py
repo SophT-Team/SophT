@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_laplacian_filter_kernel_3d,
@@ -132,7 +133,7 @@ def test_laplacian_filter_constant_field(
         filter_flux_buffer=filter_flux_buffer,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type=field_type,
         filter_type=filter_type,
     )
@@ -171,7 +172,7 @@ def test_laplacian_filter_random_field(
         filter_flux_buffer=filter_flux_buffer,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type=field_type,
         filter_type=filter_type,
     )

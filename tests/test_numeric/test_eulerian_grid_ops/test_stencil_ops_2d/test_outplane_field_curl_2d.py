@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_outplane_field_curl_pyst_kernel_2d,
@@ -38,7 +39,7 @@ def test_outplane_field_curl(n_values, precision, reset_ghost_zone, rng):
     outplane_field_curl_pyst_kernel = gen_outplane_field_curl_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         reset_ghost_zone=reset_ghost_zone,
     )
     outplane_field_curl_pyst_kernel(

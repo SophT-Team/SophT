@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_diffusion_timestep_euler_forward_pyst_kernel_2d,
@@ -51,7 +52,7 @@ def test_diffusion_timestep_euler_forward_2d(n_values, precision, rng):
         gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=multiprocessing.cpu_count(),
         )
     )
     diffusion_timestep_euler_forward_pyst_kernel(

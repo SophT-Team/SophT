@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_vorticity_stretching_flux_pyst_kernel_3d,
@@ -68,7 +69,7 @@ def test_vort_stretching_flux_3d(n_values, precision, rng):
     vorticity_stretching_flux_kernel_3d = gen_vorticity_stretching_flux_pyst_kernel_3d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     vorticity_stretching_flux_kernel_3d(
         vorticity_stretching_flux_field=vorticity_stretching_flux_field,

@@ -1,7 +1,7 @@
+import multiprocessing
 from typing import Literal
 
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_penalise_field_boundary_pyst_kernel_3d,
@@ -126,7 +126,7 @@ def test_penalise_field_boundary_3d(
         z_grid_field=solution.z_grid_field,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type=field_type,
     )
     match field_type:
@@ -156,7 +156,7 @@ def test_zero_width_penalise_field_boundary_3d(
         z_grid_field=solution.z_grid_field,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type=field_type,
     )
     match field_type:

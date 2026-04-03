@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_diffusion_flux_pyst_kernel_2d,
@@ -52,7 +53,7 @@ def test_diffusion_flux_2d(n_values, precision, reset_ghost_zone, rng):
     )
     diffusion_flux_pyst_kernel = gen_diffusion_flux_pyst_kernel_2d(
         real_t=real_t,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         fixed_grid_size=(n_values, n_values),
         reset_ghost_zone=reset_ghost_zone,
     )

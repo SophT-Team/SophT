@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d,
@@ -57,7 +58,7 @@ def test_update_vorticity_from_velocity_forcing_2d(n_values, precision, rng):
         gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=multiprocessing.cpu_count(),
         )
     )
     update_vorticity_from_velocity_forcing_pyst_kernel(
@@ -85,7 +86,7 @@ def test_update_vorticity_from_penalised_velocity_2d(n_values, precision, rng):
         gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
+            num_threads=multiprocessing.cpu_count(),
         )
     )
     update_vorticity_from_penalised_vorticity_kernel(

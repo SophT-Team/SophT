@@ -1,5 +1,6 @@
+import multiprocessing
+
 import numpy as np
-import psutil
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
     gen_add_fixed_val_pyst_kernel_2d,
@@ -20,7 +21,7 @@ def test_elementwise_sum_pyst_kernel_2d(n_values, precision):
     elementwise_sum_pyst_kernel = gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="scalar",
     )
     field_1 = 2 * np.ones((n_values, n_values), dtype=real_t)
@@ -41,7 +42,7 @@ def test_vector_field_elementwise_sum_pyst_kernel_2d(n_values, precision):
     elementwise_sum_pyst_kernel = gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="vector",
     )
     field_1 = 2 * np.ones((2, n_values, n_values), dtype=real_t)
@@ -62,7 +63,7 @@ def test_set_fixed_val_pyst_kernel_2d(n_values, precision):
     set_fixed_val_pyst_kernel = gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="scalar",
     )
     field = np.ones((n_values, n_values), dtype=real_t)
@@ -81,7 +82,7 @@ def test_vector_field_set_fixed_val_pyst_kernel_2d(n_values, precision):
     set_fixed_val_pyst_kernel = gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="vector",
     )
     field = np.ones((2, n_values, n_values), dtype=real_t)
@@ -101,7 +102,7 @@ def test_elementwise_copy_pyst_kernel_2d(n_values, precision):
     elementwise_copy_pyst_kernel = gen_elementwise_copy_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
     )
     field = 2 * np.ones((n_values, n_values), dtype=real_t)
     rhs_field = 3 * np.ones((n_values, n_values), dtype=real_t)
@@ -117,7 +118,7 @@ def test_elementwise_copy_pyst_kernel_2d(n_values, precision):
 def test_elementwise_complex_product_pyst_kernel_2d(n_values, precision):
     real_t = get_real_t(precision)
     elementwise_complex_product_pyst_kernel = gen_elementwise_complex_product_pyst_kernel_2d(
-        real_t=real_t, num_threads=psutil.cpu_count(logical=False)
+        real_t=real_t, num_threads=multiprocessing.cpu_count()
     )
     complex_dtype = np.complex64 if real_t == np.float32 else np.complex128
     field_1 = (1 + 2j) * np.ones((n_values, n_values), dtype=complex_dtype)
@@ -139,7 +140,7 @@ def test_set_fixed_val_at_boundaries_2d(n_values, precision):
     set_fixed_val_at_boundaries = gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
         real_t=real_t,
         width=width,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="scalar",
     )
     field = np.ones((n_values, n_values), dtype=real_t)
@@ -163,7 +164,7 @@ def test_vector_field_set_fixed_val_at_boundaries_2d(n_values, precision):
     set_fixed_val_at_boundaries = gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
         real_t=real_t,
         width=width,
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="vector",
     )
     field = np.ones((dim, n_values, n_values), dtype=real_t)
@@ -186,7 +187,7 @@ def test_add_fixed_val_pyst_kernel_2d(n_values, precision):
     add_fixed_val_pyst_kernel = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="scalar",
     )
     field = np.ones((n_values, n_values), dtype=real_t)
@@ -207,7 +208,7 @@ def test_vector_field_add_fixed_val_pyst_kernel_2d(n_values, precision):
     add_fixed_val_pyst_kernel = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="vector",
     )
     field = np.ones((2, n_values, n_values), dtype=real_t)
@@ -230,7 +231,7 @@ def test_elementwise_saxpby_pyst_kernel_2d(n_values, precision):
     elementwise_saxpby_pyst_kernel = gen_elementwise_saxpby_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="scalar",
     )
     field_1 = 2 * np.ones((n_values, n_values), dtype=real_t)
@@ -256,7 +257,7 @@ def test_vector_field_elementwise_saxpby_pyst_kernel_2d(n_values, precision):
     elementwise_saxpby_pyst_kernel = gen_elementwise_saxpby_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=psutil.cpu_count(logical=False),
+        num_threads=multiprocessing.cpu_count(),
         field_type="vector",
     )
     field_1 = 2 * np.ones((2, n_values, n_values), dtype=real_t)
