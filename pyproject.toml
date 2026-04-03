@@ -1,6 +1,6 @@
 [project]
 name = "sopht"
-version = "0.0.1"
+version = "0.0.3"
 description = "Scalable One-stop Platform for Hydroelastic Things (SOPHT)"
 readme = "README.md"
 authors = [
