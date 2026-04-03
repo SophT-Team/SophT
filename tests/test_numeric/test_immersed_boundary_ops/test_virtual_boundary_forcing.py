@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
@@ -350,7 +348,9 @@ def test_compute_interaction_without_eul_grid_forcing_reset(grid_dim, n_values, 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("n_values", [16])
-def test_compute_interaction_with_eul_grid_forcing_reset(grid_dim, n_values, precision, rng):
+def test_compute_interaction_with_eul_grid_forcing_reset(
+    grid_dim, n_values, precision, rng, max_cpu_count
+):
     real_t = get_real_t(precision)
     mock_soln = MockVirtualBoundaryForcingSolution(
         grid_size=n_values,
@@ -366,7 +366,7 @@ def test_compute_interaction_with_eul_grid_forcing_reset(grid_dim, n_values, pre
         num_lag_nodes=mock_soln.num_lag_nodes,
         real_t=mock_soln.real_t,
         enable_eul_grid_forcing_reset=True,
-        num_threads=multiprocessing.cpu_count(),
+        num_threads=max_cpu_count,
     )
     eul_grid_velocity_shape = (grid_dim,) + (n_values,) * grid_dim
     eul_grid_forcing_field = rng.random(eul_grid_velocity_shape).astype(real_t)

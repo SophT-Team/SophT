@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import numpy.linalg as la
 import pytest
@@ -74,7 +72,7 @@ class UnboundedPoissonSolverSolution2D:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_unbounded_poisson_solve_pyfftw_2d(n_values, precision, rng):
+def test_unbounded_poisson_solve_pyfftw_2d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     x_range = real_t(2.0)
     solution = UnboundedPoissonSolverSolution2D(
@@ -89,7 +87,7 @@ def test_unbounded_poisson_solve_pyfftw_2d(n_values, precision, rng):
         grid_size_x=n_values,
         x_range=x_range,
         real_t=real_t,
-        num_threads=multiprocessing.cpu_count(),
+        num_threads=max_cpu_count,
     )
     solution_field = np.zeros_like(solution.rhs_field)
     unbounded_poisson_solver_kernel = unbounded_poisson_solver.solve

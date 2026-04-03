@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -58,7 +56,7 @@ class AdvectionTimestepSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_euler_forward_conservative_eno3_2d(n_values, precision, rng):
+def test_euler_forward_conservative_eno3_2d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = AdvectionTimestepSolution(
         rng,
@@ -73,7 +71,7 @@ def test_euler_forward_conservative_eno3_2d(n_values, precision, rng):
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=multiprocessing.cpu_count(),
+            num_threads=max_cpu_count,
         )
     )
     field = solution.ref_field.copy()

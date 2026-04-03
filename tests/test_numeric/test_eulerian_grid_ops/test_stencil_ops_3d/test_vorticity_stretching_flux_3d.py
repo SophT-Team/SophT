@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -62,14 +60,14 @@ class VorticityStretchingFluxSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vort_stretching_flux_3d(n_values, precision, rng):
+def test_vort_stretching_flux_3d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = VorticityStretchingFluxSolution(n_values, rng, precision)
     vorticity_stretching_flux_field = np.zeros_like(solution.ref_vorticity_stretching_flux_field)
     vorticity_stretching_flux_kernel_3d = gen_vorticity_stretching_flux_pyst_kernel_3d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values, n_values),
-        num_threads=multiprocessing.cpu_count(),
+        num_threads=max_cpu_count,
     )
     vorticity_stretching_flux_kernel_3d(
         vorticity_stretching_flux_field=vorticity_stretching_flux_field,

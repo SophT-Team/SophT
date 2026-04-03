@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -43,7 +41,7 @@ class DiffusionTimestepSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_diffusion_timestep_euler_forward_2d(n_values, precision, rng):
+def test_diffusion_timestep_euler_forward_2d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = DiffusionTimestepSolution(rng, n_values, precision=precision)
     field = solution.ref_field.copy()
@@ -52,7 +50,7 @@ def test_diffusion_timestep_euler_forward_2d(n_values, precision, rng):
         gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values),
-            num_threads=multiprocessing.cpu_count(),
+            num_threads=max_cpu_count,
         )
     )
     diffusion_timestep_euler_forward_pyst_kernel(

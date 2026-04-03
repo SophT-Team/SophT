@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -49,7 +47,9 @@ class CharFuncFromLevelSetFuncSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_char_func_from_level_set_via_sine_heaviside_pyst_3d(n_values, precision, rng):
+def test_char_func_from_level_set_via_sine_heaviside_pyst_3d(
+    n_values, precision, rng, max_cpu_count
+):
     real_t = get_real_t(precision)
     solution = CharFuncFromLevelSetFuncSolution(n_values, rng, precision)
     char_func_field = np.zeros_like(solution.ref_char_func_field)
@@ -58,7 +58,7 @@ def test_char_func_from_level_set_via_sine_heaviside_pyst_3d(n_values, precision
             blend_width=solution.blend_width,
             real_t=real_t,
             fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=multiprocessing.cpu_count(),
+            num_threads=max_cpu_count,
         )
     )
     char_func_from_level_set_via_sine_heaviside_pyst_kernel_3d(

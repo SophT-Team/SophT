@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -67,7 +65,7 @@ class PenaliseFieldBoundarySolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_penalise_field_boundary_2d(n_values, precision, rng):
+def test_penalise_field_boundary_2d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = PenaliseFieldBoundarySolution(n_values, rng, precision)
     field = solution.ref_field.copy()
@@ -78,7 +76,7 @@ def test_penalise_field_boundary_2d(n_values, precision, rng):
         y_grid_field=solution.y_grid_field,
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=multiprocessing.cpu_count(),
+        num_threads=max_cpu_count,
     )
     penalise_field_towards_boundary_pyst_kernel(field=field)
     solution.check_equals(field)

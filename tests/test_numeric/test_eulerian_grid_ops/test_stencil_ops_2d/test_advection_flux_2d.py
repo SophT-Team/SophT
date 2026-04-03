@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -113,7 +111,7 @@ class AdvectionFluxSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_advection_flux_conservative_eno3(n_values, precision, rng):
+def test_advection_flux_conservative_eno3(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = AdvectionFluxSolution(
         rng, n_values, flux_type="conservative_eno3", precision=precision
@@ -122,7 +120,7 @@ def test_advection_flux_conservative_eno3(n_values, precision, rng):
     advection_flux_conservative_eno3_kernel = gen_advection_flux_conservative_eno3_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=multiprocessing.cpu_count(),
+        num_threads=max_cpu_count,
     )
     advection_flux_conservative_eno3_kernel(
         advection_flux=advection_flux,

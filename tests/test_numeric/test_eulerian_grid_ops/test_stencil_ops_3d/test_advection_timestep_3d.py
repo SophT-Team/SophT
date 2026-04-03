@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -93,7 +91,7 @@ class AdvectionTimestepEulerForwardSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_advection_eno3_euler_forward(n_values, precision, rng):
+def test_advection_eno3_euler_forward(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = AdvectionTimestepEulerForwardSolution(
         n_values,
@@ -107,7 +105,7 @@ def test_advection_eno3_euler_forward(n_values, precision, rng):
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=multiprocessing.cpu_count(),
+            num_threads=max_cpu_count,
             field_type="scalar",
         )
     )
@@ -122,7 +120,7 @@ def test_advection_eno3_euler_forward(n_values, precision, rng):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vector_field_advection_timestep_eno3_3d(n_values, precision, rng):
+def test_vector_field_advection_timestep_eno3_3d(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = AdvectionTimestepEulerForwardSolution(
         n_values,
@@ -137,7 +135,7 @@ def test_vector_field_advection_timestep_eno3_3d(n_values, precision, rng):
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
             real_t=real_t,
             fixed_grid_size=(n_values, n_values, n_values),
-            num_threads=multiprocessing.cpu_count(),
+            num_threads=max_cpu_count,
             field_type="vector",
         )
     )

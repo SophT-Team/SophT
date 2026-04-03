@@ -1,5 +1,3 @@
-import multiprocessing
-
 import numpy as np
 import pytest
 from sopht.numeric.eulerian_grid_ops import (
@@ -37,14 +35,14 @@ class InplaneCurlSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_inplane_field_curl(n_values, precision, rng):
+def test_inplane_field_curl(n_values, precision, rng, max_cpu_count):
     real_t = get_real_t(precision)
     solution = InplaneCurlSolution(n_values, rng, precision)
     curl = np.zeros_like(solution.ref_curl)
     inplane_field_curl_kernel = gen_inplane_field_curl_pyst_kernel_2d(
         real_t=real_t,
         fixed_grid_size=(n_values, n_values),
-        num_threads=multiprocessing.cpu_count(),
+        num_threads=max_cpu_count,
     )
     inplane_field_curl_kernel(
         curl=curl,
