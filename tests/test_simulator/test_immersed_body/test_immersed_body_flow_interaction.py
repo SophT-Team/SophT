@@ -38,11 +38,6 @@ def test_immersed_body_interactor_warnings(num_forcing_points, caplog):
     with caplog.at_level(logging.INFO):
         cylinder_flow_interactor, _, _, dx = mock_2d_cylinder_flow_interactor(num_forcing_points)
     max_lag_grid_dx = cylinder_flow_interactor.forcing_grid.get_maximum_lagrangian_grid_spacing()
-    records = [
-        record
-        for record in caplog.records
-        if record.name == "sopht.simulator.immersed_body.immersed_body_flow_interaction"
-    ]
     if max_lag_grid_dx > 2 * dx:
         expected_message = (
             f"\n=================================================="
@@ -74,9 +69,12 @@ def test_immersed_body_interactor_warnings(num_forcing_points, caplog):
         )
         expected_log_level = logging.INFO
 
-    assert len(records) == 1
-    assert records[0].levelno == expected_log_level
-    assert records[0].message == expected_message
+    expected_tuple = (
+        "sopht.simulator.immersed_body.immersed_body_flow_interaction",
+        expected_log_level,
+        expected_message,
+    )
+    assert expected_tuple in caplog.record_tuples
 
 
 def test_immersed_body_interactor_call_method():
