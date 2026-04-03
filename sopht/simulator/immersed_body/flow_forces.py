@@ -15,7 +15,7 @@ class FlowForces(NoForces):
         self,
         body_flow_interactor: CosseratRodFlowInteraction | RigidBodyFlowInteraction,
     ) -> None:
-        super(NoForces, self).__init__()
+        super().__init__()
         self.body_flow_interactor = body_flow_interactor
 
     @override
