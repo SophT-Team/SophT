@@ -6,6 +6,7 @@ from .post_process import make_dir_and_transfer_h5_data, make_video_from_image_s
 from .precision import get_real_t, get_test_tol
 from .pyst_kernel_config import get_pyst_dtype, get_pyst_kernel_config
 from .restart_sim import restart_simulation
+from .rod_viz import plot_video_of_rod_surface
 
 __all__ = [
     "IO",
@@ -20,6 +21,7 @@ __all__ = [
     "get_test_tol",
     "make_dir_and_transfer_h5_data",
     "make_video_from_image_series",
+    "plot_video_of_rod_surface",
     "restart_simulation",
     "save_and_clear_fig",
 ]
