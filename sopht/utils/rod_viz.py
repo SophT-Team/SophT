@@ -131,7 +131,7 @@ def plot_video_of_rod_surface(
                     if inst_position.shape[1] != inst_radius.shape[0]:
                         inst_position = 0.5 * (inst_position[..., 1:] + inst_position[..., :-1])
 
-                    rod_scatters[rod_idx]._offsets3d = (
+                    rod_scatters[rod_idx]._offsets3d = (  # noqa: SLF001
                         inst_position[VectorField.x_axis_idx()],
                         inst_position[VectorField.y_axis_idx()],
                         inst_position[VectorField.z_axis_idx()],
@@ -144,7 +144,7 @@ def plot_video_of_rod_surface(
                 if sphere_flag:
                     for sphere_idx in range(n_visualized_spheres):
                         sphere_position, _ = sphere_history_unpacker(sphere_idx, time_idx)
-                        sphere_artists[sphere_idx]._offsets3d = (
+                        sphere_artists[sphere_idx]._offsets3d = (  # noqa: SLF001
                             sphere_position[VectorField.x_axis_idx()],
                             sphere_position[VectorField.y_axis_idx()],
                             sphere_position[VectorField.z_axis_idx()],
