@@ -49,11 +49,11 @@ def hill_sphere_vortex_case(
         z_grid=flow_sim.position_field[z_axis_idx],
     )
     # compute velocity from vorticity
-    flow_sim._unbounded_poisson_solver.vector_field_solve(
+    flow_sim._unbounded_poisson_solver.vector_field_solve(  # noqa: SLF001
         solution_vector_field=flow_sim.stream_func_field,
         rhs_vector_field=flow_sim.vorticity_field,
     )
-    flow_sim._curl(
+    flow_sim._curl(  # noqa: SLF001
         curl=flow_sim.velocity_field,
         field=flow_sim.stream_func_field,
         prefactor=flow_sim.real_t(0.5 / flow_sim.dx),
