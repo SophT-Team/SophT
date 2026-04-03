@@ -1,4 +1,4 @@
-"""SophT Simulator package the manages the Flow-Structure Interaction."""
+"""SophT Simulator package that manages the Flow-Structure Interaction."""
 
 from .flow import (
     FlowSimulator,
