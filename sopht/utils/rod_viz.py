@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 
 import numpy as np
@@ -7,6 +8,8 @@ from matplotlib.patches import Circle
 from tqdm import tqdm
 
 from sopht.utils.field import VectorField
+
+logger = logging.getLogger(__name__)
 
 
 def plot_video_of_rod_surface(
@@ -52,7 +55,7 @@ def plot_video_of_rod_surface(
         sphere_cmap = cm.get_cmap("Spectral", n_visualized_spheres)
 
     # video pre-processing
-    print("plot scene visualization video")
+    logger.info("plot scene visualization video")
     ffmpeg_writer = animation.writers["ffmpeg"]
     metadata = {"title": "Movie Test", "artist": "Matplotlib", "comment": "Movie support!"}
     writer = ffmpeg_writer(fps=fps, metadata=metadata)

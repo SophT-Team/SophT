@@ -9,6 +9,8 @@ from .immersed_body_forcing_grid import (
     ImmersedBodyForcingGrid,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
     """Base class for immersed body flow interaction."""
@@ -48,32 +50,35 @@ class ImmersedBodyFlowInteraction(VirtualBoundaryForcing):
         self.eul_grid_velocity_field.flags.writeable = False
 
         # check relative resolutions of the Lagrangian and Eulerian grids
-        log = logging.getLogger()
         max_lag_grid_dx = self.forcing_grid.get_maximum_lagrangian_grid_spacing()
         grid_type = type(self.forcing_grid).__name__
-        log.warning(f"==========================================================\nFor {grid_type}:")
         if max_lag_grid_dx > 2 * dx:  # 2 here since the support of delta function is 2 grid points
-            log.warning(
-                f"Eulerian grid spacing (dx): {dx}"
+            log_str = (
                 f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} > 2 * dx"
-                "\nThe Lagrangian grid of the body is too coarse relative to"
-                "\nthe Eulerian grid of the flow, which can lead to unexpected"
-                "\nconvergence. Please make the Lagrangian grid finer."
+                f"\nThe Lagrangian grid of the body is too coarse relative to"
+                f"\nthe Eulerian grid of the flow, which can lead to unexpected"
+                f"\nconvergence. Please make the Lagrangian grid finer."
             )
+            log_func = logger.warning
         elif max_lag_grid_dx < 0.5 * dx:  # reverse case of the above condition
-            log.warning(
-                "==========================================================\n"
-                f"Eulerian grid spacing (dx): {dx}"
+            log_str = (
                 f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} < 0.5 * dx"
-                "\nThe Lagrangian grid of the body is too fine relative to"
-                "\nthe Eulerian grid of the flow, which corresponds to redundant"
-                "\nforcing points. Please make the Lagrangian grid coarser."
+                f"\nThe Lagrangian grid of the body is too fine relative to"
+                f"\nthe Eulerian grid of the flow, which corresponds to redundant"
+                f"\nforcing points. Please make the Lagrangian grid coarser."
             )
+            log_func = logger.warning
         else:
-            log.warning(
-                "Lagrangian grid is resolved almost the same as the Eulerian\ngrid of the flow."
+            log_str = (
+                "\nLagrangian grid is resolved almost the same\nas the Eulerian grid of the flow."
             )
-        log.warning("==========================================================")
+            log_func = logger.info
+        log_str = (
+            f"\n=================================================="
+            f"\nFor {grid_type}:\nEulerian grid spacing (dx): {dx}{log_str}"
+            f"\n=================================================="
+        )
+        log_func(log_str)
 
         # rescale the virtual boundary coeffs by grid spacings
         # (based on previous penalty immersed boundary method works)

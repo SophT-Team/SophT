@@ -1,8 +1,11 @@
+import logging
 from pathlib import Path
 
 import elastica as ea
 
 from sopht.utils.io import IO
+
+logger = logging.getLogger(__name__)
 
 
 def restart_simulation(
@@ -29,6 +32,6 @@ def restart_simulation(
     if curr_time != rod_time:
         msg = "Simulation time of the flow is not matched with the Elastica, check your inputs!"
         raise ValueError(msg)
-    print(f"sopht_{latest:04d}.h5 has been loaded")
+    logger.info("sopht_%04d.h5 has been loaded", latest)
 
     return curr_time

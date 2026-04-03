@@ -35,31 +35,48 @@ def mock_2d_cylinder_flow_interactor(num_forcing_points=16):
 
 @pytest.mark.parametrize("num_forcing_points", [1, 4, 64])
 def test_immersed_body_interactor_warnings(num_forcing_points, caplog):
-    with caplog.at_level(logging.WARNING):
+    with caplog.at_level(logging.INFO):
         cylinder_flow_interactor, _, _, dx = mock_2d_cylinder_flow_interactor(num_forcing_points)
     max_lag_grid_dx = cylinder_flow_interactor.forcing_grid.get_maximum_lagrangian_grid_spacing()
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "sopht.simulator.immersed_body.immersed_body_flow_interaction"
+    ]
     if max_lag_grid_dx > 2 * dx:
-        warning_message = (
-            f"Eulerian grid spacing (dx): {dx}"
+        expected_message = (
+            f"\n=================================================="
+            f"\nFor CircularCylinderForcingGrid:\nEulerian grid spacing (dx): {dx}"
             f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} > 2 * dx"
-            "\nThe Lagrangian grid of the body is too coarse relative to"
-            "\nthe Eulerian grid of the flow, which can lead to unexpected"
-            "\nconvergence. Please make the Lagrangian grid finer."
+            f"\nThe Lagrangian grid of the body is too coarse relative to"
+            f"\nthe Eulerian grid of the flow, which can lead to unexpected"
+            f"\nconvergence. Please make the Lagrangian grid finer."
+            f"\n=================================================="
         )
+        expected_log_level = logging.WARNING
     elif max_lag_grid_dx < 0.5 * dx:
-        warning_message = (
-            "==========================================================\n"
-            f"Eulerian grid spacing (dx): {dx}"
+        expected_message = (
+            f"\n=================================================="
+            f"\nFor CircularCylinderForcingGrid:\nEulerian grid spacing (dx): {dx}"
             f"\nMax Lagrangian grid spacing: {max_lag_grid_dx} < 0.5 * dx"
-            "\nThe Lagrangian grid of the body is too fine relative to"
-            "\nthe Eulerian grid of the flow, which corresponds to redundant"
-            "\nforcing points. Please make the Lagrangian grid coarser."
+            f"\nThe Lagrangian grid of the body is too fine relative to"
+            f"\nthe Eulerian grid of the flow, which corresponds to redundant"
+            f"\nforcing points. Please make the Lagrangian grid coarser."
+            f"\n=================================================="
         )
+        expected_log_level = logging.WARNING
     else:
-        warning_message = (
-            "Lagrangian grid is resolved almost the same as the Eulerian\ngrid of the flow."
+        expected_message = (
+            f"\n=================================================="
+            f"\nFor CircularCylinderForcingGrid:\nEulerian grid spacing (dx): {dx}"
+            f"\nLagrangian grid is resolved almost the same\nas the Eulerian grid of the flow."
+            f"\n=================================================="
         )
-    assert warning_message in caplog.text
+        expected_log_level = logging.INFO
+
+    assert len(records) == 1
+    assert records[0].levelno == expected_log_level
+    assert records[0].message == expected_message
 
 
 def test_immersed_body_interactor_call_method():

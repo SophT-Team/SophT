@@ -5,5 +5,4 @@ extend-ignore = [
    "D",      # pydocstyle
    "INP001", # implicit-namespace-package
    "S101",   # assert
-   "T20",    # flake8-print
 ]

@@ -6,6 +6,8 @@ from elastica._linalg import _batch_cross
 from elastica.utils import MaxDimension
 from typing_extensions import override
 
+logger = logging.getLogger(__name__)
+
 
 class RectangularPlane(ea.RigidBodyBase):
     @override
@@ -35,14 +37,13 @@ class RectangularPlane(ea.RigidBodyBase):
         """
         super().__init__()
 
-        logger = logging.getLogger()
         logger.warning(
-            "==============================================="
+            "\n=================================================="
             "\nInitialising rectangular plane object. Note:"
             "\nCurrently tracking dynamics in pyelastica is"
             "\nnot supported, please do not add the plane"
             "\nto the pyelastica simulator!"
-            "\n==============================================="
+            "\n=================================================="
         )
 
         self.n_elems = 1

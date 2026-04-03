@@ -15,6 +15,7 @@ from .passive_transport_flow_simulators import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+logger = logging.getLogger(__name__)
 
 _zeros_2: np.ndarray = np.zeros(2, dtype=np.float64)
 _zeros_3: np.ndarray = np.zeros(3, dtype=np.float64)
@@ -272,10 +273,6 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         self.penalty_zone_width = kwargs.get("penalty_zone_width", 2)
         self.filter_vorticity = filter_vorticity
         if self.filter_vorticity:
-            log = logging.getLogger()
-            log.warning(
-                "===============================================\nVorticity filtering is turned on."
-            )
             # default values for the filter setting dictionary
             default_filter_setting_dict: dict[
                 str, int | Literal["multiplicative", "convolution"]
@@ -283,13 +280,17 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             self.filter_setting_dict = kwargs.get(
                 "filter_setting_dict", default_filter_setting_dict
             )
-            log.warning(
-                f"Setting default filter order = {self.filter_setting_dict['order']}"
-                f"\nand type = {self.filter_setting_dict['type']}. For custom filtering,"
-                "\nprovide a dictionary called 'filter_setting_dict'"
-                "\nwith keys 'order' and 'type'."
+            log_str = (
+                f"\n=================================================="
+                f"\nVorticity filtering is turned on."
+                f"\nSetting default filter order = {self.filter_setting_dict['order']}"
+                f"and type = {self.filter_setting_dict['type']}"
+                f"\nFor custom filtering, provide a dictionary called"
+                f"\n'filter_setting_dict with keys 'order' and 'type'."
+                f"\n=================================================="
             )
-            log.warning("===============================================")
+            logger.info(log_str)
+
         self.flow_density = flow_density
         # check validity of poisson solver types
         supported_poisson_solver_types = [

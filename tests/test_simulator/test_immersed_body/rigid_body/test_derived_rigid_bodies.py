@@ -24,17 +24,28 @@ def test_rectangular_plane(caplog):
     origin = _default_origin
     length = 1.0
     breadth = 0.5
-    with caplog.at_level(logging.WARNING):
-        plane = mock_xy_plane(origin, length, breadth)
-    warning_message = (
-        "==============================================="
+    expected_message = (
+        "\n=================================================="
         "\nInitialising rectangular plane object. Note:"
         "\nCurrently tracking dynamics in pyelastica is"
         "\nnot supported, please do not add the plane"
         "\nto the pyelastica simulator!"
-        "\n==============================================="
+        "\n=================================================="
     )
-    assert warning_message in caplog.text
+    with caplog.at_level(logging.WARNING):
+        plane = mock_xy_plane(origin, length, breadth)
+
+    # check warning message
+    records = [
+        record
+        for record in caplog.records
+        if record.name == "sopht.simulator.immersed_body.rigid_body.derived_rigid_bodies"
+    ]
+    assert len(records) == 1
+    assert records[0].levelno == logging.WARNING
+    assert records[0].message == expected_message
+
+    # Check plane properties
     assert plane.n_elems == 1
     assert plane.length == length
     assert plane.breadth == breadth
