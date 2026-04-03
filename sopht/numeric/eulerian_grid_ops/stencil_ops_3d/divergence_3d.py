@@ -1,10 +1,13 @@
 """Kernels for computing divergence in 3D."""
+
+from collections.abc import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_divergence_pyst_kernel_3d(
@@ -13,7 +16,7 @@ def gen_divergence_pyst_kernel_3d(
     fixed_grid_size: tuple[int, int, int] | bool = False,
     reset_ghost_zone: bool = True,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D divergence kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -43,16 +46,12 @@ def gen_divergence_pyst_kernel_3d(
             )
         )
 
-    _divergence_kernel_3d = ps.create_kernel(
-        _divergence_stencil_3d, config=kernel_config
-    ).compile()
+    _divergence_kernel_3d = ps.create_kernel(_divergence_stencil_3d, config=kernel_config).compile()
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
 
-    def divergence_pyst_kernel_3d(
-        divergence: np.ndarray, field: np.ndarray, inv_dx: float
-    ) -> None:
+    def divergence_pyst_kernel_3d(divergence: np.ndarray, field: np.ndarray, inv_dx: float) -> None:
         """Divergence in 3D.
 
         Computes divergence (3D scalar field) for a 3D vector field
@@ -91,7 +90,7 @@ def gen_divergence_pyst_kernel_3d(
                 divergence_pyst_kernel_3d(divergence, field, inv_dx)
 
                 # set boundary unaffected points to 0
-                # TODO need one sided corrections?
+                # TODO: need one sided corrections?
                 set_fixed_val_at_boundaries_3d(field=divergence, fixed_val=0)
 
             return divergence_with_ghost_zone_reset_pyst_kernel_3d

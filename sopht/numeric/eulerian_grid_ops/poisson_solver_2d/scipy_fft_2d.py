@@ -1,4 +1,5 @@
 """Create reference FFT operations via scipy in 2D."""
+
 import numpy as np
 from scipy.fft import irfftn, rfftn
 

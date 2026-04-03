@@ -1,0 +1,8 @@
+extend = "../pyproject.toml"
+
+[lint]
+extend-ignore = [
+   "D",      # pydocstyle
+   "INP001", # implicit-namespace-package
+   "S101",   # assert
+]

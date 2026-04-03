@@ -1,18 +1,13 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_advection_flux_conservative_eno3_pyst_kernel_2d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
 
 
-def advection_flux_conservative_eno_ord3_reference(
-    field, velocity_x, velocity_y, inv_dx, real_t
-):
+def advection_flux_conservative_eno_ord3_reference(field, velocity_x, velocity_y, inv_dx, real_t):
     kernel_w = 2
     advection_flux = np.zeros_like(field)
     face_velocity_x_east = real_t(0.5) * (
@@ -74,21 +69,24 @@ def advection_flux_conservative_eno_ord3_reference(
         - real_t(1 / 6) * nodal_flux[kernel_w + 1 : -kernel_w + 1, kernel_w:-kernel_w]
     )
     advection_flux[kernel_w:-kernel_w, kernel_w:-kernel_w] = inv_dx * (
-        advection_flux_east
-        - advection_flux_west
-        + advection_flux_north
-        - advection_flux_south
+        advection_flux_east - advection_flux_west + advection_flux_north - advection_flux_south
     )
     return advection_flux
 
 
 class AdvectionFluxSolution:
-    def __init__(self, n_samples, flux_type="conservative_eno3", precision="single"):
+    def __init__(
+        self,
+        rng_generator: np.random.Generator,
+        n_samples: int,
+        flux_type: str = "conservative_eno3",
+        precision: str = "single",
+    ) -> None:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_velocity_x = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_velocity_y = np.random.randn(n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
+        self.ref_velocity_x = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
+        self.ref_velocity_y = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
         self.ref_velocity = np.zeros((2, n_samples, n_samples)).astype(real_t)
         self.ref_velocity[0] = self.ref_velocity_x
         self.ref_velocity[1] = self.ref_velocity_y
@@ -114,18 +112,16 @@ class AdvectionFluxSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_advection_flux_conservative_eno3(n_values, precision):
+def test_advection_flux_conservative_eno3(n_values, precision, rng):
     real_t = get_real_t(precision)
     solution = AdvectionFluxSolution(
-        n_values, flux_type="conservative_eno3", precision=precision
+        rng, n_values, flux_type="conservative_eno3", precision=precision
     )
     advection_flux = np.zeros_like(solution.ref_advection_flux)
-    advection_flux_conservative_eno3_kernel = (
-        gen_advection_flux_conservative_eno3_pyst_kernel_2d(
-            real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
-            num_threads=psutil.cpu_count(logical=False),
-        )
+    advection_flux_conservative_eno3_kernel = gen_advection_flux_conservative_eno3_pyst_kernel_2d(
+        real_t=real_t,
+        fixed_grid_size=(n_values, n_values),
+        num_threads=psutil.cpu_count(logical=False),
     )
     advection_flux_conservative_eno3_kernel(
         advection_flux=advection_flux,

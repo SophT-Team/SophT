@@ -1,7 +1,5 @@
 import numpy as np
-
 import pytest
-
 from sopht.numeric.immersed_boundary_ops import EulerianLagrangianGridCommunicator2D
 from sopht.utils.precision import get_real_t, get_test_tol
 
@@ -34,9 +32,7 @@ def test_local_eulerian_grid_support_of_lagrangian_grid_2d(n_values, precision):
     ).astype(real_t)
     y = x.copy()
     x_grid, y_grid = np.meshgrid(x, y)
-    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(
-        int
-    )
+    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(int)
     # init lag. grid near domain center
     ref_nearest_eul_grid_index_to_lag_grid[0] = np.arange(
         eul_grid_size // 3, eul_grid_size // 3 + num_lag_nodes
@@ -54,42 +50,29 @@ def test_local_eulerian_grid_support_of_lagrangian_grid_2d(n_values, precision):
         ref_local_eul_grid_support_of_lag_grid[0, ..., i] = x_grid[
             ref_nearest_eul_grid_index_to_lag_grid[1, i]
             - interp_kernel_width
-            + 1 : ref_nearest_eul_grid_index_to_lag_grid[1, i]
-            + interp_kernel_width
-            + 1,
+            + 1 : ref_nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
             ref_nearest_eul_grid_index_to_lag_grid[0, i]
             - interp_kernel_width
-            + 1 : ref_nearest_eul_grid_index_to_lag_grid[0, i]
-            + interp_kernel_width
-            + 1,
+            + 1 : ref_nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
         ]
         ref_local_eul_grid_support_of_lag_grid[1, ..., i] = y_grid[
             ref_nearest_eul_grid_index_to_lag_grid[1, i]
             - interp_kernel_width
-            + 1 : ref_nearest_eul_grid_index_to_lag_grid[1, i]
-            + interp_kernel_width
-            + 1,
+            + 1 : ref_nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
             ref_nearest_eul_grid_index_to_lag_grid[0, i]
             - interp_kernel_width
-            + 1 : ref_nearest_eul_grid_index_to_lag_grid[0, i]
-            + interp_kernel_width
-            + 1,
+            + 1 : ref_nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
         ]
 
     # get relative distance (support) of grid
-    ref_local_eul_grid_support_of_lag_grid[
-        ...
-    ] = ref_local_eul_grid_support_of_lag_grid - lag_positions.reshape(
-        grid_dim, 1, 1, num_lag_nodes
+    ref_local_eul_grid_support_of_lag_grid[...] = (
+        ref_local_eul_grid_support_of_lag_grid
+        - lag_positions.reshape(grid_dim, 1, 1, num_lag_nodes)
     )
 
     # test against solution
-    nearest_eul_grid_index_to_lag_grid = np.zeros_like(
-        ref_nearest_eul_grid_index_to_lag_grid
-    )
-    local_eul_grid_support_of_lag_grid = np.zeros_like(
-        ref_local_eul_grid_support_of_lag_grid
-    )
+    nearest_eul_grid_index_to_lag_grid = np.zeros_like(ref_nearest_eul_grid_index_to_lag_grid)
+    local_eul_grid_support_of_lag_grid = np.zeros_like(ref_local_eul_grid_support_of_lag_grid)
     local_eulerian_grid_support_of_lagrangian_grid_kernel(
         local_eul_grid_support_of_lag_grid,
         nearest_eul_grid_index_to_lag_grid,
@@ -118,9 +101,7 @@ def test_eulerian_to_lagrangian_grid_interpolation_kernel_2d(n_values, precision
     eul_domain_size = real_t(1.0)
     dx = real_t(eul_domain_size / eul_grid_size)
     eul_grid_coord_shift = real_t(0.5 * dx)
-    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(
-        int
-    )
+    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(int)
     # init lag. grid near domain center
     ref_nearest_eul_grid_index_to_lag_grid[0] = np.arange(
         eul_grid_size // 3, eul_grid_size // 3 + num_lag_nodes
@@ -145,9 +126,7 @@ def test_eulerian_to_lagrangian_grid_interpolation_kernel_2d(n_values, precision
     )
     ref_interp_weights = np.tile(ref_interp_weights, reps=(1, 1, num_lag_nodes))
     # summation formula for 1 to n
-    ref_interp_weight_sum = (
-        (4 * interp_kernel_width**2) * (4 * interp_kernel_width**2 - 1) / 2
-    )
+    ref_interp_weight_sum = (4 * interp_kernel_width**2) * (4 * interp_kernel_width**2 - 1) / 2
 
     lag_grid_field = np.zeros((num_lag_nodes), dtype=real_t)
     eulerian_to_lagrangian_grid_interpolation_kernel(
@@ -175,9 +154,7 @@ def test_vector_field_eul_to_lag_grid_interpolation_kernel_2d(n_values, precisio
     eul_domain_size = real_t(1.0)
     dx = real_t(eul_domain_size / eul_grid_size)
     eul_grid_coord_shift = real_t(0.5 * dx)
-    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(
-        int
-    )
+    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(int)
     # init lag. grid near domain center
     ref_nearest_eul_grid_index_to_lag_grid[0] = np.arange(
         eul_grid_size // 3, eul_grid_size // 3 + num_lag_nodes
@@ -203,9 +180,7 @@ def test_vector_field_eul_to_lag_grid_interpolation_kernel_2d(n_values, precisio
     )
     ref_interp_weights = np.tile(ref_interp_weights, reps=(1, 1, num_lag_nodes))
     # summation formula for 1 to n
-    ref_interp_weight_sum = (
-        (4 * interp_kernel_width**2) * (4 * interp_kernel_width**2 - 1) / 2
-    )
+    ref_interp_weight_sum = (4 * interp_kernel_width**2) * (4 * interp_kernel_width**2 - 1) / 2
 
     lag_grid_field = np.zeros((n_components, num_lag_nodes), dtype=real_t)
     eulerian_to_lagrangian_grid_interpolation_kernel(
@@ -229,9 +204,7 @@ def test_lagrangian_to_eulerian_grid_interpolation_kernel_2d(n_values, precision
     eul_grid_size = n_values
     interp_kernel_width = 2
     num_lag_nodes = 3
-    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(
-        int
-    )
+    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(int)
     eul_domain_size = real_t(1.0)
     dx = real_t(eul_domain_size / eul_grid_size)
     eul_grid_coord_shift = real_t(0.5 * dx)
@@ -261,9 +234,7 @@ def test_lagrangian_to_eulerian_grid_interpolation_kernel_2d(n_values, precision
     prefactor_lag_field = 2
     ref_lag_grid_field = prefactor_lag_field * np.ones((num_lag_nodes), dtype=real_t)
     # reference integral of interpolated field onto Eulerian grid
-    num_ones_in_ref_interp_weights = (2 * interp_kernel_width) * (
-        2 * interp_kernel_width
-    )
+    num_ones_in_ref_interp_weights = (2 * interp_kernel_width) * (2 * interp_kernel_width)
     ref_interpolated_field_sum = (
         num_lag_nodes * prefactor_lag_field * num_ones_in_ref_interp_weights
     )
@@ -291,9 +262,7 @@ def test_vector_field_lag_to_eul_grid_interpolation_kernel_2d(n_values, precisio
     eul_grid_size = n_values
     interp_kernel_width = 2
     num_lag_nodes = 3
-    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(
-        int
-    )
+    ref_nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes)).astype(int)
     eul_domain_size = real_t(1.0)
     dx = real_t(eul_domain_size / eul_grid_size)
     eul_grid_coord_shift = real_t(0.5 * dx)
@@ -327,9 +296,7 @@ def test_vector_field_lag_to_eul_grid_interpolation_kernel_2d(n_values, precisio
     ref_lag_grid_field[0] *= prefactor_lag_field_y
     ref_lag_grid_field[1] *= prefactor_lag_field_x
     # reference integral of interpolated field onto Eulerian grid
-    num_ones_in_ref_interp_weights = (2 * interp_kernel_width) * (
-        2 * interp_kernel_width
-    )
+    num_ones_in_ref_interp_weights = (2 * interp_kernel_width) * (2 * interp_kernel_width)
     ref_interpolated_field_sum_y = (
         num_lag_nodes * prefactor_lag_field_y * num_ones_in_ref_interp_weights
     )
@@ -337,9 +304,7 @@ def test_vector_field_lag_to_eul_grid_interpolation_kernel_2d(n_values, precisio
         num_lag_nodes * prefactor_lag_field_x * num_ones_in_ref_interp_weights
     )
 
-    eul_grid_field = np.zeros(
-        (n_components, eul_grid_size, eul_grid_size), dtype=real_t
-    )
+    eul_grid_field = np.zeros((n_components, eul_grid_size, eul_grid_size), dtype=real_t)
     lagrangian_to_eulerian_grid_interpolation_kernel(
         eul_grid_field,
         ref_lag_grid_field,
@@ -361,9 +326,7 @@ def test_vector_field_lag_to_eul_grid_interpolation_kernel_2d(n_values, precisio
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("interp_kernel_type", ["cosine", "peskin"])
-def test_interpolation_weights_kernel_on_nodes_2d(
-    interp_kernel_type, n_values, precision
-):
+def test_interpolation_weights_kernel_on_nodes_2d(interp_kernel_type, n_values, precision):
     real_t = get_real_t(precision)
     eul_grid_size = n_values
     grid_dim = 2

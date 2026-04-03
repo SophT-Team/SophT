@@ -1,15 +1,17 @@
-import pytest
-import sopht.utils as spu
-import sopht.simulator as sps
 import elastica as ea
 import numpy as np
-import os
+import pytest
+import sopht.simulator as sps
+import sopht.utils as spu
 from numpy.testing import assert_allclose
+from test_io import _remove_h5_xmf
 
 xfail_reason = (
     "Upstream issue with PyElastica restart functionality, "
     "see https://github.com/GazzolaLab/PyElastica/issues/528"
 )
+
+
 @pytest.mark.xfail(reason=xfail_reason)
 @pytest.mark.parametrize("grid_size_x", [32])
 @pytest.mark.parametrize("precision", ["single"])
@@ -52,7 +54,7 @@ def test_restart_simulation(precision, grid_size_x, with_free_stream, filter_vor
         filter_vorticity=filter_vorticity,
     )
 
-    os.system("rm -f *h5 *xmf")
+    _remove_h5_xmf()
 
     for i in range(len(recorded_data_restarted)):
         assert_allclose(recorded_data_restarted[i], recorded_data_full[i])
@@ -67,10 +69,7 @@ def run_sim(
     with_free_stream: bool,
     filter_vorticity: bool,
 ):
-    class RestartTestSimulator(
-        ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
-    ):
-        ...
+    class RestartTestSimulator(ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping): ...
 
     restart_test_simulator = RestartTestSimulator()
 
@@ -154,9 +153,7 @@ def run_sim(
     free_stream_velocity = np.array([1.0, 0.0, 0.0])
     real_t = spu.get_real_t(precision)
     timestepper = ea.PositionVerlet()
-    do_step, stages_and_updates = ea.extend_stepper_interface(
-        timestepper, restart_test_simulator
-    )
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, restart_test_simulator)
 
     recorded_data = []
 
@@ -169,9 +166,7 @@ def run_sim(
         },
     )
     # Initialize sphere IO
-    rod_io = spu.CosseratRodIO(
-        cosserat_rod=cosserat_rod, dim=grid_dim, real_dtype=real_t
-    )
+    rod_io = spu.CosseratRodIO(cosserat_rod=cosserat_rod, dim=grid_dim, real_dtype=real_t)
     # Initialize forcing io
     forcing_io = spu.IO(dim=grid_dim, real_dtype=real_t)
     # Add vector field on lagrangian grid
@@ -192,20 +187,17 @@ def run_sim(
         )
 
     while flow_sim.time < final_time:
-
         if save_data:
             io.save(
-                h5_file_name="sopht_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                 time=flow_sim.time,
             )
             rod_io.save(
-                h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                 time=flow_sim.time,
             )
             forcing_io.save(
-                h5_file_name="forcing_grid_"
-                + str("%0.4d" % (flow_sim.time * 100))
-                + ".h5",
+                h5_file_name=f"forcing_grid_{int(flow_sim.time * 100):04d}.h5",
                 time=flow_sim.time,
             )
             ea.save_state(restart_test_simulator, restart_dir, flow_sim.time)
@@ -218,7 +210,7 @@ def run_sim(
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             rod_time = do_step(
                 timestepper,
                 stages_and_updates,

@@ -1,9 +1,6 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.immersed_boundary_ops import VirtualBoundaryForcing
 from sopht.utils.precision import get_real_t, get_test_tol
 
@@ -45,8 +42,7 @@ class MockVirtualBoundaryForcingSolution:
             self.grid_size // 3, self.grid_size // 3 + self.num_lag_nodes
         ).reshape(-1, self.num_lag_nodes)
         self.lag_grid_position_field = (
-            self.nearest_eul_grid_index_to_lag_grid * self.dx
-            + self.eul_grid_coord_shift
+            self.nearest_eul_grid_index_to_lag_grid * self.dx + self.eul_grid_coord_shift
         )
 
         # interaction step solution computation
@@ -57,20 +53,14 @@ class MockVirtualBoundaryForcingSolution:
             self.lag_grid_flow_velocity_field - self.lag_grid_velocity_field
         )
         self.dt = self.real_t(0.5) * self.dx
-        self.lag_grid_position_mismatch_field = np.zeros_like(
-            self.lag_grid_velocity_mismatch_field
-        )
+        self.lag_grid_position_mismatch_field = np.zeros_like(self.lag_grid_velocity_mismatch_field)
         self.lag_grid_forcing_field = (
-            self.virtual_boundary_stiffness_coeff
-            * self.lag_grid_position_mismatch_field
-            + self.virtual_boundary_damping_coeff
-            * self.lag_grid_velocity_mismatch_field
+            self.virtual_boundary_stiffness_coeff * self.lag_grid_position_mismatch_field
+            + self.virtual_boundary_damping_coeff * self.lag_grid_velocity_mismatch_field
         )
         # max number of Eulerian grid indices affected by Lagrangian grid
         self.max_num_of_eul_grid_idx_impacted_by_lag_grid = (
-            self.grid_dim
-            * self.num_lag_nodes
-            * (2 * self.interp_kernel_width) ** self.grid_dim
+            self.grid_dim * self.num_lag_nodes * (2 * self.interp_kernel_width) ** self.grid_dim
         )
 
     def check_lag_grid_interaction_solution(self, virtual_boundary_forcing):
@@ -103,9 +93,7 @@ class MockVirtualBoundaryForcingSolution:
             eul_grid_forcing_field > 0
         )
         # force conservation test
-        eul_forcing_grid_integral = np.sum(eul_grid_forcing_field) * (
-            self.dx**self.grid_dim
-        )
+        eul_forcing_grid_integral = np.sum(eul_grid_forcing_field) * (self.dx**self.grid_dim)
         np.testing.assert_allclose(
             eul_forcing_grid_integral,
             np.sum(self.lag_grid_forcing_field),
@@ -207,9 +195,7 @@ def test_compute_lag_grid_velocity_mismatch_field(grid_dim, n_values, precision)
     )
 
     lag_grid_velocity_field = np.ones((grid_dim, mock_soln.num_lag_nodes), dtype=real_t)
-    virtual_boundary_forcing.lag_grid_flow_velocity_field = (
-        real_t(3) * lag_grid_velocity_field
-    )
+    virtual_boundary_forcing.lag_grid_flow_velocity_field = real_t(3) * lag_grid_velocity_field
     virtual_boundary_forcing.compute_lag_grid_velocity_mismatch_field(
         lag_grid_velocity_mismatch_field=virtual_boundary_forcing.lag_grid_velocity_mismatch_field,
         lag_grid_flow_velocity_field=virtual_boundary_forcing.lag_grid_flow_velocity_field,
@@ -227,9 +213,7 @@ def test_compute_lag_grid_velocity_mismatch_field(grid_dim, n_values, precision)
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("n_values", [16])
-def test_update_lag_grid_position_mismatch_field_via_euler_forward(
-    grid_dim, n_values, precision
-):
+def test_update_lag_grid_position_mismatch_field_via_euler_forward(grid_dim, n_values, precision):
     real_t = get_real_t(precision)
     mock_soln = MockVirtualBoundaryForcingSolution(
         grid_size=n_values,
@@ -327,17 +311,13 @@ def test_compute_interaction_force_on_lag_grid(grid_dim, n_values, precision):
         lag_grid_position_field=mock_soln.lag_grid_position_field,
         lag_grid_velocity_field=mock_soln.lag_grid_velocity_field,
     )
-    mock_soln.check_lag_grid_interaction_solution(
-        virtual_boundary_forcing=virtual_boundary_forcing
-    )
+    mock_soln.check_lag_grid_interaction_solution(virtual_boundary_forcing=virtual_boundary_forcing)
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("n_values", [16])
-def test_compute_interaction_without_eul_grid_forcing_reset(
-    grid_dim, n_values, precision
-):
+def test_compute_interaction_without_eul_grid_forcing_reset(grid_dim, n_values, precision):
     real_t = get_real_t(precision)
     mock_soln = MockVirtualBoundaryForcingSolution(
         grid_size=n_values,
@@ -362,18 +342,14 @@ def test_compute_interaction_without_eul_grid_forcing_reset(
         lag_grid_position_field=mock_soln.lag_grid_position_field,
         lag_grid_velocity_field=mock_soln.lag_grid_velocity_field,
     )
-    mock_soln.check_lag_grid_interaction_solution(
-        virtual_boundary_forcing=virtual_boundary_forcing
-    )
-    mock_soln.check_eul_grid_interaction_solution(
-        eul_grid_forcing_field=eul_grid_forcing_field
-    )
+    mock_soln.check_lag_grid_interaction_solution(virtual_boundary_forcing=virtual_boundary_forcing)
+    mock_soln.check_eul_grid_interaction_solution(eul_grid_forcing_field=eul_grid_forcing_field)
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("n_values", [16])
-def test_compute_interaction_with_eul_grid_forcing_reset(grid_dim, n_values, precision):
+def test_compute_interaction_with_eul_grid_forcing_reset(grid_dim, n_values, precision, rng):
     real_t = get_real_t(precision)
     mock_soln = MockVirtualBoundaryForcingSolution(
         grid_size=n_values,
@@ -392,19 +368,15 @@ def test_compute_interaction_with_eul_grid_forcing_reset(grid_dim, n_values, pre
         num_threads=psutil.cpu_count(logical=False),
     )
     eul_grid_velocity_shape = (grid_dim,) + (n_values,) * grid_dim
-    eul_grid_forcing_field = np.random.rand(*eul_grid_velocity_shape).astype(real_t)
+    eul_grid_forcing_field = rng.random(eul_grid_velocity_shape).astype(real_t)
     virtual_boundary_forcing.compute_interaction_forcing(
         eul_grid_forcing_field=eul_grid_forcing_field,
         eul_grid_velocity_field=mock_soln.eul_grid_velocity_field,
         lag_grid_position_field=mock_soln.lag_grid_position_field,
         lag_grid_velocity_field=mock_soln.lag_grid_velocity_field,
     )
-    mock_soln.check_lag_grid_interaction_solution(
-        virtual_boundary_forcing=virtual_boundary_forcing
-    )
-    mock_soln.check_eul_grid_interaction_solution(
-        eul_grid_forcing_field=eul_grid_forcing_field
-    )
+    mock_soln.check_lag_grid_interaction_solution(virtual_boundary_forcing=virtual_boundary_forcing)
+    mock_soln.check_eul_grid_interaction_solution(eul_grid_forcing_field=eul_grid_forcing_field)
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])

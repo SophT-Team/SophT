@@ -1,4 +1,5 @@
 """Precision and tolerance details."""
+
 import numpy as np
 
 
@@ -6,10 +7,10 @@ def get_real_t(precision: str = "single") -> type:
     """Return the real data type based on precision."""
     if precision == "single":
         return np.float32
-    elif precision == "double":
+    if precision == "double":
         return np.float64
-    else:
-        raise ValueError("Precision argument must be single or double")
+    msg = "Precision argument must be single or double"
+    raise ValueError(msg)
 
 
 def get_test_tol(precision: str = "single") -> float:

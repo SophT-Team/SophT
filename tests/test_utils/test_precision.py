@@ -10,9 +10,7 @@ def test_get_real_t(precision):
     elif precision == "double":
         assert get_real_t(precision) == np.float64
     else:
-        with pytest.raises(
-            ValueError, match="Precision argument must be single or double"
-        ):
+        with pytest.raises(ValueError, match="Precision argument must be single or double"):
             get_real_t(precision)
 
 

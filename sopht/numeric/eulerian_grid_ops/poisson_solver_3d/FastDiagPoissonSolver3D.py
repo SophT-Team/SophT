@@ -1,9 +1,12 @@
 """Poisson solver kernels in 3D via Fast Diagonalisation."""
+
+from typing import Literal
+
 import numpy as np
 import numpy.linalg as la
 import scipy.sparse as spp
+
 import sopht.utils as spu
-from typing import Literal
 
 
 class FastDiagPoissonSolver3D:
@@ -16,9 +19,7 @@ class FastDiagPoissonSolver3D:
         grid_size_x: int,
         dx: float,
         real_t: type = np.float64,
-        bc_type: Literal[
-            "homogenous_neumann_along_xyz"
-        ] = "homogenous_neumann_along_xyz",
+        bc_type: Literal["homogenous_neumann_along_xyz"] = "homogenous_neumann_along_xyz",
     ) -> None:
         """Class initialiser."""
         self.dx = dx
@@ -50,7 +51,7 @@ class FastDiagPoissonSolver3D:
 
     def _construct_poisson_matrices(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Construct the finite difference Poisson matrices."""
-        # TODO can add higher order options..
+        # TODO: can add higher order options..
         inv_dx2 = self.real_t(1 / self.dx / self.dx)
         poisson_matrix_x = inv_dx2 * spp.diags(
             [-1, 2, -1],
@@ -177,9 +178,7 @@ class FastDiagPoissonSolver3D:
             self.eig_vecs_y, self.spectral_field_buffer, axes=(1, 1)
         ).transpose((1, 0, 2))
         # hit first z index
-        solution_field[...] = np.tensordot(
-            self.eig_vecs_z, self.spectral_field_buffer, axes=(1, 0)
-        )
+        solution_field[...] = np.tensordot(self.eig_vecs_z, self.spectral_field_buffer, axes=(1, 0))
 
     def vector_field_solve(
         self, solution_vector_field: np.ndarray, rhs_vector_field: np.ndarray

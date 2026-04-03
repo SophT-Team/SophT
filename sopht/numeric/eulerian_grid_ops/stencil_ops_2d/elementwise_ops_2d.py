@@ -1,9 +1,13 @@
 """Kernels for elementwise operations in 2D."""
+
+from collections.abc import Callable
+from typing import Literal
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_elementwise_sum_pyst_kernel_2d(
@@ -12,7 +16,7 @@ def gen_elementwise_sum_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise sum kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -40,19 +44,17 @@ def gen_elementwise_sum_pyst_kernel_2d(
             )
 
             @ps.kernel
-            def _elementwise_sum_stencil_2d():  # noqa F811
+            def _elementwise_sum_stencil_2d():
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
                 sum_field[0, 0, 0] @= field_1[0, 0, 0] + field_2[0, 0, 0]
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
-    elementwise_sum_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_sum_stencil_2d, config=kernel_config
-    ).compile()
-    return elementwise_sum_pyst_kernel_2d
+    return ps.create_kernel(_elementwise_sum_stencil_2d, config=kernel_config).compile()
 
 
 def gen_set_fixed_val_pyst_kernel_2d(
@@ -61,7 +63,7 @@ def gen_set_fixed_val_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D set field to fixed value kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -108,7 +110,8 @@ def gen_set_fixed_val_pyst_kernel_2d(
 
             return vector_field_set_fixed_val_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_elementwise_copy_pyst_kernel_2d(
@@ -116,7 +119,7 @@ def gen_elementwise_copy_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise copy one field to another kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -132,10 +135,7 @@ def gen_elementwise_copy_pyst_kernel_2d(
         field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
         field[0, 0] @= rhs_field[0, 0]
 
-    elementwise_copy_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_copy_stencil_2d, config=kernel_config
-    ).compile()
-    return elementwise_copy_pyst_kernel_2d
+    return ps.create_kernel(_elementwise_copy_stencil_2d, config=kernel_config).compile()
 
 
 def gen_elementwise_complex_product_pyst_kernel_2d(
@@ -143,7 +143,7 @@ def gen_elementwise_complex_product_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise complex number product kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -163,12 +163,10 @@ def gen_elementwise_complex_product_pyst_kernel_2d(
             f"product_field_imag, field_1_imag, field_2_imag : {pyst_dtype}[{grid_info}]"
         )
         product_field_real[0, 0] @= (
-            field_1_real[0, 0] * field_2_real[0, 0]
-            - field_1_imag[0, 0] * field_2_imag[0, 0]
+            field_1_real[0, 0] * field_2_real[0, 0] - field_1_imag[0, 0] * field_2_imag[0, 0]
         )
         product_field_imag[0, 0] @= (
-            field_1_real[0, 0] * field_2_imag[0, 0]
-            + field_1_imag[0, 0] * field_2_real[0, 0]
+            field_1_real[0, 0] * field_2_imag[0, 0] + field_1_imag[0, 0] * field_2_real[0, 0]
         )
 
     _elementwise_complex_product_pyst_kernel_2d = ps.create_kernel(
@@ -198,9 +196,11 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
     num_threads: bool | int = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D set field to fixed value at boundaries kernel generator."""
-    assert width > 0 and isinstance(width, int), "invalid zone width"
+    if not isinstance(width, int) or width <= 0:
+        msg = "Invalid width for boundary zone, must be a positive integer"
+        raise ValueError(msg)
     set_fixed_val_kernel_2d = gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         num_threads=num_threads,
@@ -249,7 +249,8 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
 
             return vector_field_set_fixed_val_at_boundaries_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_add_fixed_val_pyst_kernel_2d(
@@ -258,7 +259,7 @@ def gen_add_fixed_val_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D add a fixed value to a field kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -308,7 +309,8 @@ def gen_add_fixed_val_pyst_kernel_2d(
 
             return vector_field_add_fixed_val_pyst_kernel_2d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
 
 def gen_elementwise_saxpby_pyst_kernel_2d(
@@ -317,7 +319,7 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
     fixed_grid_size: tuple[int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D elementwise saxpby (s = a * x + b * y) kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -335,12 +337,8 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
-                field_1_prefac, field_2_prefac = sp.symbols(
-                    "field_1_prefac, field_2_prefac"
-                )
-                sum_field[0, 0] @= (
-                    field_1_prefac * field_1[0, 0] + field_2_prefac * field_2[0, 0]
-                )
+                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
+                sum_field[0, 0] @= field_1_prefac * field_1[0, 0] + field_2_prefac * field_2[0, 0]
 
         case "vector":
             grid_info = (
@@ -350,22 +348,17 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
             )
 
             @ps.kernel
-            def _elementwise_saxpby_stencil_2d():  # noqa F811
+            def _elementwise_saxpby_stencil_2d():
                 sum_field, field_1, field_2 = ps.fields(
                     f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
                 )
-                field_1_prefac, field_2_prefac = sp.symbols(
-                    "field_1_prefac, field_2_prefac"
-                )
+                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
                 sum_field[0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0]
-                    + field_2_prefac * field_2[0, 0, 0]
+                    field_1_prefac * field_1[0, 0, 0] + field_2_prefac * field_2[0, 0, 0]
                 )
 
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)
 
-    elementwise_saxpby_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_saxpby_stencil_2d, config=kernel_config
-    ).compile()
-    return elementwise_saxpby_pyst_kernel_2d
+    return ps.create_kernel(_elementwise_saxpby_stencil_2d, config=kernel_config).compile()

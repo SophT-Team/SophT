@@ -1,13 +1,9 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from scipy.fft import irfftn, rfftn
-
-from sopht.numeric.eulerian_grid_ops import FFTPyFFTW2D
 from sopht.numeric.eulerian_grid_ops import (
+    FFTPyFFTW2D,
     fft_ifft_via_scipy_kernel_2d,
 )
 from sopht.utils.precision import get_real_t, get_test_tol
@@ -20,10 +16,16 @@ def fft_ifft_reference(field, axes):
 
 
 class FFTSolution:
-    def __init__(self, n_samples, axes=None, precision="single"):
+    def __init__(
+        self,
+        n_samples: int,
+        rng_generator: np.random.Generator,
+        axes: list[int] | None = None,
+        precision: str = "single",
+    ):
         self.real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples).astype(self.real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples)).astype(self.real_t)
         self.ref_fourier_field, self.ref_inv_fourier_field = fft_ifft_reference(
             self.ref_field, axes=axes
         )
@@ -33,9 +35,7 @@ class FFTSolution:
         return (self.ref_fourier_field, self.ref_inv_fourier_field)
 
     def check_equals(self, fourier_field, inv_fourier_field):
-        np.testing.assert_allclose(
-            self.ref_fourier_field, fourier_field, atol=self.test_tol
-        )
+        np.testing.assert_allclose(self.ref_fourier_field, fourier_field, atol=self.test_tol)
         np.testing.assert_allclose(
             self.ref_inv_fourier_field, inv_fourier_field, atol=self.test_tol
         )
@@ -43,8 +43,8 @@ class FFTSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_scipy_fft(n_values, precision):
-    solution = FFTSolution(n_values, precision=precision)
+def test_scipy_fft(n_values, precision, rng):
+    solution = FFTSolution(n_values, rng_generator=rng, precision=precision)
     fourier_field = np.zeros_like(solution.ref_fourier_field)
     inv_fourier_field = np.zeros_like(solution.ref_inv_fourier_field)
     max_num_threads = psutil.cpu_count(logical=False)
@@ -60,9 +60,9 @@ def test_scipy_fft(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_pyfftw_fft(n_values, precision):
+def test_pyfftw_fft(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = FFTSolution(n_values, precision=precision)
+    solution = FFTSolution(n_values, rng_generator=rng, precision=precision)
     max_num_threads = psutil.cpu_count(logical=False)
     pyfftw = FFTPyFFTW2D(n_values, n_values, num_threads=max_num_threads, real_t=real_t)
     fourier_field = np.zeros_like(solution.ref_fourier_field)

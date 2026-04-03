@@ -1,7 +1,9 @@
 import logging
-import numpy as np
-from typing import Type
 from abc import abstractmethod
+
+import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class FlowSimulator:
@@ -14,10 +16,10 @@ class FlowSimulator:
     def __init__(
         self,
         grid_dim: int,
-        # TODO fix mypy error and enable type hint
+        # TODO: fix mypy error and enable type hint
         grid_size,  # : tuple[int, int] | tuple[int, int, int],
         x_range: float,
-        real_t: Type = np.float32,
+        real_t: type = np.float32,
         num_threads: int = 1,
         time: float = 0.0,
     ) -> None:
@@ -32,9 +34,8 @@ class FlowSimulator:
 
         """
         if grid_dim not in [2, 3]:
-            raise ValueError(
-                "Invalid grid dimensions. Supported values include 2 and 3."
-            )
+            msg = "Invalid grid dimensions. Supported values include 2 and 3."
+            raise ValueError(msg)
         self.grid_dim = grid_dim
         self.grid_size = grid_size
         self.x_range = x_range
@@ -51,52 +52,47 @@ class FlowSimulator:
         grid_size_x = self.grid_size[-1]
         self.dx = self.real_t(self.x_range / grid_size_x)
         eul_grid_shift = self.dx / 2.0
-        x = np.linspace(
-            eul_grid_shift, self.x_range - eul_grid_shift, grid_size_x
-        ).astype(self.real_t)
-        match self.grid_dim:
-            case 2:
-                grid_size_y, grid_size_x = self.grid_size
-                self.y_range = self.x_range * grid_size_y / grid_size_x
-                y = np.linspace(
-                    eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y
-                ).astype(self.real_t)
-                # reversing because meshgrid generates in order Y and X
-                self.position_field = np.flipud(
-                    np.array(np.meshgrid(y, x, indexing="ij"))
-                )
-            case 3:
-                grid_size_z, grid_size_y, grid_size_x = self.grid_size
-                self.y_range = self.x_range * grid_size_y / grid_size_x
-                self.z_range = self.x_range * grid_size_z / grid_size_x
-                y = np.linspace(
-                    eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y
-                ).astype(self.real_t)
-                z = np.linspace(
-                    eul_grid_shift, self.z_range - eul_grid_shift, grid_size_z
-                ).astype(self.real_t)
-                # reversing because meshgrid generates in order Z, Y and X
-                self.position_field = np.flipud(
-                    np.array(np.meshgrid(z, y, x, indexing="ij"))
-                )
-        log = logging.getLogger()
-        log.warning(
-            "==============================================="
-            f"\n{self.grid_dim}D flow domain initialized with:"
-            f"\nX axis from 0.0 to {self.x_range}"
+        x = np.linspace(eul_grid_shift, self.x_range - eul_grid_shift, grid_size_x).astype(
+            self.real_t
         )
-        match self.grid_dim:
-            case 2:
-                log.warning(f"Y axis from 0.0 to {self.y_range}")
-            case 3:
-                log.warning(
-                    f"Y axis from 0.0 to {self.y_range}"
-                    f"\nZ axis from 0.0 to {self.z_range}"
-                )
-        log.warning(
-            "Please initialize bodies within these bounds!"
-            "\n==============================================="
+        if self.grid_dim == 2:
+            grid_size_y, grid_size_x = self.grid_size
+            self.y_range = self.x_range * grid_size_y / grid_size_x
+            y = np.linspace(eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y).astype(
+                self.real_t
+            )
+            # reversing because meshgrid generates in order Y and X
+            self.position_field = np.flipud(np.array(np.meshgrid(y, x, indexing="ij")))
+            # for logging
+            dimension_str = (
+                f"\nX axis from 0.0 to {self.x_range}\nY axis from 0.0 to {self.y_range}"
+            )
+        else:
+            grid_size_z, grid_size_y, grid_size_x = self.grid_size
+            self.y_range = self.x_range * grid_size_y / grid_size_x
+            self.z_range = self.x_range * grid_size_z / grid_size_x
+            y = np.linspace(eul_grid_shift, self.y_range - eul_grid_shift, grid_size_y).astype(
+                self.real_t
+            )
+            z = np.linspace(eul_grid_shift, self.z_range - eul_grid_shift, grid_size_z).astype(
+                self.real_t
+            )
+            # reversing because meshgrid generates in order Z, Y and X
+            self.position_field = np.flipud(np.array(np.meshgrid(z, y, x, indexing="ij")))
+            # for logging
+            dimension_str = (
+                f"\nX axis from 0.0 to {self.x_range}"
+                f"\nY axis from 0.0 to {self.y_range}"
+                f"\nZ axis from 0.0 to {self.z_range}"
+            )
+
+        log_str = (
+            f"\n=================================================="
+            f"\n{self.grid_dim}D flow domain initialized with:{dimension_str}"
+            f"\nPlease initialize bodies within these bounds!"
+            f"\n=================================================="
         )
+        logger.info(log_str)
 
     @abstractmethod
     def _init_fields(self) -> None:

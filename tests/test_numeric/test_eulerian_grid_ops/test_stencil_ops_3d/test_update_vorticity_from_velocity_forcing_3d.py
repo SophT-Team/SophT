@@ -1,9 +1,6 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d,
     gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d,
@@ -53,22 +50,20 @@ def update_vorticity_from_velocity_forcing_reference_3d(
 
 
 class UpdateVorticityFromVelocityForcingSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_vorticity_field = np.random.rand(
-            3, n_samples, n_samples, n_samples
+        self.ref_vorticity_field = rng_generator.random(
+            (3, n_samples, n_samples, n_samples)
         ).astype(real_t)
-        self.ref_velocity_forcing_field = np.random.rand(
-            3, n_samples, n_samples, n_samples
+        self.ref_velocity_forcing_field = rng_generator.random(
+            (3, n_samples, n_samples, n_samples)
         ).astype(real_t)
         self.prefactor = real_t(0.1)
-        self.ref_new_vorticity_field = (
-            update_vorticity_from_velocity_forcing_reference_3d(
-                self.ref_vorticity_field,
-                self.ref_velocity_forcing_field,
-                self.prefactor,
-            )
+        self.ref_new_vorticity_field = update_vorticity_from_velocity_forcing_reference_3d(
+            self.ref_vorticity_field,
+            self.ref_velocity_forcing_field,
+            self.prefactor,
         )
 
     def check_equals(self, new_vorticity_field):
@@ -81,9 +76,9 @@ class UpdateVorticityFromVelocityForcingSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_update_vorticity_from_velocity_forcing_3d(n_values, precision):
+def test_update_vorticity_from_velocity_forcing_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = UpdateVorticityFromVelocityForcingSolution(n_values, precision)
+    solution = UpdateVorticityFromVelocityForcingSolution(n_values, rng, precision)
     vorticity_field = solution.ref_vorticity_field.copy()
     update_vorticity_from_velocity_forcing_pyst_kernel = (
         gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
@@ -102,13 +97,11 @@ def test_update_vorticity_from_velocity_forcing_3d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_update_vorticity_from_penalised_velocity_3d(n_values, precision):
+def test_update_vorticity_from_penalised_velocity_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    vorticity_field = np.random.rand(3, n_values, n_values, n_values).astype(real_t)
-    velocity_field = np.random.rand(3, n_values, n_values, n_values).astype(real_t)
-    penalised_velocity_field = np.random.rand(3, n_values, n_values, n_values).astype(
-        real_t
-    )
+    vorticity_field = rng.random((3, n_values, n_values, n_values)).astype(real_t)
+    velocity_field = rng.random((3, n_values, n_values, n_values)).astype(real_t)
+    penalised_velocity_field = rng.random((3, n_values, n_values, n_values)).astype(real_t)
     prefactor = real_t(0.1)
     ref_new_vorticity_field = update_vorticity_from_velocity_forcing_reference_3d(
         vorticity_field=vorticity_field,

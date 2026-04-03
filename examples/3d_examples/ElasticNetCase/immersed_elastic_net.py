@@ -79,16 +79,11 @@ def immersed_elastic_net_case(
         # Initialize carpet IO
         elastic_net_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
-            interactor.forcing_grid.num_lag_nodes
-            for interactor in rod_flow_interactor_list
+            interactor.forcing_grid.num_lag_nodes for interactor in rod_flow_interactor_list
         ]
         elastic_net_num_lag_nodes = sum(rod_num_lag_nodes_list)
-        elastic_net_lag_grid_position_field = np.zeros(
-            (grid_dim, elastic_net_num_lag_nodes)
-        )
-        elastic_net_lag_grid_forcing_field = np.zeros_like(
-            elastic_net_lag_grid_position_field
-        )
+        elastic_net_lag_grid_position_field = np.zeros((grid_dim, elastic_net_num_lag_nodes))
+        elastic_net_lag_grid_forcing_field = np.zeros_like(elastic_net_lag_grid_position_field)
 
         def update_elastic_net_lag_grid_fields():
             """Updates the combined lag grid with individual rod grids"""
@@ -118,9 +113,7 @@ def immersed_elastic_net_case(
     max_displacement_history = []
     drag_history = []
     time_scale = length_scale / vel_free_stream
-    net_projected_area = (
-        elastic_net_sim.elastic_net_length_x * elastic_net_sim.elastic_net_length_y
-    )
+    net_projected_area = elastic_net_sim.elastic_net_length_x * elastic_net_sim.elastic_net_length_y
     drag_scale = rho_f * vel_free_stream**2 * net_projected_area
 
     # create fig for plotting flow fields
@@ -133,20 +126,18 @@ def immersed_elastic_net_case(
             if save_flow_data:
                 update_elastic_net_lag_grid_fields()
                 io.save(
-                    h5_file_name="flow_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"flow_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 elastic_net_io.save(
-                    h5_file_name="lag_grid_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name=f"lag_grid_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Velocity magnitude, time: {flow_sim.time:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
-                # TODO function for velocity magnitude
+                # TODO: function for velocity magnitude
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[
@@ -172,15 +163,15 @@ def immersed_elastic_net_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             grid_dev_error = 0.0
             for flow_body_interactor in rod_flow_interactor_list:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
+
+            progress = flow_sim.time / elastic_net_sim.final_time * 100
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time / elastic_net_sim.final_time * 100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({progress:2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}, "
@@ -189,10 +180,7 @@ def immersed_elastic_net_case(
             time_history.append(flow_sim.time / time_scale)
             max_displacement = np.amax(
                 np.array(
-                    [
-                        rod.position_collection[z_axis_idx].max()
-                        for rod in elastic_net_sim.rod_list
-                    ]
+                    [rod.position_collection[z_axis_idx].max() for rod in elastic_net_sim.rod_list]
                 )
             )
             max_displacement_history.append(max_displacement / length_scale)
@@ -213,7 +201,7 @@ def immersed_elastic_net_case(
         rod_time_steps = int(flow_dt / min(flow_dt, elastic_net_sim.dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # timestep the cilia simulator
             rod_time = elastic_net_sim.time_step(time=rod_time, time_step=local_rod_dt)
             # timestep the rod_flow_interactors
@@ -260,7 +248,6 @@ def immersed_elastic_net_case(
 
 
 if __name__ == "__main__":
-
     # setup the structure of the carpet
     num_rods_along_x = 8  # set >= 2
     num_rods_along_y = 8  # set >= 2
@@ -268,22 +255,14 @@ if __name__ == "__main__":
     gap_radius_ratio = 10
     base_radius = gap_between_rods / gap_radius_ratio
     spacing_between_rods = gap_between_rods + 2 * base_radius
-    elastic_net_length_x = (
-        num_rods_along_x - 1
-    ) * spacing_between_rods + 2 * base_radius
-    elastic_net_length_y = (
-        num_rods_along_y - 1
-    ) * spacing_between_rods + 2 * base_radius
+    elastic_net_length_x = (num_rods_along_x - 1) * spacing_between_rods + 2 * base_radius
+    elastic_net_length_y = (num_rods_along_y - 1) * spacing_between_rods + 2 * base_radius
     # get the flow domain range based on the carpet
     domain_x_range = 1.3 * elastic_net_length_x
     domain_y_range = 1.3 * elastic_net_length_y
     domain_z_range = 1.3 * elastic_net_length_x
-    offset_between_net_origin_and_flow_grid_center_x = (
-        0.49 * elastic_net_length_x - base_radius
-    )
-    offset_between_net_origin_and_flow_grid_center_y = (
-        0.49 * elastic_net_length_y - base_radius
-    )
+    offset_between_net_origin_and_flow_grid_center_x = 0.49 * elastic_net_length_x - base_radius
+    offset_between_net_origin_and_flow_grid_center_y = 0.49 * elastic_net_length_y - base_radius
     elastic_net_origin = np.array(
         [
             0.5 * domain_x_range - offset_between_net_origin_and_flow_grid_center_x,
@@ -298,9 +277,7 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option(
-        "--grid_size_x", default=128, help="Number of grid points in x direction."
-    )
+    @click.option("--grid_size_x", default=128, help="Number of grid points in x direction.")
     @click.option("--reynolds", default=100.0, help="Reynolds number of flow.")
     @click.option(
         "--nondim_youngs_modulus",
@@ -333,9 +310,7 @@ if __name__ == "__main__":
         )
         click.echo(f"Number of threads for parallelism: {num_threads}")
         click.echo(f"Flow Reynolds number: {reynolds}")
-        click.echo(
-            f"Non-dimensional Youngs modulus of the nest: {nondim_youngs_modulus}"
-        )
+        click.echo(f"Non-dimensional Youngs modulus of the nest: {nondim_youngs_modulus}")
         immersed_elastic_net_case(
             elastic_net_sim=elastic_net_simulator,
             reynolds=reynolds,

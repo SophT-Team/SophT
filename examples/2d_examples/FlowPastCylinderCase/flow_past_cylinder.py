@@ -1,5 +1,5 @@
-import elastica as ea
 import click
+import elastica as ea
 import matplotlib.pyplot as plt
 import numpy as np
 import sopht.simulator as sps
@@ -85,7 +85,6 @@ def flow_past_cylinder_boundary_forcing_case(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -109,7 +108,7 @@ def flow_past_cylinder_boundary_forcing_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
             print(
                 f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
@@ -141,9 +140,7 @@ def flow_past_cylinder_boundary_forcing_case(
         data_timer += dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
     plt.figure()
     plt.plot(np.array(drag_coeffs_time), np.array(drag_coeffs))
@@ -163,9 +160,7 @@ if __name__ == "__main__":
 
     @click.command()
     @click.option("--num_threads", default=4, help="Number of threads for parallelism.")
-    @click.option(
-        "--sim_grid_size_x", default=512, help="Number of grid points in x direction."
-    )
+    @click.option("--sim_grid_size_x", default=512, help="Number of grid points in x direction.")
     @click.option(
         "--nondim_final_time",
         default=200.0,

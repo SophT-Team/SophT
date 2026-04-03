@@ -1,24 +1,26 @@
-from typing import Type
-import os
+import logging
+from pathlib import Path
+
 import elastica as ea
+
 from sopht.utils.io import IO
+
+logger = logging.getLogger(__name__)
 
 
 def restart_simulation(
-    restart_simulator: Type[ea.BaseSystemCollection],
+    restart_simulator: ea.BaseSystemCollection,
     io: IO,
     rod_io: IO,
     forcing_io: IO,
     restart_dir: str,
 ) -> float:
     # find latest saved data
-    iter_num = []
-    for filename in os.listdir():
-        if "sopht" in filename and "h5" in filename:
-            iter_num.append(int(filename.split("_")[-1].split(".")[0]))
+    iter_num = [int(filename.stem.split("_")[-1]) for filename in Path.cwd().glob("sopht_*.h5")]
 
     if len(iter_num) == 0:
-        raise FileNotFoundError("There is no file to load in the directory.")
+        msg = "There is no file to load in the directory."
+        raise FileNotFoundError(msg)
 
     latest = max(iter_num)
     # load sopht data
@@ -28,9 +30,8 @@ def restart_simulation(
     rod_time = ea.load_state(restart_simulator, restart_dir, True)
 
     if curr_time != rod_time:
-        raise ValueError(
-            "Simulation time of the flow is not matched with the Elastica, check your inputs!"
-        )
-    print(f"sopht_{latest:04d}.h5 has been loaded")
+        msg = "Simulation time of the flow is not matched with the Elastica, check your inputs!"
+        raise ValueError(msg)
+    logger.info("sopht_%04d.h5 has been loaded", latest)
 
     return curr_time

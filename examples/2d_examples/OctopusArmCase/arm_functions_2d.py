@@ -26,12 +26,10 @@ class SigmoidActivationLongitudinalMuscles:
         self.activation_level_end = activation_level_end
         self.activation_lower_threshold = activation_lower_threshold
 
-    def apply_activation(
-        self, system, activation: np.ndarray, time: float = 0.0
-    ) -> None:
+    def apply_activation(self, activation: np.ndarray, time: float = 0.0) -> None:
         n_elems = self.end_idx - self.start_idx
         index = np.arange(0, n_elems, dtype=np.int64)
-        fiber_activation = np.zeros((n_elems))
+        fiber_activation = np.zeros(n_elems)
         activation *= 0
 
         time = round(time, 5)
@@ -39,23 +37,10 @@ class SigmoidActivationLongitudinalMuscles:
             fiber_activation = (
                 self.activation_level_max
                 * 0.5
-                * (
-                    1
-                    + np.tanh(
-                        self.beta * ((time - self.start_time) / self.tau - index + 0)
-                    )
-                )
+                * (1 + np.tanh(self.beta * ((time - self.start_time) / self.tau - index + 0)))
             ) + (
                 -(self.activation_level_max - self.activation_level_end)
-                * (
-                    0.5
-                    * (
-                        1
-                        + np.tanh(
-                            self.beta * ((time - self.end_time) / self.tau - index + 0)
-                        )
-                    )
-                )
+                * (0.5 * (1 + np.tanh(self.beta * ((time - self.end_time) / self.tau - index + 0))))
             )
         active_index = np.where(fiber_activation > self.activation_lower_threshold)[0]
         activation[self.start_idx + active_index] = fiber_activation[active_index]
@@ -78,33 +63,19 @@ class LocalActivation:
         self.start_idx = int(start_idx)
         self.end_idx = int(end_idx)
 
-    def apply_activation(
-        self, system, activation: np.ndarray, time: float = 0.0
-    ) -> None:
-
+    def apply_activation(self, activation: np.ndarray, time: float = 0.0) -> None:
         time = round(time, 5)
         factor = 0.0
         if (time - self.ramp_up_time) <= 0:
             factor = 0.0
         elif (time - self.ramp_up_time) > 0 and (time - self.ramp_up_time) <= self.ramp:
-            factor = (
-                1 + np.sin(np.pi * (time - self.ramp_up_time) / self.ramp - np.pi / 2)
-            ) / 2
+            factor = (1 + np.sin(np.pi * (time - self.ramp_up_time) / self.ramp - np.pi / 2)) / 2
         elif (time - self.ramp_up_time) > 0 and (time - self.ramp_down_time) < 0:
             factor = 1.0
 
-        elif (time - self.ramp_down_time) > 0 and (
-            time - self.ramp_down_time
-        ) / self.ramp < 1.0:
+        elif (time - self.ramp_down_time) > 0 and (time - self.ramp_down_time) / self.ramp < 1.0:
             factor = (
-                1
-                - (
-                    1
-                    + np.sin(
-                        np.pi * (time - self.ramp_down_time) / self.ramp - np.pi / 2
-                    )
-                )
-                / 2
+                1 - (1 + np.sin(np.pi * (time - self.ramp_down_time) / self.ramp - np.pi / 2)) / 2
             )
 
         fiber_activation = self.activation_level * factor
@@ -123,9 +94,7 @@ class StraightRodCallBack(ea.CallBackBaseClass):
         self.every = step_skip
         self.callback_params = callback_params
 
-    def make_callback(
-        self, system: ea.CosseratRod, time: float, current_step: int
-    ) -> None:
+    def make_callback(self, system: ea.CosseratRod, time: float, current_step: int) -> None:
         if current_step % self.every == 0:
             self.callback_params["time"].append(time)
             self.callback_params["step"].append(current_step)
@@ -133,16 +102,10 @@ class StraightRodCallBack(ea.CallBackBaseClass):
             self.callback_params["velocity"].append(system.velocity_collection.copy())
             self.callback_params["radius"].append(system.radius.copy())
             self.callback_params["com"].append(system.compute_position_center_of_mass())
-            self.callback_params["external_forces"].append(
-                system.external_forces.copy()
-            )
-            self.callback_params["internal_forces"].append(
-                system.internal_forces.copy()
-            )
+            self.callback_params["external_forces"].append(system.external_forces.copy())
+            self.callback_params["internal_forces"].append(system.internal_forces.copy())
             self.callback_params["tangents"].append(system.tangents.copy())
-            self.callback_params["internal_stress"].append(
-                system.internal_stress.copy()
-            )
+            self.callback_params["internal_stress"].append(system.internal_stress.copy())
             self.callback_params["dilatation"].append(system.dilatation.copy())
             if current_step == 0:
                 self.callback_params["lengths"].append(system.rest_lengths.copy())

@@ -1,18 +1,17 @@
 from collections import defaultdict
-import numpy as np
-import elastica as ea
-from elastica._calculus import _isnan_check
+from pathlib import Path
 
+import elastica as ea
+import numpy as np
 from coomm.actuations.muscles import (
-    force_length_weight_poly,
-)
-from coomm.actuations.muscles import (
-    MuscleGroup,
+    ApplyMuscleGroups,
     LongitudinalMuscle,
+    MuscleGroup,
     ObliqueMuscle,
     TransverseMuscle,
-    ApplyMuscleGroups,
+    force_length_weight_poly,
 )
+from elastica._calculus import _isnan_check
 
 
 class BaseSimulator(
@@ -53,7 +52,7 @@ class OctopusEnvironment:
         final_time,
         time_step=1.0e-5,
         rendering_fps=30,
-        COLLECT_DATA_FOR_POSTPROCESSING=True,
+        collect_data_for_postprocessing=True,
     ):
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
@@ -63,24 +62,24 @@ class OctopusEnvironment:
         self.total_steps = int(self.final_time / self.time_step)
         self.rendering_fps = rendering_fps
         self.step_skip = int(1.0 / (self.rendering_fps * self.time_step))
-        self.COLLECT_DATA_FOR_POSTPROCESSING = COLLECT_DATA_FOR_POSTPROCESSING
+        self.collect_data_for_postprocessing = collect_data_for_postprocessing
 
     def get_systems(
         self,
     ):
         return self.rod_list  # [self.shearable_rod]
 
-    def set_arm(self, E, density, rod, rod_id):
-        self.set_rod(E, density, rod)
+    def set_arm(self, youngs_modulus, density, rod, rod_id):
+        self.set_rod(youngs_modulus, density, rod)
         self.set_muscles(rod, rod_id)
 
-    def setup(self, E, density, rod, rod_id):
-        self.set_arm(E, density, rod, rod_id)
+    def setup(self, youngs_modulus, density, rod, rod_id):
+        self.set_arm(youngs_modulus, density, rod, rod_id)
 
-    def set_rod(self, E, density, rod):
+    def set_rod(self, youngs_modulus, density, rod):
         """Set up a rod"""
 
-        self.E = E
+        self.E = youngs_modulus
         # self.shearable_rod = rod
         self.simulator.append(rod)
 
@@ -120,18 +119,16 @@ class OctopusEnvironment:
             OM_ratio_radius = 0.00075 / radius_base
             OM_rotation_number = 6
             shearable_rod_area = np.pi * arm.radius**2
-            TM_rest_muscle_area = shearable_rod_area * (
-                TM_ratio_radius**2 - AN_ratio_radius**2
-            )
+            TM_rest_muscle_area = shearable_rod_area * (TM_ratio_radius**2 - AN_ratio_radius**2)
             LM_rest_muscle_area = shearable_rod_area * (LM_ratio_radius**2)
             OM_rest_muscle_area = shearable_rod_area * (OM_ratio_radius**2)
             # stress is in unit [Pa]
             TM_max_muscle_stress = 1.5 * self.E  # 15_000.0
             LM_max_muscle_stress = 10 * self.E  # 50_000.0 * 2
             OM_max_muscle_stress = 5 * self.E  # 50_000.0
-            muscle_dict = dict(
-                force_length_weight=force_length_weight_poly,
-            )
+            muscle_dict = {
+                "force_length_weight": force_length_weight_poly,
+            }
 
             # Add a transverse muscle
             muscle_groups.append(
@@ -148,21 +145,21 @@ class OctopusEnvironment:
             )
 
             # Add 4 longitudinal muscles
-            for k in range(4):
-                muscle_groups.append(
-                    MuscleGroup(
-                        muscles=[
-                            LongitudinalMuscle(
-                                muscle_init_angle=np.pi * 0.5 * k,
-                                ratio_muscle_position=LM_ratio_muscle_position,
-                                rest_muscle_area=LM_rest_muscle_area,
-                                max_muscle_stress=LM_max_muscle_stress,
-                                **muscle_dict,
-                            )
-                        ],
-                        type_name="LM",
-                    )
+            muscle_groups += [
+                MuscleGroup(
+                    muscles=[
+                        LongitudinalMuscle(
+                            muscle_init_angle=np.pi * 0.5 * k,
+                            ratio_muscle_position=LM_ratio_muscle_position,
+                            rest_muscle_area=LM_rest_muscle_area,
+                            max_muscle_stress=LM_max_muscle_stress,
+                            **muscle_dict,
+                        )
+                    ],
+                    type_name="LM",
                 )
+                for k in range(4)
+            ]
 
             # Add a clockwise oblique muscle group (4 muscles)
             muscle_groups.append(
@@ -217,7 +214,7 @@ class OctopusEnvironment:
             callback_params_list=self.muscle_callback_params_list[arm_id],
         )
 
-    def reset(self, E, density, rod_list, arm_rod_list, rigid_body_list):
+    def reset(self, youngs_modulus, density, rod_list, arm_rod_list, rigid_body_list):
         self.simulator = BaseSimulator()
 
         self.rod_list = rod_list
@@ -226,14 +223,14 @@ class OctopusEnvironment:
         self.muscle_callback_params_list = []
         self.object_list = rod_list + rigid_body_list
 
-        for i in range(len(rod_list)):
+        for _ in range(len(rod_list)):
             self.rod_muscle_groups.append([])
             self.muscle_callback_params_list.append([])
 
         for rod_id, rod in enumerate(rod_list):
-            self.setup(E, density, rod, rod_id)
+            self.setup(youngs_modulus, density, rod, rod_id)
 
-        for body_id, body in enumerate(rigid_body_list):
+        for _, body in enumerate(rigid_body_list):
             self.simulator.append(body)
 
         # Callback
@@ -261,11 +258,10 @@ class OctopusEnvironment:
         return self.total_steps, self.get_systems()
 
     def step(self, time, muscle_activations):
-
         """Set muscle activations"""
         for rod_id in range(len(self.arm_rod_list)):
             for muscle_group, activation in zip(
-                self.rod_muscle_groups[rod_id], muscle_activations[rod_id]
+                self.rod_muscle_groups[rod_id], muscle_activations[rod_id], strict=True
             ):
                 muscle_group.apply_activation(activation)
 
@@ -313,37 +309,22 @@ class OctopusEnvironment:
             arm_velocity_history[i, :, :, :] = np.array(
                 self.post_processing_dict_list[i]["velocity"]
             )
-            arm_radius_history[i, :, :] = np.array(
-                self.post_processing_dict_list[i]["radius"]
-            )
+            arm_radius_history[i, :, :] = np.array(self.post_processing_dict_list[i]["radius"])
 
         # Body
-        body_position_history = np.array(
-            self.post_processing_dict_list[n_arms]["position"]
-        )
-        body_velocity_history = np.array(
-            self.post_processing_dict_list[n_arms]["velocity"]
-        )
+        body_position_history = np.array(self.post_processing_dict_list[n_arms]["position"])
+        body_velocity_history = np.array(self.post_processing_dict_list[n_arms]["velocity"])
         body_radius_history = np.array(self.post_processing_dict_list[n_arms]["radius"])
 
         # Head
-        head_position_history = np.array(
-            self.post_processing_dict_list[n_arms + 1]["position"]
-        )
-        head_velocity_history = np.array(
-            self.post_processing_dict_list[n_arms + 1]["velocity"]
-        )
-        head_radius_history = np.array(
-            self.post_processing_dict_list[n_arms + 1]["radius"]
-        )
+        head_position_history = np.array(self.post_processing_dict_list[n_arms + 1]["position"])
+        head_velocity_history = np.array(self.post_processing_dict_list[n_arms + 1]["velocity"])
+        head_radius_history = np.array(self.post_processing_dict_list[n_arms + 1]["radius"])
 
-        import os
-
-        current_path = os.getcwd()
-        save_folder = os.path.join(current_path, "data")
-        os.makedirs(save_folder, exist_ok=True)
+        save_folder = Path.cwd() / "data"
+        save_folder.mkdir(parents=True, exist_ok=True)
         np.savez(
-            os.path.join(save_folder, "octopus_arm_body.npz"),
+            save_folder / "octopus_arm_body.npz",
             time=time,
             arm_position_history=arm_position_history,
             arm_velocity_history=arm_velocity_history,

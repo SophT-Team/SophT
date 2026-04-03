@@ -1,7 +1,5 @@
 import numpy as np
-
 import pytest
-
 from sopht.numeric.immersed_boundary_ops import BrinkmannBoundaryForcing
 from sopht.utils.precision import get_real_t, get_test_tol
 
@@ -42,8 +40,7 @@ class MockBrinkmannBoundaryForcingSolution:
             self.grid_size // 3, self.grid_size // 3 + self.num_lag_nodes
         ).reshape(-1, self.num_lag_nodes)
         self.lag_grid_position_field = (
-            self.nearest_eul_grid_index_to_lag_grid * self.dx
-            + self.eul_grid_coord_shift
+            self.nearest_eul_grid_index_to_lag_grid * self.dx + self.eul_grid_coord_shift
         )
 
         # interaction step solution computation
@@ -63,9 +60,7 @@ class MockBrinkmannBoundaryForcingSolution:
         )
         # max number of Eulerian grid indices affected by Lagrangian grid
         self.max_num_of_eul_grid_idx_impacted_by_lag_grid = (
-            self.grid_dim
-            * self.num_lag_nodes
-            * (2 * self.interp_kernel_width) ** self.grid_dim
+            self.grid_dim * self.num_lag_nodes * (2 * self.interp_kernel_width) ** self.grid_dim
         )
 
     def check_interaction_step_solution(
@@ -203,9 +198,7 @@ def test_brinkmann_penalise_lag_grid_velocity_field(grid_dim, n_values, precisio
     )
 
     lag_grid_velocity_field = np.ones((grid_dim, mock_soln.num_lag_nodes), dtype=real_t)
-    brinkmann_boundary_forcing.lag_grid_flow_velocity_field = (
-        real_t(3) * lag_grid_velocity_field
-    )
+    brinkmann_boundary_forcing.lag_grid_flow_velocity_field = real_t(3) * lag_grid_velocity_field
     brinkmann_boundary_forcing.brinkmann_penalise_lag_grid_velocity_field(
         lag_grid_penalised_velocity_field=brinkmann_boundary_forcing.lag_grid_penalised_velocity_field,
         lag_grid_flow_velocity_field=brinkmann_boundary_forcing.lag_grid_flow_velocity_field,
@@ -332,7 +325,7 @@ def test_compute_interaction_without_eul_grid_flux_reset(grid_dim, n_values, pre
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("grid_dim", [2, 3])
 @pytest.mark.parametrize("n_values", [16])
-def test_compute_interaction_with_eul_grid_flux_reset(grid_dim, n_values, precision):
+def test_compute_interaction_with_eul_grid_flux_reset(grid_dim, n_values, precision, rng):
     real_t = get_real_t(precision)
     mock_soln = MockBrinkmannBoundaryForcingSolution(
         grid_size=n_values,
@@ -351,7 +344,7 @@ def test_compute_interaction_with_eul_grid_flux_reset(grid_dim, n_values, precis
         enable_eul_grid_flux_reset=True,
     )
     eul_grid_velocity_shape = (grid_dim,) + (n_values,) * grid_dim
-    eul_grid_penalisation_flux = np.random.rand(*eul_grid_velocity_shape).astype(real_t)
+    eul_grid_penalisation_flux = rng.random(eul_grid_velocity_shape).astype(real_t)
     brinkmann_boundary_forcing.compute_interaction_forcing(
         eul_grid_penalisation_flux=eul_grid_penalisation_flux,
         eul_grid_velocity_field=mock_soln.eul_grid_velocity_field,

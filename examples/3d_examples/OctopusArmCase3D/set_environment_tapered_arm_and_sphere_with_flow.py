@@ -1,18 +1,16 @@
 from collections import defaultdict
-import numpy as np
-import elastica as ea
-from elastica._calculus import _isnan_check
 
+import elastica as ea
+import numpy as np
 from coomm.actuations.muscles import (
-    force_length_weight_poly,
-)
-from coomm.actuations.muscles import (
-    MuscleGroup,
+    ApplyMuscleGroups,
     LongitudinalMuscle,
+    MuscleGroup,
     ObliqueMuscle,
     TransverseMuscle,
-    ApplyMuscleGroups,
+    force_length_weight_poly,
 )
+from elastica._calculus import _isnan_check
 
 
 class BaseSimulator(
@@ -32,7 +30,7 @@ class ArmEnvironment:
         final_time: float,
         time_step: float = 1.0e-5,
         rendering_fps: int = 30,
-        COLLECT_DATA_FOR_POSTPROCESSING: bool = True,
+        collect_data_for_postprocessing: bool = True,
     ) -> None:
         # Integrator type
         self.StatefulStepper = ea.PositionVerlet()
@@ -42,24 +40,24 @@ class ArmEnvironment:
         self.total_steps = int(self.final_time / self.time_step)
         self.rendering_fps = rendering_fps
         self.step_skip = int(1.0 / (self.rendering_fps * self.time_step))
-        self.COLLECT_DATA_FOR_POSTPROCESSING = COLLECT_DATA_FOR_POSTPROCESSING
+        self.collect_data_for_postprocessing = collect_data_for_postprocessing
 
     def get_systems(
         self,
     ) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
-    def set_arm(self, E: float, rod: ea.CosseratRod) -> None:
-        self.set_rod(E, rod)
+    def set_arm(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
+        self.set_rod(youngs_modulus, rod)
         self.set_muscles(self.shearable_rod)
 
-    def setup(self, E: float, rod: ea.CosseratRod) -> None:
-        self.set_arm(E, rod)
+    def setup(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
+        self.set_arm(youngs_modulus, rod)
 
-    def set_rod(self, E: float, rod: ea.CosseratRod) -> None:
+    def set_rod(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
         """Set up a rod"""
 
-        self.E = E
+        self.E = youngs_modulus
         self.shearable_rod = rod
         self.simulator.append(self.shearable_rod)
 
@@ -98,18 +96,16 @@ class ArmEnvironment:
             OM_ratio_radius = 0.00075 / radius_base
             OM_rotation_number = 6
             shearable_rod_area = np.pi * arm.radius**2
-            TM_rest_muscle_area = shearable_rod_area * (
-                TM_ratio_radius**2 - AN_ratio_radius**2
-            )
+            TM_rest_muscle_area = shearable_rod_area * (TM_ratio_radius**2 - AN_ratio_radius**2)
             LM_rest_muscle_area = shearable_rod_area * (LM_ratio_radius**2)
             OM_rest_muscle_area = shearable_rod_area * (OM_ratio_radius**2)
             # stress is in unit [Pa]
             TM_max_muscle_stress = 1.5 * self.E  # 15_000.0
             LM_max_muscle_stress = 10 * self.E  # 50_000.0 * 2
             OM_max_muscle_stress = 5 * self.E  # 50_000.0
-            muscle_dict = dict(
-                force_length_weight=force_length_weight_poly,
-            )
+            muscle_dict = {
+                "force_length_weight": force_length_weight_poly,
+            }
 
             # Add a transverse muscle
             muscle_groups.append(
@@ -126,21 +122,21 @@ class ArmEnvironment:
             )
 
             # Add 4 longitudinal muscles
-            for k in range(4):
-                muscle_groups.append(
-                    MuscleGroup(
-                        muscles=[
-                            LongitudinalMuscle(
-                                muscle_init_angle=np.pi * 0.5 * k,
-                                ratio_muscle_position=LM_ratio_muscle_position,
-                                rest_muscle_area=LM_rest_muscle_area,
-                                max_muscle_stress=LM_max_muscle_stress,
-                                **muscle_dict,
-                            )
-                        ],
-                        type_name="LM",
-                    )
+            muscle_groups += [
+                MuscleGroup(
+                    muscles=[
+                        LongitudinalMuscle(
+                            muscle_init_angle=np.pi * 0.5 * k,
+                            ratio_muscle_position=LM_ratio_muscle_position,
+                            rest_muscle_area=LM_rest_muscle_area,
+                            max_muscle_stress=LM_max_muscle_stress,
+                            **muscle_dict,
+                        )
+                    ],
+                    type_name="LM",
                 )
+                for k in range(4)
+            ]
 
             # Add a clockwise oblique muscle group (4 muscles)
             muscle_groups.append(
@@ -184,9 +180,7 @@ class ArmEnvironment:
             return muscle_groups
 
         self.muscle_groups = add_muscle_actuation(arm)
-        self.muscle_callback_params_list: list = [
-            defaultdict(list) for _ in self.muscle_groups
-        ]
+        self.muscle_callback_params_list: list = [defaultdict(list) for _ in self.muscle_groups]
         self.simulator.add_forcing_to(self.shearable_rod).using(
             ApplyMuscleGroups,
             muscle_groups=self.muscle_groups,
@@ -194,10 +188,10 @@ class ArmEnvironment:
             callback_params_list=self.muscle_callback_params_list,
         )
 
-    def reset(self, E: float, rod: ea.CosseratRod) -> None:
+    def reset(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
         self.simulator = BaseSimulator()
 
-        self.setup(E, rod)
+        self.setup(youngs_modulus, rod)
 
         """ Finalize the simulator and create time stepper """
 
@@ -216,9 +210,8 @@ class ArmEnvironment:
     def step(
         self, time: float, muscle_activations: list[np.ndarray]
     ) -> tuple[float, list[ea.CosseratRod], bool]:
-
         """Set muscle activations"""
-        for muscle_group, activation in zip(self.muscle_groups, muscle_activations):
+        for muscle_group, activation in zip(self.muscle_groups, muscle_activations, strict=True):
             muscle_group.apply_activation(activation)
 
         """ Run the simulation for one step """
@@ -251,5 +244,5 @@ class Environment(ArmEnvironment):
     def get_systems(self) -> list[ea.CosseratRod]:
         return [self.shearable_rod]
 
-    def setup(self, E: float, rod: ea.CosseratRod) -> None:
-        self.set_arm(E, rod)
+    def setup(self, youngs_modulus: float, rod: ea.CosseratRod) -> None:
+        self.set_arm(youngs_modulus, rod)

@@ -1,10 +1,12 @@
+from pathlib import Path
+
+import click
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-import click
 from elastic_fish_case import ElasticFishSimulator
-from elastic_fish_utils.fish_grid import FishSurfaceForcingGrid
 from elastic_fish_utils.fish_geometry import create_fish_geometry
+from elastic_fish_utils.fish_grid import FishSurfaceForcingGrid
 
 
 def elastic_fish_swimming_case(
@@ -51,9 +53,7 @@ def elastic_fish_swimming_case(
         / moment_of_inertia
     )
 
-    origin = np.array(
-        [0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range]
-    )
+    origin = np.array([0.85 * x_range - 0.5 * base_length, 0.5 * y_range, 0.5 * z_range])
     fish_sim = ElasticFishSimulator(
         final_time=final_time,
         period=period,
@@ -71,7 +71,7 @@ def elastic_fish_swimming_case(
 
     # ==================FLOW SETUP START=========================
     kinematic_viscosity = base_length * vel_scale / actuation_reynolds_number
-    flow_sim = sps.UnboundedFlowSimulator3D(
+    flow_sim = sps.create_unbounded_flow_simulator_3d(
         grid_size=grid_size,
         x_range=x_range,
         kinematic_viscosity=kinematic_viscosity,
@@ -107,7 +107,7 @@ def elastic_fish_swimming_case(
 
     if save_data:
         # setup IO
-        # TODO internalise this in flow simulator as dump_fields
+        # TODO: internalise this in flow simulator as dump_fields
         io_origin = np.array(
             [
                 flow_sim.position_field[z_axis_idx].min(),
@@ -182,7 +182,7 @@ def elastic_fish_swimming_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             time_history.append(flow_sim.time)
             forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
@@ -194,7 +194,7 @@ def elastic_fish_swimming_case(
                 fish_sim.shearable_rod.compute_position_center_of_mass().copy()
             )
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f},"
                 " grid deviation L2 error: "
@@ -204,7 +204,7 @@ def elastic_fish_swimming_case(
                 f" force norm: {np.linalg.norm(forces)}"
                 f"flow_dt: {flow_sim.compute_stable_timestep(dt_prefac=0.125):.6f}"
             )
-            with open("fish_velocity_vs_time.csv", "ab") as f:
+            with Path("fish_velocity_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[
@@ -219,14 +219,14 @@ def elastic_fish_swimming_case(
                     delimiter=",",
                 )
 
-            with open("fish_com_position_vs_time.csv", "ab") as f:
+            with Path("fish_com_position_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[np.hstack((flow_sim.time, com_position_history[-1]))].T,
                     delimiter=",",
                 )
 
-            with open("fish_forces_vs_time.csv", "ab") as f:
+            with Path("fish_forces_vs_time.csv").open("ab") as f:
                 np.savetxt(
                     f,
                     np.c_[
@@ -243,13 +243,11 @@ def elastic_fish_swimming_case(
 
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
 
@@ -260,7 +258,7 @@ def elastic_fish_swimming_case(
         rod_time_steps = int(flow_dt / min(flow_dt, fish_sim.dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             rod_time = fish_sim.time_step(rod_time, local_rod_dt)
             # timestep the cosserat_rod_flow_interactor
             cosserat_rod_flow_interactor.time_step(dt=local_rod_dt)
@@ -273,9 +271,7 @@ def elastic_fish_swimming_case(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=30
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=30)
 
     # Save data
     np.savetxt(
@@ -339,10 +335,7 @@ if __name__ == "__main__":
         exp_moment_of_inertia = np.pi / 4 * exp_base_radius**4
         exp_bending_rigidity = exp_youngs_modulus * exp_moment_of_inertia
         exp_non_dim_bending_stiffness = exp_bending_rigidity / (
-            exp_rho_f
-            * exp_velocity_scale**2
-            * exp_base_length**3
-            * exp_base_diameter
+            exp_rho_f * exp_velocity_scale**2 * exp_base_length**3 * exp_base_diameter
         )
         exp_actuation_reynolds_number = (
             exp_base_length * exp_velocity_scale / exp_kinematic_viscosity

@@ -1,9 +1,12 @@
 """Kernels for penalising field boundary in 2D."""
+
+from collections.abc import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_penalise_field_boundary_pyst_kernel_2d(
@@ -15,9 +18,11 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D penalise field boundary kernel generator."""
-    assert width >= 0 and isinstance(width, int), "invalid zone width"
+    if not isinstance(width, int) or width < 0:
+        msg = "Invalid zone width, must be a non-negative integer"
+        raise ValueError(msg)
 
     if width == 0:
         # bypass option to prevent penalisation, done this way since by
@@ -54,9 +59,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
 
         @ps.kernel
         def penalise_field_x_front_boundary_stencil_2d():
-            field, x_grid_field = ps.fields(
-                f"field, x_grid_field : {pyst_dtype}[{grid_info}]"
-            )
+            field, x_grid_field = ps.fields(f"field, x_grid_field : {pyst_dtype}[{grid_info}]")
             field[0, 0] @= field[0, 0] * sp.sin(
                 sine_prefactor * (x_grid_field[0, 0] - x_grid_field_start)
             )
@@ -68,9 +71,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
 
         @ps.kernel
         def penalise_field_x_back_boundary_stencil_2d():
-            field, x_grid_field = ps.fields(
-                f"field, x_grid_field : {pyst_dtype}[{grid_info}]"
-            )
+            field, x_grid_field = ps.fields(f"field, x_grid_field : {pyst_dtype}[{grid_info}]")
             field[0, 0] @= field[0, 0] * sp.sin(
                 sine_prefactor * (x_grid_field_end - x_grid_field[0, 0])
             )
@@ -95,9 +96,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
 
         @ps.kernel
         def penalise_field_y_front_boundary_stencil_2d():
-            field, y_grid_field = ps.fields(
-                f"field, y_grid_field : {pyst_dtype}[{grid_info}]"
-            )
+            field, y_grid_field = ps.fields(f"field, y_grid_field : {pyst_dtype}[{grid_info}]")
             field[0, 0] @= field[0, 0] * sp.sin(
                 sine_prefactor * (y_grid_field[0, 0] - y_grid_field_start)
             )
@@ -109,9 +108,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
 
         @ps.kernel
         def penalise_field_y_back_boundary_stencil_2d():
-            field, y_grid_field = ps.fields(
-                f"field, y_grid_field : {pyst_dtype}[{grid_info}]"
-            )
+            field, y_grid_field = ps.fields(f"field, y_grid_field : {pyst_dtype}[{grid_info}]")
             field[0, 0] @= field[0, 0] * sp.sin(
                 sine_prefactor * (y_grid_field_end - y_grid_field[0, 0])
             )
@@ -132,22 +129,14 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
             # these parts involve broadcasting hence couldn't be pystencilized
             field[:, :width] = field[:, (width - 1) : width]
             field[:, -width:] = field[:, -width : (-width + 1)]
-            penalise_field_x_front_boundary_kernel_2d(
-                field=field, x_grid_field=x_grid_field
-            )
-            penalise_field_x_back_boundary_kernel_2d(
-                field=field, x_grid_field=x_grid_field
-            )
+            penalise_field_x_front_boundary_kernel_2d(field=field, x_grid_field=x_grid_field)
+            penalise_field_x_back_boundary_kernel_2d(field=field, x_grid_field=x_grid_field)
 
             # then along Y
             # these parts involve broadcasting hence couldn't be pystencilized
             field[:width, :] = field[(width - 1) : width, :]
             field[-width:, :] = field[-width : (-width + 1), :]
-            penalise_field_y_front_boundary_kernel_2d(
-                field=field, y_grid_field=y_grid_field
-            )
-            penalise_field_y_back_boundary_kernel_2d(
-                field=field, y_grid_field=y_grid_field
-            )
+            penalise_field_y_front_boundary_kernel_2d(field=field, y_grid_field=y_grid_field)
+            penalise_field_y_back_boundary_kernel_2d(field=field, y_grid_field=y_grid_field)
 
     return penalise_field_boundary_pyst_kernel_2d

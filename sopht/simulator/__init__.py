@@ -1,2 +1,53 @@
-from .flow import *
-from .immersed_body import *
+"""SophT Simulator package that manages the Flow-Structure Interaction."""
+
+from .flow import (
+    FlowSimulator,
+    PassiveTransportFlowSimulator,
+    UnboundedNavierStokesFlowSimulator2D,
+    UnboundedNavierStokesFlowSimulator3D,
+    create_unbounded_flow_simulator_2d,
+    create_unbounded_flow_simulator_3d,
+)
+from .immersed_body import (
+    CircularCylinderForcingGrid,
+    CosseratRodEdgeForcingGrid,
+    CosseratRodElementCentricForcingGrid,
+    CosseratRodFlowInteraction,
+    CosseratRodNodalForcingGrid,
+    CosseratRodSurfaceForcingGrid,
+    FlowForces,
+    ImmersedBodyFlowInteraction,
+    ImmersedBodyForcingGrid,
+    OpenEndCircularCylinderForcingGrid,
+    RectangularPlane,
+    RectangularPlaneForcingGrid,
+    RigidBodyFlowInteraction,
+    SphereForcingGrid,
+    ThreeDimensionalRigidBodyForcingGrid,
+    TwoDimensionalCylinderForcingGrid,
+)
+
+__all__ = [
+    "CircularCylinderForcingGrid",
+    "CosseratRodEdgeForcingGrid",
+    "CosseratRodElementCentricForcingGrid",
+    "CosseratRodFlowInteraction",
+    "CosseratRodNodalForcingGrid",
+    "CosseratRodSurfaceForcingGrid",
+    "FlowForces",
+    "FlowSimulator",
+    "ImmersedBodyFlowInteraction",
+    "ImmersedBodyForcingGrid",
+    "OpenEndCircularCylinderForcingGrid",
+    "PassiveTransportFlowSimulator",
+    "RectangularPlane",
+    "RectangularPlaneForcingGrid",
+    "RigidBodyFlowInteraction",
+    "SphereForcingGrid",
+    "ThreeDimensionalRigidBodyForcingGrid",
+    "TwoDimensionalCylinderForcingGrid",
+    "UnboundedNavierStokesFlowSimulator2D",
+    "UnboundedNavierStokesFlowSimulator3D",
+    "create_unbounded_flow_simulator_2d",
+    "create_unbounded_flow_simulator_3d",
+]

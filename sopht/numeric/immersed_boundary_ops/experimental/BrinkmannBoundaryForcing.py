@@ -1,7 +1,7 @@
 """Brinkmann boundary forcing for flow-body feedback."""
-from numba import njit
 
 import numpy as np
+from numba import njit
 
 from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
     gen_set_fixed_val_pyst_kernel_2d,
@@ -23,7 +23,7 @@ class BrinkmannBoundaryForcing:
     Brinkmann boundary forcing class for computing feedback between the
     Lagrangian body and Eulerian grid flow, using Lagrangian variant of
     Brinkmann penalisation.
-    TODO add proper style docs
+    TODO: add proper style docs
     """
 
     def __init__(
@@ -40,7 +40,7 @@ class BrinkmannBoundaryForcing:
     ):
         """Class initialiser.
 
-        TODO add proper style docs
+        TODO: add proper style docs
         Takes in inputs:
         brinkmann_coeff: Brinkmann penalisation coefficient for computing penalty
         force, set to a high value
@@ -57,14 +57,14 @@ class BrinkmannBoundaryForcing:
 
         """
         self.dx = dx
-        assert grid_dim == 2 or grid_dim == 3, "Invalid grid dimensions"
+        if grid_dim not in (2, 3):
+            msg = "Invalid grid dimensions, must be either 2 or 3"
+            raise ValueError(msg)
         self.grid_dim = grid_dim
         self.brinkmann_coeff = brinkmann_coeff
 
         # creating buffers...
-        self.nearest_eul_grid_index_to_lag_grid = np.empty(
-            (grid_dim, num_lag_nodes), dtype=int
-        )
+        self.nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes), dtype=int)
         eul_grid_support_of_lag_grid_shape = (
             (grid_dim,) + (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         )
@@ -73,18 +73,10 @@ class BrinkmannBoundaryForcing:
         )
         interp_weights_shape = (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         self.interp_weights = np.empty(interp_weights_shape, dtype=real_t)
-        self.lag_grid_flow_velocity_field = np.zeros(
-            (grid_dim, num_lag_nodes), dtype=real_t
-        )
-        self.lag_grid_penalised_velocity_field = np.zeros_like(
-            self.lag_grid_flow_velocity_field
-        )
-        self.lag_grid_penalisation_flux = np.zeros_like(
-            self.lag_grid_penalised_velocity_field
-        )
-        self.lag_grid_penalisation_forcing = np.zeros_like(
-            self.lag_grid_penalisation_flux
-        )
+        self.lag_grid_flow_velocity_field = np.zeros((grid_dim, num_lag_nodes), dtype=real_t)
+        self.lag_grid_penalised_velocity_field = np.zeros_like(self.lag_grid_flow_velocity_field)
+        self.lag_grid_penalisation_flux = np.zeros_like(self.lag_grid_penalised_velocity_field)
+        self.lag_grid_penalisation_forcing = np.zeros_like(self.lag_grid_penalisation_flux)
 
         if grid_dim == 2:
             self.eul_lag_grid_communicator = EulerianLagrangianGridCommunicator2D(
@@ -119,13 +111,9 @@ class BrinkmannBoundaryForcing:
                     num_threads=num_threads,
                     field_type="vector",
                 )
-            self.compute_interaction_forcing = (
-                self.compute_interaction_with_eul_grid_flux_reset
-            )
+            self.compute_interaction_forcing = self.compute_interaction_with_eul_grid_flux_reset
         else:
-            self.compute_interaction_forcing = (
-                self.compute_interaction_without_eul_grid_flux_reset
-            )
+            self.compute_interaction_forcing = self.compute_interaction_without_eul_grid_flux_reset
 
     @staticmethod
     @njit(cache=True, fastmath=True)
@@ -143,8 +131,7 @@ class BrinkmannBoundaryForcing:
 
         """
         lag_grid_penalised_velocity_field[...] = (
-            lag_grid_flow_velocity_field
-            + brinkmann_coeff * dt * lag_grid_body_velocity_field
+            lag_grid_flow_velocity_field + brinkmann_coeff * dt * lag_grid_body_velocity_field
         ) / (1 + brinkmann_coeff * dt)
 
     @staticmethod
@@ -217,9 +204,7 @@ class BrinkmannBoundaryForcing:
             lag_grid_field=self.lag_grid_penalisation_flux,
             interp_weights=(
                 self.interp_weights
-                * (
-                    self.dx**self.grid_dim
-                )  # dx factor converts delta function to interpolator
+                * (self.dx**self.grid_dim)  # dx factor converts delta function to interpolator
             ),
             nearest_eul_grid_index_to_lag_grid=self.nearest_eul_grid_index_to_lag_grid,
         )

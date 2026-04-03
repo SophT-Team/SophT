@@ -20,6 +20,12 @@ clean_ruff_cache:
 
 clean: clean_ds_store clean_mypy_cache clean_pycache clean_pytest_cache clean_ruff_cache
 
+format:
+    ruff format sopht tests examples
+
+check:
+    ruff check --statistics sopht tests examples
+
 sys_info:
     @echo "Operating System: {{ os() }}"
     @echo "Architecture: {{ arch() }}"
@@ -28,7 +34,7 @@ sys_info:
         echo "Python version: $($python_cmd -V 2>&1)"
 
 test:
-    @pytest tests
+    @pytest tests --disable-warnings -v
 
 typecheck:
     @mypy sopht

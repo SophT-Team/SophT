@@ -1,8 +1,12 @@
 """Kernels for performing diffusion timestep in 3D."""
+
+from collections.abc import Callable
+from typing import Literal
+
 import numpy as np
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
@@ -11,7 +15,7 @@ def gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
     fixed_grid_size: tuple[int, int, int] | bool = False,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """3D Diffusion euler forward timestep kernel generator."""
     elementwise_sum_pyst_kernel_3d = spne.gen_elementwise_sum_pyst_kernel_3d(
         real_t=real_t,
@@ -37,9 +41,7 @@ def gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
             field=field,
             prefactor=nu_dt_by_dx2,
         )
-        elementwise_sum_pyst_kernel_3d(
-            sum_field=field, field_1=field, field_2=diffusion_flux
-        )
+        elementwise_sum_pyst_kernel_3d(sum_field=field, field_1=field, field_2=diffusion_flux)
 
     match field_type:
         case "scalar":

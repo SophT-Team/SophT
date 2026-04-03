@@ -22,7 +22,9 @@ dependencies = [
     "pyelastica",
     "matplotlib",
     "pyfftw",
-    "pystencils"
+    "pystencils",
+    "ffmpeg-python",
+    "typing-extensions",
 ]
 
 [project.urls]
@@ -34,7 +36,7 @@ Issues = "https://github.com/SophT-Team/SophT/issues"
 examples = [
     "click",
     # "coomm",
-    "magneto_pyelastica"
+    "magneto_pyelastica",
 ]
 
 # https://hatch.pypa.io/latest/config/build/#build-system
@@ -49,7 +51,7 @@ tests = [
     "coverage",
     "pytest-cov",
     "mypy",
-    "psutil", 
+    "psutil",
 ]
 lint = [
     "ruff"
@@ -82,41 +84,48 @@ exclude = [
     ".tox",
     ".venv",
     ".vscode",
+    "__pycache__",
     "__pypackages__",
     "_build",
     "buck-out",
     "build",
     "dist",
     "node_modules",
+    "scripts",
     "site-packages",
     "venv",
 ]
 
-line-length = 88
+line-length = 100
 indent-width = 4
 
 target-version = "py310"
 
 [tool.ruff.lint]
-select = [
-    "F",        # Pyflakes rules
-    "W",        # PyCodeStyle warnings
-    "E",        # PyCodeStyle errors
-    "I",        # Sort imports properly
-    "UP",       # Warn if certain things can changed due to newer Python versions
-    "C4",       # Catch incorrect use of comprehensions, dict, list, etc
-    "FA",       # Enforce from __future__ import annotations
-    "ISC",      # Good use of string concatenation
-    "ICN",      # Use common import conventions
-    "RET",      # Good return practices
-    "SIM",      # Common simplification rules
-    "TID",      # Some good import practices
-    "TC",       # Enforce importing certain types in a TYPE_CHECKING block
-    "PTH",      # Use pathlib instead of os.path
-    "TD",       # Be diligent with TODO comments
-    "NPY",      # Some numpy-specific things
+select = ["ALL"]
+ignore = [
+    "ANN",     # missing type annotation (handled by mypy)
+    "C901",    # too-complex
+    "COM812",  # missing-trailing-comma
+    "CPY001",  # Missing copyright notice at top of file
+    # TODO: enable once the documentation styles are settled
+    "D",       # pydocstyle
+    "D203",    # blank line required before class docstring
+    "D211",    # no-blank-line-before-class
+    "D213",    # multi-line-summary-second-line
+    "ERA001",  # commented-out-code
+    "FBT",     # boolean trap
+    "FIX002",  # line-contains-todo
+    "N999",    # invalid-module-name
+    "PLR0912", # too-many-branches
+    "PLR0913", # too-many-arguments
+    "PLR0915", # too-many-statements
+    "PLR2004", # magic-value-comparison
+    "S607",    # start-process-with-partial-path
+    "TD002",   # Missing author in TODO
+    "TD003",   # missing-todo-link
+    "TRY003",  # raise-vanilla-args
 ]
-ignore = []
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]

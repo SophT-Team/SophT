@@ -1,8 +1,8 @@
 import numpy as np
-from set_environment_tapered_arm_cylinder import Environment
-from arm_functions_2d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
 import sopht.simulator as sps
 import sopht.utils as spu
+from arm_functions_2d import SigmoidActivationLongitudinalMuscles  # , LocalActivation
+from set_environment_tapered_arm_cylinder import Environment
 
 
 def tapered_arm_and_cylinder_flow_coupling(
@@ -77,9 +77,7 @@ def tapered_arm_and_cylinder_flow_coupling(
     # ==================FLOW SETUP END=========================
     # ==================FLOW-ROD COMMUNICATOR SETUP START======
     # flow_body_interactors = []
-    flow_body_interactors: list[
-        sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction
-    ] = []
+    flow_body_interactors: list[sps.RigidBodyFlowInteraction | sps.CosseratRodFlowInteraction] = []
     cosserat_rod_flow_interactor = sps.CosseratRodFlowInteraction(
         cosserat_rod=env.shearable_rod,
         eul_grid_forcing_field=flow_sim.eul_grid_forcing_field,
@@ -128,7 +126,6 @@ def tapered_arm_and_cylinder_flow_coupling(
     fig, ax = spu.create_figure_and_axes()
 
     while flow_sim.time < final_time:
-
         # Plot solution
         if foto_timer >= foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
@@ -173,15 +170,13 @@ def tapered_arm_and_cylinder_flow_coupling(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
             grid_dev_error = 0.0
             for flow_body_interactor in flow_body_interactors:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
             )
@@ -194,14 +189,12 @@ def tapered_arm_and_cylinder_flow_coupling(
         # print(flow_dt, rod_dt)
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # Activate longitudinal muscle
-            activation_functions[2].apply_activation(
-                env.shearable_rod, activations[2], rod_time
-            )
+            activation_functions[2].apply_activation(activations[2], rod_time)
             # Do one elastica step
             env.time_step = local_rod_dt
-            rod_time, systems, done = env.step(rod_time, activations)
+            rod_time, _, _ = env.step(rod_time, activations)
 
             # timestep the body_flow_interactors
             for flow_body_interactor in flow_body_interactors:
@@ -218,9 +211,7 @@ def tapered_arm_and_cylinder_flow_coupling(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import numpy as np
-from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 import sopht.utils as spu
+from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
 
 
 class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
@@ -36,16 +36,12 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
         x_axis_idx = spu.VectorField.x_axis_idx()
         y_axis_idx = spu.VectorField.y_axis_idx()
         # top boundary
-        self.position_field[
-            x_axis_idx, : self.num_lag_nodes_per_side
-        ] = side_coordinates_range
-        self.position_field[y_axis_idx, : self.num_lag_nodes_per_side] = (
-            0.5 * self.side_length
-        )
+        self.position_field[x_axis_idx, : self.num_lag_nodes_per_side] = side_coordinates_range
+        self.position_field[y_axis_idx, : self.num_lag_nodes_per_side] = 0.5 * self.side_length
         # right boundary
         self.position_field[
             x_axis_idx, self.num_lag_nodes_per_side : 2 * self.num_lag_nodes_per_side
-        ] = (0.5 * self.side_length)
+        ] = 0.5 * self.side_length
         self.position_field[
             y_axis_idx, self.num_lag_nodes_per_side : 2 * self.num_lag_nodes_per_side
         ] = side_coordinates_range
@@ -57,16 +53,12 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
         self.position_field[
             y_axis_idx,
             2 * self.num_lag_nodes_per_side : 3 * self.num_lag_nodes_per_side,
-        ] = (
-            -0.5 * self.side_length
-        )
+        ] = -0.5 * self.side_length
         # left boundary
         self.position_field[
             x_axis_idx,
             3 * self.num_lag_nodes_per_side : 4 * self.num_lag_nodes_per_side,
-        ] = (
-            -0.5 * self.side_length
-        )
+        ] = -0.5 * self.side_length
         self.position_field[
             y_axis_idx,
             3 * self.num_lag_nodes_per_side : 4 * self.num_lag_nodes_per_side,
@@ -77,21 +69,19 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
 
     def compute_initial_lag_grid_velocity_field(self, lid_velocity: float) -> None:
         """Compute the initial velocities of the lid driven cavity"""
-        self.velocity_field[
-            spu.VectorField.x_axis_idx(), : self.num_lag_nodes_per_side
-        ] = lid_velocity
+        self.velocity_field[spu.VectorField.x_axis_idx(), : self.num_lag_nodes_per_side] = (
+            lid_velocity
+        )
 
     def compute_lag_grid_position_field(self) -> None:
         """Computes positions of the lid driven cavity"""
         # We don't do anything here, since these are computed statically
         # during initialisation
-        pass
 
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocities of the lid driven cavity"""
         # We don't do anything here, since these are computed statically
         # during initialisation
-        pass
 
     def transfer_forcing_from_grid_to_body(
         self,
@@ -101,7 +91,6 @@ class LidDrivenCavityForcingGrid(ImmersedBodyForcingGrid):
     ) -> None:
         """Transfer forcing from lagrangian forcing grid to the cosserat rod"""
         # This field is added to make this class concrete
-        pass
 
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""

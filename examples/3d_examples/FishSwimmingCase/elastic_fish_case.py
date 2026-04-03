@@ -1,12 +1,15 @@
-import numpy as np
 import elastica as ea
+import numpy as np
 import sopht.utils as spu
-from elastic_fish_utils.fish_geometry import (
-    update_rod_for_fish_geometry,
-    create_fish_geometry,
-)
 from elastic_fish_utils.carling_fish_bc import CarlingFishBC
 from elastic_fish_utils.fish_connection import FishConnection
+from elastic_fish_utils.fish_geometry import (
+    create_fish_geometry,
+    update_rod_for_fish_geometry,
+)
+
+_default_origin: np.ndarray = np.array([0.0, 0.0, 0.0])
+_default_normal: np.ndarray = np.array([0.0, 0.0, 1.0])
 
 
 class ElasticFishSimulator:
@@ -19,10 +22,10 @@ class ElasticFishSimulator:
         base_length: float = 1.0,
         damping_constant: float = 0.02,
         dt_scale: float = 5e-4,
-        origin: np.ndarray = np.array([0.0, 0.0, 0.0]),
+        origin: np.ndarray = _default_origin,
         plot_result: bool = True,
         period: float = 1.0,
-        normal=np.array([0.0, 0.0, 1.0]),
+        normal: np.ndarray = _default_normal,
     ) -> None:
         class BaseSimulator(
             ea.BaseSystemCollection,
@@ -31,8 +34,7 @@ class ElasticFishSimulator:
             ea.Damping,
             ea.CallBacks,
             ea.Connections,
-        ):
-            ...
+        ): ...
 
         self.plot_result = plot_result
         self.simulator = BaseSimulator()
@@ -87,7 +89,7 @@ class ElasticFishSimulator:
             FishConnection, k=self.shearable_rod.shear_matrix[2, 2, 0]
         )
 
-        self.dt = dt_scale * self.shearable_rod.rest_lengths[0]  #
+        self.dt = dt_scale * self.shearable_rod.rest_lengths[0]
         self.simulator.dampen(self.shearable_rod).using(
             ea.AnalyticalLinearDamper,
             damping_constant=damping_constant,
@@ -118,35 +120,19 @@ class ElasticFishSimulator:
                 self.every = step_skip
                 self.callback_params = callback_params
 
-            def make_callback(
-                self, system: ea.CosseratRod, time: float, current_step: int
-            ) -> None:
+            def make_callback(self, system: ea.CosseratRod, time: float, current_step: int) -> None:
                 if current_step % self.every == 0:
                     self.callback_params["time"].append(time)
                     self.callback_params["step"].append(current_step)
-                    self.callback_params["position"].append(
-                        system.position_collection.copy()
-                    )
-                    self.callback_params["com"].append(
-                        system.compute_position_center_of_mass()
-                    )
+                    self.callback_params["position"].append(system.position_collection.copy())
+                    self.callback_params["com"].append(system.compute_position_center_of_mass())
                     self.callback_params["radius"].append(system.radius.copy())
-                    self.callback_params["rest_lengths"].append(
-                        system.rest_lengths.copy()
-                    )
+                    self.callback_params["rest_lengths"].append(system.rest_lengths.copy())
                     self.callback_params["curvature"].append(system.kappa.copy())
-                    self.callback_params["torque"].append(
-                        system.external_torques.copy()
-                    )
-                    self.callback_params["target_curvature"].append(
-                        system.rest_kappa.copy()
-                    )
-                    self.callback_params["internal_torques"].append(
-                        system.internal_torques.copy()
-                    )
-                    self.callback_params["external_torques"].append(
-                        system.external_torques.copy()
-                    )
+                    self.callback_params["torque"].append(system.external_torques.copy())
+                    self.callback_params["target_curvature"].append(system.rest_kappa.copy())
+                    self.callback_params["internal_torques"].append(system.internal_torques.copy())
+                    self.callback_params["external_torques"].append(system.external_torques.copy())
                     self.callback_params["com_velocity"].append(
                         system.compute_velocity_center_of_mass().copy()
                     )
@@ -167,14 +153,13 @@ class ElasticFishSimulator:
 
     def time_step(self, time: float, time_step: float) -> float:
         """Time step the simulator"""
-        time = self.do_step(
+        return self.do_step(
             self.timestepper,
             self.stages_and_updates,
             self.simulator,
             time,
             time_step,
         )
-        return time
 
     def run(
         self,
@@ -188,7 +173,6 @@ class ElasticFishSimulator:
 
 
 if __name__ == "__main__":
-
     period = 1.0
     final_time = 4.0 * period
     elastic_fish_sim = ElasticFishSimulator(
@@ -226,9 +210,7 @@ if __name__ == "__main__":
     nondim_time = time_sim / period
 
     # Get non-dimensional position along rod from simulation
-    rest_lengths = np.array(
-        elastic_fish_sim.rod_post_processing_list[0]["rest_lengths"][:]
-    )
+    rest_lengths = np.array(elastic_fish_sim.rod_post_processing_list[0]["rest_lengths"][:])
     s_node = np.zeros((rest_lengths.shape[0], rest_lengths.shape[1] + 1))
     s_node[:, 1:] = np.cumsum(rest_lengths, axis=1)
     s_node /= s_node[:, -1:]
@@ -247,9 +229,7 @@ if __name__ == "__main__":
     )[:, 1, :]
 
     # curvature error
-    error = np.linalg.norm(
-        curvatures[start:, 0, :] - curvatures_solution[start:, :], axis=1
-    )
+    error = np.linalg.norm(curvatures[start:, 0, :] - curvatures_solution[start:, :], axis=1)
 
     # plot curvature along rod for a few frames to see
     from matplotlib import pyplot as plt
@@ -261,9 +241,7 @@ if __name__ == "__main__":
     axs = []
     axs.append(plt.subplot2grid((1, 1), (0, 0)))
     skip_frames = 15
-    axs[0].plot(
-        curvatures[start::skip_frames, 1, :].T, "-", color="red", label="simulation"
-    )
+    axs[0].plot(curvatures[start::skip_frames, 1, :].T, "-", color="red", label="simulation")
     axs[0].plot(
         curvatures_solution[start::skip_frames, :].T,
         "--",
@@ -289,20 +267,14 @@ if __name__ == "__main__":
 
     plt.rcParams.update({"font.size": 22})
     fig, ax = spu.create_figure_and_axes(fig_aspect_ratio=1.0)
-    ax.plot(
-        positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 1, :].T
-    )
+    ax.plot(positions[start::skip_frames, 0, :].T, positions[start::skip_frames, 1, :].T)
     plt.tight_layout()
     fig.savefig("position_envelope.png")
     plt.close(plt.gcf())
 
     com_pos_fish = np.array(elastic_fish_sim.rod_post_processing_list[0]["com"][:])
-    com_pos_virtual_fish = np.array(
-        elastic_fish_sim.rod_post_processing_list[1]["com"][:]
-    )
-    y_positions = np.array(elastic_fish_sim.rod_post_processing_list[1]["position"])[
-        :, 1, :
-    ]
+    com_pos_virtual_fish = np.array(elastic_fish_sim.rod_post_processing_list[1]["com"][:])
+    y_positions = np.array(elastic_fish_sim.rod_post_processing_list[1]["position"])[:, 1, :]
 
     plt.rcParams.update({"font.size": 22})
     fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)
@@ -318,8 +290,7 @@ if __name__ == "__main__":
     )
     axs[0].plot(
         s_node[start::skip_frames, :].T,
-        positions[start::skip_frames, 1, :].T
-        - com_pos_fish[start::skip_frames, 1][np.newaxis, :],
+        positions[start::skip_frames, 1, :].T - com_pos_fish[start::skip_frames, 1][np.newaxis, :],
         "-",
         color="red",
         label="simulation",
@@ -329,9 +300,7 @@ if __name__ == "__main__":
     plt.close(plt.gcf())
 
     # Comm velocity
-    com_velocity_fish = np.array(
-        elastic_fish_sim.rod_post_processing_list[0]["com_velocity"][:]
-    )
+    com_velocity_fish = np.array(elastic_fish_sim.rod_post_processing_list[0]["com_velocity"][:])
 
     plt.rcParams.update({"font.size": 22})
     fig = plt.figure(figsize=(10, 10), frameon=True, dpi=150)

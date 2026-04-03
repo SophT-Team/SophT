@@ -1,9 +1,12 @@
 """Kernels for updating vorticity based on velocity forcing in 2D."""
+
+from collections.abc import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
@@ -11,7 +14,7 @@ def gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """Update vorticity based on velocity forcing in 2D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
@@ -73,7 +76,7 @@ def gen_update_vorticity_from_penalised_velocity_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """Update vorticity based on penalised velocity in 2D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)

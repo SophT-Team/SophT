@@ -1,7 +1,7 @@
 """Eulerian-Lagrangian grid communicator in 3D."""
-from numba import njit
 
 import numpy as np
+from numba import njit
 
 
 class EulerianLagrangianGridCommunicator3D:
@@ -12,7 +12,7 @@ class EulerianLagrangianGridCommunicator3D:
     1. Find grid intersections (nearest indices)
     2. Interpolate fields back and forth
     3. Compute interpolation weights for interpolation
-    TODO add proper style docs
+    TODO: add proper style docs
     """
 
     def __init__(
@@ -50,22 +50,19 @@ class EulerianLagrangianGridCommunicator3D:
             )
         )
         if interp_kernel_type == "peskin":
-            self.interpolation_weights_kernel = (
-                generate_peskin_interpolation_weights_kernel_3d(
-                    dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
-                )
+            self.interpolation_weights_kernel = generate_peskin_interpolation_weights_kernel_3d(
+                dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
             )
         elif interp_kernel_type == "cosine":
-            self.interpolation_weights_kernel = (
-                generate_cosine_interpolation_weights_kernel_3d(
-                    dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
-                )
+            self.interpolation_weights_kernel = generate_cosine_interpolation_weights_kernel_3d(
+                dx=dx, interp_kernel_width=interp_kernel_width, real_t=real_t
             )
         else:
-            raise ValueError(
+            msg = (
                 "Invalid interpolation kernel type. Current supported types are"
                 "'cosine' and 'peskin'."
             )
+            raise ValueError(msg)
 
 
 def generate_local_eulerian_grid_support_of_lagrangian_grid_kernel_3d(
@@ -122,18 +119,14 @@ def generate_local_eulerian_grid_support_of_lagrangian_grid_kernel_3d(
         # grid point, due to floating point error, this can cause the nearest index to
         # shift by -1. However, this behaviour is expected and accounted for in the
         # followup interpolation kernels.
-        nearest_eul_grid_index_to_lag_grid[...] = (
-            lag_positions - eul_grid_coord_shift
-        ) // dx
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        nearest_eul_grid_index_to_lag_grid[...] = (lag_positions - eul_grid_coord_shift) // dx
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
         # get relative distance (support) of body
         # reshape done to broadcast
         local_eul_grid_support_of_lag_grid[...] = (
             (
-                nearest_eul_grid_index_to_lag_grid.reshape(
-                    grid_dim, 1, 1, 1, num_lag_nodes
-                )
+                nearest_eul_grid_index_to_lag_grid.reshape(grid_dim, 1, 1, 1, num_lag_nodes)
                 + local_eul_grid_support_indices
             )
             * dx
@@ -198,9 +191,9 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
     """
     # grid/problem dimensions
     grid_dim = 3
-    assert (
-        n_components == 1 or n_components == grid_dim
-    ), "invalid number of components for interpolation!"
+    if n_components not in (1, grid_dim):
+        msg = f"Invalid number of components for interpolation, must be either 1 or {grid_dim}"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def eulerian_to_lagrangian_grid_interpolation_kernel_3d(
@@ -217,26 +210,20 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             lag_grid_field[i] = np.sum(
                 eul_grid_field[
                     nearest_eul_grid_index_to_lag_grid[2, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
@@ -256,9 +243,9 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             # numba doesnt allow multiple axes for np.sum :/,
             # hence needs to be done serially
             lag_grid_field[0, i] = np.sum(
@@ -266,19 +253,13 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
                     0,
                     nearest_eul_grid_index_to_lag_grid[2, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
@@ -287,19 +268,13 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
                     1,
                     nearest_eul_grid_index_to_lag_grid[2, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
@@ -308,27 +283,20 @@ def generate_eulerian_to_lagrangian_grid_interpolation_kernel_3d(
                     2,
                     nearest_eul_grid_index_to_lag_grid[2, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[2, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[1, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                     nearest_eul_grid_index_to_lag_grid[0, i]
                     - interp_kernel_width
-                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                    + interp_kernel_width
-                    + 1,
+                    + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
                 ]
                 * interp_weights[..., i]
             ) * (dx**grid_dim)
 
     if n_components == 1:
         return eulerian_to_lagrangian_grid_interpolation_kernel_3d
-    else:
-        return vector_field_eulerian_to_lagrangian_grid_interpolation_kernel_3d
+    return vector_field_eulerian_to_lagrangian_grid_interpolation_kernel_3d
 
 
 def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
@@ -343,9 +311,9 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
 
     """
     grid_dim = 3
-    assert (
-        n_components == 1 or n_components == grid_dim
-    ), "invalid number of components for interpolation!"
+    if n_components not in (1, grid_dim):
+        msg = f"Invalid number of components for interpolation, must be either 1 or {grid_dim}"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
     def lagrangian_to_eulerian_grid_interpolation_kernel_3d(
@@ -362,28 +330,20 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             eul_grid_field[
                 nearest_eul_grid_index_to_lag_grid[2, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[2, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[2, i] + interp_kernel_width + 1,
                 nearest_eul_grid_index_to_lag_grid[1, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                 nearest_eul_grid_index_to_lag_grid[0, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                + interp_kernel_width
-                + 1,
-            ] += (
-                lag_grid_field[i] * interp_weights[..., i]
-            )
+                + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
+            ] += lag_grid_field[i] * interp_weights[..., i]
 
     @njit(cache=True, fastmath=True)
     def vector_field_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
@@ -400,26 +360,20 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
         shape (2 * interp_kernel_width, 2 * interp_kernel_width, num_lag_nodes)
 
         """
-        # TODO We need to add boundary exception handling! where the Lagrangian
+        # TODO: We need to add boundary exception handling! where the Lagrangian
         #  node goes in `interp_kernel_width` boundary zone of the Eulerian grid
-        for i in range(0, num_lag_nodes):
+        for i in range(num_lag_nodes):
             eul_grid_field[
                 ...,
                 nearest_eul_grid_index_to_lag_grid[2, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[2, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[2, i] + interp_kernel_width + 1,
                 nearest_eul_grid_index_to_lag_grid[1, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[1, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[1, i] + interp_kernel_width + 1,
                 nearest_eul_grid_index_to_lag_grid[0, i]
                 - interp_kernel_width
-                + 1 : nearest_eul_grid_index_to_lag_grid[0, i]
-                + interp_kernel_width
-                + 1,
+                + 1 : nearest_eul_grid_index_to_lag_grid[0, i] + interp_kernel_width + 1,
             ] += (
                 np.ascontiguousarray(lag_grid_field[..., i]).reshape(-1, 1, 1, 1)
                 * interp_weights[..., i]
@@ -427,8 +381,7 @@ def generate_lagrangian_to_eulerian_grid_interpolation_kernel_3d(
 
     if n_components == 1:
         return lagrangian_to_eulerian_grid_interpolation_kernel_3d
-    else:
-        return vector_field_lagrangian_to_eulerian_grid_interpolation_kernel_3d
+    return vector_field_lagrangian_to_eulerian_grid_interpolation_kernel_3d
 
 
 def generate_cosine_interpolation_weights_kernel_3d(dx, interp_kernel_width, real_t):
@@ -441,30 +394,19 @@ def generate_cosine_interpolation_weights_kernel_3d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 3
-    assert (
-        interp_kernel_width == 2
-    ), "Interpolation kernel inconsistent with interpolation kernel width!"
+    if interp_kernel_width != 2:
+        msg = "Interpolation kernel inconsistent with interpolation kernel width!"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
-    def cosine_interpolation_weights_kernel_3d(
-        interp_weights, local_eul_grid_support_of_lag_grid
-    ):
+    def cosine_interpolation_weights_kernel_3d(interp_weights, local_eul_grid_support_of_lag_grid):
         """Compute the interpolation weights using 3D cosine delta function."""
         local_eul_grid_support_of_lag_grid /= dx
         interp_weights[...] = (
             real_t((0.25 / dx) ** grid_dim)
-            * (
-                real_t(1.0)
-                + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[0])
-            )
-            * (
-                real_t(1.0)
-                + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[1])
-            )
-            * (
-                real_t(1.0)
-                + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[2])
-            )
+            * (real_t(1.0) + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[0]))
+            * (real_t(1.0) + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[1]))
+            * (real_t(1.0) + np.cos(real_t(0.5 * np.pi) * local_eul_grid_support_of_lag_grid[2]))
         )
 
     return cosine_interpolation_weights_kernel_3d
@@ -480,18 +422,14 @@ def generate_peskin_interpolation_weights_kernel_3d(dx, interp_kernel_width, rea
     """
     # grid/problem dimensions
     grid_dim = 3
-    assert (
-        interp_kernel_width == 2
-    ), "Interpolation kernel inconsistent with interpolation kernel width!"
+    if interp_kernel_width != 2:
+        msg = "Interpolation kernel inconsistent with interpolation kernel width!"
+        raise ValueError(msg)
 
     @njit(cache=True, fastmath=True)
-    def peskin_interpolation_weights_kernel_3d(
-        interp_weights, local_eul_grid_support_of_lag_grid
-    ):
+    def peskin_interpolation_weights_kernel_3d(interp_weights, local_eul_grid_support_of_lag_grid):
         """Compute the interpolation weights using 3D delta function by Peskin, 2002."""
-        local_eul_grid_support_of_lag_grid[...] = (
-            np.fabs(local_eul_grid_support_of_lag_grid) / dx
-        )
+        local_eul_grid_support_of_lag_grid[...] = np.fabs(local_eul_grid_support_of_lag_grid) / dx
         interp_weights[...] = (
             (0.125 / dx) ** grid_dim
             * (

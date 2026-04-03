@@ -7,9 +7,7 @@ from sopht.numeric.eulerian_grid_ops import (
 from sopht.utils.precision import get_real_t, get_test_tol
 
 
-def scalar_multiplicative_laplacian_filter(
-    scalar_field: np.ndarray, filter_order: int
-) -> None:
+def scalar_multiplicative_laplacian_filter(scalar_field: np.ndarray, filter_order: int) -> None:
     """
     Numpy implementation of multiplicative filter for scalar field
     """
@@ -42,9 +40,7 @@ def scalar_multiplicative_laplacian_filter(
     scalar_field -= filter_flux_buffer
 
 
-def scalar_convolution_laplacian_filter(
-    scalar_field: np.ndarray, filter_order: int
-) -> None:
+def scalar_convolution_laplacian_filter(scalar_field: np.ndarray, filter_order: int) -> None:
     """
     Numpy implementation of convolution filter for scalar field
     """
@@ -85,18 +81,14 @@ def scalar_convolution_laplacian_filter(
     scalar_field -= filter_flux_buffer
 
 
-def scalar_laplacian_filter(
-    scalar_field: np.ndarray, filter_order: int, filter_type: str
-) -> None:
+def scalar_laplacian_filter(scalar_field: np.ndarray, filter_order: int, filter_type: str) -> None:
     if filter_type == "multiplicative":
         scalar_multiplicative_laplacian_filter(scalar_field, filter_order)
     elif filter_type == "convolution":
         scalar_convolution_laplacian_filter(scalar_field, filter_order)
 
 
-def vector_laplacian_filter(
-    vector_field: np.ndarray, filter_order: int, filter_type: str
-) -> None:
+def vector_laplacian_filter(vector_field: np.ndarray, filter_order: int, filter_type: str) -> None:
     """
     Numpy implementation of filter for vector field
     """
@@ -131,9 +123,7 @@ def test_laplacian_filter_constant_field(
 
     post_filtered_field = test_field.copy()
     field_buffer = (
-        np.zeros_like(test_field)
-        if field_type == "scalar"
-        else np.zeros_like(test_field[0])
+        np.zeros_like(test_field) if field_type == "scalar" else np.zeros_like(test_field[0])
     )
     filter_flux_buffer = np.zeros_like(field_buffer)
     laplacian_filter = gen_laplacian_filter_kernel_3d(
@@ -147,9 +137,7 @@ def test_laplacian_filter_constant_field(
         filter_type=filter_type,
     )
     laplacian_filter(test_field)
-    np.testing.assert_allclose(
-        post_filtered_field, test_field, atol=get_test_tol(precision)
-    )
+    np.testing.assert_allclose(post_filtered_field, test_field, atol=get_test_tol(precision))
 
 
 @pytest.mark.parametrize("precision", ["single", "double"])
@@ -163,19 +151,18 @@ def test_laplacian_filter_random_field(
     filter_order,
     field_type,
     filter_type,
+    rng,
 ):
     real_t = get_real_t(precision)
     dim = 3
     test_field = (
-        np.random.rand(n_values, n_values, n_values).astype(real_t)
+        rng.random((n_values, n_values, n_values)).astype(real_t)
         if field_type == "scalar"
-        else np.random.rand(dim, n_values, n_values, n_values).astype(real_t)
+        else rng.random((dim, n_values, n_values, n_values)).astype(real_t)
     )
     numpy_ref_field = test_field.copy()
     field_buffer = (
-        np.zeros_like(test_field)
-        if field_type == "scalar"
-        else np.zeros_like(test_field[0])
+        np.zeros_like(test_field) if field_type == "scalar" else np.zeros_like(test_field[0])
     )
     filter_flux_buffer = np.zeros_like(field_buffer)
     laplacian_filter = gen_laplacian_filter_kernel_3d(
@@ -202,6 +189,4 @@ def test_laplacian_filter_random_field(
             filter_order=filter_order,
             filter_type=filter_type,
         )
-    np.testing.assert_allclose(
-        numpy_ref_field, test_field, atol=get_test_tol(precision)
-    )
+    np.testing.assert_allclose(numpy_ref_field, test_field, atol=get_test_tol(precision))

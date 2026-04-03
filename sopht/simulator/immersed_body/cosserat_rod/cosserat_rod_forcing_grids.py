@@ -1,13 +1,16 @@
-from elastica._linalg import _batch_cross, _batch_matvec, _batch_matrix_transpose
-from elastica.interaction import _node_to_element_velocity, _elements_to_nodes_inplace
 import elastica as ea
 import numpy as np
-from sopht.simulator.immersed_body import ImmersedBodyForcingGrid
+from elastica._linalg import _batch_cross, _batch_matrix_transpose, _batch_matvec
+from elastica.interaction import _elements_to_nodes_inplace, _node_to_element_velocity
+from typing_extensions import override
+
+from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBodyForcingGrid
 
 
 class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod nodes"""
 
+    @override
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         num_lag_nodes = cosserat_rod.n_elems + 1
         super().__init__(grid_dim, num_lag_nodes)
@@ -18,18 +21,17 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
-        self.position_field[...] = self.cosserat_rod.position_collection[
-            : self.grid_dim
-        ]
+        self.position_field[...] = self.cosserat_rod.position_collection[: self.grid_dim]
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
-        self.velocity_field[...] = self.cosserat_rod.velocity_collection[
-            : self.grid_dim
-        ]
+        self.velocity_field[...] = self.cosserat_rod.velocity_collection[: self.grid_dim]
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -70,6 +72,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # estimated distance between consecutive elements
@@ -79,6 +82,7 @@ class CosseratRodNodalForcingGrid(ImmersedBodyForcingGrid):
 class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
     """Class for forcing grid at Cosserat rod element centers"""
 
+    @override
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         num_lag_nodes = cosserat_rod.n_elems
         super().__init__(grid_dim, num_lag_nodes)
@@ -88,6 +92,7 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
         self.position_field[...] = (
@@ -95,12 +100,14 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
             + self.cosserat_rod.position_collection[: self.grid_dim, :-1]
         ) / 2.0
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
         self.velocity_field[...] = _node_to_element_velocity(
             self.cosserat_rod.mass, self.cosserat_rod.velocity_collection
         )[: self.grid_dim]
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -116,6 +123,7 @@ class CosseratRodElementCentricForcingGrid(ImmersedBodyForcingGrid):
         # torque from grid forcing (don't modify since set = 0 at initialisation)
         # because no torques acting on element centers
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         # estimated distance between consecutive elements
@@ -134,12 +142,14 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
+    @override
     def __init__(self, grid_dim: int, cosserat_rod: ea.CosseratRod) -> None:
         if grid_dim != 2:
-            raise ValueError(
+            msg = (
                 "Invalid grid dimensions. Cosserat rod edge forcing grid is only "
                 "defined for grid_dim=2"
             )
+            raise ValueError(msg)
         self.cosserat_rod = cosserat_rod
         # 1 for element center 2 for edges
         num_lag_nodes = cosserat_rod.n_elems + 2 * cosserat_rod.n_elems
@@ -154,13 +164,9 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         self.start_idx_elems = 0
         self.end_idx_elems = self.start_idx_elems + cosserat_rod.n_elems
         self.start_idx_left_edge_nodes = self.end_idx_elems
-        self.end_idx_left_edge_nodes = (
-            self.start_idx_left_edge_nodes + cosserat_rod.n_elems
-        )
+        self.end_idx_left_edge_nodes = self.start_idx_left_edge_nodes + cosserat_rod.n_elems
         self.start_idx_right_edge_nodes = self.end_idx_left_edge_nodes
-        self.end_idx_right_edge_nodes = (
-            self.start_idx_right_edge_nodes + cosserat_rod.n_elems
-        )
+        self.end_idx_right_edge_nodes = self.start_idx_right_edge_nodes + cosserat_rod.n_elems
 
         self.element_forces_left_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
         self.element_forces_right_edge_nodes = np.zeros((3, cosserat_rod.n_elems))
@@ -169,6 +175,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
 
@@ -177,11 +184,12 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             + self.cosserat_rod.position_collection[..., :-1]
         )
 
-        self.position_field[
-            :, self.start_idx_elems : self.end_idx_elems
-        ] = rod_element_position[: self.grid_dim]
+        self.position_field[:, self.start_idx_elems : self.end_idx_elems] = rod_element_position[
+            : self.grid_dim
+        ]
 
-        # Rod normal is used to compute the edge points. Rod normal is not necessarily be same as the d1.
+        # Rod normal is used to compute the edge points.
+        # Rod normal is not necessarily be same as the d1.
         # Here we also assume rod will always be in XY plane.
         rod_normal_direction = _batch_cross(self.z_vector, self.cosserat_rod.tangents)
 
@@ -189,16 +197,17 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
         self.moment_arm[:] = rod_normal_direction * self.cosserat_rod.radius
 
         # x_elem + rd1
-        self.position_field[
-            :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
-        ] = (rod_element_position + self.moment_arm)[: self.grid_dim]
+        self.position_field[:, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes] = (
+            rod_element_position + self.moment_arm
+        )[: self.grid_dim]
 
         # x_elem - rd1
         # self.moment_arm_edge_right[:] = -self.moment_arm_edge_left
-        self.position_field[
-            :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
-        ] = (rod_element_position - self.moment_arm)[: self.grid_dim]
+        self.position_field[:, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes] = (
+            rod_element_position - self.moment_arm
+        )[: self.grid_dim]
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
@@ -212,24 +221,21 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             self.cosserat_rod.omega_collection,
         )
 
-        self.velocity_field[
-            :, self.start_idx_elems : self.end_idx_elems
-        ] = element_velocity[: self.grid_dim]
+        self.velocity_field[:, self.start_idx_elems : self.end_idx_elems] = element_velocity[
+            : self.grid_dim
+        ]
 
         # v_elem + omega X rd1
-        self.velocity_field[
-            :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
-        ] = (element_velocity + _batch_cross(omega_collection, self.moment_arm))[
-            : self.grid_dim
-        ]
+        self.velocity_field[:, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes] = (
+            element_velocity + _batch_cross(omega_collection, self.moment_arm)
+        )[: self.grid_dim]
 
         # v_elem - omega X rd1
-        self.velocity_field[
-            :, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes
-        ] = (element_velocity + _batch_cross(omega_collection, -self.moment_arm))[
-            : self.grid_dim
-        ]
+        self.velocity_field[:, self.start_idx_right_edge_nodes : self.end_idx_right_edge_nodes] = (
+            element_velocity + _batch_cross(omega_collection, -self.moment_arm)
+        )[: self.grid_dim]
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -253,9 +259,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             :, self.start_idx_left_edge_nodes : self.end_idx_left_edge_nodes
         ]
         # torque from grid forcing
-        body_flow_torques[...] += _batch_cross(
-            self.moment_arm, self.element_forces_left_edge_nodes
-        )
+        body_flow_torques[...] += _batch_cross(self.moment_arm, self.element_forces_left_edge_nodes)
 
         # Lagrangian nodes on right edge.
         self.element_forces_right_edge_nodes[: self.grid_dim] = -lag_grid_forcing_field[
@@ -278,6 +282,7 @@ class CosseratRodEdgeForcingGrid(ImmersedBodyForcingGrid):
             body_flow_torques,
         )
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         return np.amax(self.cosserat_rod.lengths)
@@ -295,6 +300,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
     """
 
+    @override
     def __init__(
         self,
         grid_dim: int,
@@ -303,17 +309,16 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         with_cap: bool = False,
     ) -> None:
         if grid_dim != 3:
-            raise ValueError(
+            msg = (
                 "Invalid grid dimensions. Cosserat rod surface forcing grid is only "
                 "defined for grid_dim=3"
             )
+            raise ValueError(msg)
         self.cosserat_rod = cosserat_rod
         self.n_elems = cosserat_rod.n_elems
 
         # Surface grid density at the arm maximum radius
-        self.surface_grid_density_for_largest_element = (
-            surface_grid_density_for_largest_element
-        )
+        self.surface_grid_density_for_largest_element = surface_grid_density_for_largest_element
 
         # Enable capping of rod ends
         self.with_cap = with_cap
@@ -324,22 +329,22 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
             / np.max(self.cosserat_rod.radius[:])
             * self.surface_grid_density_for_largest_element
         ).astype(int)
-        # If there are less than 1 point then set it equal to 1 since we will place it on the element center.
+        # If there are less than 1 point then set it equal to 1,
+        # since we will place it on the element center.
         self.surface_grid_points[np.where(self.surface_grid_points < 3)[0]] = 1
 
         # store grid point radius ratio for each forcing point
-        self.grid_point_radius_ratio = np.ones((self.surface_grid_points.sum()))
+        self.grid_point_radius_ratio = np.ones(self.surface_grid_points.sum())
         # Generate rotation angle of each grid point
         self.surface_point_rotation_angle_list = []
         for i in range(self.n_elems):
             if self.surface_grid_points[i] > 1:
                 self.surface_point_rotation_angle_list.append(
-                    np.linspace(
-                        0, 2 * np.pi, self.surface_grid_points[i], endpoint=False
-                    )
+                    np.linspace(0, 2 * np.pi, self.surface_grid_points[i], endpoint=False)
                 )
             else:
-                # If there is only one point, then that point is on the element center so pass empty array.
+                # If there is only one point, then that point is on the element center so
+                # pass empty array.
                 self.surface_point_rotation_angle_list.append(np.array([]))
 
         # Modify surface grid quantities to account for caps
@@ -353,8 +358,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Since lag grid points are on the surface, for each node we need to compute moment arm.
         self.moment_arm = np.zeros_like(self.position_field)
 
-        # Depending on the rod taper number of surface points can vary between elements, so we need start_idx and
-        # end_idx to slice grid points according to element they belong.
+        # Depending on the rod taper number of surface points can vary between elements,
+        # so we need start_idx and end_idx to slice grid points according to element they belong.
         self.start_idx = np.zeros((self.n_elems), dtype=int)
         self.end_idx = np.zeros((self.n_elems), dtype=int)
 
@@ -368,23 +373,19 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         self.local_frame_surface_points = np.zeros_like(self.position_field)
 
-        # Compute surface(grid) point positions on local frame for each element. If there is one grid point then
-        # that point is on the element center so just pass 0.0
-        for i, surface_point_rotation_angle in enumerate(
-            self.surface_point_rotation_angle_list
-        ):
+        # Compute surface(grid) point positions on local frame for each element.
+        # If there is one grid point then that point is on the element center so just pass 0.0
+        for i, surface_point_rotation_angle in enumerate(self.surface_point_rotation_angle_list):
             if surface_point_rotation_angle.size == 0:
                 # This is true if there is only one point for element, and it is on element center.
-                self.local_frame_surface_points[
-                    :, self.start_idx[i] : self.end_idx[i]
-                ] = 0.0
+                self.local_frame_surface_points[:, self.start_idx[i] : self.end_idx[i]] = 0.0
             else:
-                self.local_frame_surface_points[
-                    0, self.start_idx[i] : self.end_idx[i]
-                ] = np.cos(surface_point_rotation_angle)
-                self.local_frame_surface_points[
-                    1, self.start_idx[i] : self.end_idx[i]
-                ] = np.sin(surface_point_rotation_angle)
+                self.local_frame_surface_points[0, self.start_idx[i] : self.end_idx[i]] = np.cos(
+                    surface_point_rotation_angle
+                )
+                self.local_frame_surface_points[1, self.start_idx[i] : self.end_idx[i]] = np.sin(
+                    surface_point_rotation_angle
+                )
 
         # some caching stuff
         self.rod_director_collection_transpose = np.zeros_like(
@@ -395,7 +396,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.rod_element_global_frame_omega = np.zeros_like(self.rod_element_position)
 
         self.grid_point_director_transpose = np.zeros((3, 3, self.num_lag_nodes))
-        self.grid_point_radius = np.zeros((self.num_lag_nodes))
+        self.grid_point_radius = np.zeros(self.num_lag_nodes)
         self.grid_point_omega = np.zeros_like(self.position_field)
         self.lag_grid_torque_field = np.zeros_like(self.position_field)
 
@@ -403,6 +404,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         self.compute_lag_grid_position_field()
         self.compute_lag_grid_velocity_field()
 
+    @override
     def compute_lag_grid_position_field(self) -> None:
         """Computes location of forcing grid for the Cosserat rod"""
 
@@ -418,16 +420,16 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         # Broadcast rod properties to the grid points.
         for i in range(self.n_elems):
-            self.grid_point_director_transpose[
-                :, :, self.start_idx[i] : self.end_idx[i]
-            ] = self.rod_director_collection_transpose[:, :, i : i + 1]
+            self.grid_point_director_transpose[:, :, self.start_idx[i] : self.end_idx[i]] = (
+                self.rod_director_collection_transpose[:, :, i : i + 1]
+            )
             self.grid_point_radius[self.start_idx[i] : self.end_idx[i]] = (
                 self.cosserat_rod.radius[i]
                 * self.grid_point_radius_ratio[self.start_idx[i] : self.end_idx[i]]
             )
-            self.position_field[
-                :, self.start_idx[i] : self.end_idx[i]
-            ] = self.rod_element_position[:, i : i + 1]
+            self.position_field[:, self.start_idx[i] : self.end_idx[i]] = self.rod_element_position[
+                :, i : i + 1
+            ]
 
         # Compute the moment arm or distance from the element center for each grid point.
         self.moment_arm[:] = self.grid_point_radius * _batch_matvec(
@@ -437,6 +439,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
         # Surface positions are moment_arm + element center position
         self.position_field += self.moment_arm
 
+    @override
     def compute_lag_grid_velocity_field(self) -> None:
         """Computes velocity of forcing grid points for the Cosserat rod"""
 
@@ -452,16 +455,17 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         # Broadcast rod properties to the grid points.
         for i in range(self.n_elems):
-            self.grid_point_omega[
-                :, self.start_idx[i] : self.end_idx[i]
-            ] = self.rod_element_global_frame_omega[:, i : i + 1]
-            self.velocity_field[
-                :, self.start_idx[i] : self.end_idx[i]
-            ] = self.rod_element_velocity[:, i : i + 1]
+            self.grid_point_omega[:, self.start_idx[i] : self.end_idx[i]] = (
+                self.rod_element_global_frame_omega[:, i : i + 1]
+            )
+            self.velocity_field[:, self.start_idx[i] : self.end_idx[i]] = self.rod_element_velocity[
+                :, i : i + 1
+            ]
 
         # v_elem + omega X moment_arm
         self.velocity_field += _batch_cross(self.grid_point_omega, self.moment_arm)
 
+    @override
     def transfer_forcing_from_grid_to_body(
         self,
         body_flow_forces: np.ndarray,
@@ -482,26 +486,21 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
 
         # negative sign due to Newtons third law
         # torque generated by all lagrangian points are
-        self.lag_grid_torque_field[...] = _batch_cross(
-            self.moment_arm, -lag_grid_forcing_field
-        )
+        self.lag_grid_torque_field[...] = _batch_cross(self.moment_arm, -lag_grid_forcing_field)
 
         # Update body torques
         # convert global to local frame
         for i in range(self.n_elems):
-            body_flow_torques[:, i] = self.cosserat_rod.director_collection[
-                :, :, i
-            ] @ np.sum(
+            body_flow_torques[:, i] = self.cosserat_rod.director_collection[:, :, i] @ np.sum(
                 self.lag_grid_torque_field[:, self.start_idx[i] : self.end_idx[i]],
                 axis=1,
             )
 
+    @override
     def get_maximum_lagrangian_grid_spacing(self) -> float:
         """Get the maximum Lagrangian grid spacing"""
         grid_angular_spacing = 2 * np.pi / self.surface_grid_density_for_largest_element
-        return np.amax(
-            [self.cosserat_rod.lengths, self.cosserat_rod.radius * grid_angular_spacing]
-        )
+        return np.amax([self.cosserat_rod.lengths, self.cosserat_rod.radius * grid_angular_spacing])
 
     def _update_surface_grid_point_for_caps(self):
         """
@@ -515,12 +514,8 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 # we can still fit points within the surface grid circle
                 # use max(arc-length of angular discretization, rod element length)
                 # as reference length for radial discretization
-                grid_angular_spacing = (
-                    2.0 * np.pi / self.surface_grid_points[rod_end_idx]
-                )
-                end_elem_surface_grid_radial_spacing = (
-                    rod_end_radius * grid_angular_spacing
-                )
+                grid_angular_spacing = 2.0 * np.pi / self.surface_grid_points[rod_end_idx]
+                end_elem_surface_grid_radial_spacing = rod_end_radius * grid_angular_spacing
                 # note: we include at least one point on the element for the cap
                 end_elem_grid_radial_density = max(
                     int(rod_end_radius // end_elem_surface_grid_radial_spacing), 1
@@ -553,38 +548,34 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 np.ones(end_elem_surface_grid_points.sum()),
             )
             end_elem_grid_points_radius_ratio = (
-                np.linspace(
-                    0, rod_end_radius, end_elem_grid_radial_density, endpoint=False
-                )
+                np.linspace(0, rod_end_radius, end_elem_grid_radial_density, endpoint=False)
                 / rod_end_radius
             )
             # start index for grid points within the surface grid point of end element
             # we store the inner grid points at the end portion of the array window
             # corresponding to the element
             start_idx = (
-                self.surface_grid_points.cumsum()[rod_end_idx]
-                - end_elem_surface_grid_points.sum()
+                self.surface_grid_points.cumsum()[rod_end_idx] - end_elem_surface_grid_points.sum()
             )
             # loop over each concentric circle and update the radius ratio
             for idx, num_grid_points in enumerate(end_elem_surface_grid_points):
                 end_idx = start_idx + num_grid_points
-                self.grid_point_radius_ratio[
-                    start_idx:end_idx
-                ] = end_elem_grid_points_radius_ratio[idx]
+                self.grid_point_radius_ratio[start_idx:end_idx] = end_elem_grid_points_radius_ratio[
+                    idx
+                ]
                 start_idx = end_idx
 
             # (3) Update grid point rotation angle on rod ends
             if self.surface_grid_points[rod_end_idx] > 1:
-                # If there are more than one point on the surface then compute the angle of these points.
-                # Surface points are on the local frame
+                # If there are more than one point on the surface then compute the
+                # angle of these points. Surface points are on the local frame.
                 surface_point_angles_list = []
                 # first, include outer most surface point angles
                 surface_point_angles_list.extend(
                     np.linspace(
                         0,
                         2 * np.pi,
-                        self.surface_grid_points[rod_end_idx]
-                        - end_elem_surface_grid_points.sum(),
+                        self.surface_grid_points[rod_end_idx] - end_elem_surface_grid_points.sum(),
                         endpoint=False,
                     ).tolist()
                 )
@@ -592,11 +583,7 @@ class CosseratRodSurfaceForcingGrid(ImmersedBodyForcingGrid):
                 for num_grid_points in end_elem_surface_grid_points:
                     # compute point angles for each concentric circles
                     surface_point_angles_list.extend(
-                        np.linspace(
-                            0, 2 * np.pi, num_grid_points, endpoint=False
-                        ).tolist()
+                        np.linspace(0, 2 * np.pi, num_grid_points, endpoint=False).tolist()
                     )
                 surface_point_angles = np.array(surface_point_angles_list)
-                self.surface_point_rotation_angle_list[
-                    rod_end_idx
-                ] = surface_point_angles
+                self.surface_point_rotation_angle_list[rod_end_idx] = surface_point_angles

@@ -1,7 +1,7 @@
 import numpy as np
+import sopht.numeric.eulerian_grid_ops as spne
 import sopht.simulator as sps
 import sopht.utils as spu
-import sopht.numeric.eulerian_grid_ops as spne
 from magnetic_cilia_carpet import MagneticCiliaCarpetSimulator
 
 
@@ -100,8 +100,7 @@ def immersed_magnetic_cilia_carpet_case(
         # Initialize carpet IO
         carpet_io = spu.IO(dim=grid_dim, real_dtype=real_t)
         rod_num_lag_nodes_list = [
-            interactor.forcing_grid.num_lag_nodes
-            for interactor in rod_flow_interactor_list
+            interactor.forcing_grid.num_lag_nodes for interactor in rod_flow_interactor_list
         ]
         carpet_num_lag_nodes = sum(rod_num_lag_nodes_list)
         carpet_lag_grid_position_field = np.zeros((grid_dim, carpet_num_lag_nodes))
@@ -145,20 +144,18 @@ def immersed_magnetic_cilia_carpet_case(
             if save_data:
                 update_carpet_lag_grid_fields()
                 io.save(
-                    h5_file_name="flow_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"flow_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 carpet_io.save(
-                    h5_file_name="carpet_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name=f"carpet_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             ax.set_title(f"Velocity magnitude, time: {flow_sim.time:.2f}")
             contourf_obj = ax.contourf(
                 flow_sim.position_field[x_axis_idx, :, grid_size_y // 2, :],
                 flow_sim.position_field[z_axis_idx, :, grid_size_y // 2, :],
-                # TODO function for velocity magnitude
+                # TODO: function for velocity magnitude
                 np.linalg.norm(
                     np.mean(
                         flow_sim.velocity_field[
@@ -184,16 +181,16 @@ def immersed_magnetic_cilia_carpet_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             time_history.append(flow_sim.time)
             grid_dev_error = 0.0
             for flow_body_interactor in rod_flow_interactor_list:
-                grid_dev_error += (
-                    flow_body_interactor.get_grid_deviation_error_l2_norm()
-                )
+                grid_dev_error += flow_body_interactor.get_grid_deviation_error_l2_norm()
+
+            progress = flow_sim.time / cilia_carpet_simulator.final_time * 100
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/cilia_carpet_simulator.final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({progress:2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 f"grid deviation L2 error: {grid_dev_error:.6f}"
@@ -235,11 +232,9 @@ def immersed_magnetic_cilia_carpet_case(
         rod_time_steps = int(flow_dt / min(flow_dt, cilia_carpet_simulator.dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             # timestep the cilia simulator
-            rod_time = cilia_carpet_simulator.time_step(
-                time=rod_time, time_step=local_rod_dt
-            )
+            rod_time = cilia_carpet_simulator.time_step(time=rod_time, time_step=local_rod_dt)
             # timestep the rod_flow_interactors
             for rod_flow_interactor in rod_flow_interactor_list:
                 rod_flow_interactor.time_step(dt=local_rod_dt)
@@ -255,9 +250,7 @@ def immersed_magnetic_cilia_carpet_case(
         period_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
 
 def run_immersed_magnetic_cilia_carpet(
@@ -279,9 +272,9 @@ def run_immersed_magnetic_cilia_carpet(
     precision: str = "single",
     save_data: bool = False,
 ):
-    assert (
-        num_rods_along_x >= 2 and num_rods_along_y >= 2
-    ), "num_rod along x and y must be no less than 2"
+    if not (num_rods_along_x >= 2 and num_rods_along_y >= 2):
+        msg = "num_rod along x and y must be no less than 2"
+        raise ValueError(msg)
     carpet_spacing = rod_base_length * carpet_spacing_factor
     carpet_length_x = (num_rods_along_x - 1) * carpet_spacing
     carpet_length_y = (num_rods_along_y - 1) * carpet_spacing

@@ -2,11 +2,11 @@ import elastica as ea
 import numpy as np
 import pytest
 import sopht.simulator as sps
+import sopht.utils as spu
 from sopht.utils import get_test_tol
 from tests.test_simulator.test_immersed_body.rigid_body.test_derived_rigid_bodies import (
     mock_xy_plane,
 )
-import sopht.utils as spu
 
 
 def mock_2d_cylinder():
@@ -16,9 +16,7 @@ def mock_2d_cylinder():
     direction = np.array([0.0, 0.0, 1.0])
     normal = np.array([1.0, 0.0, 0.0])
     base_length = 1.0
-    cylinder = ea.Cylinder(
-        start, direction, normal, base_length, cyl_radius, density=1e3
-    )
+    cylinder = ea.Cylinder(start, direction, normal, base_length, cyl_radius, density=1e3)
     cylinder.velocity_collection[...] = 3.0
     cylinder.omega_collection[spu.VectorField.z_axis_idx()] = 4.0
     return cylinder
@@ -28,17 +26,15 @@ def mock_2d_cylinder():
 def test_circular_cylinder_grid_invalid_dim(grid_dim):
     cylinder = mock_2d_cylinder()
     if grid_dim != 2:
-        with pytest.raises(ValueError) as exc_info:
+        error_msg = (
+            "Invalid grid dimensions. 2D cylinder forcing grid is only defined for grid_dim=2"
+        )
+        with pytest.raises(ValueError, match=error_msg):
             _ = sps.CircularCylinderForcingGrid(
                 grid_dim=grid_dim,
                 rigid_body=cylinder,
                 num_forcing_points=8,
             )
-        error_msg = (
-            "Invalid grid dimensions. 2D cylinder forcing grid is only "
-            "defined for grid_dim=2"
-        )
-        assert exc_info.value.args[0] == error_msg
 
 
 @pytest.mark.parametrize("num_forcing_points", [8, 16])
@@ -63,21 +59,15 @@ def test_circular_cylinder_grid_kinematics(num_forcing_points):
 
     # check if location of points on circumference is correct
     d_theta = 2 * np.pi / num_forcing_points
-    correct_angular_grid = np.linspace(
-        d_theta / 2.0, 2 * np.pi - d_theta / 2.0, num_forcing_points
-    )
+    correct_angular_grid = np.linspace(d_theta / 2.0, 2 * np.pi - d_theta / 2.0, num_forcing_points)
     x_axis = 0
     y_axis = 1
-    sine_of_angular_grid = (
-        circ_cyl_forcing_grid.position_field[y_axis] - cylinder_com[y_axis]
-    )
-    cos_of_angular_grid = (
-        circ_cyl_forcing_grid.position_field[x_axis] - cylinder_com[x_axis]
-    )
+    sine_of_angular_grid = circ_cyl_forcing_grid.position_field[y_axis] - cylinder_com[y_axis]
+    cos_of_angular_grid = circ_cyl_forcing_grid.position_field[x_axis] - cylinder_com[x_axis]
     # since arctan2 gives values in range (-pi, pi)
-    test_angular_grid = (
-        np.arctan2(sine_of_angular_grid, cos_of_angular_grid) + 2 * np.pi
-    ) % (2 * np.pi)
+    test_angular_grid = (np.arctan2(sine_of_angular_grid, cos_of_angular_grid) + 2 * np.pi) % (
+        2 * np.pi
+    )
     np.testing.assert_allclose(test_angular_grid, correct_angular_grid)
 
     # check if velocities are correct
@@ -86,16 +76,12 @@ def test_circular_cylinder_grid_kinematics(num_forcing_points):
     z_axis = 2
     # vel = v_com + omega cross r
     correct_velocity_field[x_axis] = (
-        cylinder_com_velocity[x_axis]
-        - moment_arm[y_axis] * cylinder.omega_collection[z_axis, 0]
+        cylinder_com_velocity[x_axis] - moment_arm[y_axis] * cylinder.omega_collection[z_axis, 0]
     )
     correct_velocity_field[y_axis] = (
-        cylinder_com_velocity[y_axis]
-        + moment_arm[x_axis] * cylinder.omega_collection[z_axis, 0]
+        cylinder_com_velocity[y_axis] + moment_arm[x_axis] * cylinder.omega_collection[z_axis, 0]
     )
-    np.testing.assert_allclose(
-        correct_velocity_field, circ_cyl_forcing_grid.velocity_field
-    )
+    np.testing.assert_allclose(correct_velocity_field, circ_cyl_forcing_grid.velocity_field)
 
 
 @pytest.mark.parametrize("num_forcing_points", [8, 16])
@@ -132,8 +118,7 @@ def test_circular_cylinder_grid_force_transfer(num_forcing_points):
     z_axis = 2
     correct_body_flow_torques = np.zeros_like(correct_body_flow_forces)
     correct_body_flow_torques[z_axis] = -np.sum(
-        moment_arm[x_axis] * uniform_forcing[y_axis]
-        - moment_arm[y_axis] * uniform_forcing[x_axis]
+        moment_arm[x_axis] * uniform_forcing[y_axis] - moment_arm[y_axis] * uniform_forcing[x_axis]
     )
     np.testing.assert_allclose(
         body_flow_torques,
@@ -171,17 +156,15 @@ def mock_3d_sphere():
 def test_sphere_grid_invalid_dim(grid_dim):
     sphere = mock_3d_sphere()
     if grid_dim != 3:
-        with pytest.raises(ValueError) as exc_info:
+        error_msg = (
+            "Invalid grid dimensions. 3D Rigid body forcing grid is only defined for grid_dim=3"
+        )
+        with pytest.raises(ValueError, match=error_msg):
             _ = sps.SphereForcingGrid(
                 grid_dim=grid_dim,
                 rigid_body=sphere,
                 num_forcing_points_along_equator=8,
             )
-        error_msg = (
-            "Invalid grid dimensions. 3D Rigid body forcing grid is only "
-            "defined for grid_dim=3"
-        )
-        assert exc_info.value.args[0] == error_msg
 
 
 @pytest.mark.parametrize("num_forcing_points_along_equator", [8, 16])
@@ -199,8 +182,7 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
     assert sphere_forcing_grid.velocity_field.shape[0] == grid_dim
     polar_angle_grid = np.linspace(0, np.pi, num_forcing_points_along_equator // 2)
     num_forcing_points_along_latitudes = (
-        np.rint(num_forcing_points_along_equator * np.sin(polar_angle_grid)).astype(int)
-        + 1
+        np.rint(num_forcing_points_along_equator * np.sin(polar_angle_grid)).astype(int) + 1
     )
     assert sphere_forcing_grid.num_lag_nodes == sum(num_forcing_points_along_latitudes)
 
@@ -220,7 +202,7 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
     num_lag_nodes_idx = 0
     test_tol = get_test_tol(precision="double")
     for num_forcing_points_along_latitude, polar_angle in zip(
-        num_forcing_points_along_latitudes, polar_angle_grid
+        num_forcing_points_along_latitudes, polar_angle_grid, strict=False
     ):
         azimuthal_angle_grid = np.linspace(
             0.0, 2 * np.pi, num_forcing_points_along_latitude, endpoint=False
@@ -228,8 +210,7 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
         np.testing.assert_allclose(
             moment_arm[
                 x_axis,
-                num_lag_nodes_idx : num_lag_nodes_idx
-                + num_forcing_points_along_latitude,
+                num_lag_nodes_idx : num_lag_nodes_idx + num_forcing_points_along_latitude,
             ],
             sphere.radius * np.sin(polar_angle) * np.cos(azimuthal_angle_grid),
             atol=test_tol,
@@ -237,8 +218,7 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
         np.testing.assert_allclose(
             moment_arm[
                 y_axis,
-                num_lag_nodes_idx : num_lag_nodes_idx
-                + num_forcing_points_along_latitude,
+                num_lag_nodes_idx : num_lag_nodes_idx + num_forcing_points_along_latitude,
             ],
             sphere.radius * np.sin(polar_angle) * np.sin(azimuthal_angle_grid),
             atol=test_tol,
@@ -246,8 +226,7 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
         np.testing.assert_allclose(
             moment_arm[
                 z_axis,
-                num_lag_nodes_idx : num_lag_nodes_idx
-                + num_forcing_points_along_latitude,
+                num_lag_nodes_idx : num_lag_nodes_idx + num_forcing_points_along_latitude,
             ],
             sphere.radius * np.cos(polar_angle),
             atol=test_tol,
@@ -260,19 +239,15 @@ def test_sphere_grid_kinematics(num_forcing_points_along_equator):
         for axis in range(grid_dim):
             # vel = v_com + omega cross r
             omega_cross_r = (
-                sphere.omega_collection[(axis + 1) % grid_dim]
-                * moment_arm[(axis + 2) % grid_dim]
-                - sphere.omega_collection[(axis + 2) % grid_dim]
-                * moment_arm[(axis + 1) % grid_dim]
+                sphere.omega_collection[(axis + 1) % grid_dim] * moment_arm[(axis + 2) % grid_dim]
+                - sphere.omega_collection[(axis + 2) % grid_dim] * moment_arm[(axis + 1) % grid_dim]
             )
             correct_velocity_field[axis] = sphere_com_velocity[x_axis] + omega_cross_r
-        np.testing.assert_allclose(
-            correct_velocity_field, sphere_forcing_grid.velocity_field
-        )
+        np.testing.assert_allclose(correct_velocity_field, sphere_forcing_grid.velocity_field)
 
 
 @pytest.mark.parametrize("num_forcing_points_along_equator", [8, 16])
-def test_sphere_grid_force_transfer(num_forcing_points_along_equator):
+def test_sphere_grid_force_transfer(num_forcing_points_along_equator, rng):
     sphere = mock_3d_sphere()
     grid_dim = 3
     sphere_forcing_grid = sps.SphereForcingGrid(
@@ -283,7 +258,7 @@ def test_sphere_grid_force_transfer(num_forcing_points_along_equator):
     body_flow_forces = np.zeros((grid_dim, 1))
     body_flow_torques = np.zeros_like(body_flow_forces)
     lag_grid_forcing_field = np.zeros((grid_dim, sphere_forcing_grid.num_lag_nodes))
-    uniform_forcing = np.random.rand(grid_dim, 1)
+    uniform_forcing = rng.random((grid_dim, 1))
     lag_grid_forcing_field[...] = uniform_forcing
     sphere_forcing_grid.transfer_forcing_from_grid_to_body(
         body_flow_forces=body_flow_forces,
@@ -322,9 +297,7 @@ def test_sphere_grid_spacing(num_forcing_points_along_equator):
 
     max_grid_spacing = sphere_forcing_grid.get_maximum_lagrangian_grid_spacing()
     sphere_equator_circumference = 2 * np.pi * sphere.radius
-    correct_max_grid_spacing = (
-        sphere_equator_circumference / num_forcing_points_along_equator
-    )
+    correct_max_grid_spacing = sphere_equator_circumference / num_forcing_points_along_equator
     assert correct_max_grid_spacing == max_grid_spacing
 
 
@@ -372,9 +345,7 @@ def test_rectangular_plane_grid_kinematics(num_forcing_points_along_length):
         plane.position_collection[y_axis, 0] + 0.5 * plane.breadth,
         num_forcing_points_along_breadth,
     )
-    correct_x_axis_grid, correct_y_axis_grid = np.meshgrid(
-        x_axis_grid_range, y_axis_grid_range
-    )
+    correct_x_axis_grid, correct_y_axis_grid = np.meshgrid(x_axis_grid_range, y_axis_grid_range)
     np.testing.assert_allclose(
         rect_plane_forcing_grid.position_field[x_axis],
         correct_x_axis_grid.reshape(
@@ -418,13 +389,9 @@ def test_open_end_3d_circular_cylinder_grid_kinematics(num_forcing_points_along_
     cylinder_circumference = 2 * np.pi * cylinder.radius
     # keep same density of points along surface
     num_forcing_points_along_circumference = int(
-        np.ceil(
-            num_forcing_points_along_length * cylinder_circumference / cylinder.length
-        )
+        np.ceil(num_forcing_points_along_length * cylinder_circumference / cylinder.length)
     )
-    num_forcing_points = (
-        num_forcing_points_along_length * num_forcing_points_along_circumference
-    )
+    num_forcing_points = num_forcing_points_along_length * num_forcing_points_along_circumference
     assert circ_cyl_forcing_grid.rigid_body is cylinder
     assert circ_cyl_forcing_grid.position_field.shape == (grid_dim, num_forcing_points)
     assert circ_cyl_forcing_grid.velocity_field.shape == (grid_dim, num_forcing_points)
@@ -456,9 +423,9 @@ def test_open_end_3d_circular_cylinder_grid_kinematics(num_forcing_points_along_
         circ_cyl_forcing_grid.position_field[x_axis_idx] - cylinder_com[x_axis_idx]
     )
     # since arctan2 gives values in range (-pi, pi)
-    test_angular_grid = (
-        np.arctan2(sine_of_angular_grid, cos_of_angular_grid) + 2 * np.pi
-    ) % (2 * np.pi)
+    test_angular_grid = (np.arctan2(sine_of_angular_grid, cos_of_angular_grid) + 2 * np.pi) % (
+        2 * np.pi
+    )
     np.testing.assert_allclose(test_angular_grid, correct_angular_grid)
     # check if axial locations are correct
     correct_length_grid = cylinder_com[z_axis_idx] + np.repeat(
@@ -486,9 +453,7 @@ def test_open_end_3d_circular_cylinder_grid_kinematics(num_forcing_points_along_
         + moment_arm[x_axis_idx] * cylinder.omega_collection[z_axis_idx, 0]
     )
     correct_velocity_field[z_axis_idx] = cylinder_com_velocity[z_axis_idx]
-    np.testing.assert_allclose(
-        correct_velocity_field, circ_cyl_forcing_grid.velocity_field
-    )
+    np.testing.assert_allclose(correct_velocity_field, circ_cyl_forcing_grid.velocity_field)
 
 
 @pytest.mark.parametrize("num_forcing_points_along_length", [8, 16])
@@ -551,8 +516,7 @@ def test_open_end_3d_circular_cylinder_grid_spacing(num_forcing_points_along_len
     max_grid_spacing = circ_cyl_forcing_grid.get_maximum_lagrangian_grid_spacing()
     cylinder_circumference = 2 * np.pi * cylinder.radius
     correct_max_grid_spacing = max(
-        cylinder_circumference
-        / circ_cyl_forcing_grid.num_forcing_points_along_circumference,
+        cylinder_circumference / circ_cyl_forcing_grid.num_forcing_points_along_circumference,
         cylinder.length / num_forcing_points_along_length,
     )
     assert correct_max_grid_spacing == max_grid_spacing

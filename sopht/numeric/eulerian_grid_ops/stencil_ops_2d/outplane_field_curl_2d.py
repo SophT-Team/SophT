@@ -1,10 +1,13 @@
 """Kernels for computing curl of outplane field in 2D."""
+
+from collections.abc import Callable
+
 import numpy as np
 import pystencils as ps
 import sympy as sp
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable
 
 
 def gen_outplane_field_curl_pyst_kernel_2d(
@@ -91,7 +94,7 @@ def gen_outplane_field_curl_pyst_kernel_2d(
                 outplane_field_curl_pyst_kernel_2d(curl, field, prefactor)
 
                 # set boundary unaffected points to 0
-                # TODO need one sided corrections?
+                # TODO: need one sided corrections?
                 set_fixed_val_at_boundaries_2d(vector_field=curl, fixed_vals=[0, 0])
 
             return outplane_field_curl_with_ghost_zone_reset_pyst_kernel_2d

@@ -1,9 +1,6 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_2d,
 )
@@ -18,20 +15,18 @@ def char_func_from_level_set_via_sine_heaviside_reference(
 ):
     char_func_field[...] = 0
     char_func_field[...] = char_func_field + (level_set_field >= blend_width)
-    char_func_field[...] = char_func_field + (
-        np.fabs(level_set_field) < blend_width
-    ) * real_t(0.5) * (
-        1
-        + level_set_field / blend_width
-        + np.sin(np.pi * level_set_field / blend_width) / np.pi
-    )
+    char_func_field[...] = char_func_field + (np.fabs(level_set_field) < blend_width) * real_t(
+        0.5
+    ) * (1 + level_set_field / blend_width + np.sin(np.pi * level_set_field / blend_width) / np.pi)
 
 
 class CharFuncFromLevelSetFuncSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(
+        self, rng_generator: np.random.Generator, n_samples: int, precision="single"
+    ) -> None:
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.level_set_field = np.random.randn(n_samples, n_samples).astype(real_t)
+        self.level_set_field = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
         self.dx = real_t(0.1)
         self.blend_width = 2 * self.dx
         # later can add variations here...
@@ -53,9 +48,9 @@ class CharFuncFromLevelSetFuncSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_char_func_from_level_set_via_sine_heaviside_pyst_2d(n_values, precision):
+def test_char_func_from_level_set_via_sine_heaviside_pyst_2d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = CharFuncFromLevelSetFuncSolution(n_values, precision)
+    solution = CharFuncFromLevelSetFuncSolution(rng, n_values, precision)
     char_func_field = np.zeros_like(solution.ref_char_func_field)
     char_func_from_level_set_via_sine_heaviside_pyst_kernel = (
         gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_2d(

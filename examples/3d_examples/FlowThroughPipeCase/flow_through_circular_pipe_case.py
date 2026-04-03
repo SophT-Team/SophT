@@ -22,7 +22,7 @@ def flow_through_circular_pipe_case(
     This example considers the case of steady flow through a pipe in 3D.
     """
     grid_dim = 3
-    grid_size_z, grid_size_y, grid_size_x = grid_size
+    grid_size_z, _, grid_size_x = grid_size
     real_t = spu.get_real_t(precision)
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
@@ -87,8 +87,7 @@ def flow_through_circular_pipe_case(
     # create fig for plotting flow fields
     fig, ax = spu.create_figure_and_axes(fig_aspect_ratio="default")
     radial_coordinate = (
-        flow_sim.position_field[y_axis_idx, grid_size_z // 2, ..., grid_size_x // 2]
-        - y_cm
+        flow_sim.position_field[y_axis_idx, grid_size_z // 2, ..., grid_size_x // 2] - y_cm
     )
     anal_velocity_profile = analytical_pipe_flow_velocity(
         radial_coordinate=radial_coordinate,
@@ -102,7 +101,7 @@ def flow_through_circular_pipe_case(
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/t_end*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / t_end * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f}, "
                 "grid deviation L2 error: "
@@ -110,9 +109,7 @@ def flow_through_circular_pipe_case(
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
             # midplane along X
@@ -135,7 +132,7 @@ def flow_through_circular_pipe_case(
             spu.save_and_clear_fig(
                 fig,
                 ax,
-                file_name="snap_" + str("%0.4d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):04d}.png",
             )
 
         dt = flow_sim.compute_stable_timestep(dt_prefac=0.5)
@@ -151,9 +148,7 @@ def flow_through_circular_pipe_case(
         foto_timer += dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=10
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=10)
 
 
 if __name__ == "__main__":

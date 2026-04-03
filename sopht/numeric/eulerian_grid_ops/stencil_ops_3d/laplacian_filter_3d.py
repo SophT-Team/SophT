@@ -1,9 +1,13 @@
 """Kernels applying laplacian filter on 3d grid for scalar and vector fields"""
+
+from collections.abc import Callable
+from typing import Literal
+
 import numpy as np
 import pystencils as ps
+
 import sopht.numeric.eulerian_grid_ops as spne
 import sopht.utils as spu
-from typing import Callable, Literal
 
 
 def gen_laplacian_filter_kernel_3d(
@@ -33,10 +37,15 @@ def gen_laplacian_filter_kernel_3d(
        Université Catholique de Louvain).
     """
 
-    assert filter_order >= 0 and isinstance(filter_order, int), "Invalid filter order"
-    assert filter_flux_buffer_boundary_width > 0 and isinstance(
-        filter_flux_buffer_boundary_width, int
-    ), "Invalid value for filter flux buffer boundary zone"
+    if not isinstance(filter_order, int) or filter_order < 0:
+        msg = "Invalid filter order, must be a non-negative integer"
+        raise ValueError(msg)
+    if (
+        not isinstance(filter_flux_buffer_boundary_width, int)
+        or filter_flux_buffer_boundary_width <= 0
+    ):
+        msg = "Invalid value for filter flux buffer boundary zone, must be a positive integer"
+        raise ValueError(msg)
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
@@ -48,42 +57,24 @@ def gen_laplacian_filter_kernel_3d(
 
     @ps.kernel
     def _laplacian_filter_3d_x() -> None:
-        filter_flux, field = ps.fields(
-            f"filter_flux, field : {pyst_dtype}[{grid_info}]"
-        )
-        filter_flux[0, 0, 0] @= 0.25 * (
-            -field[0, 0, 1] - field[0, 0, -1] + 2 * field[0, 0, 0]
-        )
+        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
+        filter_flux[0, 0, 0] @= 0.25 * (-field[0, 0, 1] - field[0, 0, -1] + 2 * field[0, 0, 0])
 
-    laplacian_filter_3d_x = ps.create_kernel(
-        _laplacian_filter_3d_x, config=kernel_config
-    ).compile()
+    laplacian_filter_3d_x = ps.create_kernel(_laplacian_filter_3d_x, config=kernel_config).compile()
 
     @ps.kernel
     def _laplacian_filter_3d_y() -> None:
-        filter_flux, field = ps.fields(
-            f"filter_flux, field : {pyst_dtype}[{grid_info}]"
-        )
-        filter_flux[0, 0, 0] @= 0.25 * (
-            -field[0, 1, 0] - field[0, -1, 0] + 2 * field[0, 0, 0]
-        )
+        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
+        filter_flux[0, 0, 0] @= 0.25 * (-field[0, 1, 0] - field[0, -1, 0] + 2 * field[0, 0, 0])
 
-    laplacian_filter_3d_y = ps.create_kernel(
-        _laplacian_filter_3d_y, config=kernel_config
-    ).compile()
+    laplacian_filter_3d_y = ps.create_kernel(_laplacian_filter_3d_y, config=kernel_config).compile()
 
     @ps.kernel
     def _laplacian_filter_3d_z() -> None:
-        filter_flux, field = ps.fields(
-            f"filter_flux, field : {pyst_dtype}[{grid_info}]"
-        )
-        filter_flux[0, 0, 0] @= 0.25 * (
-            -field[1, 0, 0] - field[-1, 0, 0] + 2 * field[0, 0, 0]
-        )
+        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
+        filter_flux[0, 0, 0] @= 0.25 * (-field[1, 0, 0] - field[-1, 0, 0] + 2 * field[0, 0, 0])
 
-    laplacian_filter_3d_z = ps.create_kernel(
-        _laplacian_filter_3d_z, config=kernel_config
-    ).compile()
+    laplacian_filter_3d_z = ps.create_kernel(_laplacian_filter_3d_z, config=kernel_config).compile()
 
     elementwise_copy_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
         real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
@@ -177,7 +168,8 @@ def gen_laplacian_filter_kernel_3d(
         case "convolution":
             scalar_field_filter_kernel_3d = scalar_field_convolution_filter_kernel_3d
         case _:
-            raise ValueError("Invalid filter type")
+            msg = "Invalid filter type"
+            raise ValueError(msg)
 
     # Depending on the field type return the relevant filter implementation
     match field_type:
@@ -198,4 +190,5 @@ def gen_laplacian_filter_kernel_3d(
 
             return vector_filed_filter_kernel_3d
         case _:
-            raise ValueError("Invalid field type")
+            msg = "Invalid field type"
+            raise ValueError(msg)

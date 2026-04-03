@@ -35,16 +35,14 @@ class OscillationActivation:
 
         self.non_dimensional_length = np.linspace(0, 1, n_elems)
 
-    def apply_activation(self, system, activation, time: float = 0.0):
-
+    def apply_activation(self, activation, time: float = 0.0):
         n_elems = self.end_idx - self.start_idx
-        fiber_activation = np.zeros((n_elems))
+        fiber_activation = np.zeros(n_elems)
         activation *= 0
 
         time = round(time, 5)
 
         if time > self.start_time and time < self.end_time:
-
             sigmoid = 1 / (1 + np.exp(-self.a * (self.frequency * time - self.b)))
 
             fiber_activation = (
@@ -64,7 +62,6 @@ class OscillationActivation:
 
 
 if __name__ == "__main__":
-
     A = 20
     omega_r = 10
     beta = 3
@@ -104,10 +101,8 @@ if __name__ == "__main__":
         b=0.5,
     )
 
-    system = None
-
     for i in range(time.shape[0]):
-        oscillation_activation.apply_activation(system, activation[i, :], time[i])
+        oscillation_activation.apply_activation(activation[i, :], time[i])
 
     non_dimensional_length = oscillation_activation.non_dimensional_length.copy()
 

@@ -1,8 +1,8 @@
+import click
 import elastica as ea
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
-import click
 
 
 def flow_past_rod_case(
@@ -38,16 +38,11 @@ def flow_past_rod_case(
     velocity_free_stream = [U_free_stream, 0.0, 0.0]
     # =================PYELASTICA STUFF BEGIN=====================
 
-    class FlowPastRodSimulator(
-        ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping
-    ):
-        ...
+    class FlowPastRodSimulator(ea.BaseSystemCollection, ea.Constraints, ea.Forcing, ea.Damping): ...
 
     flow_past_sim = FlowPastRodSimulator()
     start = np.array([0.2 * x_range, 0.5 * y_range, 0.75 * z_range])
-    direction = np.array(
-        [np.sin(rod_start_incline_angle), 0.0, -np.cos(rod_start_incline_angle)]
-    )
+    direction = np.array([np.sin(rod_start_incline_angle), 0.0, -np.cos(rod_start_incline_angle)])
     normal = np.array([0.0, 1.0, 0.0])
     base_diameter = y_range / 5.0
     base_radius = base_diameter / 2.0
@@ -132,9 +127,7 @@ def flow_past_rod_case(
     # =================TIMESTEPPING====================
     flow_past_sim.finalize()
     timestepper = ea.PositionVerlet()
-    do_step, stages_and_updates = ea.extend_stepper_interface(
-        timestepper, flow_past_sim
-    )
+    do_step, stages_and_updates = ea.extend_stepper_interface(timestepper, flow_past_sim)
 
     if save_data:
         # setup flow IO
@@ -146,9 +139,7 @@ def flow_past_rod_case(
             },
         )
         # Initialize sphere IO
-        rod_io = spu.CosseratRodIO(
-            cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t
-        )
+        rod_io = spu.CosseratRodIO(cosserat_rod=flow_past_rod, dim=grid_dim, real_dtype=real_t)
 
     foto_timer = 0.0
     timescale = base_length / U_free_stream
@@ -210,14 +201,14 @@ def flow_past_rod_case(
                 fig,
                 ax,
                 cbar,
-                file_name="snap_" + str("%0.5d" % (flow_sim.time * 100)) + ".png",
+                file_name=f"snap_{int(flow_sim.time * 100):05d}.png",
             )
             time_history.append(flow_sim.time)
             rod_angle.append(rod_incline_angle_with_horizon(flow_past_rod))
             forces = np.sum(cosserat_rod_flow_interactor.lag_grid_forcing_field, axis=1)
             force_history.append(forces.copy())
             print(
-                f"time: {flow_sim.time:.2f} ({(flow_sim.time/final_time*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({(flow_sim.time / final_time * 100):2.1f}%), "
                 f"max_vort: {np.amax(flow_sim.vorticity_field):.4f}, "
                 f"rod angle: {rod_incline_angle_with_horizon(flow_past_rod):2.2f}, "
                 f"vort divg. L2 norm: {flow_sim.get_vorticity_divergence_l2_norm():.4f},"
@@ -228,13 +219,11 @@ def flow_past_rod_case(
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
                 rod_io.save(
-                    h5_file_name="rod_" + str("%0.4d" % (flow_sim.time * 100)) + ".h5",
+                    h5_file_name=f"rod_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
 
@@ -246,7 +235,7 @@ def flow_past_rod_case(
         rod_time_steps = int(flow_dt / min(flow_dt, rod_dt))
         local_rod_dt = flow_dt / rod_time_steps
         rod_time = flow_sim.time
-        for i in range(rod_time_steps):
+        for _ in range(rod_time_steps):
             rod_time = do_step(
                 timestepper, stages_and_updates, flow_past_sim, rod_time, local_rod_dt
             )
@@ -264,9 +253,7 @@ def flow_past_rod_case(
         foto_timer += flow_dt
 
     # compile video
-    spu.make_video_from_image_series(
-        video_name="flow", image_series_name="snap", frame_rate=30
-    )
+    spu.make_video_from_image_series(video_name="flow", image_series_name="snap", frame_rate=30)
 
     # Save data
     np.savetxt(
@@ -302,8 +289,8 @@ if __name__ == "__main__":
         surface_grid_density_for_largest_element = nx // 8
         n_elem = 5 * nx // 16
 
-        click.echo(f"Number of threads for parallelism: {num_threads, }")
-        click.echo(f"Grid size:  {nz, ny, nx ,} ")
+        click.echo(f"Number of threads for parallelism: {(num_threads,)}")
+        click.echo(f"Grid size:  {nz, ny, nx} ")
         click.echo(
             f"num forcing points around the surface:  {surface_grid_density_for_largest_element}"
         )
@@ -335,9 +322,7 @@ if __name__ == "__main__":
             / exp_bending_rigidity
         )
         # Froude = g D / U^2
-        exp_froude_number = (
-            exp_gravitational_acc * exp_base_diameter / exp_U_free_stream**2
-        )
+        exp_froude_number = exp_gravitational_acc * exp_base_diameter / exp_U_free_stream**2
         exp_Re = exp_U_free_stream * exp_base_diameter / exp_kinematic_viscosity
 
         # stretch to bending ratio EAL2 / EI
@@ -348,16 +333,15 @@ if __name__ == "__main__":
         # Drag coefficient from Silvaleon 2018 Eq 10
         Cd = (1.13 + 11.4 / exp_Re**0.808) ** 0.952
         # Silvaleon 2018
-        Ca_B = (
-            (2 / np.pi) * Cd * (exp_rho_f / (exp_rho_s - exp_rho_f)) / exp_froude_number
-        )
+        Ca_B = (2 / np.pi) * Cd * (exp_rho_f / (exp_rho_s - exp_rho_f)) / exp_froude_number
         # Final deflection angle Silvaleon 2018 Eq 15
-        rod_start_incline_angle = np.deg2rad(
-            90 - 90 / (1 + 3.32 * Ca_B**1.33) ** 0.407 + 0.5
-        )
+        rod_start_incline_angle = np.deg2rad(90 - 90 / (1 + 3.32 * Ca_B**1.33) ** 0.407 + 0.5)
 
         print(
-            f"Re: {exp_Re}, Ca: {exp_cauchy_number}, Fr: {exp_froude_number}, Angle: {rod_start_incline_angle}"
+            f"Re: {exp_Re}, "
+            f"Ca: {exp_cauchy_number}, "
+            f"Fr: {exp_froude_number}, "
+            f"Angle: {rod_start_incline_angle}"
         )
 
         flow_past_rod_case(

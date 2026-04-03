@@ -1,9 +1,6 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_diffusion_timestep_euler_forward_pyst_kernel_3d,
 )
@@ -21,15 +18,16 @@ def diffusion_timestep_euler_forward_reference(field, nu_dt_by_dx2, real_t):
         + field[:-2, 1:-1, 1:-1]
         - real_t(6) * field[1:-1, 1:-1, 1:-1]
     )
-    new_field = field + diffusion_flux
-    return new_field
+    return field + diffusion_flux
 
 
 class DiffusionTimestepEulerForwardSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
+        )
         self.nu_dt_by_dx2 = real_t(0.1)
         self.ref_new_field = diffusion_timestep_euler_forward_reference(
             self.ref_field,
@@ -37,8 +35,8 @@ class DiffusionTimestepEulerForwardSolution:
             real_t,
         )
 
-        self.ref_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
+        self.ref_vector_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
         ).astype(real_t)
         self.ref_new_vector_field = np.zeros_like(self.ref_vector_field)
         self.ref_new_vector_field[0] = diffusion_timestep_euler_forward_reference(
@@ -74,9 +72,9 @@ class DiffusionTimestepEulerForwardSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_diffusion_timestep_euler_forward_3d(n_values, precision):
+def test_diffusion_timestep_euler_forward_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = DiffusionTimestepEulerForwardSolution(n_values, precision)
+    solution = DiffusionTimestepEulerForwardSolution(n_values, rng, precision)
     field = solution.ref_field.copy()
     diffusion_flux = np.ones_like(field)
     diffusion_timestep_euler_forward_pyst_kernel = (
@@ -97,9 +95,9 @@ def test_diffusion_timestep_euler_forward_3d(n_values, precision):
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_vector_field_diffusion_timestep_euler_forward_3d(n_values, precision):
+def test_vector_field_diffusion_timestep_euler_forward_3d(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = DiffusionTimestepEulerForwardSolution(n_values, precision)
+    solution = DiffusionTimestepEulerForwardSolution(n_values, rng, precision)
     vector_field = solution.ref_vector_field.copy()
     diffusion_flux = np.ones((n_values, n_values, n_values), dtype=real_t)
     vector_field_diffusion_timestep_euler_forward_pyst_kernel = (

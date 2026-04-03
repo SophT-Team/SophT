@@ -1,9 +1,6 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_diffusion_flux_pyst_kernel_3d,
 )
@@ -25,17 +22,17 @@ def diffuse_reference(field, prefactor, real_t):
 
 
 class DiffusionFluxSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field = np.random.randn(n_samples, n_samples, n_samples).astype(real_t)
-        self.prefactor = real_t(0.1)
-        self.ref_diffusion_flux = diffuse_reference(
-            self.ref_field, self.prefactor, real_t
+        self.ref_field = rng_generator.standard_normal((n_samples, n_samples, n_samples)).astype(
+            real_t
         )
+        self.prefactor = real_t(0.1)
+        self.ref_diffusion_flux = diffuse_reference(self.ref_field, self.prefactor, real_t)
 
-        self.ref_vector_field = np.random.randn(
-            3, n_samples, n_samples, n_samples
+        self.ref_vector_field = rng_generator.standard_normal(
+            (3, n_samples, n_samples, n_samples)
         ).astype(real_t)
         self.ref_vector_field_diffusion_flux = np.zeros_like(self.ref_vector_field)
         self.ref_vector_field_diffusion_flux[0] = diffuse_reference(
@@ -79,9 +76,9 @@ class DiffusionFluxSolution:
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("reset_ghost_zone", [True, False])
-def test_diffusion_flux_3d(n_values, precision, reset_ghost_zone):
+def test_diffusion_flux_3d(n_values, precision, reset_ghost_zone, rng):
     real_t = get_real_t(precision)
-    solution = DiffusionFluxSolution(n_values, precision)
+    solution = DiffusionFluxSolution(n_values, rng, precision)
     diffusion_flux = (
         np.ones_like(solution.ref_diffusion_flux)
         if reset_ghost_zone
@@ -105,9 +102,9 @@ def test_diffusion_flux_3d(n_values, precision, reset_ghost_zone):
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
 @pytest.mark.parametrize("reset_ghost_zone", [True, False])
-def test_vector_field_diffusion_flux_3d(n_values, precision, reset_ghost_zone):
+def test_vector_field_diffusion_flux_3d(n_values, precision, reset_ghost_zone, rng):
     real_t = get_real_t(precision)
-    solution = DiffusionFluxSolution(n_values, precision)
+    solution = DiffusionFluxSolution(n_values, rng, precision)
     vector_field_diffusion_flux = (
         np.ones_like(solution.ref_vector_field_diffusion_flux)
         if reset_ghost_zone

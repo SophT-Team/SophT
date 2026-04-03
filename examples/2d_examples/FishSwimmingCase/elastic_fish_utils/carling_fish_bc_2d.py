@@ -1,7 +1,7 @@
 import elastica as ea
 import numpy as np
+from elastica._linalg import _batch_cross, _batch_norm
 from numba import njit
-from elastica._linalg import _batch_norm, _batch_cross
 
 
 class CarlingFishBC(ea.ConstraintBase):

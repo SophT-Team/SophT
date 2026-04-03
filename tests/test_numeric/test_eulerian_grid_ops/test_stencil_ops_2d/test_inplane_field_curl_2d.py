@@ -1,9 +1,6 @@
 import numpy as np
-
 import psutil
-
 import pytest
-
 from sopht.numeric.eulerian_grid_ops import (
     gen_inplane_field_curl_pyst_kernel_2d,
 )
@@ -20,20 +17,18 @@ def inplane_curl_reference(field_x, field_y, prefactor):
 
 
 class InplaneCurlSolution:
-    def __init__(self, n_samples, precision="single"):
+    def __init__(self, n_samples, rng_generator: np.random.Generator, precision="single"):
         real_t = get_real_t(precision)
         self.test_tol = get_test_tol(precision)
-        self.ref_field_x = np.random.randn(n_samples, n_samples).astype(real_t)
-        self.ref_field_y = np.random.randn(n_samples, n_samples).astype(real_t)
+        self.ref_field_x = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
+        self.ref_field_y = rng_generator.standard_normal((n_samples, n_samples)).astype(real_t)
         self.ref_field = np.zeros((2, n_samples, n_samples)).astype(real_t)
         self.ref_field[0] = self.ref_field_x
         self.ref_field[1] = self.ref_field_y
         # pystencil vector field needs to be (n, n, 2)
         self.transposed_ref_field = np.transpose(self.ref_field, axes=(1, 2, 0))
         self.prefactor = real_t(0.1)
-        self.ref_curl = inplane_curl_reference(
-            self.ref_field_x, self.ref_field_y, self.prefactor
-        )
+        self.ref_curl = inplane_curl_reference(self.ref_field_x, self.ref_field_y, self.prefactor)
 
     def check_equals(self, curl):
         np.testing.assert_allclose(self.ref_curl, curl, atol=self.test_tol)
@@ -41,9 +36,9 @@ class InplaneCurlSolution:
 
 @pytest.mark.parametrize("precision", ["single", "double"])
 @pytest.mark.parametrize("n_values", [16])
-def test_inplane_field_curl(n_values, precision):
+def test_inplane_field_curl(n_values, precision, rng):
     real_t = get_real_t(precision)
-    solution = InplaneCurlSolution(n_values, precision)
+    solution = InplaneCurlSolution(n_values, rng, precision)
     curl = np.zeros_like(solution.ref_curl)
     inplane_field_curl_kernel = gen_inplane_field_curl_pyst_kernel_2d(
         real_t=real_t,

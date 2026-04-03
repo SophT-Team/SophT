@@ -1,8 +1,10 @@
 """Kernels for performing advection timestep in 2D."""
+
+from collections.abc import Callable
+
 import numpy as np
 
 import sopht.numeric.eulerian_grid_ops as spne
-from typing import Callable
 
 
 def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
@@ -10,7 +12,7 @@ def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
     num_threads: bool | int = False,
     fixed_grid_size: tuple[int, int] | bool = False,
 ) -> Callable:
-    # TODO expand docs
+    # TODO: expand docs
     """2D Advection (ENO3 stencil) Euler forward timestep generator."""
     elementwise_sum_pyst_kernel_2d = spne.gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
@@ -48,8 +50,6 @@ def gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
             velocity=velocity,
             inv_dx=-dt_by_dx,
         )
-        elementwise_sum_pyst_kernel_2d(
-            sum_field=field, field_1=field, field_2=advection_flux
-        )
+        elementwise_sum_pyst_kernel_2d(sum_field=field, field_1=field, field_2=advection_flux)
 
     return advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d

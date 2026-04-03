@@ -1,7 +1,8 @@
 import logging
+
+import elastica as ea
 import numpy as np
 from elastica.utils import MaxDimension, Tolerance
-import elastica as ea
 
 
 def create_fish_geometry(rest_lengths: np.ndarray) -> tuple[np.ndarray, float]:
@@ -114,9 +115,7 @@ def update_rod_for_fish_geometry(
         (MaxDimension.value(), MaxDimension.value(), n_elements), np.float64
     )
 
-    mass_second_moment_of_inertia_temp = np.einsum(
-        "ij,i->ij", I0, density * rest_lengths
-    )
+    mass_second_moment_of_inertia_temp = np.einsum("ij,i->ij", I0, density * rest_lengths)
 
     for i in range(n_elements):
         np.fill_diagonal(
@@ -137,10 +136,9 @@ def update_rod_for_fish_geometry(
     )
     for i in range(n_elements):
         # Check rank of mass moment of inertia matrix to see if it is invertible
-        assert (
-            np.linalg.matrix_rank(mass_second_moment_of_inertia[..., i])
-            == MaxDimension.value()
-        )
+        if np.linalg.matrix_rank(mass_second_moment_of_inertia[..., i]) != MaxDimension.value():
+            msg = "Mass moment of inertia matrix is not invertible."
+            raise ValueError(msg)
         inv_mass_second_moment_of_inertia[..., i] = np.linalg.inv(
             mass_second_moment_of_inertia[..., i]
         )
@@ -153,9 +151,7 @@ def update_rod_for_fish_geometry(
     # Value taken based on best correlation for Poisson ratio = 0.5, from
     # "On Timoshenko's correction for shear in vibrating beams" by Kaneko, 1975
     alpha_c = 27.0 / 28.0
-    shear_matrix = np.zeros(
-        (MaxDimension.value(), MaxDimension.value(), n_elements), np.float64
-    )
+    shear_matrix = np.zeros((MaxDimension.value(), MaxDimension.value(), n_elements), np.float64)
     for i in range(n_elements):
         np.fill_diagonal(
             shear_matrix[..., i],
@@ -169,9 +165,7 @@ def update_rod_for_fish_geometry(
     rod.shear_matrix[:] = shear_matrix[:]
 
     # Bend/Twist matrix
-    bend_matrix = np.zeros(
-        (MaxDimension.value(), MaxDimension.value(), n_elements), np.float64
-    )
+    bend_matrix = np.zeros((MaxDimension.value(), MaxDimension.value(), n_elements), np.float64)
     for i in range(n_elements):
         np.fill_diagonal(
             bend_matrix[..., i],
@@ -181,15 +175,14 @@ def update_rod_for_fish_geometry(
                 shear_modulus * I0_3[i],
             ],
         )
-    for i in range(0, MaxDimension.value()):
-        assert np.all(
-            bend_matrix[i, i, :] > Tolerance.atol()
-        ), " Bend matrix has to be greater than 0."
+    for i in range(MaxDimension.value()):
+        if not np.all(bend_matrix[i, i, :] > Tolerance.atol()):
+            msg = "Bend matrix must be greater than 0."
+            raise ValueError(msg)
 
     # Compute bend matrix in Voronoi Domain
     bend_matrix = (
-        bend_matrix[..., 1:] * rest_lengths[1:]
-        + bend_matrix[..., :-1] * rest_lengths[0:-1]
+        bend_matrix[..., 1:] * rest_lengths[1:] + bend_matrix[..., :-1] * rest_lengths[0:-1]
     ) / (rest_lengths[1:] + rest_lengths[:-1])
 
     rod.bend_matrix[:] = bend_matrix[:]

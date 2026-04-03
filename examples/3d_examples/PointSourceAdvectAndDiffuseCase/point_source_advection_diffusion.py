@@ -1,7 +1,7 @@
-from point_source_helpers import compute_diffused_point_source_field
 import numpy as np
 import sopht.simulator as sps
 import sopht.utils as spu
+from point_source_helpers import compute_diffused_point_source_field
 
 
 def point_source_advection_diffusion_case(
@@ -77,15 +77,14 @@ def point_source_advection_diffusion_case(
         # Save data
         if foto_timer > foto_timer_limit or foto_timer == 0:
             foto_timer = 0.0
+            progress = (flow_sim.time - t_start) / (t_end - t_start) * 100
             print(
-                f"time: {flow_sim.time:.2f} ({((flow_sim.time-t_start)/(t_end-t_start)*100):2.1f}%), "
+                f"time: {flow_sim.time:.2f} ({progress:2.1f}%), "
                 f"max_vort: {np.amax(vorticity_field):.4f}"
             )
             if save_data:
                 io.save(
-                    h5_file_name="sopht_"
-                    + str("%0.4d" % (flow_sim.time * 100))
-                    + ".h5",
+                    h5_file_name=f"sopht_{int(flow_sim.time * 100):04d}.h5",
                     time=flow_sim.time,
                 )
 

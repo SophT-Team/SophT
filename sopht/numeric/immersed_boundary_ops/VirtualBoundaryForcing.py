@@ -1,7 +1,7 @@
 """Virtual boundary forcing for flow-body feedback."""
-from numba import njit
 
 import numpy as np
+from numba import njit
 
 from sopht.numeric.eulerian_grid_ops.stencil_ops_2d.elementwise_ops_2d import (
     gen_set_fixed_val_pyst_kernel_2d,
@@ -23,7 +23,7 @@ class VirtualBoundaryForcing:
     Virtual boundary forcing class for computing feedback between the
     Lagrangian body and Eulerian grid flow, using virtual boundary method
     Refer to Goldstein 1993, JCP for details on the penalty force computation.
-    TODO add proper style docs
+    TODO: add proper style docs
     """
 
     def __init__(
@@ -42,7 +42,7 @@ class VirtualBoundaryForcing:
     ):
         """Class initialiser.
 
-        TODO add proper style docs
+        TODO: add proper style docs
         Takes in inputs:
         virtual_boundary_stiffness_coeff: stiffness coefficient for computing penalty
         force, set to a high values
@@ -61,7 +61,9 @@ class VirtualBoundaryForcing:
         start_time: start time of the forcing
 
         """
-        assert grid_dim == 2 or grid_dim == 3, "Invalid grid dimensions"
+        if grid_dim not in (2, 3):
+            msg = "Invalid grid dimensions, must be either 2 or 3"
+            raise ValueError(msg)
         self.grid_dim = grid_dim
         self.virtual_boundary_stiffness_coeff = virtual_boundary_stiffness_coeff
         self.virtual_boundary_damping_coeff = virtual_boundary_damping_coeff
@@ -74,9 +76,7 @@ class VirtualBoundaryForcing:
             interp_kernel_width = 2
 
         # creating buffers...
-        self.nearest_eul_grid_index_to_lag_grid = np.empty(
-            (grid_dim, num_lag_nodes), dtype=int
-        )
+        self.nearest_eul_grid_index_to_lag_grid = np.empty((grid_dim, num_lag_nodes), dtype=int)
         eul_grid_support_of_lag_grid_shape = (
             (grid_dim,) + (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         )
@@ -85,18 +85,10 @@ class VirtualBoundaryForcing:
         )
         interp_weights_shape = (2 * interp_kernel_width,) * grid_dim + (num_lag_nodes,)
         self.interp_weights = np.empty(interp_weights_shape, dtype=real_t)
-        self.lag_grid_flow_velocity_field = np.zeros(
-            (grid_dim, num_lag_nodes), dtype=real_t
-        )
-        self.lag_grid_position_mismatch_field = np.zeros_like(
-            self.lag_grid_flow_velocity_field
-        )
-        self.lag_grid_velocity_mismatch_field = np.zeros_like(
-            self.lag_grid_position_mismatch_field
-        )
-        self.lag_grid_forcing_field = np.zeros_like(
-            self.lag_grid_velocity_mismatch_field
-        )
+        self.lag_grid_flow_velocity_field = np.zeros((grid_dim, num_lag_nodes), dtype=real_t)
+        self.lag_grid_position_mismatch_field = np.zeros_like(self.lag_grid_flow_velocity_field)
+        self.lag_grid_velocity_mismatch_field = np.zeros_like(self.lag_grid_position_mismatch_field)
+        self.lag_grid_forcing_field = np.zeros_like(self.lag_grid_velocity_mismatch_field)
 
         if grid_dim == 2:
             self.eul_lag_grid_communicator = EulerianLagrangianGridCommunicator2D(
@@ -135,9 +127,7 @@ class VirtualBoundaryForcing:
                 self.compute_interaction_force_on_eul_and_lag_grid_with_eul_grid_forcing_reset
             )
         else:
-            self.compute_interaction_forcing = (
-                self.compute_interaction_force_on_eul_and_lag_grid
-            )
+            self.compute_interaction_forcing = self.compute_interaction_force_on_eul_and_lag_grid
 
     @staticmethod
     @njit(cache=True, fastmath=True)

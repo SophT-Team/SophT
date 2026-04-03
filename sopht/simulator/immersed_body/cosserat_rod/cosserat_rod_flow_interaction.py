@@ -1,15 +1,15 @@
 import elastica as ea
 import numpy as np
-from sopht.simulator.immersed_body import (
-    ImmersedBodyForcingGrid,
-    ImmersedBodyFlowInteraction,
-)
-from typing import Type, Optional
+from typing_extensions import override
+
+from sopht.simulator.immersed_body.immersed_body_flow_interaction import ImmersedBodyFlowInteraction
+from sopht.simulator.immersed_body.immersed_body_forcing_grid import ImmersedBodyForcingGrid
 
 
 class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
     """Class for Cosserat rod flow interaction."""
 
+    @override
     def __init__(
         self,
         cosserat_rod: ea.CosseratRod,
@@ -19,10 +19,10 @@ class CosseratRodFlowInteraction(ImmersedBodyFlowInteraction):
         virtual_boundary_damping_coeff: float,
         dx: float,
         grid_dim: int,
-        forcing_grid_cls: Type[ImmersedBodyForcingGrid],
+        forcing_grid_cls: type[ImmersedBodyForcingGrid],
         real_t: type = np.float64,
-        eul_grid_coord_shift: Optional[float] = None,
-        interp_kernel_width: Optional[float] = None,
+        eul_grid_coord_shift: float | None = None,
+        interp_kernel_width: float | None = None,
         enable_eul_grid_forcing_reset: bool = False,
         num_threads: int | bool = False,
         start_time: float = 0.0,

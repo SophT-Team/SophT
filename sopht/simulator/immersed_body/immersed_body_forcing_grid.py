@@ -1,6 +1,9 @@
-from abc import abstractmethod
 import logging
+from abc import abstractmethod
+
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 class ImmersedBodyForcingGrid:
@@ -21,13 +24,12 @@ class ImmersedBodyForcingGrid:
         self.position_field = np.zeros((self.grid_dim, self.num_lag_nodes))
         self.velocity_field = np.zeros_like(self.position_field)
         if grid_dim == 2:
-            log = logging.getLogger()
-            log.warning(
-                "=========================================================="
+            logger.warning(
+                "\n=================================================="
                 "\n2D body forcing grid generated, this assumes the body"
                 "\nmoves in XY plane! Please initialize your body such that"
                 "\nensuing dynamics are constrained in XY plane!"
-                "\n=========================================================="
+                "\n=================================================="
             )
 
     @abstractmethod
