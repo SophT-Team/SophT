@@ -313,10 +313,8 @@ def octopus_swimming(
         rod_time = flow_sim.time
         for _ in range(rod_time_steps):
             # Activate longitudinal muscle
-            for rod_id, rod in enumerate(env.arm_rod_list):  # exclude head
-                activation_functions[rod_id][4].apply_activation(
-                    rod, activations[rod_id][4], rod_time
-                )
+            for rod_id, _ in enumerate(env.arm_rod_list):  # exclude head
+                activation_functions[rod_id][4].apply_activation(activations[rod_id][4], rod_time)
 
             # Do one elastica step
             env.time_step = local_rod_dt

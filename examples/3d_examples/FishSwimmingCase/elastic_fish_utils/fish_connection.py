@@ -1,6 +1,7 @@
 import elastica as ea
 import sopht.utils as spu
 from elastica._linalg import _batch_matmul, _batch_matrix_transpose, _batch_matvec
+from typing_extensions import override
 
 
 class FishConnection(ea.FreeJoint):
@@ -13,6 +14,7 @@ class FishConnection(ea.FreeJoint):
         super().__init__(k, nu=0)
         self.k = k
 
+    @override
     def apply_forces(
         self,
         rod_one: ea.CosseratRod,
@@ -28,6 +30,7 @@ class FishConnection(ea.FreeJoint):
         spring_force = self.k * target_distance
         rod_one.external_forces[y_axis_idx, :] -= spring_force
 
+    @override
     def apply_torques(
         self,
         rod_one: ea.CosseratRod,

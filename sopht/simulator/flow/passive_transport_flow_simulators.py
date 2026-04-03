@@ -103,6 +103,7 @@ class PassiveTransportFlowSimulator(FlowSimulator):
 
     def _advection_and_diffusion_time_step(self, dt: float, **kwargs) -> None:
         """Advection and diffusion time step"""
+        del kwargs  # unused
         self._advection_timestep(
             self.primary_field,
             advection_flux=self.buffer_scalar_field,
