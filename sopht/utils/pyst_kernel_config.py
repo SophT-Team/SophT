@@ -2,6 +2,7 @@ import ctypes
 import functools
 import sys
 from pathlib import Path
+from typing import Literal
 
 import numpy as np
 import pystencils as ps
@@ -55,25 +56,29 @@ def get_pyst_dtype(real_t: type) -> str:
 
 
 def get_grid_info(
-    grid_size: tuple[int, ...] | None, dimension: int, num_components: int | None = None
+    grid_size: tuple[int, ...] | None,
+    dimension: int,
+    field_type: Literal["scalar", "vector"],
 ) -> str:
-    """Return the pystencils field shape spec, e.g. "2D" or "64, 64".
-
-    num_components prepends a leading component axis, for vector fields stored as
-    (num_components, *grid_size): e.g. "3D" or "2, 64, 64" for a 2D vector field.
-    """
+    """Return the pystencils field shape spec"""
     if dimension not in (2, 3):
         msg = f"dimension must be 2 or 3, but got {dimension}"
         raise ValueError(msg)
 
+    if field_type not in ("scalar", "vector"):
+        msg = f"field_type must be 'scalar' or 'vector', but got {field_type}"
+        raise ValueError(msg)
+
+    isscalar = field_type == "scalar"
+
     if grid_size is None:
-        return f"{dimension if num_components is None else dimension + 1}D"
+        return f"{dimension if isscalar else dimension + 1}D"
 
     if len(grid_size) != dimension:
         msg = f"grid_size expected to be {dimension}D, but got {grid_size}"
         raise ValueError(msg)
 
-    shape = grid_size if num_components is None else (num_components, *grid_size)
+    shape = grid_size if isscalar else (dimension, *grid_size)
     return ", ".join(str(i) for i in shape)
 
 
@@ -82,7 +87,16 @@ def get_pyst_kernel_config(
     num_threads: int | bool,
     iteration_slice: tuple | None = None,
 ) -> ps.CreateKernelConfig:
-    """Returns the pystencils kernel config based on the data dtype and number of threads"""
+    """Returns the pystencils kernel config based on the data dtype and number of threads
+
+    OpenMP is disabled if:
+    (1) num_threads is False
+    (2) num_threads < 1
+
+    If num_threads is True, omp is left as default
+    If num_threads > 1, use num_threads for this kernel
+    """
+
     pyst_dtype = get_pyst_dtype(real_t)  # "float32" or "float64"
     kernel_config = ps.CreateKernelConfig(
         target=ps.Target.CurrentCPU,
@@ -91,8 +105,9 @@ def get_pyst_kernel_config(
     )
 
     # OpenMP options
-    kernel_config.cpu.openmp.enable = bool(num_threads)
-    if isinstance(num_threads, int) and num_threads > 1:
+    use_omp = num_threads is True or (isinstance(num_threads, int) and num_threads > 1)
+    kernel_config.cpu.openmp.enable = use_omp
+    if use_omp and num_threads is not True:
         kernel_config.cpu.openmp.schedule = "static"
         kernel_config.cpu.openmp.num_threads = num_threads
 
