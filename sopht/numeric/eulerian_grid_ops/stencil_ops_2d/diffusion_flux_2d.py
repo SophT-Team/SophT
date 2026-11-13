@@ -21,16 +21,16 @@ def gen_diffusion_flux_pyst_kernel_2d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 2)
+    grid_info = spu.get_grid_info(grid_size, 2, "scalar")
 
     diffusion_flux, field = ps.fields(f"diffusion_flux, field : {pyst_dtype}[{grid_info}]")
     prefactor = sp.symbols("prefactor")
-    _eqn = ps.Assignment(
-        diffusion_flux.center(),
+    eqn = ps.Assignment(
+        diffusion_flux.center,
         prefactor * (field[1, 0] + field[-1, 0] + field[0, 1] + field[0, -1] - 4 * field[0, 0]),
     )
 
-    diffusion_flux_kernel_2d = ps.create_kernel(_eqn, config=kernel_config).compile()
+    diffusion_flux_kernel_2d = ps.create_kernel(eqn, config=kernel_config).compile()
 
     if not reset_ghost_zone:
         return diffusion_flux_kernel_2d

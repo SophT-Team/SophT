@@ -1,7 +1,7 @@
 """Kernels for elementwise operations in 2D."""
 
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 import pystencils as ps
@@ -20,33 +20,14 @@ def gen_elementwise_sum_pyst_kernel_2d(
     """2D elementwise sum kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
+    grid_info = spu.get_grid_info(grid_size, 2, field_type)
 
-    match field_type:
-        case "scalar":
-            grid_info = spu.get_grid_info(grid_size, 2)
+    sum_field, field_1, field_2 = ps.fields(
+        f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
+    )
+    eqn = ps.Assignment(sum_field.center, field_1.center + field_2.center)
 
-            @ps.kernel
-            def _elementwise_sum_stencil_2d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
-                )
-                sum_field[0, 0] @= field_1[0, 0] + field_2[0, 0]
-
-        case "vector":
-            grid_info = spu.get_grid_info(grid_size, 2, num_components=2)
-
-            @ps.kernel
-            def _elementwise_sum_stencil_2d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
-                )
-                sum_field[0, 0, 0] @= field_1[0, 0, 0] + field_2[0, 0, 0]
-
-        case _:
-            msg = "Invalid field type"
-            raise ValueError(msg)
-
-    return ps.create_kernel(_elementwise_sum_stencil_2d, config=kernel_config).compile()
+    return ps.create_kernel(eqn, config=kernel_config).compile()
 
 
 def gen_set_fixed_val_pyst_kernel_2d(
@@ -60,21 +41,24 @@ def gen_set_fixed_val_pyst_kernel_2d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 2)
+    grid_info = spu.get_grid_info(grid_size, 2, "scalar")
 
-    @ps.kernel
-    def _set_fixed_val_stencil_2d():
-        field = ps.fields(f"field : {pyst_dtype}[{grid_info}]")
-        fixed_val = sp.symbols("fixed_val")
-        field[0, 0] @= fixed_val
-
-    set_fixed_val_pyst_kernel_2d = ps.create_kernel(
-        _set_fixed_val_stencil_2d, config=kernel_config
-    ).compile()
     match field_type:
         case "scalar":
-            return set_fixed_val_pyst_kernel_2d
+            field = cast("ps.Field", ps.fields(f"field : {pyst_dtype}[{grid_info}]"))
+            fixed_val = sp.symbols("fixed_val")
+            eqn = ps.Assignment(field.center, fixed_val)
+            return ps.create_kernel(eqn, config=kernel_config).compile()
+
         case "vector":
+            field_x, field_y = ps.fields(f"field_x, field_y : {pyst_dtype}[{grid_info}]")
+            fixed_val_x, fixed_val_y = sp.symbols("fixed_val_x, fixed_val_y")
+            eqn = [
+                ps.Assignment(field_x.center, fixed_val_x),
+                ps.Assignment(field_y.center, fixed_val_y),
+            ]
+            vector_kernel = ps.create_kernel(eqn, config=kernel_config).compile()
+
             x_axis_idx = spu.VectorField.x_axis_idx()
             y_axis_idx = spu.VectorField.y_axis_idx()
 
@@ -82,21 +66,16 @@ def gen_set_fixed_val_pyst_kernel_2d(
                 vector_field: np.ndarray,
                 fixed_vals: tuple[float, float],
             ) -> None:
-                """Set vector field to fixed value in 2D.
-
-                Sets spatially constant values for a 2D vector field,
-                assumes shape of fields (2, n, n).
-                """
-                set_fixed_val_pyst_kernel_2d(
-                    field=vector_field[x_axis_idx],
-                    fixed_val=fixed_vals[x_axis_idx],
-                )
-                set_fixed_val_pyst_kernel_2d(
-                    field=vector_field[y_axis_idx],
-                    fixed_val=fixed_vals[y_axis_idx],
+                """Set vector field to fixed value in 2D"""
+                vector_kernel(
+                    field_x=vector_field[x_axis_idx],
+                    field_y=vector_field[y_axis_idx],
+                    fixed_val_x=fixed_vals[x_axis_idx],
+                    fixed_val_y=fixed_vals[y_axis_idx],
                 )
 
             return vector_field_set_fixed_val_pyst_kernel_2d
+
         case _:
             msg = "Invalid field type"
             raise ValueError(msg)
@@ -112,14 +91,11 @@ def gen_elementwise_copy_pyst_kernel_2d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 2)
+    grid_info = spu.get_grid_info(grid_size, 2, "scalar")
 
-    @ps.kernel
-    def _elementwise_copy_stencil_2d():
-        field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
-        field[0, 0] @= rhs_field[0, 0]
-
-    return ps.create_kernel(_elementwise_copy_stencil_2d, config=kernel_config).compile()
+    field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
+    eqn = ps.Assignment(field.center, rhs_field.center)
+    return ps.create_kernel(eqn, config=kernel_config).compile()
 
 
 def gen_elementwise_complex_product_pyst_kernel_2d(
@@ -132,25 +108,27 @@ def gen_elementwise_complex_product_pyst_kernel_2d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 2)
+    grid_info = spu.get_grid_info(grid_size, 2, "scalar")
 
-    @ps.kernel
-    def _elementwise_complex_product_stencil_2d():
-        product_field_real, field_1_real, field_2_real = ps.fields(
-            f"product_field_real, field_1_real, field_2_real : {pyst_dtype}[{grid_info}]"
-        )
-        product_field_imag, field_1_imag, field_2_imag = ps.fields(
-            f"product_field_imag, field_1_imag, field_2_imag : {pyst_dtype}[{grid_info}]"
-        )
-        product_field_real[0, 0] @= (
-            field_1_real[0, 0] * field_2_real[0, 0] - field_1_imag[0, 0] * field_2_imag[0, 0]
-        )
-        product_field_imag[0, 0] @= (
-            field_1_real[0, 0] * field_2_imag[0, 0] + field_1_imag[0, 0] * field_2_real[0, 0]
-        )
+    product_field_real, field_1_real, field_2_real = ps.fields(
+        f"product_field_real, field_1_real, field_2_real : {pyst_dtype}[{grid_info}]"
+    )
+    product_field_imag, field_1_imag, field_2_imag = ps.fields(
+        f"product_field_imag, field_1_imag, field_2_imag : {pyst_dtype}[{grid_info}]"
+    )
+    eqn = [
+        ps.Assignment(
+            product_field_real.center,
+            field_1_real.center * field_2_real.center - field_1_imag.center * field_2_imag.center,
+        ),
+        ps.Assignment(
+            product_field_imag.center,
+            field_1_real.center * field_2_imag.center + field_1_imag.center * field_2_real.center,
+        ),
+    ]
 
     _elementwise_complex_product_pyst_kernel_2d = ps.create_kernel(
-        _elementwise_complex_product_stencil_2d, config=kernel_config
+        eqn, config=kernel_config
     ).compile()
 
     def elementwise_complex_product_pyst_kernel_2d(
@@ -181,6 +159,7 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
     if not isinstance(width, int) or width <= 0:
         msg = "Invalid width for boundary zone, must be a positive integer"
         raise ValueError(msg)
+
     set_fixed_val_kernel_2d = gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
         num_threads=num_threads,
@@ -228,6 +207,7 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_2d(
                 )
 
             return vector_field_set_fixed_val_at_boundaries_pyst_kernel_2d
+
         case _:
             msg = "Invalid field type"
             raise ValueError(msg)
@@ -244,21 +224,26 @@ def gen_add_fixed_val_pyst_kernel_2d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 2)
+    grid_info = spu.get_grid_info(grid_size, 2, "scalar")
 
-    @ps.kernel
-    def _add_fixed_val_stencil_2d():
-        sum_field, field = ps.fields(f"sum_field, field : {pyst_dtype}[{grid_info}]")
-        fixed_val = sp.symbols("fixed_val")
-        sum_field[0, 0] @= field[0, 0] + fixed_val
-
-    add_fixed_val_pyst_kernel_2d = ps.create_kernel(
-        _add_fixed_val_stencil_2d, config=kernel_config
-    ).compile()
     match field_type:
         case "scalar":
-            return add_fixed_val_pyst_kernel_2d
+            sum_field, field = ps.fields(f"sum_field, field : {pyst_dtype}[{grid_info}]")
+            fixed_val = sp.symbols("fixed_val")
+            eqn = ps.Assignment(sum_field.center, field.center + fixed_val)
+            return ps.create_kernel(eqn, config=kernel_config).compile()
+
         case "vector":
+            sum_field_x, sum_field_y = ps.fields(
+                f"sum_field_x, sum_field_y : {pyst_dtype}[{grid_info}]"
+            )
+            field_x, field_y = ps.fields(f"field_x, field_y : {pyst_dtype}[{grid_info}]")
+            fixed_val_x, fixed_val_y = sp.symbols("fixed_val_x, fixed_val_y")
+            eqn = [
+                ps.Assignment(sum_field_x.center, field_x.center + fixed_val_x),
+                ps.Assignment(sum_field_y.center, field_y.center + fixed_val_y),
+            ]
+            vector_kernel = ps.create_kernel(eqn, config=kernel_config).compile()
             x_axis_idx = spu.VectorField.x_axis_idx()
             y_axis_idx = spu.VectorField.y_axis_idx()
 
@@ -267,23 +252,18 @@ def gen_add_fixed_val_pyst_kernel_2d(
                 vector_field: np.ndarray,
                 fixed_vals: tuple[int, int],
             ) -> None:
-                """Add fixed value to vector field in 2D.
-
-                Adds spatially constant values to a 2D vector field,
-                assumes shape of fields (2, n, n).
-                """
-                add_fixed_val_pyst_kernel_2d(
-                    sum_field=sum_field[x_axis_idx],
-                    field=vector_field[x_axis_idx],
-                    fixed_val=fixed_vals[x_axis_idx],
-                )
-                add_fixed_val_pyst_kernel_2d(
-                    sum_field=sum_field[y_axis_idx],
-                    field=vector_field[y_axis_idx],
-                    fixed_val=fixed_vals[y_axis_idx],
+                """Add fixed value to vector field in 2D"""
+                vector_kernel(
+                    sum_field_x=sum_field[x_axis_idx],
+                    sum_field_y=sum_field[y_axis_idx],
+                    field_x=vector_field[x_axis_idx],
+                    field_y=vector_field[y_axis_idx],
+                    fixed_val_x=fixed_vals[x_axis_idx],
+                    fixed_val_y=fixed_vals[y_axis_idx],
                 )
 
             return vector_field_add_fixed_val_pyst_kernel_2d
+
         case _:
             msg = "Invalid field type"
             raise ValueError(msg)
@@ -299,34 +279,13 @@ def gen_elementwise_saxpby_pyst_kernel_2d(
     """2D elementwise saxpby (s = a * x + b * y) kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
+    grid_info = spu.get_grid_info(grid_size, 2, field_type)
 
-    match field_type:
-        case "scalar":
-            grid_info = spu.get_grid_info(grid_size, 2)
-
-            @ps.kernel
-            def _elementwise_saxpby_stencil_2d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
-                )
-                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
-                sum_field[0, 0] @= field_1_prefac * field_1[0, 0] + field_2_prefac * field_2[0, 0]
-
-        case "vector":
-            grid_info = spu.get_grid_info(grid_size, 2, num_components=2)
-
-            @ps.kernel
-            def _elementwise_saxpby_stencil_2d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
-                )
-                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
-                sum_field[0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0] + field_2_prefac * field_2[0, 0, 0]
-                )
-
-        case _:
-            msg = "Invalid field type"
-            raise ValueError(msg)
-
-    return ps.create_kernel(_elementwise_saxpby_stencil_2d, config=kernel_config).compile()
+    sum_field, field_1, field_2 = ps.fields(
+        f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
+    )
+    field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
+    eqn = ps.Assignment(
+        sum_field.center, field_1_prefac * field_1.center + field_2_prefac * field_2.center
+    )
+    return ps.create_kernel(eqn, config=kernel_config).compile()
