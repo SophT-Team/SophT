@@ -12,18 +12,14 @@ import sopht.utils as spu
 def gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """Update vorticity based on velocity forcing in 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _update_vorticity_from_velocity_forcing_x_comp_stencil_3d():
@@ -135,18 +131,14 @@ def gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
 def gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """Update vorticity based on penalised velocity in 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _update_vorticity_from_penalised_velocity_x_comp_stencil_3d():

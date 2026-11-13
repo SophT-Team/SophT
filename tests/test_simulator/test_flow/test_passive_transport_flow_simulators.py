@@ -52,27 +52,27 @@ def test_passive_transport_flow_simulator_time_step(
         case 2:
             diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
                 real_t=real_t,
-                fixed_grid_size=grid_size,
+                grid_size=grid_size,
                 num_threads=num_threads,
             )
             advection_timestep = (
                 spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
                     real_t=real_t,
-                    fixed_grid_size=grid_size,
+                    grid_size=grid_size,
                     num_threads=num_threads,
                 )
             )
         case 3:
             diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
                 real_t=real_t,
-                fixed_grid_size=grid_size,
+                grid_size=grid_size,
                 num_threads=num_threads,
                 field_type=field_type,
             )
             advection_timestep = (
                 spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
                     real_t=real_t,
-                    fixed_grid_size=grid_size,
+                    grid_size=grid_size,
                     num_threads=num_threads,
                     field_type=field_type,
                 )

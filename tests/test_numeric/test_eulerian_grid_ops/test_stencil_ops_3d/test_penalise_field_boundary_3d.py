@@ -124,7 +124,7 @@ def test_penalise_field_boundary_3d(
         y_grid_field=solution.y_grid_field,
         z_grid_field=solution.z_grid_field,
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values, n_values),
+        grid_size=(n_values, n_values, n_values),
         num_threads=max_cpu_count,
         field_type=field_type,
     )
@@ -154,7 +154,7 @@ def test_zero_width_penalise_field_boundary_3d(
         y_grid_field=solution.y_grid_field,
         z_grid_field=solution.z_grid_field,
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values, n_values),
+        grid_size=(n_values, n_values, n_values),
         num_threads=max_cpu_count,
         field_type=field_type,
     )

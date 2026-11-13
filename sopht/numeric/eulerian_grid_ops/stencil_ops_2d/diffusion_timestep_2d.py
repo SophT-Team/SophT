@@ -10,18 +10,18 @@ import sopht.numeric.eulerian_grid_ops as spne
 def gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int] | bool = False,
+    grid_size: tuple[int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """2D Diffusion Euler forward timestep generator."""
     elementwise_sum_pyst_kernel_2d = spne.gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
     diffusion_flux_kernel_2d = spne.gen_diffusion_flux_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
 

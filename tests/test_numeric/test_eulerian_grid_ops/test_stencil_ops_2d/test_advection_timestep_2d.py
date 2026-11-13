@@ -70,7 +70,7 @@ def test_euler_forward_conservative_eno3_2d(n_values, precision, rng, max_cpu_co
     advection_timestep_euler_forward_conservative_eno3_kernel = (
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
+            grid_size=(n_values, n_values),
             num_threads=max_cpu_count,
         )
     )

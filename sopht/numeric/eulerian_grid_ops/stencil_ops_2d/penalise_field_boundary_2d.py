@@ -16,7 +16,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
     y_grid_field: np.ndarray,
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int] | bool = False,
+    grid_size: tuple[int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """2D penalise field boundary kernel generator."""
@@ -32,11 +32,7 @@ def gen_penalise_field_boundary_pyst_kernel_2d(
 
     else:
         pyst_dtype = spu.get_pyst_dtype(real_t)
-        grid_info = (
-            f"{fixed_grid_size[0]}, {fixed_grid_size[1]}"
-            if type(fixed_grid_size) is tuple[int, ...]
-            else "2D"
-        )
+        grid_info = spu.get_grid_info(grid_size, 2)
         x_grid_field_start = x_grid_field[0, 0]
         y_grid_field_start = y_grid_field[0, 0]
         x_grid_field_end = x_grid_field[0, -1]

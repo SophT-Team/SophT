@@ -104,7 +104,7 @@ def test_advection_eno3_euler_forward(n_values, precision, rng, max_cpu_count):
     advection_timestep_euler_forward_conservative_eno3_kernel_3d = (
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
+            grid_size=(n_values, n_values, n_values),
             num_threads=max_cpu_count,
             field_type="scalar",
         )
@@ -134,7 +134,7 @@ def test_vector_field_advection_timestep_eno3_3d(n_values, precision, rng, max_c
     vector_field_advection_timestep_euler_forward_pyst_kernel_3d = (
         gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
+            grid_size=(n_values, n_values, n_values),
             num_threads=max_cpu_count,
             field_type="vector",
         )

@@ -81,7 +81,7 @@ def test_curl_3d(n_values, precision, reset_ghost_zone, rng, max_cpu_count):
     curl = np.ones_like(solution.ref_curl) if reset_ghost_zone else np.zeros_like(solution.ref_curl)
     curl_pyst_kernel_3d = gen_curl_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values, n_values),
+        grid_size=(n_values, n_values, n_values),
         num_threads=max_cpu_count,
         reset_ghost_zone=reset_ghost_zone,
     )

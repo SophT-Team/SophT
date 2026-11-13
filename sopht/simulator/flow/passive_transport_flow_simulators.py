@@ -75,27 +75,27 @@ class PassiveTransportFlowSimulator(FlowSimulator):
             case 2:
                 self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
                     real_t=self.real_t,
-                    fixed_grid_size=self.grid_size,
+                    grid_size=self.grid_size,
                     num_threads=self.num_threads,
                 )
                 self._advection_timestep = (
                     spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
                         real_t=self.real_t,
-                        fixed_grid_size=self.grid_size,
+                        grid_size=self.grid_size,
                         num_threads=self.num_threads,
                     )
                 )
             case 3:
                 self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
                     real_t=self.real_t,
-                    fixed_grid_size=self.grid_size,
+                    grid_size=self.grid_size,
                     num_threads=self.num_threads,
                     field_type=self.field_type,
                 )
                 self._advection_timestep = (
                     spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_3d(
                         real_t=self.real_t,
-                        fixed_grid_size=self.grid_size,
+                        grid_size=self.grid_size,
                         num_threads=self.num_threads,
                         field_type=self.field_type,
                     )

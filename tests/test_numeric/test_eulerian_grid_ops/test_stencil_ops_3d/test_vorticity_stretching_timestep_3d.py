@@ -91,7 +91,7 @@ def test_vort_stretching_timestep_euler_forward_3d(n_values, precision, rng, max
     vorticity_stretching_timestep_euler_forward_pyst_kernel_3d = (
         gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
+            grid_size=(n_values, n_values, n_values),
             num_threads=max_cpu_count,
         )
     )
@@ -117,7 +117,7 @@ def test_vort_stretching_timestep_ssprk3_3d(n_values, precision, rng, max_cpu_co
         gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d(
             real_t=real_t,
             midstep_buffer_vector_field=np.zeros_like(vorticity_field),
-            fixed_grid_size=(n_values, n_values, n_values),
+            grid_size=(n_values, n_values, n_values),
             num_threads=max_cpu_count,
         )
     )

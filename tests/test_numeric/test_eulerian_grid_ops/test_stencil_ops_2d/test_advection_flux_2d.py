@@ -119,7 +119,7 @@ def test_advection_flux_conservative_eno3(n_values, precision, rng, max_cpu_coun
     advection_flux = np.zeros_like(solution.ref_advection_flux)
     advection_flux_conservative_eno3_kernel = gen_advection_flux_conservative_eno3_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
     )
     advection_flux_conservative_eno3_kernel(

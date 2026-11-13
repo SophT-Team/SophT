@@ -1,13 +1,11 @@
 import ctypes
 import functools
-import os
 import sys
-from typing import Sequence
+from pathlib import Path
 
 import numpy as np
 import pystencils as ps
 from pystencils.jit.cpu.compiler_info import AppleClangInfo
-
 
 # IMPORTANT: macOS Only
 # pystencils and pyFFTW tend to load two separate copies of OpenMP
@@ -24,11 +22,11 @@ from pystencils.jit.cpu.compiler_info import AppleClangInfo
 def _loaded_libomp_images() -> list[str]:
     """LLVM OpenMP runtimes already loaded in this process, in load order (macOS)."""
     libsystem = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
-    libsystem._dyld_image_count.restype = ctypes.c_uint32
-    libsystem._dyld_get_image_name.argtypes = [ctypes.c_uint32]
-    libsystem._dyld_get_image_name.restype = ctypes.c_char_p
-    names = (libsystem._dyld_get_image_name(i) for i in range(libsystem._dyld_image_count()))
-    return [n.decode() for n in names if n and os.path.basename(n.decode()) == "libomp.dylib"]
+    libsystem._dyld_image_count.restype = ctypes.c_uint32  # noqa: SLF001
+    libsystem._dyld_get_image_name.argtypes = [ctypes.c_uint32]  # noqa: SLF001
+    libsystem._dyld_get_image_name.restype = ctypes.c_char_p  # noqa: SLF001
+    names = (libsystem._dyld_get_image_name(i) for i in range(libsystem._dyld_image_count()))  # noqa: SLF001
+    return [n.decode() for n in names if n and Path(n.decode()).name == "libomp.dylib"]
 
 
 @functools.cache
@@ -54,6 +52,29 @@ def get_pyst_dtype(real_t: type) -> str:
         return "float64"
     msg = "Invalid real type"
     raise ValueError(msg)
+
+
+def get_grid_info(
+    grid_size: tuple[int, ...] | None, dimension: int, num_components: int | None = None
+) -> str:
+    """Return the pystencils field shape spec, e.g. "2D" or "64, 64".
+
+    num_components prepends a leading component axis, for vector fields stored as
+    (num_components, *grid_size): e.g. "3D" or "2, 64, 64" for a 2D vector field.
+    """
+    if dimension not in (2, 3):
+        msg = f"dimension must be 2 or 3, but got {dimension}"
+        raise ValueError(msg)
+
+    if grid_size is None:
+        return f"{dimension if num_components is None else dimension + 1}D"
+
+    if len(grid_size) != dimension:
+        msg = f"grid_size expected to be {dimension}D, but got {grid_size}"
+        raise ValueError(msg)
+
+    shape = grid_size if num_components is None else (num_components, *grid_size)
+    return ", ".join(str(i) for i in shape)
 
 
 def get_pyst_kernel_config(

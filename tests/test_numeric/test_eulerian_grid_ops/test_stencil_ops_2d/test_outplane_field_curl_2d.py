@@ -36,7 +36,7 @@ def test_outplane_field_curl(n_values, precision, reset_ghost_zone, rng, max_cpu
     curl = np.ones_like(solution.ref_curl) if reset_ghost_zone else np.zeros_like(solution.ref_curl)
     outplane_field_curl_pyst_kernel = gen_outplane_field_curl_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         reset_ghost_zone=reset_ghost_zone,
     )

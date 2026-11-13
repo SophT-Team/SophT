@@ -49,12 +49,12 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
     # first we compile necessary kernels
     diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
     advection_timestep = spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
     grid_size_y, grid_size_x = grid_size
@@ -68,7 +68,7 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
     curl = spne.gen_outplane_field_curl_pyst_kernel_2d(
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
     )
     penalise_field_towards_boundary = spne.gen_penalise_field_boundary_pyst_kernel_2d(
         width=flow_sim.penalty_zone_width,
@@ -77,12 +77,12 @@ def test_navier_stokes_flow_sim_2d_with_forcing_timestep(
         y_grid_field=flow_sim.position_field[spu.VectorField.y_axis_idx()],
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
     )
     update_vorticity_from_velocity_forcing = (
         spne.gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
             real_t=real_t,
-            fixed_grid_size=grid_size,
+            grid_size=grid_size,
             num_threads=num_threads,
         )
     )
@@ -208,14 +208,14 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     # first we compile necessary kernels
     diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
         field_type="vector",
     )
     elementwise_cross_product = spne.gen_elementwise_cross_product_pyst_kernel_3d(
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
     )
     grid_size_z, grid_size_y, grid_size_x = grid_size
     unbounded_poisson_solver = spne.UnboundedPoissonSolverPYFFTW3D(
@@ -229,7 +229,7 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
     curl = spne.gen_curl_pyst_kernel_3d(
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
     )
     penalise_field_towards_boundary = spne.gen_penalise_field_boundary_pyst_kernel_3d(
         width=flow_sim.penalty_zone_width,
@@ -239,13 +239,13 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
         z_grid_field=flow_sim.position_field[spu.VectorField.z_axis_idx()],
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
         field_type="vector",
     )
     update_vorticity_from_velocity_forcing = (
         spne.gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
             real_t=real_t,
-            fixed_grid_size=grid_size,
+            grid_size=grid_size,
             num_threads=num_threads,
         )
     )
@@ -255,7 +255,7 @@ def test_navier_stokes_flow_sim_3d_with_forcing_timestep(
             field_buffer=np.zeros_like(ref_vorticity_field[0]),
             real_t=real_t,
             num_threads=num_threads,
-            fixed_grid_size=grid_size,
+            grid_size=grid_size,
             field_type="vector",
             filter_order=filter_order,
             filter_type=filter_type,
@@ -361,7 +361,7 @@ def test_navier_stokes_flow_sim_3d_get_vorticity_divergence_l2_norm(grid_size_x,
     # compute manually
     compute_divergence = spne.gen_divergence_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
     divergence_field = np.zeros_like(flow_sim.vorticity_field[0])

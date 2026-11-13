@@ -13,7 +13,7 @@ import sopht.utils as spu
 def gen_elementwise_sum_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -23,11 +23,7 @@ def gen_elementwise_sum_pyst_kernel_3d(
 
     match field_type:
         case "scalar":
-            grid_info = (
-                f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "3D"
-            )
+            grid_info = spu.get_grid_info(grid_size, 3)
 
             @ps.kernel
             def _elementwise_sum_stencil_3d():
@@ -37,11 +33,7 @@ def gen_elementwise_sum_pyst_kernel_3d(
                 sum_field[0, 0, 0] @= field_1[0, 0, 0] + field_2[0, 0, 0]
 
         case "vector":
-            grid_info = (
-                f"3, {fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "4D"
-            )
+            grid_info = spu.get_grid_info(grid_size, 3, num_components=3)
 
             @ps.kernel
             def _elementwise_sum_stencil_3d():
@@ -60,7 +52,7 @@ def gen_elementwise_sum_pyst_kernel_3d(
 def gen_set_fixed_val_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -68,11 +60,7 @@ def gen_set_fixed_val_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _set_fixed_val_stencil_3d():
@@ -122,18 +110,14 @@ def gen_set_fixed_val_pyst_kernel_3d(
 def gen_elementwise_copy_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise copy one field to another kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _elementwise_copy_stencil_3d():
@@ -146,18 +130,14 @@ def gen_elementwise_copy_pyst_kernel_3d(
 def gen_elementwise_complex_product_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise complex number product kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _elementwise_complex_product_stencil_3d():
@@ -271,7 +251,7 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
 def gen_add_fixed_val_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -279,11 +259,7 @@ def gen_add_fixed_val_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _add_fixed_val_stencil_3d():
@@ -337,7 +313,7 @@ def gen_add_fixed_val_pyst_kernel_3d(
 def gen_elementwise_saxpby_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -347,11 +323,7 @@ def gen_elementwise_saxpby_pyst_kernel_3d(
 
     match field_type:
         case "scalar":
-            grid_info = (
-                f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "3D"
-            )
+            grid_info = spu.get_grid_info(grid_size, 3)
 
             @ps.kernel
             def _elementwise_saxpby_stencil_3d():
@@ -364,11 +336,7 @@ def gen_elementwise_saxpby_pyst_kernel_3d(
                 )
 
         case "vector":
-            grid_info = (
-                f"3, {fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "4D"
-            )
+            grid_info = spu.get_grid_info(grid_size, 3, num_components=3)
 
             @ps.kernel
             def _elementwise_saxpby_stencil_3d():
@@ -390,17 +358,13 @@ def gen_elementwise_saxpby_pyst_kernel_3d(
 def gen_elementwise_cross_product_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise cross product kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _elementwise_cross_product_single_axis_stencil_3d():

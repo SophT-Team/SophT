@@ -73,7 +73,7 @@ class UnboundedPoissonSolverPYFFTW2D:
         self.set_fixed_val_kernel_2d = spne.gen_set_fixed_val_pyst_kernel_2d(
             real_t=self.real_t,
             num_threads=self.num_threads,
-            fixed_grid_size=(
+            grid_size=(
                 self.domain_doubled_buffer.shape[0],
                 self.domain_doubled_buffer.shape[1],
             ),

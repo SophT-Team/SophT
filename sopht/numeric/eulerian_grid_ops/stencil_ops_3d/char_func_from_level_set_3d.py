@@ -13,18 +13,14 @@ def gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_3d(
     blend_width: float,
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     """Level set --> Characteristic function 3D kernel generator.
 
     Generate function that computes characteristic function field
     from the level set field, via a smooth sine Heaviside function.
     """
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     sine_prefactor = np.pi / blend_width

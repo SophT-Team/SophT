@@ -7,16 +7,12 @@ import sympy as sp
 import sopht.utils as spu
 
 
-def gen_inplane_field_curl_pyst_kernel_2d(real_t, num_threads=False, fixed_grid_size=False):
+def gen_inplane_field_curl_pyst_kernel_2d(real_t, num_threads=False, grid_size=None):
     """2D Inplane field curl kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "2D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 2)
 
     @ps.kernel
     def _inplane_field_curl_stencil_2d():

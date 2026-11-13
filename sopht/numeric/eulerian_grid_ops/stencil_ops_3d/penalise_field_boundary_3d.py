@@ -18,7 +18,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(
     z_grid_field: np.ndarray,
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -54,11 +54,7 @@ def gen_penalise_field_boundary_pyst_kernel_3d(
 
         case _:
             pyst_dtype = spu.get_pyst_dtype(real_t)
-            grid_info = (
-                f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "3D"
-            )
+            grid_info = spu.get_grid_info(grid_size, 3)
             x_grid_field_start = x_grid_field[0, 0, 0]
             y_grid_field_start = y_grid_field[0, 0, 0]
             z_grid_field_start = z_grid_field[0, 0, 0]

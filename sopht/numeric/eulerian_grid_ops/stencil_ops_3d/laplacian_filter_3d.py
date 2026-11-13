@@ -16,7 +16,7 @@ def gen_laplacian_filter_kernel_3d(
     field_buffer: np.ndarray,
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
     filter_type: Literal["multiplicative", "convolution"] = "multiplicative",
     filter_flux_buffer_boundary_width: int = 1,
@@ -49,11 +49,7 @@ def gen_laplacian_filter_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3)
 
     @ps.kernel
     def _laplacian_filter_3d_x() -> None:
@@ -77,10 +73,10 @@ def gen_laplacian_filter_kernel_3d(
     laplacian_filter_3d_z = ps.create_kernel(_laplacian_filter_3d_z, config=kernel_config).compile()
 
     elementwise_copy_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
-        real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
+        real_t=real_t, num_threads=num_threads, grid_size=grid_size
     )
     elementwise_saxpby_3d = spne.gen_elementwise_saxpby_pyst_kernel_3d(
-        real_t=real_t, num_threads=num_threads, fixed_grid_size=fixed_grid_size
+        real_t=real_t, num_threads=num_threads, grid_size=grid_size
     )
     # to set boundary zone = 0
     boundary_width = filter_flux_buffer_boundary_width
