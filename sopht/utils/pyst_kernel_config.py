@@ -17,11 +17,19 @@ def get_pyst_kernel_config(
 ) -> ps.CreateKernelConfig:
     """Returns the pystencils kernel config based on the data
     dtype and number of threads"""
-    pyst_dtype = get_pyst_dtype(real_t)
-    # TODO: check out more options here!
-    return ps.CreateKernelConfig(
-        data_type=pyst_dtype,
-        default_number_float=pyst_dtype,
-        cpu_openmp=num_threads,
+    pyst_dtype = get_pyst_dtype(real_t) # "float32" or "float64"
+    kernel_config = ps.CreateKernelConfig(
+        target=ps.Target.CurrentCPU,
+        default_dtype=pyst_dtype,
         iteration_slice=iteration_slice,
     )
+
+    # OpenMP options
+    kernel_config.cpu.openmp.enable = True
+    kernel_config.cpu.openmp.schedule = "static"
+    kernel_config.cpu.openmp.num_threads = num_threads
+
+    # SIMD
+    # kernel_config.cpu.vectorize.enable = True
+
+    return kernel_config
