@@ -2,6 +2,7 @@ import ctypes
 import functools
 import os
 import sys
+from typing import Sequence
 
 import numpy as np
 import pystencils as ps
@@ -19,6 +20,7 @@ from pystencils.jit.cpu.compiler_info import AppleClangInfo
 # TODO: Check for alternatives from build options, e.g. build pyFFTW
 # from system OMP and FFTW so that it does not rely on bundled OMP.
 
+
 def _loaded_libomp_images() -> list[str]:
     """LLVM OpenMP runtimes already loaded in this process, in load order (macOS)."""
     libsystem = ctypes.CDLL("/usr/lib/libSystem.B.dylib")
@@ -35,6 +37,7 @@ def _cpu_jit_linking_libomp(libomp_path: str) -> ps.jit.CpuJit:
     Create a pystencils jit config that appends a specified omp path to
     compiler flags. Cached so it is not run repeatedly.
     """
+
     class _SharedLibompAppleClangInfo(AppleClangInfo):
         def linker_flags(self) -> list[str]:
             flags = [f for f in super().linker_flags() if not f.endswith("libomp.dylib")]
@@ -54,10 +57,12 @@ def get_pyst_dtype(real_t: type) -> str:
 
 
 def get_pyst_kernel_config(
-    real_t: type, num_threads: int | bool, iteration_slice: tuple | None = None
+    real_t: type,
+    num_threads: int | bool,
+    iteration_slice: tuple | None = None,
 ) -> ps.CreateKernelConfig:
     """Returns the pystencils kernel config based on the data dtype and number of threads"""
-    pyst_dtype = get_pyst_dtype(real_t) # "float32" or "float64"
+    pyst_dtype = get_pyst_dtype(real_t)  # "float32" or "float64"
     kernel_config = ps.CreateKernelConfig(
         target=ps.Target.CurrentCPU,
         default_dtype=pyst_dtype,
@@ -65,8 +70,8 @@ def get_pyst_kernel_config(
     )
 
     # OpenMP options
+    kernel_config.cpu.openmp.enable = bool(num_threads)
     if isinstance(num_threads, int) and num_threads > 1:
-        kernel_config.cpu.openmp.enable = True
         kernel_config.cpu.openmp.schedule = "static"
         kernel_config.cpu.openmp.num_threads = num_threads
 
