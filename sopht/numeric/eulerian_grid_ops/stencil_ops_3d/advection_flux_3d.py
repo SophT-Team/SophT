@@ -15,163 +15,52 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_3d(
     grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
-    """3D conservative ENO3 advection flux kernel generator."""
+    """3D conservative ENO3 advection flux kernel generator.
+
+    All six face fluxes (x/y/z, front/back) are evaluated in a single fused kernel.
+    The upwind choice is made branchless: both biased stencils are computed and
+    blended with a 0/1 switch, which the C compiler turns into a vectorizable select.
+    """
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 3)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _advection_flux_x_front_conservative_eno3_stencil_3d():
-        advection_flux, field, velocity_x = ps.fields(
-            f"advection_flux, field, velocity_x : {pyst_dtype}[{grid_info}]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        # TODO: SHOULD HAVE CODEGEN FOR THIS!
-        advection_flux[0, 0, 0] @= advection_flux[0, 0, 0] + inv_dx * (
-            (
-                (1 / 3) * field[0, 0, 1] * velocity_x[0, 0, 1]
-                + (5 / 6) * field[0, 0, 0] * velocity_x[0, 0, 0]
-                - (1 / 6) * field[0, 0, -1] * velocity_x[0, 0, -1]
-            )
-            if velocity_x[0, 0, 0] > -velocity_x[0, 0, 1]
-            else (
-                (1 / 3) * field[0, 0, 0] * velocity_x[0, 0, 0]
-                + (5 / 6) * field[0, 0, 1] * velocity_x[0, 0, 1]
-                - (1 / 6) * field[0, 0, 2] * velocity_x[0, 0, 2]
-            )
-        )
+    advection_flux, field, velocity_x, velocity_y, velocity_z = ps.fields(
+        f"advection_flux, field, velocity_x, velocity_y, velocity_z : {pyst_dtype}[{grid_info}]"
+    )
+    inv_dx = sp.Symbol("inv_dx")
 
-    _advection_flux_x_front_conservative_eno3_kernel_3d = ps.create_kernel(
-        _advection_flux_x_front_conservative_eno3_stencil_3d, config=kernel_config
+    def face_flux(velocity: ps.Field, axis: int, offset: int) -> sp.Expr:
+        """ENO3 conservative flux at the face between cells offset and offset + 1 along axis."""
+
+        def flux(k: int) -> sp.Expr:
+            return field.center.neighbor(axis, k) * velocity.center.neighbor(axis, k)
+
+        def vel(k: int) -> sp.Expr:
+            return velocity.center.neighbor(axis, k)
+
+        i = offset
+        left_biased = (1 / 3) * flux(i + 1) + (5 / 6) * flux(i) - (1 / 6) * flux(i - 1)
+        right_biased = (1 / 3) * flux(i) + (5 / 6) * flux(i + 1) - (1 / 6) * flux(i + 2)
+        is_positive = sp.Piecewise((1, vel(i) > -vel(i + 1)), (0, True))
+        return right_biased + (left_biased - right_biased) * is_positive
+
+    # field is in z-y-x convention: axis 2 is x, axis 1 is y, axis 0 is z
+    x_axis, y_axis, z_axis = 2, 1, 0
+    flux_divergence = (
+        face_flux(velocity_x, x_axis, 0)
+        - face_flux(velocity_x, x_axis, -1)
+        + face_flux(velocity_y, y_axis, 0)
+        - face_flux(velocity_y, y_axis, -1)
+        + face_flux(velocity_z, z_axis, 0)
+        - face_flux(velocity_z, z_axis, -1)
+    )
+    eqn = ps.AddAugmentedAssignment(advection_flux.center, inv_dx * flux_divergence)
+    _advection_flux_conservative_eno3_kernel_3d = ps.create_kernel(
+        eqn, config=kernel_config
     ).compile()
 
-    @ps.kernel
-    def _advection_flux_x_back_conservative_eno3_stencil_3d():
-        advection_flux, field, velocity_x = ps.fields(
-            # f"advection_flux, field, velocity_x : {pyst_dtype}[{grid_info}]"
-            # This switch is done to avoid the weird slowdown happening here.
-            f"advection_flux, field, velocity_x : {pyst_dtype}[3D]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        # TODO: SHOULD HAVE CODEGEN FOR THIS!
-        advection_flux[0, 0, 0] @= advection_flux[0, 0, 0] - inv_dx * (
-            (
-                (1 / 3) * field[0, 0, 0] * velocity_x[0, 0, 0]
-                + (5 / 6) * field[0, 0, -1] * velocity_x[0, 0, -1]
-                - (1 / 6) * field[0, 0, -2] * velocity_x[0, 0, -2]
-            )
-            if velocity_x[0, 0, 0] > -velocity_x[0, 0, -1]
-            else (
-                (1 / 3) * field[0, 0, -1] * velocity_x[0, 0, -1]
-                + (5 / 6) * field[0, 0, 0] * velocity_x[0, 0, 0]
-                - (1 / 6) * field[0, 0, 1] * velocity_x[0, 0, 1]
-            )
-        )
-
-    _advection_flux_x_back_conservative_eno3_kernel_3d = ps.create_kernel(
-        _advection_flux_x_back_conservative_eno3_stencil_3d, config=kernel_config
-    ).compile()
-
-    @ps.kernel
-    def _advection_flux_y_front_conservative_eno3_stencil_3d():
-        advection_flux, field, velocity_y = ps.fields(
-            f"advection_flux, field, velocity_y : {pyst_dtype}[{grid_info}]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        # TODO: SHOULD HAVE CODEGEN FOR THIS!
-        advection_flux[0, 0, 0] @= advection_flux[0, 0, 0] + inv_dx * (
-            (
-                (1 / 3) * field[0, 1, 0] * velocity_y[0, 1, 0]
-                + (5 / 6) * field[0, 0, 0] * velocity_y[0, 0, 0]
-                - (1 / 6) * field[0, -1, 0] * velocity_y[0, -1, 0]
-            )
-            if velocity_y[0, 0, 0] > -velocity_y[0, 1, 0]
-            else (
-                (1 / 3) * field[0, 0, 0] * velocity_y[0, 0, 0]
-                + (5 / 6) * field[0, 1, 0] * velocity_y[0, 1, 0]
-                - (1 / 6) * field[0, 2, 0] * velocity_y[0, 2, 0]
-            )
-        )
-
-    _advection_flux_y_front_conservative_eno3_kernel_3d = ps.create_kernel(
-        _advection_flux_y_front_conservative_eno3_stencil_3d, config=kernel_config
-    ).compile()
-
-    @ps.kernel
-    def _advection_flux_y_back_conservative_eno3_stencil_3d():
-        advection_flux, field, velocity_y = ps.fields(
-            f"advection_flux, field, velocity_y : {pyst_dtype}[{grid_info}]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        # TODO: SHOULD HAVE CODEGEN FOR THIS!
-        advection_flux[0, 0, 0] @= advection_flux[0, 0, 0] - inv_dx * (
-            (
-                (1 / 3) * field[0, 0, 0] * velocity_y[0, 0, 0]
-                + (5 / 6) * field[0, -1, 0] * velocity_y[0, -1, 0]
-                - (1 / 6) * field[0, -2, 0] * velocity_y[0, -2, 0]
-            )
-            if velocity_y[0, 0, 0] > -velocity_y[0, -1, 0]
-            else (
-                (1 / 3) * field[0, -1, 0] * velocity_y[0, -1, 0]
-                + (5 / 6) * field[0, 0, 0] * velocity_y[0, 0, 0]
-                - (1 / 6) * field[0, 1, 0] * velocity_y[0, 1, 0]
-            )
-        )
-
-    _advection_flux_y_back_conservative_eno3_kernel_3d = ps.create_kernel(
-        _advection_flux_y_back_conservative_eno3_stencil_3d, config=kernel_config
-    ).compile()
-
-    @ps.kernel
-    def _advection_flux_z_front_conservative_eno3_stencil_3d():
-        advection_flux, field, velocity_z = ps.fields(
-            f"advection_flux, field, velocity_z : {pyst_dtype}[{grid_info}]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        # TODO: SHOULD HAVE CODEGEN FOR THIS!
-        advection_flux[0, 0, 0] @= advection_flux[0, 0, 0] + inv_dx * (
-            (
-                (1 / 3) * field[1, 0, 0] * velocity_z[1, 0, 0]
-                + (5 / 6) * field[0, 0, 0] * velocity_z[0, 0, 0]
-                - (1 / 6) * field[-1, 0, 0] * velocity_z[-1, 0, 0]
-            )
-            if velocity_z[0, 0, 0] > -velocity_z[1, 0, 0]
-            else (
-                (1 / 3) * field[0, 0, 0] * velocity_z[0, 0, 0]
-                + (5 / 6) * field[1, 0, 0] * velocity_z[1, 0, 0]
-                - (1 / 6) * field[2, 0, 0] * velocity_z[2, 0, 0]
-            )
-        )
-
-    _advection_flux_z_front_conservative_eno3_kernel_3d = ps.create_kernel(
-        _advection_flux_z_front_conservative_eno3_stencil_3d, config=kernel_config
-    ).compile()
-
-    @ps.kernel
-    def _advection_flux_z_back_conservative_eno3_stencil_3d():
-        advection_flux, field, velocity_z = ps.fields(
-            f"advection_flux, field, velocity_z : {pyst_dtype}[{grid_info}]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        # TODO: SHOULD HAVE CODEGEN FOR THIS!
-        advection_flux[0, 0, 0] @= advection_flux[0, 0, 0] - inv_dx * (
-            (
-                (1 / 3) * field[0, 0, 0] * velocity_z[0, 0, 0]
-                + (5 / 6) * field[-1, 0, 0] * velocity_z[-1, 0, 0]
-                - (1 / 6) * field[-2, 0, 0] * velocity_z[-2, 0, 0]
-            )
-            if velocity_z[0, 0, 0] > -velocity_z[-1, 0, 0]
-            else (
-                (1 / 3) * field[-1, 0, 0] * velocity_z[-1, 0, 0]
-                + (5 / 6) * field[0, 0, 0] * velocity_z[0, 0, 0]
-                - (1 / 6) * field[1, 0, 0] * velocity_z[1, 0, 0]
-            )
-        )
-
-    _advection_flux_z_back_conservative_eno3_kernel_3d = ps.create_kernel(
-        _advection_flux_z_back_conservative_eno3_stencil_3d, config=kernel_config
-    ).compile()
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
@@ -189,39 +78,11 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_3d(
         3rd order ENO stencil.
         """
         # Assumes velocity field is (3, n, n)
-        _advection_flux_x_front_conservative_eno3_kernel_3d(
+        _advection_flux_conservative_eno3_kernel_3d(
             advection_flux=advection_flux,
             field=field,
             velocity_x=velocity[x_axis_idx],
-            inv_dx=inv_dx,
-        )
-        _advection_flux_x_back_conservative_eno3_kernel_3d(
-            advection_flux=advection_flux,
-            field=field,
-            velocity_x=velocity[x_axis_idx],
-            inv_dx=inv_dx,
-        )
-        _advection_flux_y_front_conservative_eno3_kernel_3d(
-            advection_flux=advection_flux,
-            field=field,
             velocity_y=velocity[y_axis_idx],
-            inv_dx=inv_dx,
-        )
-        _advection_flux_y_back_conservative_eno3_kernel_3d(
-            advection_flux=advection_flux,
-            field=field,
-            velocity_y=velocity[y_axis_idx],
-            inv_dx=inv_dx,
-        )
-        _advection_flux_z_front_conservative_eno3_kernel_3d(
-            advection_flux=advection_flux,
-            field=field,
-            velocity_z=velocity[z_axis_idx],
-            inv_dx=inv_dx,
-        )
-        _advection_flux_z_back_conservative_eno3_kernel_3d(
-            advection_flux=advection_flux,
-            field=field,
             velocity_z=velocity[z_axis_idx],
             inv_dx=inv_dx,
         )

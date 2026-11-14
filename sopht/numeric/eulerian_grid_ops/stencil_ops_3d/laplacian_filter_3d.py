@@ -49,28 +49,30 @@ def gen_laplacian_filter_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 3)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _laplacian_filter_3d_x() -> None:
-        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
-        filter_flux[0, 0, 0] @= 0.25 * (-field[0, 0, 1] - field[0, 0, -1] + 2 * field[0, 0, 0])
+    filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
 
-    laplacian_filter_3d_x = ps.create_kernel(_laplacian_filter_3d_x, config=kernel_config).compile()
+    laplacian_filter_3d_x = ps.create_kernel(
+        ps.Assignment(
+            filter_flux.center, 0.25 * (-field[0, 0, 1] - field[0, 0, -1] + 2 * field[0, 0, 0])
+        ),
+        config=kernel_config,
+    ).compile()
 
-    @ps.kernel
-    def _laplacian_filter_3d_y() -> None:
-        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
-        filter_flux[0, 0, 0] @= 0.25 * (-field[0, 1, 0] - field[0, -1, 0] + 2 * field[0, 0, 0])
+    laplacian_filter_3d_y = ps.create_kernel(
+        ps.Assignment(
+            filter_flux.center, 0.25 * (-field[0, 1, 0] - field[0, -1, 0] + 2 * field[0, 0, 0])
+        ),
+        config=kernel_config,
+    ).compile()
 
-    laplacian_filter_3d_y = ps.create_kernel(_laplacian_filter_3d_y, config=kernel_config).compile()
-
-    @ps.kernel
-    def _laplacian_filter_3d_z() -> None:
-        filter_flux, field = ps.fields(f"filter_flux, field : {pyst_dtype}[{grid_info}]")
-        filter_flux[0, 0, 0] @= 0.25 * (-field[1, 0, 0] - field[-1, 0, 0] + 2 * field[0, 0, 0])
-
-    laplacian_filter_3d_z = ps.create_kernel(_laplacian_filter_3d_z, config=kernel_config).compile()
+    laplacian_filter_3d_z = ps.create_kernel(
+        ps.Assignment(
+            filter_flux.center, 0.25 * (-field[1, 0, 0] - field[-1, 0, 0] + 2 * field[0, 0, 0])
+        ),
+        config=kernel_config,
+    ).compile()
 
     elementwise_copy_3d = spne.gen_elementwise_copy_pyst_kernel_3d(
         real_t=real_t, num_threads=num_threads, grid_size=grid_size

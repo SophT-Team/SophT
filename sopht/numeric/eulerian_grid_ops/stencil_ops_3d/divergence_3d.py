@@ -21,28 +21,27 @@ def gen_divergence_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 3)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _divergence_stencil_3d():
-        divergence, field_x, field_y, field_z = ps.fields(
-            f"divergence, field_x, field_y, field_z : {pyst_dtype}[{grid_info}]"
-        )
-        inv_dx = sp.symbols("inv_dx")
-        divergence[0, 0, 0] @= (
-            0.5
-            * inv_dx
-            * (
-                field_x[0, 0, 1]
-                - field_x[0, 0, -1]
-                + field_y[0, 1, 0]
-                - field_y[0, -1, 0]
-                + field_z[1, 0, 0]
-                - field_z[-1, 0, 0]
-            )
-        )
+    divergence, field_x, field_y, field_z = ps.fields(
+        f"divergence, field_x, field_y, field_z : {pyst_dtype}[{grid_info}]"
+    )
+    inv_dx = sp.symbols("inv_dx")
+    eqn = ps.Assignment(
+        divergence.center,
+        0.5
+        * inv_dx
+        * (
+            field_x[0, 0, 1]
+            - field_x[0, 0, -1]
+            + field_y[0, 1, 0]
+            - field_y[0, -1, 0]
+            + field_z[1, 0, 0]
+            - field_z[-1, 0, 0]
+        ),
+    )
 
-    _divergence_kernel_3d = ps.create_kernel(_divergence_stencil_3d, config=kernel_config).compile()
+    _divergence_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
@@ -61,32 +60,31 @@ def gen_divergence_pyst_kernel_3d(
             inv_dx=inv_dx,
         )
 
-    match reset_ghost_zone:
-        case False:
-            return divergence_pyst_kernel_3d
-        case _:  # True
-            # to set boundary zone = 0
-            boundary_width = 1
-            set_fixed_val_at_boundaries_3d = spne.gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
-                real_t=real_t,
-                width=boundary_width,
-                # complexity of this operation is O(N^2), hence setting serial version
-                num_threads=False,
-                field_type="scalar",
-            )
+    if not reset_ghost_zone:
+        return divergence_pyst_kernel_3d
 
-            def divergence_with_ghost_zone_reset_pyst_kernel_3d(
-                divergence: np.ndarray, field: np.ndarray, inv_dx: float
-            ) -> None:
-                """Divergence in 3D, with resetting of ghost zone
+    # to set boundary zone = 0
+    boundary_width = 1
+    set_fixed_val_at_boundaries_3d = spne.gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
+        real_t=real_t,
+        width=boundary_width,
+        # complexity of this operation is O(N^2), hence setting serial version
+        num_threads=False,
+        field_type="scalar",
+    )
 
-                Computes divergence (3D scalar field) for a 3D vector field
-                Assumes field is (3, n, n, n) and dx = dy = dz
-                """
-                divergence_pyst_kernel_3d(divergence, field, inv_dx)
+    def divergence_with_ghost_zone_reset_pyst_kernel_3d(
+        divergence: np.ndarray, field: np.ndarray, inv_dx: float
+    ) -> None:
+        """Divergence in 3D, with resetting of ghost zone
 
-                # set boundary unaffected points to 0
-                # TODO: need one sided corrections?
-                set_fixed_val_at_boundaries_3d(field=divergence, fixed_val=0)
+        Computes divergence (3D scalar field) for a 3D vector field
+        Assumes field is (3, n, n, n) and dx = dy = dz
+        """
+        divergence_pyst_kernel_3d(divergence, field, inv_dx)
 
-            return divergence_with_ghost_zone_reset_pyst_kernel_3d
+        # set boundary unaffected points to 0
+        # TODO: need one sided corrections?
+        set_fixed_val_at_boundaries_3d(field=divergence, fixed_val=0)
+
+    return divergence_with_ghost_zone_reset_pyst_kernel_3d

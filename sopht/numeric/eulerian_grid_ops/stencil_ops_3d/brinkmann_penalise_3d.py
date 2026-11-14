@@ -20,21 +20,19 @@ def gen_brinkmann_penalise_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 3)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _brinkmann_penalise_stencil_3d():
-        penalised_field, field, char_field, penalty_field = ps.fields(
-            f"penalised_field, field, char_field, penalty_field : {pyst_dtype}[{grid_info}]"
-        )
-        penalty_factor = sp.symbols("penalty_factor")
-        penalised_field[0, 0, 0] @= (
-            field[0, 0, 0] + penalty_factor * char_field[0, 0, 0] * penalty_field[0, 0, 0]
-        ) / (1 + penalty_factor * char_field[0, 0, 0])
+    penalised_field, field, char_field, penalty_field = ps.fields(
+        f"penalised_field, field, char_field, penalty_field : {pyst_dtype}[{grid_info}]"
+    )
+    penalty_factor = sp.symbols("penalty_factor")
+    eqn = ps.Assignment(
+        penalised_field.center,
+        (field.center + penalty_factor * char_field.center * penalty_field.center)
+        / (1 + penalty_factor * char_field.center),
+    )
 
-    brinkmann_penalise_pyst_kernel_3d = ps.create_kernel(
-        _brinkmann_penalise_stencil_3d, config=kernel_config
-    ).compile()
+    brinkmann_penalise_pyst_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
     match field_type:
         case "scalar":
             return brinkmann_penalise_pyst_kernel_3d

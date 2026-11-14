@@ -21,47 +21,34 @@ def gen_curl_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = spu.get_grid_info(grid_size, 3)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _curl_x_comp_stencil_3d():
-        curl_x, field_y, field_z = ps.fields(
-            f"curl_x, field_y, field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_x = df_z / dy - df_y / dz
-        curl_x[0, 0, 0] @= prefactor * (
-            field_z[0, 1, 0] - field_z[0, -1, 0] - field_y[1, 0, 0] + field_y[-1, 0, 0]
-        )
+    curl_x, curl_y, curl_z, field_x, field_y, field_z = ps.fields(
+        f"curl_x, curl_y, curl_z, field_x, field_y, field_z : {pyst_dtype}[{grid_info}]"
+    )
+    prefactor = sp.symbols("prefactor")
 
-    _curl_x_comp_3d = ps.create_kernel(_curl_x_comp_stencil_3d, config=kernel_config).compile()
+    # curl_x = df_z / dy - df_y / dz
+    eqn_x = ps.Assignment(
+        curl_x.center,
+        prefactor * (field_z[0, 1, 0] - field_z[0, -1, 0] - field_y[1, 0, 0] + field_y[-1, 0, 0]),
+    )
+    _curl_x_comp_3d = ps.create_kernel(eqn_x, config=kernel_config).compile()
 
-    @ps.kernel
-    def _curl_y_comp_stencil_3d():
-        curl_y, field_x, field_z = ps.fields(
-            f"curl_y, field_x, field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_y = df_x / dz - df_z / dx
-        curl_y[0, 0, 0] @= prefactor * (
-            field_x[1, 0, 0] - field_x[-1, 0, 0] - field_z[0, 0, 1] + field_z[0, 0, -1]
-        )
+    # curl_y = df_x / dz - df_z / dx
+    eqn_y = ps.Assignment(
+        curl_y.center,
+        prefactor * (field_x[1, 0, 0] - field_x[-1, 0, 0] - field_z[0, 0, 1] + field_z[0, 0, -1]),
+    )
+    _curl_y_comp_3d = ps.create_kernel(eqn_y, config=kernel_config).compile()
 
-    _curl_y_comp_3d = ps.create_kernel(_curl_y_comp_stencil_3d, config=kernel_config).compile()
+    # curl_z = df_y / dx - df_x / dy
+    eqn_z = ps.Assignment(
+        curl_z.center,
+        prefactor * (field_y[0, 0, 1] - field_y[0, 0, -1] - field_x[0, 1, 0] + field_x[0, -1, 0]),
+    )
+    _curl_z_comp_3d = ps.create_kernel(eqn_z, config=kernel_config).compile()
 
-    @ps.kernel
-    def _curl_z_comp_stencil_3d():
-        curl_z, field_x, field_y = ps.fields(
-            f"curl_z, field_x, field_y : {pyst_dtype}[{grid_info}]"
-        )
-        ""
-        prefactor = sp.symbols("prefactor")
-        # curl_z = df_y / dx - df_x / dy
-        curl_z[0, 0, 0] @= prefactor * (
-            field_y[0, 0, 1] - field_y[0, 0, -1] - field_x[0, 1, 0] + field_x[0, -1, 0]
-        )
-
-    _curl_z_comp_3d = ps.create_kernel(_curl_z_comp_stencil_3d, config=kernel_config).compile()
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
@@ -96,33 +83,32 @@ def gen_curl_pyst_kernel_3d(
             prefactor=prefactor,
         )
 
-    match reset_ghost_zone:
-        case False:
-            return curl_pyst_kernel_3d
-        case True:
-            # to set boundary zone = 0
-            boundary_width = 1
-            set_fixed_val_at_boundaries_3d = spne.gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
-                real_t=real_t,
-                width=boundary_width,
-                # complexity of this operation is O(N^2), hence setting serial version
-                num_threads=False,
-                field_type="vector",
-            )
+    if not reset_ghost_zone:
+        return curl_pyst_kernel_3d
 
-            def curl_with_ghost_zone_reset_pyst_kernel_3d(
-                curl: np.ndarray, field: np.ndarray, prefactor: float
-            ) -> None:
-                """Curl in 3D, with resetting of ghost zone
+    # to set boundary zone = 0
+    boundary_width = 1
+    set_fixed_val_at_boundaries_3d = spne.gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
+        real_t=real_t,
+        width=boundary_width,
+        # complexity of this operation is O(N^2), hence setting serial version
+        num_threads=False,
+        field_type="vector",
+    )
 
-                Computes curl (3D vector field) essentially vector
-                Laplacian for a 3D vector field
-                assumes shape of fields (3, n, n, n)
-                # Assumes field is (3, n, n, n) and dx = dy = dz
-                """
-                curl_pyst_kernel_3d(curl, field, prefactor)
-                # set boundary unaffected points to 0
-                # TODO: need one sided corrections?
-                set_fixed_val_at_boundaries_3d(vector_field=curl, fixed_vals=[0, 0, 0])
+    def curl_with_ghost_zone_reset_pyst_kernel_3d(
+        curl: np.ndarray, field: np.ndarray, prefactor: float
+    ) -> None:
+        """Curl in 3D, with resetting of ghost zone
 
-            return curl_with_ghost_zone_reset_pyst_kernel_3d
+        Computes curl (3D vector field) essentially vector
+        Laplacian for a 3D vector field
+        assumes shape of fields (3, n, n, n)
+        # Assumes field is (3, n, n, n) and dx = dy = dz
+        """
+        curl_pyst_kernel_3d(curl, field, prefactor)
+        # set boundary unaffected points to 0
+        # TODO: need one sided corrections?
+        set_fixed_val_at_boundaries_3d(vector_field=curl, fixed_vals=[0, 0, 0])
+
+    return curl_with_ghost_zone_reset_pyst_kernel_3d
