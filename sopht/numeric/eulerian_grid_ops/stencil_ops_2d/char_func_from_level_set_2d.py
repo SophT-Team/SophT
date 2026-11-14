@@ -20,28 +20,31 @@ def gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_2d(
     Generate function that computes characteristic function field
     from the level set field, via a smooth sine Heaviside function.
     """
-    grid_info = spu.get_grid_info(grid_size, 2)
+    grid_info = spu.get_grid_info(grid_size, 2, "scalar")
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     sine_prefactor = np.pi / blend_width
 
-    @ps.kernel
-    def _char_func_from_level_set_via_sine_heaviside_stencil_2d():
-        char_func_field, level_set_field = ps.fields(
-            f"char_func_field, level_set_field : {pyst_dtype}[{grid_info}]"
-        )
-        char_func_field[0, 0] @= (1 if (level_set_field[0, 0] > blend_width) else 0) + (
-            0
-            if abs(level_set_field[0, 0]) > blend_width
-            else 0.5
+    char_func_field, level_set_field = ps.fields(
+        f"char_func_field, level_set_field : {pyst_dtype}[{grid_info}]"
+    )
+
+    _char_func_field = sp.Piecewise(
+        (1, level_set_field.center > blend_width), (0, True)
+    ) + sp.Piecewise(
+        (0, sp.Abs(level_set_field.center) > blend_width),
+        (
+            0.5
             * (
                 1
-                + level_set_field[0, 0] / blend_width
-                + sp.sin(sine_prefactor * level_set_field[0, 0]) / np.pi
-            )
-        )
+                + level_set_field.center / blend_width
+                + sp.sin(sine_prefactor * level_set_field.center) / np.pi
+            ),
+            True,
+        ),
+    )
 
     return ps.create_kernel(
-        _char_func_from_level_set_via_sine_heaviside_stencil_2d,
+        ps.Assignment(char_func_field.center, _char_func_field),
         config=kernel_config,
     ).compile()
