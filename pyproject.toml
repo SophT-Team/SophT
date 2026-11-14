@@ -22,7 +22,7 @@ dependencies = [
     "pyelastica",
     "matplotlib",
     "pyfftw",
-    "pystencils",
+    "pystencils>=2.0",
     "ffmpeg-python",
     "typing-extensions",
 ]

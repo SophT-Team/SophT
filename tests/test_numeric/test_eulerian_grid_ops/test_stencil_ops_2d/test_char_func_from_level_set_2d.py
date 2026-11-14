@@ -57,7 +57,7 @@ def test_char_func_from_level_set_via_sine_heaviside_pyst_2d(
         gen_char_func_from_level_set_via_sine_heaviside_pyst_kernel_2d(
             blend_width=solution.blend_width,
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
+            grid_size=(n_values, n_values),
             num_threads=max_cpu_count,
         )
     )

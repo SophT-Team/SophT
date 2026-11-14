@@ -13,32 +13,26 @@ import sopht.utils as spu
 def gen_brinkmann_penalise_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     """Brinkmann penalisation 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
+
+    penalised_field, field, char_field, penalty_field = ps.fields(
+        f"penalised_field, field, char_field, penalty_field : {pyst_dtype}[{grid_info}]"
+    )
+    penalty_factor = sp.symbols("penalty_factor")
+    eqn = ps.Assignment(
+        penalised_field.center,
+        (field.center + penalty_factor * char_field.center * penalty_field.center)
+        / (1 + penalty_factor * char_field.center),
     )
 
-    @ps.kernel
-    def _brinkmann_penalise_stencil_3d():
-        penalised_field, field, char_field, penalty_field = ps.fields(
-            f"penalised_field, field, char_field, penalty_field : {pyst_dtype}[{grid_info}]"
-        )
-        penalty_factor = sp.symbols("penalty_factor")
-        penalised_field[0, 0, 0] @= (
-            field[0, 0, 0] + penalty_factor * char_field[0, 0, 0] * penalty_field[0, 0, 0]
-        ) / (1 + penalty_factor * char_field[0, 0, 0])
-
-    brinkmann_penalise_pyst_kernel_3d = ps.create_kernel(
-        _brinkmann_penalise_stencil_3d, config=kernel_config
-    ).compile()
+    brinkmann_penalise_pyst_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
     match field_type:
         case "scalar":
             return brinkmann_penalise_pyst_kernel_3d

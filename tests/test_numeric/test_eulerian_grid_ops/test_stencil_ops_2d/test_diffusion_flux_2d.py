@@ -52,7 +52,7 @@ def test_diffusion_flux_2d(n_values, precision, reset_ghost_zone, rng, max_cpu_c
     diffusion_flux_pyst_kernel = gen_diffusion_flux_pyst_kernel_2d(
         real_t=real_t,
         num_threads=max_cpu_count,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         reset_ghost_zone=reset_ghost_zone,
     )
     diffusion_flux_pyst_kernel(

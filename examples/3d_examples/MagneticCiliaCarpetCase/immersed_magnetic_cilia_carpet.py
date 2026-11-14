@@ -47,7 +47,7 @@ def immersed_magnetic_cilia_carpet_case(
     elemenwise_saxpby = spne.gen_elementwise_saxpby_pyst_kernel_3d(
         real_t=real_t,
         num_threads=num_threads,
-        fixed_grid_size=grid_size,
+        grid_size=grid_size,
         field_type="vector",
     )
 

@@ -66,7 +66,7 @@ def test_vort_stretching_flux_3d(n_values, precision, rng, max_cpu_count):
     vorticity_stretching_flux_field = np.zeros_like(solution.ref_vorticity_stretching_flux_field)
     vorticity_stretching_flux_kernel_3d = gen_vorticity_stretching_flux_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values, n_values),
+        grid_size=(n_values, n_values, n_values),
         num_threads=max_cpu_count,
     )
     vorticity_stretching_flux_kernel_3d(

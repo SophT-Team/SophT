@@ -12,88 +12,69 @@ import sopht.utils as spu
 def gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """Update vorticity based on velocity forcing in 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _update_vorticity_from_velocity_forcing_x_comp_stencil_3d():
-        (
-            vorticity_field_x,
-            velocity_forcing_field_y,
-            velocity_forcing_field_z,
-        ) = ps.fields(
-            f"vorticity_field_x, velocity_forcing_field_y, "
-            f"velocity_forcing_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_x = df_z / dy - df_y / dz
-        vorticity_field_x[0, 0, 0] @= vorticity_field_x[0, 0, 0] + prefactor * (
+    vorticity_field_x, vorticity_field_y, vorticity_field_z = ps.fields(
+        f"vorticity_field_x, vorticity_field_y, vorticity_field_z : {pyst_dtype}[{grid_info}]"
+    )
+    velocity_forcing_field_x, velocity_forcing_field_y, velocity_forcing_field_z = ps.fields(
+        f"velocity_forcing_field_x, velocity_forcing_field_y, velocity_forcing_field_z "
+        f": {pyst_dtype}[{grid_info}]"
+    )
+    prefactor = sp.symbols("prefactor")
+
+    # curl_x = df_z / dy - df_y / dz
+    eqn_x = ps.AddAugmentedAssignment(
+        vorticity_field_x.center,
+        prefactor
+        * (
             velocity_forcing_field_z[0, 1, 0]
             - velocity_forcing_field_z[0, -1, 0]
             - velocity_forcing_field_y[1, 0, 0]
             + velocity_forcing_field_y[-1, 0, 0]
-        )
-
+        ),
+    )
     _update_vorticity_from_velocity_forcing_x_comp_kernel_3d = ps.create_kernel(
-        _update_vorticity_from_velocity_forcing_x_comp_stencil_3d, config=kernel_config
+        eqn_x, config=kernel_config
     ).compile()
 
-    @ps.kernel
-    def _update_vorticity_from_velocity_forcing_y_comp_stencil_3d():
-        (
-            vorticity_field_y,
-            velocity_forcing_field_x,
-            velocity_forcing_field_z,
-        ) = ps.fields(
-            f"vorticity_field_y, velocity_forcing_field_x,"
-            f" velocity_forcing_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_y = df_x / dz - df_z / dx
-        vorticity_field_y[0, 0, 0] @= vorticity_field_y[0, 0, 0] + prefactor * (
+    # curl_y = df_x / dz - df_z / dx
+    eqn_y = ps.AddAugmentedAssignment(
+        vorticity_field_y.center,
+        prefactor
+        * (
             velocity_forcing_field_x[1, 0, 0]
             - velocity_forcing_field_x[-1, 0, 0]
             - velocity_forcing_field_z[0, 0, 1]
             + velocity_forcing_field_z[0, 0, -1]
-        )
-
+        ),
+    )
     _update_vorticity_from_velocity_forcing_y_comp_kernel_3d = ps.create_kernel(
-        _update_vorticity_from_velocity_forcing_y_comp_stencil_3d, config=kernel_config
+        eqn_y, config=kernel_config
     ).compile()
 
-    @ps.kernel
-    def _update_vorticity_from_velocity_forcing_z_comp_stencil_3d():
-        (
-            vorticity_field_z,
-            velocity_forcing_field_x,
-            velocity_forcing_field_y,
-        ) = ps.fields(
-            f"vorticity_field_z, velocity_forcing_field_x,"
-            f" velocity_forcing_field_y : {pyst_dtype}[{grid_info}]"
-        )
-        ""
-        prefactor = sp.symbols("prefactor")
-        # curl_z = df_y / dx - df_x / dy
-        vorticity_field_z[0, 0, 0] @= vorticity_field_z[0, 0, 0] + prefactor * (
+    # curl_z = df_y / dx - df_x / dy
+    eqn_z = ps.AddAugmentedAssignment(
+        vorticity_field_z.center,
+        prefactor
+        * (
             velocity_forcing_field_y[0, 0, 1]
             - velocity_forcing_field_y[0, 0, -1]
             - velocity_forcing_field_x[0, 1, 0]
             + velocity_forcing_field_x[0, -1, 0]
-        )
-
+        ),
+    )
     _update_vorticity_from_velocity_forcing_z_comp_kernel_3d = ps.create_kernel(
-        _update_vorticity_from_velocity_forcing_z_comp_stencil_3d, config=kernel_config
+        eqn_z, config=kernel_config
     ).compile()
+
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
@@ -135,37 +116,32 @@ def gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
 def gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """Update vorticity based on penalised velocity in 3D kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _update_vorticity_from_penalised_velocity_x_comp_stencil_3d():
-        (
-            vorticity_field_x,
-            velocity_field_y,
-            velocity_field_z,
-        ) = ps.fields(
-            f"vorticity_field_x, velocity_field_y, velocity_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        (
-            penalised_velocity_field_y,
-            penalised_velocity_field_z,
-        ) = ps.fields(
-            f"penalised_velocity_field_y, penalised_velocity_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_x = df_z / dy - df_y / dz
-        vorticity_field_x[0, 0, 0] @= vorticity_field_x[0, 0, 0] + prefactor * (
+    vorticity_field_x, vorticity_field_y, vorticity_field_z = ps.fields(
+        f"vorticity_field_x, vorticity_field_y, vorticity_field_z : {pyst_dtype}[{grid_info}]"
+    )
+    velocity_field_x, velocity_field_y, velocity_field_z = ps.fields(
+        f"velocity_field_x, velocity_field_y, velocity_field_z : {pyst_dtype}[{grid_info}]"
+    )
+    penalised_velocity_field_x, penalised_velocity_field_y, penalised_velocity_field_z = ps.fields(
+        f"penalised_velocity_field_x, penalised_velocity_field_y, penalised_velocity_field_z "
+        f": {pyst_dtype}[{grid_info}]"
+    )
+    prefactor = sp.symbols("prefactor")
+
+    # curl_x = df_z / dy - df_y / dz
+    eqn_x = ps.AddAugmentedAssignment(
+        vorticity_field_x.center,
+        prefactor
+        * (
             penalised_velocity_field_z[0, 1, 0]
             - velocity_field_z[0, 1, 0]
             - penalised_velocity_field_z[0, -1, 0]
@@ -174,31 +150,18 @@ def gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
             + velocity_field_y[1, 0, 0]
             + penalised_velocity_field_y[-1, 0, 0]
             - velocity_field_y[-1, 0, 0]
-        )
-
+        ),
+    )
     _update_vorticity_from_penalised_velocity_x_comp_kernel_3d = ps.create_kernel(
-        _update_vorticity_from_penalised_velocity_x_comp_stencil_3d,
+        eqn_x,
         config=kernel_config,
     ).compile()
 
-    @ps.kernel
-    def _update_vorticity_from_penalised_velocity_y_comp_stencil_3d():
-        (
-            vorticity_field_y,
-            velocity_field_x,
-            velocity_field_z,
-        ) = ps.fields(
-            f"vorticity_field_y, velocity_field_x, velocity_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        (
-            penalised_velocity_field_x,
-            penalised_velocity_field_z,
-        ) = ps.fields(
-            f"penalised_velocity_field_x, penalised_velocity_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_y = df_x / dz - df_z / dx
-        vorticity_field_y[0, 0, 0] @= vorticity_field_y[0, 0, 0] + prefactor * (
+    # curl_y = df_x / dz - df_z / dx
+    eqn_y = ps.AddAugmentedAssignment(
+        vorticity_field_y.center,
+        prefactor
+        * (
             penalised_velocity_field_x[1, 0, 0]
             - velocity_field_x[1, 0, 0]
             - penalised_velocity_field_x[-1, 0, 0]
@@ -207,31 +170,18 @@ def gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
             + velocity_field_z[0, 0, 1]
             + penalised_velocity_field_z[0, 0, -1]
             - velocity_field_z[0, 0, -1]
-        )
-
+        ),
+    )
     _update_vorticity_from_penalised_velocity_y_comp_kernel_3d = ps.create_kernel(
-        _update_vorticity_from_penalised_velocity_y_comp_stencil_3d,
+        eqn_y,
         config=kernel_config,
     ).compile()
 
-    @ps.kernel
-    def _update_vorticity_from_penalised_velocity_z_comp_stencil_3d():
-        (
-            vorticity_field_z,
-            velocity_field_x,
-            velocity_field_y,
-        ) = ps.fields(
-            f"vorticity_field_z, velocity_field_x, velocity_field_y : {pyst_dtype}[{grid_info}]"
-        )
-        (
-            penalised_velocity_field_x,
-            penalised_velocity_field_y,
-        ) = ps.fields(
-            f"penalised_velocity_field_x, penalised_velocity_field_y : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        # curl_z = df_y / dx - df_x / dy
-        vorticity_field_z[0, 0, 0] @= vorticity_field_z[0, 0, 0] + prefactor * (
+    # curl_z = df_y / dx - df_x / dy
+    eqn_z = ps.AddAugmentedAssignment(
+        vorticity_field_z.center,
+        prefactor
+        * (
             penalised_velocity_field_y[0, 0, 1]
             - velocity_field_y[0, 0, 1]
             - penalised_velocity_field_y[0, 0, -1]
@@ -240,12 +190,13 @@ def gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
             + velocity_field_x[0, 1, 0]
             + penalised_velocity_field_x[0, -1, 0]
             - velocity_field_x[0, -1, 0]
-        )
-
+        ),
+    )
     _update_vorticity_from_penalised_velocity_z_comp_kernel_3d = ps.create_kernel(
-        _update_vorticity_from_penalised_velocity_z_comp_stencil_3d,
+        eqn_z,
         config=kernel_config,
     ).compile()
+
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()

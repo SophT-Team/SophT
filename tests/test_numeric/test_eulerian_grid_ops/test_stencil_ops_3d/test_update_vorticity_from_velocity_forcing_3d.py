@@ -82,7 +82,7 @@ def test_update_vorticity_from_velocity_forcing_3d(n_values, precision, rng, max
     update_vorticity_from_velocity_forcing_pyst_kernel = (
         gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
+            grid_size=(n_values, n_values, n_values),
             num_threads=max_cpu_count,
         )
     )
@@ -110,7 +110,7 @@ def test_update_vorticity_from_penalised_velocity_3d(n_values, precision, rng, m
     update_vorticity_from_penalised_vorticity_kernel = (
         gen_update_vorticity_from_penalised_velocity_pyst_kernel_3d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values, n_values),
+            grid_size=(n_values, n_values, n_values),
             num_threads=max_cpu_count,
         )
     )

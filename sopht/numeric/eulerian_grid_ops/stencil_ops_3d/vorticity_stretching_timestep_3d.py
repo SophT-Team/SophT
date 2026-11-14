@@ -10,19 +10,19 @@ import sopht.numeric.eulerian_grid_ops as spne
 def gen_vorticity_stretching_timestep_euler_forward_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D Vorticity stretching euler forward timestep kernel generator."""
     elementwise_sum_pyst_kernel_3d = spne.gen_elementwise_sum_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
         field_type="vector",
     )
     vorticity_stretching_flux_pyst_kernel_3d = spne.gen_vorticity_stretching_flux_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
 
@@ -58,25 +58,25 @@ def gen_vorticity_stretching_timestep_ssprk3_pyst_kernel_3d(
     real_t: type,
     midstep_buffer_vector_field: np.ndarray,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D Vorticity stretching SSP-RK3 timestep kernel generator."""
     elementwise_sum_pyst_kernel_3d = spne.gen_elementwise_sum_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
         field_type="vector",
     )
     elementwise_saxpby_pyst_kernel_3d = spne.gen_elementwise_saxpby_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
         field_type="vector",
     )
     vorticity_stretching_flux_pyst_kernel_3d = spne.gen_vorticity_stretching_flux_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
 

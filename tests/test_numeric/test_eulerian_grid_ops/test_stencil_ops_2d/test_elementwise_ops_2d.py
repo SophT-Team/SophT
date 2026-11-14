@@ -18,7 +18,7 @@ def test_elementwise_sum_pyst_kernel_2d(n_values, precision, max_cpu_count):
     real_t = get_real_t(precision)
     elementwise_sum_pyst_kernel = gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="scalar",
     )
@@ -39,7 +39,7 @@ def test_vector_field_elementwise_sum_pyst_kernel_2d(n_values, precision, max_cp
     real_t = get_real_t(precision)
     elementwise_sum_pyst_kernel = gen_elementwise_sum_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="vector",
     )
@@ -60,7 +60,7 @@ def test_set_fixed_val_pyst_kernel_2d(n_values, precision, max_cpu_count):
     real_t = get_real_t(precision)
     set_fixed_val_pyst_kernel = gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="scalar",
     )
@@ -79,7 +79,7 @@ def test_vector_field_set_fixed_val_pyst_kernel_2d(n_values, precision, max_cpu_
     real_t = get_real_t(precision)
     set_fixed_val_pyst_kernel = gen_set_fixed_val_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="vector",
     )
@@ -99,7 +99,7 @@ def test_elementwise_copy_pyst_kernel_2d(n_values, precision, max_cpu_count):
     real_t = get_real_t(precision)
     elementwise_copy_pyst_kernel = gen_elementwise_copy_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
     )
     field = 2 * np.ones((n_values, n_values), dtype=real_t)
@@ -184,7 +184,7 @@ def test_add_fixed_val_pyst_kernel_2d(n_values, precision, max_cpu_count):
     real_t = get_real_t(precision)
     add_fixed_val_pyst_kernel = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="scalar",
     )
@@ -205,7 +205,7 @@ def test_vector_field_add_fixed_val_pyst_kernel_2d(n_values, precision, max_cpu_
     real_t = get_real_t(precision)
     add_fixed_val_pyst_kernel = gen_add_fixed_val_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="vector",
     )
@@ -228,7 +228,7 @@ def test_elementwise_saxpby_pyst_kernel_2d(n_values, precision, max_cpu_count):
     real_t = get_real_t(precision)
     elementwise_saxpby_pyst_kernel = gen_elementwise_saxpby_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="scalar",
     )
@@ -254,7 +254,7 @@ def test_vector_field_elementwise_saxpby_pyst_kernel_2d(n_values, precision, max
     real_t = get_real_t(precision)
     elementwise_saxpby_pyst_kernel = gen_elementwise_saxpby_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="vector",
     )

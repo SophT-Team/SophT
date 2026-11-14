@@ -12,19 +12,19 @@ import sopht.utils as spu
 def gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
     """3D Diffusion euler forward timestep kernel generator."""
     elementwise_sum_pyst_kernel_3d = spne.gen_elementwise_sum_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
     diffusion_flux_kernel_3d = spne.gen_diffusion_flux_pyst_kernel_3d(
         real_t=real_t,
-        fixed_grid_size=fixed_grid_size,
+        grid_size=grid_size,
         num_threads=num_threads,
     )
 

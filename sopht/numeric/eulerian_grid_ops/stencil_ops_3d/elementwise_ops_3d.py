@@ -1,7 +1,7 @@
 """Kernels for elementwise operations in 3D."""
 
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 import pystencils as ps
@@ -13,54 +13,59 @@ import sopht.utils as spu
 def gen_elementwise_sum_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise sum kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
+
+    sum_field, field_1, field_2 = ps.fields(
+        f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
+    )
+    eqn = ps.Assignment(sum_field.center, field_1.center + field_2.center)
+    elementwise_sum_pyst_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
 
     match field_type:
         case "scalar":
-            grid_info = (
-                f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "3D"
-            )
-
-            @ps.kernel
-            def _elementwise_sum_stencil_3d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
-                )
-                sum_field[0, 0, 0] @= field_1[0, 0, 0] + field_2[0, 0, 0]
-
+            return elementwise_sum_pyst_kernel_3d
         case "vector":
-            grid_info = (
-                f"3, {fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "4D"
-            )
+            x_axis_idx = spu.VectorField.x_axis_idx()
+            y_axis_idx = spu.VectorField.y_axis_idx()
+            z_axis_idx = spu.VectorField.z_axis_idx()
 
-            @ps.kernel
-            def _elementwise_sum_stencil_3d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
+            def vector_field_elementwise_sum_pyst_kernel_3d(
+                sum_field: np.ndarray, field_1: np.ndarray, field_2: np.ndarray
+            ) -> None:
+                """Elementwise sum of 3D vector fields, assumes shape of fields (3, n, n, n)."""
+                elementwise_sum_pyst_kernel_3d(
+                    sum_field=sum_field[x_axis_idx],
+                    field_1=field_1[x_axis_idx],
+                    field_2=field_2[x_axis_idx],
                 )
-                sum_field[0, 0, 0, 0] @= field_1[0, 0, 0, 0] + field_2[0, 0, 0, 0]
+                elementwise_sum_pyst_kernel_3d(
+                    sum_field=sum_field[y_axis_idx],
+                    field_1=field_1[y_axis_idx],
+                    field_2=field_2[y_axis_idx],
+                )
+                elementwise_sum_pyst_kernel_3d(
+                    sum_field=sum_field[z_axis_idx],
+                    field_1=field_1[z_axis_idx],
+                    field_2=field_2[z_axis_idx],
+                )
 
+            return vector_field_elementwise_sum_pyst_kernel_3d
         case _:
             msg = "Invalid field type"
             raise ValueError(msg)
-
-    return ps.create_kernel(_elementwise_sum_stencil_3d, config=kernel_config).compile()
 
 
 def gen_set_fixed_val_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -68,25 +73,29 @@ def gen_set_fixed_val_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _set_fixed_val_stencil_3d():
-        field = ps.fields(f"field : {pyst_dtype}[{grid_info}]")
-        fixed_val = sp.symbols("fixed_val")
-        field[0, 0, 0] @= fixed_val
-
-    set_fixed_val_pyst_kernel_3d = ps.create_kernel(
-        _set_fixed_val_stencil_3d, config=kernel_config
-    ).compile()
     match field_type:
         case "scalar":
-            return set_fixed_val_pyst_kernel_3d
+            field = cast("ps.Field", ps.fields(f"field : {pyst_dtype}[{grid_info}]"))
+            fixed_val = sp.symbols("fixed_val")
+            eqn = ps.Assignment(field.center, fixed_val)
+            return ps.create_kernel(eqn, config=kernel_config).compile()
+
         case "vector":
+            field_x, field_y, field_z = ps.fields(
+                f"field_x, field_y, field_z : {pyst_dtype}[{grid_info}]"
+            )
+            fixed_val_x, fixed_val_y, fixed_val_z = sp.symbols(
+                "fixed_val_x, fixed_val_y, fixed_val_z"
+            )
+            eqn = [
+                ps.Assignment(field_x.center, fixed_val_x),
+                ps.Assignment(field_y.center, fixed_val_y),
+                ps.Assignment(field_z.center, fixed_val_z),
+            ]
+            vector_kernel = ps.create_kernel(eqn, config=kernel_config).compile()
+
             x_axis_idx = spu.VectorField.x_axis_idx()
             y_axis_idx = spu.VectorField.y_axis_idx()
             z_axis_idx = spu.VectorField.z_axis_idx()
@@ -100,20 +109,17 @@ def gen_set_fixed_val_pyst_kernel_3d(
                 Sets spatially constant values for a 3D vector field,
                 assumes shape of fields (3, n, n, n).
                 """
-                set_fixed_val_pyst_kernel_3d(
-                    field=vector_field[x_axis_idx],
-                    fixed_val=fixed_vals[x_axis_idx],
-                )
-                set_fixed_val_pyst_kernel_3d(
-                    field=vector_field[y_axis_idx],
-                    fixed_val=fixed_vals[y_axis_idx],
-                )
-                set_fixed_val_pyst_kernel_3d(
-                    field=vector_field[z_axis_idx],
-                    fixed_val=fixed_vals[z_axis_idx],
+                vector_kernel(
+                    field_x=vector_field[x_axis_idx],
+                    field_y=vector_field[y_axis_idx],
+                    field_z=vector_field[z_axis_idx],
+                    fixed_val_x=fixed_vals[x_axis_idx],
+                    fixed_val_y=fixed_vals[y_axis_idx],
+                    fixed_val_z=fixed_vals[z_axis_idx],
                 )
 
             return vector_field_set_fixed_val_pyst_kernel_3d
+
         case _:
             msg = "Invalid field type"
             raise ValueError(msg)
@@ -122,62 +128,51 @@ def gen_set_fixed_val_pyst_kernel_3d(
 def gen_elementwise_copy_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise copy one field to another kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _elementwise_copy_stencil_3d():
-        field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
-        field[0, 0, 0] @= rhs_field[0, 0, 0]
-
-    return ps.create_kernel(_elementwise_copy_stencil_3d, config=kernel_config).compile()
+    field, rhs_field = ps.fields(f"field, rhs_field : {pyst_dtype}[{grid_info}]")
+    eqn = ps.Assignment(field.center, rhs_field.center)
+    return ps.create_kernel(eqn, config=kernel_config).compile()
 
 
 def gen_elementwise_complex_product_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise complex number product kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _elementwise_complex_product_stencil_3d():
-        product_field_real, field_1_real, field_2_real = ps.fields(
-            f"product_field_real, field_1_real, field_2_real : {pyst_dtype}[{grid_info}]"
-        )
-        product_field_imag, field_1_imag, field_2_imag = ps.fields(
-            f"product_field_imag, field_1_imag, field_2_imag : {pyst_dtype}[{grid_info}]"
-        )
-        product_field_real[0, 0, 0] @= (
-            field_1_real[0, 0, 0] * field_2_real[0, 0, 0]
-            - field_1_imag[0, 0, 0] * field_2_imag[0, 0, 0]
-        )
-        product_field_imag[0, 0, 0] @= (
-            field_1_real[0, 0, 0] * field_2_imag[0, 0, 0]
-            + field_1_imag[0, 0, 0] * field_2_real[0, 0, 0]
-        )
+    product_field_real, field_1_real, field_2_real = ps.fields(
+        f"product_field_real, field_1_real, field_2_real : {pyst_dtype}[{grid_info}]"
+    )
+    product_field_imag, field_1_imag, field_2_imag = ps.fields(
+        f"product_field_imag, field_1_imag, field_2_imag : {pyst_dtype}[{grid_info}]"
+    )
+    eqn = [
+        ps.Assignment(
+            product_field_real.center,
+            field_1_real.center * field_2_real.center - field_1_imag.center * field_2_imag.center,
+        ),
+        ps.Assignment(
+            product_field_imag.center,
+            field_1_real.center * field_2_imag.center + field_1_imag.center * field_2_real.center,
+        ),
+    ]
 
     _elementwise_complex_product_pyst_kernel_3d = ps.create_kernel(
-        _elementwise_complex_product_stencil_3d, config=kernel_config
+        eqn, config=kernel_config
     ).compile()
 
     def elementwise_complex_product_pyst_kernel_3d(
@@ -271,7 +266,7 @@ def gen_set_fixed_val_at_boundaries_pyst_kernel_3d(
 def gen_add_fixed_val_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
@@ -279,21 +274,13 @@ def gen_add_fixed_val_pyst_kernel_3d(
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
-    )
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
 
-    @ps.kernel
-    def _add_fixed_val_stencil_3d():
-        sum_field, field = ps.fields(f"sum_field, field : {pyst_dtype}[{grid_info}]")
-        fixed_val = sp.symbols("fixed_val")
-        sum_field[0, 0, 0] @= field[0, 0, 0] + fixed_val
+    sum_field, field = ps.fields(f"sum_field, field : {pyst_dtype}[{grid_info}]")
+    fixed_val = sp.symbols("fixed_val")
+    eqn = ps.Assignment(sum_field.center, field.center + fixed_val)
+    add_fixed_val_pyst_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
 
-    add_fixed_val_pyst_kernel_3d = ps.create_kernel(
-        _add_fixed_val_stencil_3d, config=kernel_config
-    ).compile()
     match field_type:
         case "scalar":
             return add_fixed_val_pyst_kernel_3d
@@ -337,84 +324,103 @@ def gen_add_fixed_val_pyst_kernel_3d(
 def gen_elementwise_saxpby_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
     field_type: Literal["scalar", "vector"] = "scalar",
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise saxpby (s = a * x + b * y) kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
+
+    sum_field, field_1, field_2 = ps.fields(
+        f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
+    )
+    field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
+    eqn = ps.Assignment(
+        sum_field.center, field_1_prefac * field_1.center + field_2_prefac * field_2.center
+    )
+    elementwise_saxpby_pyst_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
 
     match field_type:
         case "scalar":
-            grid_info = (
-                f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "3D"
-            )
-
-            @ps.kernel
-            def _elementwise_saxpby_stencil_3d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
-                )
-                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
-                sum_field[0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0] + field_2_prefac * field_2[0, 0, 0]
-                )
-
+            return elementwise_saxpby_pyst_kernel_3d
         case "vector":
-            grid_info = (
-                f"3, {fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-                if type(fixed_grid_size) is tuple[int, ...]
-                else "4D"
-            )
+            x_axis_idx = spu.VectorField.x_axis_idx()
+            y_axis_idx = spu.VectorField.y_axis_idx()
+            z_axis_idx = spu.VectorField.z_axis_idx()
 
-            @ps.kernel
-            def _elementwise_saxpby_stencil_3d():
-                sum_field, field_1, field_2 = ps.fields(
-                    f"sum_field, field_1, field_2 : {pyst_dtype}[{grid_info}]"
+            def vector_field_elementwise_saxpby_pyst_kernel_3d(
+                sum_field: np.ndarray,
+                field_1: np.ndarray,
+                field_2: np.ndarray,
+                field_1_prefac: float,
+                field_2_prefac: float,
+            ) -> None:
+                """Elementwise saxpby of 3D vector fields, assumes shape of fields (3, n, n, n)."""
+                elementwise_saxpby_pyst_kernel_3d(
+                    sum_field=sum_field[x_axis_idx],
+                    field_1=field_1[x_axis_idx],
+                    field_2=field_2[x_axis_idx],
+                    field_1_prefac=field_1_prefac,
+                    field_2_prefac=field_2_prefac,
                 )
-                field_1_prefac, field_2_prefac = sp.symbols("field_1_prefac, field_2_prefac")
-                sum_field[0, 0, 0, 0] @= (
-                    field_1_prefac * field_1[0, 0, 0, 0] + field_2_prefac * field_2[0, 0, 0, 0]
+                elementwise_saxpby_pyst_kernel_3d(
+                    sum_field=sum_field[y_axis_idx],
+                    field_1=field_1[y_axis_idx],
+                    field_2=field_2[y_axis_idx],
+                    field_1_prefac=field_1_prefac,
+                    field_2_prefac=field_2_prefac,
+                )
+                elementwise_saxpby_pyst_kernel_3d(
+                    sum_field=sum_field[z_axis_idx],
+                    field_1=field_1[z_axis_idx],
+                    field_2=field_2[z_axis_idx],
+                    field_1_prefac=field_1_prefac,
+                    field_2_prefac=field_2_prefac,
                 )
 
+            return vector_field_elementwise_saxpby_pyst_kernel_3d
         case _:
             msg = "Invalid field type"
             raise ValueError(msg)
-
-    return ps.create_kernel(_elementwise_saxpby_stencil_3d, config=kernel_config).compile()
 
 
 def gen_elementwise_cross_product_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D elementwise cross product kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
+
+    result_field_x, result_field_y, result_field_z = ps.fields(
+        f"result_field_x, result_field_y, result_field_z : {pyst_dtype}[{grid_info}]"
     )
-
-    @ps.kernel
-    def _elementwise_cross_product_single_axis_stencil_3d():
-        result_field_i, field_1_j, field_1_k, field_2_j, field_2_k = ps.fields(
-            f"result_field_i, field_1_j, field_1_k, field_2_j, field_2_k : "
-            f"{pyst_dtype}[{grid_info}]"
-        )
-        result_field_i[0, 0, 0] @= (
-            field_1_j[0, 0, 0] * field_2_k[0, 0, 0] - field_2_j[0, 0, 0] * field_1_k[0, 0, 0]
-        )
-
-    elementwise_cross_product_single_axis_kernel_3d = ps.create_kernel(
-        _elementwise_cross_product_single_axis_stencil_3d, config=kernel_config
-    ).compile()
+    field_1_x, field_1_y, field_1_z = ps.fields(
+        f"field_1_x, field_1_y, field_1_z : {pyst_dtype}[{grid_info}]"
+    )
+    field_2_x, field_2_y, field_2_z = ps.fields(
+        f"field_2_x, field_2_y, field_2_z : {pyst_dtype}[{grid_info}]"
+    )
+    eqn = [
+        ps.Assignment(
+            result_field_x.center,
+            field_1_y.center * field_2_z.center - field_2_y.center * field_1_z.center,
+        ),
+        ps.Assignment(
+            result_field_y.center,
+            field_1_z.center * field_2_x.center - field_2_z.center * field_1_x.center,
+        ),
+        ps.Assignment(
+            result_field_z.center,
+            field_1_x.center * field_2_y.center - field_2_x.center * field_1_y.center,
+        ),
+    ]
+    _elementwise_cross_product_kernel_3d = ps.create_kernel(eqn, config=kernel_config).compile()
     x_axis_idx = spu.VectorField.x_axis_idx()
     y_axis_idx = spu.VectorField.y_axis_idx()
     z_axis_idx = spu.VectorField.z_axis_idx()
@@ -424,26 +430,16 @@ def gen_elementwise_cross_product_pyst_kernel_3d(
     ) -> None:
         """Elementwise cross product of 2 3D vector fields"""
         # Assumes fields are (3, n, n, n)
-        elementwise_cross_product_single_axis_kernel_3d(
-            result_field_i=result_field[x_axis_idx],
-            field_1_j=field_1[y_axis_idx],
-            field_1_k=field_1[z_axis_idx],
-            field_2_j=field_2[y_axis_idx],
-            field_2_k=field_2[z_axis_idx],
-        )
-        elementwise_cross_product_single_axis_kernel_3d(
-            result_field_i=result_field[y_axis_idx],
-            field_1_j=field_1[z_axis_idx],
-            field_1_k=field_1[x_axis_idx],
-            field_2_j=field_2[z_axis_idx],
-            field_2_k=field_2[x_axis_idx],
-        )
-        elementwise_cross_product_single_axis_kernel_3d(
-            result_field_i=result_field[z_axis_idx],
-            field_1_j=field_1[x_axis_idx],
-            field_1_k=field_1[y_axis_idx],
-            field_2_j=field_2[x_axis_idx],
-            field_2_k=field_2[y_axis_idx],
+        _elementwise_cross_product_kernel_3d(
+            result_field_x=result_field[x_axis_idx],
+            result_field_y=result_field[y_axis_idx],
+            result_field_z=result_field[z_axis_idx],
+            field_1_x=field_1[x_axis_idx],
+            field_1_y=field_1[y_axis_idx],
+            field_1_z=field_1[z_axis_idx],
+            field_2_x=field_2[x_axis_idx],
+            field_2_y=field_2[y_axis_idx],
+            field_2_z=field_2[z_axis_idx],
         )
 
     return elementwise_cross_product_pyst_kernel_3d

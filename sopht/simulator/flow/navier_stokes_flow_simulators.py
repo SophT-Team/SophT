@@ -91,13 +91,13 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         """Compile necessary kernels based on simulator flags"""
         self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
             real_t=self.real_t,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
             num_threads=self.num_threads,
         )
         self._advection_timestep = (
             spne.gen_advection_timestep_euler_forward_conservative_eno3_pyst_kernel_2d(
                 real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
+                grid_size=self.grid_size,
                 num_threads=self.num_threads,
             )
         )
@@ -112,7 +112,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         self._curl = spne.gen_outplane_field_curl_pyst_kernel_2d(
             real_t=self.real_t,
             num_threads=self.num_threads,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
         )
         self._penalise_field_towards_boundary = spne.gen_penalise_field_boundary_pyst_kernel_2d(
             width=self.penalty_zone_width,
@@ -121,13 +121,13 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
             y_grid_field=self.position_field[spu.VectorField.y_axis_idx()],
             real_t=self.real_t,
             num_threads=self.num_threads,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
         )
         if self.with_forcing:
             self._update_vorticity_from_velocity_forcing = (
                 spne.gen_update_vorticity_from_velocity_forcing_pyst_kernel_2d(
                     real_t=self.real_t,
-                    fixed_grid_size=self.grid_size,
+                    grid_size=self.grid_size,
                     num_threads=self.num_threads,
                 )
             )
@@ -139,7 +139,7 @@ class UnboundedNavierStokesFlowSimulator2D(FlowSimulator):
         if self.with_free_stream_flow:
             add_fixed_val = spne.gen_add_fixed_val_pyst_kernel_2d(
                 real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
+                grid_size=self.grid_size,
                 num_threads=self.num_threads,
                 field_type="vector",
             )
@@ -329,7 +329,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         """Compile necessary kernels based on 3D simulator flags"""
         self._diffusion_timestep = spne.gen_diffusion_timestep_euler_forward_pyst_kernel_3d(
             real_t=self.real_t,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
             num_threads=self.num_threads,
             field_type="vector",
         )
@@ -359,7 +359,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         self._curl = spne.gen_curl_pyst_kernel_3d(
             real_t=self.real_t,
             num_threads=self.num_threads,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
         )
         self._penalise_field_towards_boundary = spne.gen_penalise_field_boundary_pyst_kernel_3d(
             width=self.penalty_zone_width,
@@ -369,25 +369,25 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
             z_grid_field=self.position_field[spu.VectorField.z_axis_idx()],
             real_t=self.real_t,
             num_threads=self.num_threads,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
             field_type="vector",
         )
         self._elementwise_cross_product = spne.gen_elementwise_cross_product_pyst_kernel_3d(
             real_t=self.real_t,
             num_threads=self.num_threads,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
         )
         self._update_vorticity_from_velocity_forcing = (
             spne.gen_update_vorticity_from_velocity_forcing_pyst_kernel_3d(
                 real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
+                grid_size=self.grid_size,
                 num_threads=self.num_threads,
             )
         )
         # check if vorticity stays divergence free
         self._compute_divergence = spne.gen_divergence_pyst_kernel_3d(
             real_t=self.real_t,
-            fixed_grid_size=self.grid_size,
+            grid_size=self.grid_size,
             num_threads=self.num_threads,
         )
 
@@ -402,7 +402,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
                 field_buffer=self.buffer_vector_field[1],
                 real_t=self.real_t,
                 num_threads=self.num_threads,
-                fixed_grid_size=self.grid_size,
+                grid_size=self.grid_size,
                 field_type="vector",
                 filter_type=self.filter_setting_dict["type"],
             )
@@ -417,7 +417,7 @@ class UnboundedNavierStokesFlowSimulator3D(FlowSimulator):
         if self.with_free_stream_flow:
             add_fixed_val = spne.gen_add_fixed_val_pyst_kernel_3d(
                 real_t=self.real_t,
-                fixed_grid_size=self.grid_size,
+                grid_size=self.grid_size,
                 num_threads=self.num_threads,
                 field_type="vector",
             )

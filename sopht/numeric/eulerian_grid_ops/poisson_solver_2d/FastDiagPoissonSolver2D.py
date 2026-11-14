@@ -41,6 +41,7 @@ class FastDiagPoissonSolver2D:
             [-1, 0, 1],
             shape=(self.grid_size_x, self.grid_size_x),
             format="csr",
+            dtype=self.real_t,
         )
         poisson_matrix_x = poisson_matrix_x.toarray().astype(self.real_t)
         poisson_matrix_y = inv_dx2 * spp.diags(
@@ -48,6 +49,7 @@ class FastDiagPoissonSolver2D:
             [-1, 0, 1],
             shape=(self.grid_size_y, self.grid_size_y),
             format="csr",
+            dtype=self.real_t
         )
         poisson_matrix_y = poisson_matrix_y.toarray().astype(self.real_t)
 

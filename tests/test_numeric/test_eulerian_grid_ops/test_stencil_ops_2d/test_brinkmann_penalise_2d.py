@@ -72,7 +72,7 @@ def test_brinkmann_penalise_scalar_field_2d(n_values, precision, rng, max_cpu_co
     penalised_field = np.zeros_like(solution.ref_penalised_field)
     brinkmann_penalise_pyst_kernel = gen_brinkmann_penalise_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="scalar",
     )
@@ -94,7 +94,7 @@ def test_brinkmann_penalise_vector_field_2d(n_values, precision, rng, max_cpu_co
     penalised_vector_field = np.zeros_like(solution.ref_penalised_vector_field)
     brinkmann_penalise_vector_field_pyst_kernel = gen_brinkmann_penalise_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
         field_type="vector",
     )
@@ -117,7 +117,7 @@ def test_brinkmann_penalise_scalar_field_vs_fixed_val_2d(n_values, precision, rn
     brinkmann_penalise_field_vs_fixed_val_pyst_kernel = (
         gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
+            grid_size=(n_values, n_values),
             num_threads=max_cpu_count,
             field_type="scalar",
         )
@@ -147,7 +147,7 @@ def test_brinkmann_penalise_vector_field_vs_fixed_val_2d(n_values, precision, rn
     brinkmann_penalise_vector_field_vs_fixed_val_pyst_kernel = (
         gen_brinkmann_penalise_vs_fixed_val_pyst_kernel_2d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
+            grid_size=(n_values, n_values),
             num_threads=max_cpu_count,
             field_type="vector",
         )

@@ -75,7 +75,7 @@ def test_penalise_field_boundary_2d(n_values, precision, rng, max_cpu_count):
         x_grid_field=solution.x_grid_field,
         y_grid_field=solution.y_grid_field,
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
     )
     penalise_field_towards_boundary_pyst_kernel(field=field)

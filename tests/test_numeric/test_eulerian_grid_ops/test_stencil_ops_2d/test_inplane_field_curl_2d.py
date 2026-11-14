@@ -41,7 +41,7 @@ def test_inplane_field_curl(n_values, precision, rng, max_cpu_count):
     curl = np.zeros_like(solution.ref_curl)
     inplane_field_curl_kernel = gen_inplane_field_curl_pyst_kernel_2d(
         real_t=real_t,
-        fixed_grid_size=(n_values, n_values),
+        grid_size=(n_values, n_values),
         num_threads=max_cpu_count,
     )
     inplane_field_curl_kernel(

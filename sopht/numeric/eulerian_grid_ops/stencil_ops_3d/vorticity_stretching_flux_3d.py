@@ -13,39 +13,37 @@ import sopht.utils as spu
 def gen_vorticity_stretching_flux_pyst_kernel_3d(
     real_t: type,
     num_threads: bool | int = False,
-    fixed_grid_size: tuple[int, int, int] | bool = False,
+    grid_size: tuple[int, int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
     """3D Vorticity stretching flux kernel generator."""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
-    grid_info = (
-        f"{fixed_grid_size[0]}, {fixed_grid_size[1]}, {fixed_grid_size[2]}"
-        if type(fixed_grid_size) is tuple[int, ...]
-        else "3D"
+    grid_info = spu.get_grid_info(grid_size, 3, "scalar")
+
+    vorticity_stretching_flux_field_comp, velocity_field_comp = ps.fields(
+        f"vorticity_stretching_flux_field_comp, velocity_field_comp : {pyst_dtype}[{grid_info}]"
+    )
+    vorticity_field_x, vorticity_field_y, vorticity_field_z = ps.fields(
+        f"vorticity_field_x, vorticity_field_y, vorticity_field_z : {pyst_dtype}[{grid_info}]"
+    )
+    prefactor = sp.symbols("prefactor")
+    eqn = ps.Assignment(
+        vorticity_stretching_flux_field_comp.center,
+        prefactor
+        * (
+            vorticity_field_x.center
+            * (velocity_field_comp[0, 0, 1] - velocity_field_comp[0, 0, -1])
+            + vorticity_field_y.center
+            * (velocity_field_comp[0, 1, 0] - velocity_field_comp[0, -1, 0])
+            + vorticity_field_z.center
+            * (velocity_field_comp[1, 0, 0] - velocity_field_comp[-1, 0, 0])
+        ),
     )
 
-    @ps.kernel
-    def _vorticity_stretching_flux_single_comp_stencil_3d():
-        vorticity_stretching_flux_field_comp, velocity_field_comp = ps.fields(
-            f"vorticity_stretching_flux_field_comp, velocity_field_comp : {pyst_dtype}[{grid_info}]"
-        )
-        vorticity_field_x, vorticity_field_y, vorticity_field_z = ps.fields(
-            f"vorticity_field_x, vorticity_field_y, vorticity_field_z : {pyst_dtype}[{grid_info}]"
-        )
-        prefactor = sp.symbols("prefactor")
-        vorticity_stretching_flux_field_comp[0, 0, 0] @= prefactor * (
-            vorticity_field_x[0, 0, 0]
-            * (velocity_field_comp[0, 0, 1] - velocity_field_comp[0, 0, -1])
-            + vorticity_field_y[0, 0, 0]
-            * (velocity_field_comp[0, 1, 0] - velocity_field_comp[0, -1, 0])
-            + vorticity_field_z[0, 0, 0]
-            * (velocity_field_comp[1, 0, 0] - velocity_field_comp[-1, 0, 0])
-        )
-
     _vorticity_stretching_flux_single_comp_kernel_3d = ps.create_kernel(
-        _vorticity_stretching_flux_single_comp_stencil_3d,
+        eqn,
         config=kernel_config,
     ).compile()
 

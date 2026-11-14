@@ -49,7 +49,7 @@ def test_diffusion_timestep_euler_forward_2d(n_values, precision, rng, max_cpu_c
     diffusion_timestep_euler_forward_pyst_kernel = (
         gen_diffusion_timestep_euler_forward_pyst_kernel_2d(
             real_t=real_t,
-            fixed_grid_size=(n_values, n_values),
+            grid_size=(n_values, n_values),
             num_threads=max_cpu_count,
         )
     )
