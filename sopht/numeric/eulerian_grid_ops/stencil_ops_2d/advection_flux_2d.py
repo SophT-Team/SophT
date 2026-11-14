@@ -15,12 +15,7 @@ def gen_advection_flux_conservative_eno3_pyst_kernel_2d(
     grid_size: tuple[int, int] | None = None,
 ) -> Callable:
     # TODO: expand docs
-    """2D conservative ENO3 advection flux kernel generator.
-
-    All four face fluxes (x/y, front/back) are evaluated in a single fused kernel.
-    The upwind choice is made branchless: both biased stencils are computed and
-    blended with a 0/1 switch, which the C compiler turns into a vectorizable select.
-    """
+    """2D conservative ENO3 advection flux kernel generator"""
     pyst_dtype = spu.get_pyst_dtype(real_t)
     kernel_config = spu.get_pyst_kernel_config(real_t, num_threads)
     # we can add dtype checks later
