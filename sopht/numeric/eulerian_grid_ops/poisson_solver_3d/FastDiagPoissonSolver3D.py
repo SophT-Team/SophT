@@ -58,6 +58,7 @@ class FastDiagPoissonSolver3D:
             [-1, 0, 1],
             shape=(self.grid_size_x, self.grid_size_x),
             format="csr",
+            dtype=self.real_t,
         )
         poisson_matrix_x = poisson_matrix_x.toarray().astype(self.real_t)
         poisson_matrix_y = inv_dx2 * spp.diags(
@@ -65,6 +66,7 @@ class FastDiagPoissonSolver3D:
             [-1, 0, 1],
             shape=(self.grid_size_y, self.grid_size_y),
             format="csr",
+            dtype=self.real_t,
         )
         poisson_matrix_y = poisson_matrix_y.toarray().astype(self.real_t)
         poisson_matrix_z = inv_dx2 * spp.diags(
@@ -72,6 +74,7 @@ class FastDiagPoissonSolver3D:
             [-1, 0, 1],
             shape=(self.grid_size_z, self.grid_size_z),
             format="csr",
+            dtype=self.real_t,
         )
         poisson_matrix_z = poisson_matrix_z.toarray().astype(self.real_t)
 
